@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import { Api } from 'telegram';
 
 dotenv.config();
-
+ 
 const apiId = Number(process.env.API_ID);
 const apiHash = process.env.API_HASH;
 const sessionString = process.env.STRING_SESSION;
@@ -50,8 +50,23 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
         text: msg.message || '',
         timestamp: new Date(msg.date * 1000).toISOString(),
         url: `https://t.me/${username}/${msg.id}`,
+        media: null
       };
 
+      if (msg.media) {
+        try {
+          const filePath = await client.downloadMedia(msg, {
+            outputFile: `media/${peer.channelId}_${msg.id}`
+          });
+          post.media = {
+            type: msg.media.className,
+            file_path: filePath
+          };
+        } catch (err) {
+          console.error('Ошибка при скачивании медиа:', err);
+          post.media = { error: 'download_failed' };
+        }
+      }
       await axios.post(API_URL, post);
       console.log(`📤 Отправлен пост из ${username}:`, post.text);
     } catch (err) {

@@ -1,0 +1,60 @@
+
+@import "tailwindcss";
+body {
+    min-height: 100dvh;
+    font-family: Inter, sans-serif;
+    font-optical-sizing: auto;
+    color: var(--text-0);
+    background: var(--surface-0);
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  :root {
+    /* --surface-0: #f9f9fa; */
+    --surface-0: #F8F4F3;
+    --surface-1: #ffffff;
+    --surface-2: #f4f4f4;
+    --surface-3: #eeeeee;
+    --surface-4: #e1e1e1;
+  
+    --text-0: #000000;
+    --text-1: rgba(0,0,0, .72);
+    --text-2: rgba(0,0,0, .48);
+    --text-3: rgba(0,0,0, .24);
+  
+    --outline-0: rgba(0,0,0, .16);
+    --outline-1: rgba(0,0,0, .12);
+    --outline-2: rgba(0,0,0, .07);
+    --outline-3: rgba(0,0,0, .04);
+  
+    --smoke-0: var(--surface-0);
+    --smoke-1: var(--surface-0);
+    --smoke-2: var(--surface-1);
+    --smoke-3: var(--surface-2);
+    --smoke-4: var(--surface-3);
+  }
+  
+  .dark {
+    --surface-0: #070707;
+    --surface-1: #111111;
+    --surface-2: #171717;
+    --surface-3: #212121;
+    --surface-4: #2d2d2d;
+  
+    --text-0: #ffffff;
+    --text-1: rgba(255,255,255, .72);
+    --text-2: rgba(255,255,255, .48);
+    --text-3: rgba(255,255,255, .32);
+  
+    --outline-0: rgba(255,255,255, .16);
+    --outline-1: rgba(255,255,255, .12);
+    --outline-2: rgba(255,255,255, .07);
+    --outline-3: rgba(255,255,255, .04);
+  
+    --smoke-0: var(--surface-3);
+    --smoke-1: var(--surface-1);
+    --smoke-2: var(--surface-2);
+    --smoke-3: var(--surface-3);
+    --smoke-4: var(--surface-4);
+  }
+  
