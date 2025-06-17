@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import axios from 'axios';
 import cors from '@fastify/cors';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -16,11 +16,29 @@ let db;
 mongoClient.connect().then(() => {
   db = mongoClient.db(process.env.MONGODB_DB);
   console.log('✅ Connected to MongoDB');
+  console.log("База данных:", process.env.MONGODB_DB);
 });
 
 fastify.get('/', async (request, reply) => {
   return db.collection('posts').find({}).toArray();
 }),
+
+fastify.get('/post/:id', async (request, reply) => {
+  const { id } = request.params;
+
+  if (!db) return reply.code(500).send({error: 'DB not ready'})
+
+  try {
+    const post = await db.collection('posts').findOne({_id: new ObjectId(id)});
+
+    if (!post) {
+      return reply.code(404).send({error: 'Post not found'})
+    }
+    return reply.send(post)
+  } catch (error) {
+    console.log(error)
+  }
+})
 
 fastify.post('/chat', async (request, reply) => {
   const { prompt } = request.body;
@@ -39,7 +57,7 @@ fastify.post('/chat', async (request, reply) => {
     return reply.send({ response: response.data.response });
   } catch (error) {
     fastify.log.error(error);
-    return reply.code(500).send({ error: 'Error communicating with Ollama.' });
+    return reply.code(500).send({ error: 'Error communicating with llm.' });
   }
 });
 

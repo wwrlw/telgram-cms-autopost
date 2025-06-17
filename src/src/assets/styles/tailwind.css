@@ -1,0 +1,26 @@
+@import "tailwindcss/preflight";
+@tailwind utilities;
+
+@layer utilities {
+    .btn {
+        display: inline-flex;
+        align-items: items-center;
+        justify-content: justify-center;
+        cursor: cursor-pointer;
+        user-select: select-none;
+    }
+    .text-main {
+        color: text;
+        color: text-1;
+    }
+}
+
+.text-title-1 {
+    font-size: 16px;
+    line-height: 14px;
+}
+
+.text-body-1 {
+    font-size: 14px;
+    line-height: 12px;
+}

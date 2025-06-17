@@ -13,7 +13,7 @@ const sessionString = process.env.STRING_SESSION;
 const targetChannels = process.env.TARGET_CHANNELS?.split(',') || [];
 const API_URL = process.env.API_URL;
 
-const stringSession = new StringSession(sessionString); // пустая строка для первой авторизации
+const stringSession = new StringSession(sessionString);
 
 const client = new TelegramClient(stringSession, apiId, apiHash, {
   connectionRetries: 5,
