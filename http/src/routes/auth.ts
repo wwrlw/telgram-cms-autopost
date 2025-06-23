@@ -1,55 +1,55 @@
-import fastify, { FastifyInstance } from "fastify";
-import {
-  createUser,
-  findUserByUsername,
-  verifyPassword,
-} from "../services/userService";
-
-import 'fastify';
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    jwt: any;
-  }
-}
+import { FastifyInstance } from "fastify";
+import { DependencyContainer } from "../container/DependencyContainer";
+import { CreateUserUseCase } from "../use-cases/CreateUserUseCase";
+import { LoginUseCase } from "../use-cases/LoginUseCase";
+import { CreateUserDto, LoginDto } from "../models/User";
 
 export async function authRoutes(fastify: FastifyInstance) {
+  const container = DependencyContainer.getInstance();
+
   fastify.post("/auth/register", async (request, reply) => {
-    const { username, password } = request.body as {
-      username: string;
-      password: string;
-    };
-
-    if (!username || !password) {
-      return reply.status(400).send({ error: "Missing username or password" });
+    try {
+      const userData = request.body as CreateUserDto;
+      const createUserUseCase = container.getCreateUserUseCase();
+      const user = await createUserUseCase.execute(userData);
+      
+      // Формат ответа для фронтенда
+      return {
+        success: true,
+        data: {
+          user: user
+        }
+      };
+    } catch (error) {
+      throw error;
     }
-
-    const existing = await findUserByUsername(fastify.mongo, username);
-    if (existing) {
-      return reply.status(409).send({ error: "User already exists" });
-    }
-
-    const user = await createUser(fastify.mongo, username, password);
-    return { id: user._id, username: user.username };
   });
 
   fastify.post("/login", async (request, reply) => {
-    const { username, password } = request.body as {
-      username: string;
-      password: string;
-    };
-
-    const user = await findUserByUsername(fastify.mongo, username);
-    if (!user) {
-      return reply.status(401).send({ error: "Invalid username or password" });
+    try {
+      const loginData = request.body as LoginDto;
+      console.log('Login request data:', loginData); // Отладочный лог
+      
+      const loginUseCase = container.getLoginUseCase();
+      const result = await loginUseCase.execute(loginData);
+      console.log('Login use case result:', result); // Отладочный лог
+      
+      // Формат ответа для фронтенда
+      const response = {
+        success: true,
+        data: {
+          token: result.token,
+          user: {
+            id: result.userId,
+            username: loginData.username
+          }
+        }
+      };
+      console.log('Final response:', response); // Отладочный лог
+      return response;
+    } catch (error) {
+      console.error('Login error:', error); // Отладочный лог
+      throw error;
     }
-
-    const valid = await verifyPassword(password, user.password);
-    if (!valid) {
-      return reply.status(401).send({ error: "Invalid username or password" });
-    }
-
-    const token = fastify.jwt.sign({ username: user.username, id: user._id });
-    return { token };
   });
 }

@@ -38,10 +38,10 @@ router.beforeEach(async (to) => {
     const publicPages = ['/login'];
     const authRequired = !publicPages.includes(to.path);
     const auth = {
-        user: localStorage.getItem('token') ? true : false,
+        data: localStorage.getItem('token') ? true : false,
     };
 
-    if (authRequired && !auth.user) {
+    if (authRequired && !auth.data) {
         auth.returnUrl = to.fullPath;
         return '/login';
     }

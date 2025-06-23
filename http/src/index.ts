@@ -5,7 +5,8 @@ import authPlugin from './plugins/auth';
 import { authRoutes } from './routes/auth';
 import { postsRoutes } from './routes/posts';
 import cors from '@fastify/cors'
-import { startTelegramParser } from './parser/telegramParser';
+import { DependencyContainer } from './container/DependencyContainer';
+import { errorHandler } from './middleware/ErrorHandler';
 
 dotenv.config();
 
@@ -18,15 +19,13 @@ async function start() {
             credentials: true,
           });
         await fastify.register(mongoConnector);
+        const container = DependencyContainer.getInstance();
+        container.setMongo(fastify.mongo);
         await fastify.register(authPlugin);
         await fastify.register(authRoutes);
         await fastify.register(postsRoutes);
+        fastify.setErrorHandler(errorHandler);
         await fastify.ready();
-        // if (fastify.mongo.db) {
-        //     startTelegramParser(fastify.mongo.db);
-        // } else {
-        //     fastify.log.error('MongoDB is not connected, parser not started');
-        // }
         await fastify.listen({ port: Number(process.env.PORT) || 3001, host: '0.0.0.0' });
     } catch (err) {
         fastify.log.error(err);

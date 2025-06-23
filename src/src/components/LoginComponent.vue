@@ -67,18 +67,6 @@
                     <div class="flex-grow border-t border-gray-300"></div>
                 </div>
 
-                <div class="space-y-3">
-                    <button
-                        class="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                        <img src="https://img.icons8.com/color/20/000000/google-logo.png" alt="Google" class="mr-3">
-                        <span class="text-gray-700 font-medium">Google</span>
-                    </button>
-                    <button
-                        class="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                        <img src="https://img.icons8.com/color/20/000000/facebook-new.png" alt="Facebook" class="mr-3">
-                        <span class="text-gray-700 font-medium">Facebook</span>
-                    </button>
-                </div>
 
                 <p class="text-center text-gray-600 text-sm mt-8">
                     Don't have an account?
@@ -234,9 +222,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import http from '@/js/http';
 
-const activeForm = ref('login');
+const router = useRouter();
 const errorMessage = ref('');
 const loading = ref(false);
 
@@ -245,6 +234,19 @@ const loginForm = ref({
     password: ''
 });
 
+const signupForm = ref({
+    firstName: '',
+    lastName: '',
+    username: '',
+    phone: '',
+    birthdate: '',
+    password: '',
+    confirmPassword: ''
+});
+
+const forgotForm = ref({
+    email: ''
+});
 
 const LoginService = async () => {
     errorMessage.value = '';
@@ -253,10 +255,16 @@ const LoginService = async () => {
     try {
         await http.login(loginForm.value, (res) => {
             loading.value = false;
-            if (res.success) {
-                console.log('Login success:', res);
+            console.log('Login response:', res);
+            
+            if (res && res.success) {
+                console.log('Token:', res.data.token);
+                localStorage.setItem('token', res.data.token);
+                localStorage.setItem('user', JSON.stringify(res.data.user));
+                console.log('LocalStorage after login:', localStorage);
+                router.push('/');
             } else {
-                errorMessage.value = res.message || 'Invalid credentials.';
+                errorMessage.value = res?.message || 'Invalid credentials.';
             }
         });
     } catch (err) {
@@ -265,5 +273,4 @@ const LoginService = async () => {
         console.error('Login error:', err);
     }
 };
-
 </script>

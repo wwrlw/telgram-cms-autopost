@@ -1,0 +1,8 @@
+import { User, CreateUserDto, LoginDto, UserResponse, AuthResponse } from '../../models/User';
+
+export interface IUserService {
+  createUser(userData: CreateUserDto): Promise<UserResponse>;
+  login(loginData: LoginDto): Promise<AuthResponse>;
+  getUserById(id: string): Promise<UserResponse>;
+  verifyPassword(password: string, hash: string): Promise<boolean>;
+} 

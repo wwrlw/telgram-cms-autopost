@@ -34,7 +34,7 @@ const posts = ref([]);
 
 const postsService = () => {
   http.posts((res) => {
-    posts.value = res;
+    posts.value = res.data;
   }, (err) => {
     console.error(err);
   });

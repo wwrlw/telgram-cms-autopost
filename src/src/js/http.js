@@ -50,15 +50,28 @@ let http = {
         .then((res) => {
             callback(res.data);
         })
+        .catch((err) => {
+            callback({ success: false, message: 'Failed to load post' });
+        });
     },
     login: function (params, callback) {
-        instance.post('/login', params).then((res) => {
+        instance.post('/login', params)
+        .then((res) => {
             callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Network error occurred';
+            callback({ success: false, message: errorMessage });
         });
     },
     register: function (params, callback) {
-        instance.post('/api/register', { params }).then((res) => {
+        instance.post('/auth/register', params)
+        .then((res) => {
             callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Registration failed';
+            callback({ success: false, message: errorMessage });
         });
     }
 };
