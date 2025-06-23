@@ -27,20 +27,20 @@
                     <p class="text-gray-600 text-sm">Access your account to continue</p>
                 </div>
 
-                <form id="login-form" class="space-y-5">
+                <form id="login-form" class="space-y-5" @submit.prevent="LoginService">
                     <div>
-                        <label for="login-email" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                        <input type="email" id="login-email"
+                        <label for="login-email" class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                        <input type="username" id="login-email" v-model="loginForm.username"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                            placeholder="your@email.com" required>
+                            placeholder="your username">
                     </div>
 
                     <div>
                         <label for="login-password"
                             class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                        <input type="password" id="login-password"
+                        <input type="password" id="login-password" v-model="loginForm.password"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                            placeholder="••••••••" required>
+                            placeholder="••••••••">
                     </div>
 
                     <div class="flex items-center justify-between">
@@ -114,7 +114,8 @@
                     </div>
 
                     <div>
-                        <label for="signup-email" class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                        <label for="signup-email"
+                            class="block text-sm font-semibold text-gray-700 mb-1">Username</label>
                         <input type="email" id="signup-email"
                             class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                             placeholder="your@email.com" required>
@@ -232,96 +233,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import axios from 'axios';
+import { ref, onMounted } from 'vue';
+import http from '@/js/http';
 
 const activeForm = ref('login');
 const errorMessage = ref('');
 const loading = ref(false);
 
 const loginForm = ref({
-  email: '',
-  password: ''
-});
-3
-const signupForm = ref({
-  firstName: '',
-  lastName: '',
-  email: '',
-  password: '',
-  confirmPassword: ''
+    username: '',
+    password: ''
 });
 
-const forgotPasswordForm = ref({
-  email: ''
-});
 
-const showForm = (formName) => {
-  activeForm.value = formName;
-  errorMessage.value = '';
-};
-
-const handleLogin = async () => {
-  try {
-    loading.value = true;
+const LoginService = async () => {
     errorMessage.value = '';
-    
-    const response = await axios.post('http://localhost:3001/api/login', {
-      email: loginForm.value.email,
-      password: loginForm.value.password
-    });
-
-    localStorage.setItem('token', response.data.token);
-    
-    window.location.href = '/dashboard';
-  } catch (error) {
-    errorMessage.value = error.response?.data?.error || 'An error occurred during login';
-  } finally {
-    loading.value = false;
-  }
-};
-
-const handleSignup = async () => {
-  try {
     loading.value = true;
-    errorMessage.value = '';
 
-    if (signupForm.value.password !== signupForm.value.confirmPassword) {
-      errorMessage.value = 'Passwords do not match';
-      return;
+    try {
+        await http.login(loginForm.value, (res) => {
+            loading.value = false;
+            if (res.success) {
+                console.log('Login success:', res);
+            } else {
+                errorMessage.value = res.message || 'Invalid credentials.';
+            }
+        });
+    } catch (err) {
+        loading.value = false;
+        errorMessage.value = 'An error occurred. Please try again later.';
+        console.error('Login error:', err);
     }
-
-    const response = await axios.post('http://localhost:3001/api/register', {
-      firstName: signupForm.value.firstName,
-      lastName: signupForm.value.lastName,
-      email: signupForm.value.email,
-      password: signupForm.value.password
-    });
-
-    localStorage.setItem('token', response.data.token);
-    
-    window.location.href = '/dashboard';
-  } catch (error) {
-    errorMessage.value = error.response?.data?.error || 'An error occurred during registration';
-  } finally {
-    loading.value = false;
-  }
 };
 
-const handleForgotPassword = async () => {
-  try {
-    loading.value = true;
-    errorMessage.value = '';
-    
-    await axios.post('http://localhost:3001/api/forgot-password', {
-      email: forgotPasswordForm.value.email
-    });
-    
-    errorMessage.value = 'Password reset instructions sent to your email';
-  } catch (error) {
-    errorMessage.value = error.response?.data?.error || 'An error occurred';
-  } finally {
-    loading.value = false;
-  }
-};
 </script>

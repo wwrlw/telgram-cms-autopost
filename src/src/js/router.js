@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Index from "@/views/Index.vue";
 import LoginPage from "@/views/LoginPage.vue";
 const page404 = () => import('@/views/Page404.vue');
+const Post = () => import('@/views/Post.vue');
 //
 
 const routes = [
@@ -21,6 +22,11 @@ const routes = [
     name: "404",
     component: page404,
   },
+  {
+    path: '/post/:id',
+    name: 'post',
+    component: Post,
+  }
 ];
 
 const router = createRouter({
@@ -32,7 +38,7 @@ router.beforeEach(async (to) => {
     const publicPages = ['/login'];
     const authRequired = !publicPages.includes(to.path);
     const auth = {
-        user: true,
+        user: localStorage.getItem('token') ? true : false,
     };
 
     if (authRequired && !auth.user) {
