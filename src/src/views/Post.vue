@@ -126,6 +126,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http from '@/js/http';
+import { getMediaUrl } from '@/js/utils';
 
 const route = useRoute();
 const router = useRouter();
@@ -170,10 +171,6 @@ const formatDate = (dateString) => {
     });
 };
 
-const getMediaUrl = (filePath) => {
-    const cleanPath = filePath.replace('/app/', '');
-    return `http://127.0.0.1:3001/${cleanPath}`;
-};
 
 const openMediaModal = (media, index) => {
     selectedMedia.value = media;
