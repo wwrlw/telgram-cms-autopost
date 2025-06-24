@@ -6,6 +6,7 @@ import { UserService } from '../services/UserService';
 import { AuthService } from '../services/AuthService';
 import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
+import { GetPostsWithQueryUseCase } from '../use-cases/GetPostsWithQueryUseCase';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
 import { LoginUseCase } from '../use-cases/LoginUseCase';
 
@@ -55,6 +56,10 @@ export class DependencyContainer {
 
   getGetPostsUseCase(): GetPostsUseCase {
     return new GetPostsUseCase(this.getPostService());
+  }
+
+  getGetPostsWithQueryUseCase(): GetPostsWithQueryUseCase {
+    return new GetPostsWithQueryUseCase(this.getPostService());
   }
 
   getCreateUserUseCase(): CreateUserUseCase {
