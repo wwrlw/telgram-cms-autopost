@@ -5,6 +5,8 @@ import authPlugin from './plugins/auth';
 import { authRoutes } from './routes/auth';
 import { postsRoutes } from './routes/posts';
 import cors from '@fastify/cors'
+import fastifyStatic from '@fastify/static'
+import path from 'path';
 import { DependencyContainer } from './container/DependencyContainer';
 import { errorHandler } from './middleware/ErrorHandler';
 
@@ -21,6 +23,14 @@ async function start() {
         await fastify.register(mongoConnector);
         const container = DependencyContainer.getInstance();
         container.setMongo(fastify.mongo);
+        
+        // Настройка раздачи статических файлов для медиа
+        await fastify.register(fastifyStatic, {
+            root: path.join(process.cwd(), 'media'),
+            prefix: '/media/',
+            decorateReply: false
+        });
+        
         await fastify.register(authPlugin);
         await fastify.register(authRoutes);
         await fastify.register(postsRoutes);

@@ -171,7 +171,8 @@ const formatDate = (dateString) => {
 };
 
 const getMediaUrl = (filePath) => {
-    return `http://127.0.0.1:3001/media/${filePath}`;
+    const cleanPath = filePath.replace('/app/', '');
+    return `http://127.0.0.1:3001/${cleanPath}`;
 };
 
 const openMediaModal = (media, index) => {

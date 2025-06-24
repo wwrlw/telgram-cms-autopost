@@ -11,6 +11,10 @@ export class TelegramService {
   private mongoService: MongoService;
   private mediaService: MediaService;
 
+  // --- Добавлено для альбомов ---
+  private albumBuffer: { [groupedId: string]: any[] } = {};
+  private albumTimers: { [groupedId: string]: NodeJS.Timeout } = {};
+
   constructor(
     private config: {
       apiId: number;
@@ -115,8 +119,54 @@ export class TelegramService {
       return;
     }
 
-    console.log('📨 Peer:', peer);
+    // --- Новый код для альбомов ---
+    if (msg.groupedId) {
+      const groupId = msg.groupedId.toString();
+      if (!this.albumBuffer[groupId]) {
+        this.albumBuffer[groupId] = [];
+      }
+      this.albumBuffer[groupId].push(msg);
 
+      // Сбросить старый таймер, если есть
+      if (this.albumTimers[groupId]) {
+        clearTimeout(this.albumTimers[groupId]);
+      }
+
+      // Установить новый таймер: если в течение 1.5 сек не пришло новых частей — собрать альбом
+      this.albumTimers[groupId] = setTimeout(async () => {
+        const albumMsgs = this.albumBuffer[groupId];
+        let allMedia: any[] = [];
+        let text = '';
+        for (const m of albumMsgs) {
+          const media = await this.mediaService.processMedia(
+            this.client,
+            m,
+            Number(peer.channelId || peer.userId || peer.chatId || 0),
+            m.id
+          );
+          allMedia = allMedia.concat(media);
+          if (m.message && !text) text = m.message;
+        }
+        const entity = await this.client.getEntity(peer);
+        const username = (entity as any).username || `channel_${peer.channelId || peer.userId || peer.chatId}`;
+        const postUrl = `https://t.me/${username}/${albumMsgs[0].id}`;
+        const postData: CreatePostDto = {
+          source_channel: username,
+          text,
+          url: postUrl,
+          media: allMedia,
+          is_unique: false
+        };
+        await this.mongoService.savePost(postData);
+        delete this.albumBuffer[groupId];
+        delete this.albumTimers[groupId];
+        console.log(`📤 Сохранён альбом-пост из ${username}:`, postData);
+      }, 1500);
+      return; // Не сохраняем отдельные части альбома!
+    }
+    // --- Конец нового кода ---
+
+    // Обычные сообщения (без groupedId)
     try {
       const entity = await this.client.getEntity(peer);
       const username = (entity as any).username || `channel_${peer.channelId || peer.userId || peer.chatId}`;

@@ -30,24 +30,42 @@ export class MediaService {
     messageId: number
   ): Promise<Media[]> {
     if (!message.media) {
+      console.log('📷 Нет медиа в сообщении');
       return [];
     }
+
+    console.log('📷 Найдено медиа в сообщении:', {
+      mediaType: message.media?.className,
+      isArray: Array.isArray(message.media),
+      mediaCount: Array.isArray(message.media) ? message.media.length : 1
+    });
 
     const mediaArray: Media[] = [];
     const mediaList = Array.isArray(message.media) ? message.media : [message.media];
 
+    console.log(`📷 Обрабатываем ${mediaList.length} медиафайлов`);
+
     for (let i = 0; i < mediaList.length; i++) {
       const media = mediaList[i];
+      console.log(`📷 Обрабатываем медиа ${i + 1}/${mediaList.length}:`, {
+        className: media?.className,
+        type: this.getMediaType(media)
+      });
+      
       try {
         const mediaInfo = await this.processSingleMedia(client, media, channelId, messageId, i);
         if (mediaInfo) {
           mediaArray.push(mediaInfo);
+          console.log(`✅ Медиа ${i + 1} успешно обработано:`, mediaInfo);
+        } else {
+          console.log(`❌ Медиа ${i + 1} не удалось обработать`);
         }
       } catch (error) {
         console.error(`❌ Ошибка обработки медиа ${i}:`, error);
       }
     }
 
+    console.log(`📷 Итого обработано медиафайлов: ${mediaArray.length}`);
     return mediaArray;
   }
 
