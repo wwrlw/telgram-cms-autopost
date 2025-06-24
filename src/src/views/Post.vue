@@ -89,7 +89,6 @@
                 </div>
             </div>
 
-            <!-- Not found state -->
             <div v-else class="not-found">
                 <div class="not-found-icon">📄</div>
                 <h2>Post Not Found</h2>
@@ -98,7 +97,6 @@
             </div>
         </div>
 
-        <!-- Media modal -->
         <div v-if="showMediaModal" class="media-modal" @click="closeMediaModal">
             <div class="modal-content" @click.stop>
                 <button class="modal-close" @click="closeMediaModal">×</button>
