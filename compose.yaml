@@ -11,7 +11,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
     volumes:
-      - ./data:/data/db
+      - ../data:/data/db
     networks:
       - bots
   mongo-express:
@@ -33,32 +33,16 @@ services:
       - mongo
     networks:
       - bots
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
-      - ./grafana/data:/var/lib/grafana
-      - ./grafana/plugins:/var/lib/grafana/plugins
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=S31z2XS@3xa33--lM8
-      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-mongodb-datasource
-    networks:
-      - bots
   backend:
-    build: ./tg-parse/http
+    build: ./http
     container_name: tg-parse-backend
     restart: unless-stopped
     ports:
       - "3001:3001"
     volumes:
-      - ./tg-parse/parser/media:/app/media
+      - ./parser/media:/app/media
     # volumes:
-    #   - ./tg-parse/http:/app
+    #   - ./http:/app
     #   - /app/node_modules
     environment:
       - NODE_ENV=development
@@ -69,13 +53,13 @@ services:
     networks:
       - bots
   parser:
-    build: ./tg-parse/parser
+    build: ./parser
     container_name: tg-parse-parser
     restart: unless-stopped
     volumes:
-      - ./tg-parse/parser:/app
+      - ./parser:/app
       - /app/node_modules
-      - ./tg-parse/parser/media:/app/media
+      - ./parser/media:/app/media
     environment:
       - NODE_ENV=development
       - STRING_SESSION=${STRING_SESSION}
@@ -94,13 +78,13 @@ services:
     networks:
       - bots
   frontend:
-    build: ./tg-parse/src
+    build: ./src
     container_name: tg-parse-frontend
     restart: unless-stopped
     ports:
       - "5173:5173"
     volumes:
-      - ./tg-parse/src:/app
+      - ./src:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
