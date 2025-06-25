@@ -87,6 +87,59 @@ let http = {
             const errorMessage = err.response?.data?.message || 'Registration failed';
             callback({ success: false, message: errorMessage });
         });
+    },
+    
+    channels: function (params = {}, callback, errorCallback) {
+        const queryParams = new URLSearchParams();
+        
+        if (params.search) queryParams.append('search', params.search);
+        if (params.page) queryParams.append('page', params.page);
+        if (params.limit) queryParams.append('limit', params.limit);
+        
+        const url = queryParams.toString() ? `/channels?${queryParams.toString()}` : '/channels';
+        
+        instance.get(url)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            if (errorCallback) errorCallback(err);
+            else callback({ success: false, message: 'Failed to load channels' });
+        });
+    },
+    
+    createChannel: function (params, callback) {
+        instance.post('/channels', params)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to create channel';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+    
+    updateChannel: function (params, callback) {
+        const { id, ...updateData } = params;
+        instance.put(`/channels/${id}`, updateData)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to update channel';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+    
+    deleteChannel: function (params, callback) {
+        instance.delete(`/channels/${params.id}`)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to delete channel';
+            callback({ success: false, message: errorMessage });
+        });
     }
 };
 

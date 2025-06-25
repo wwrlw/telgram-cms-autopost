@@ -28,6 +28,9 @@
                     Контент
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Действия
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Источник
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -35,9 +38,6 @@
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Статус
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Действия
                   </th>
                 </tr>
               </thead>
@@ -52,6 +52,7 @@
                            v-model="selectedPosts"
                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                   </td>
+                  
                   <td class="px-6 py-4">
                     <div class="flex items-start space-x-3">
                       <div v-if="post.media" class="flex-shrink-0">
@@ -79,6 +80,22 @@
                       </div>
                     </div>
                   </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex items-center space-x-2 gap-2">
+                      <router-link :to="{ name: 'post', params: { id: post._id } }"
+                                   class="text-indigo-600 hover:text-indigo-900 text-sm">
+                        Просмотр
+                      </router-link>
+                      <button @click="$emit('publish', post)" 
+                              class="text-green-600 hover:text-green-900 text-sm">
+                        Опубликовать
+                      </button>
+                      <button @click="$emit('delete', post._id)" 
+                              class="text-red-600 hover:text-red-900 text-sm">
+                        Удалить
+                      </button>
+                    </div>
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <a :href="post.url" 
                        target="_blank" 
@@ -104,22 +121,7 @@
                       {{ post.is_unique ? 'Уникальный' : 'Оригинальный' }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex items-center space-x-2 gap-2">
-                      <router-link :to="{ name: 'post', params: { id: post._id } }"
-                                   class="text-indigo-600 hover:text-indigo-900 text-sm">
-                        Просмотр
-                      </router-link>
-                      <button @click="$emit('publish', post)" 
-                              class="text-green-600 hover:text-green-900 text-sm">
-                        Опубликовать
-                      </button>
-                      <button @click="$emit('delete', post._id)" 
-                              class="text-red-600 hover:text-red-900 text-sm">
-                        Удалить
-                      </button>
-                    </div>
-                  </td>
+            
                 </tr>
               </tbody>
             </table>
