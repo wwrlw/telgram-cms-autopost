@@ -17,7 +17,6 @@
     "fs-extra": "^11.2.0",
     "input": "^1.0.1",
     "mongodb": "^6.5.0",
-    "node-fetch": "^3.3.2",
     "sharp": "^0.33.3",
     "telegram": "^2.25.0"
   },

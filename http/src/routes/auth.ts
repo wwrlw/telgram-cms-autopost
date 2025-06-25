@@ -25,14 +25,13 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.post("/login", async (request, reply) => {
+  fastify.post("/auth/login", async (request, reply) => {
     try {
       const loginData = request.body as LoginDto;
       console.log('Login request data:', loginData); // Отладочный лог
       
       const loginUseCase = container.getLoginUseCase();
       const result = await loginUseCase.execute(loginData);
-      console.log('Login use case result:', result); // Отладочный лог
       
       // Формат ответа для фронтенда
       const response = {

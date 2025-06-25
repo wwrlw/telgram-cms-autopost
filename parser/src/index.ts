@@ -18,8 +18,8 @@ if (mongoUsername && mongoPassword) {
 
 // Конфигурация API
 const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:3001';
-const apiUsername = process.env.API_USERNAME;
-const apiPassword = process.env.API_PASSWORD;
+const apiUsername = process.env.API_USERNAME || "admin";
+const apiPassword = process.env.API_PASSWORD || "123";
 
 if (!apiUsername || !apiPassword) {
   console.error('❌ API_USERNAME и API_PASSWORD должны быть установлены в переменных окружения');

@@ -51,15 +51,65 @@ export class TelegramService {
     try {
       await this.mongoService.connect();
 
-      await this.client.start({
-        phoneNumber: async () => await input.text('Введите номер телефона: '),
-        password: async () => await input.text('Введите пароль: '),
-        phoneCode: async () => await input.text('Введите код из Telegram: '),
-        onError: (err: any) => console.error('❌ Ошибка Telegram клиента:', err),
-      });
+      console.log('🔐 Подключаемся к Telegram...');
+      
+      // Если STRING_SESSION пустая - используем интерактивную авторизацию
+      const isEmptySession = !this.config.sessionString || this.config.sessionString.trim() === '';
+      
+      if (isEmptySession) {
+        console.log('📝 STRING_SESSION не установлена, запускаем интерактивную авторизацию...');
+        console.log('💡 После авторизации скопируйте полученную сессию в переменную STRING_SESSION');
+      }
+      
+      try {
+        await this.client.start({
+          phoneNumber: async () => {
+            if (!isEmptySession) {
+              throw new Error('Требуется интерактивный ввод, но STRING_SESSION уже установлена. Проверьте её корректность.');
+            }
+            return await input.text('Введите номер телефона: ');
+          },
+          password: async () => {
+            if (!isEmptySession) {
+              throw new Error('Требуется интерактивный ввод, но STRING_SESSION уже установлена. Проверьте её корректность.');
+            }
+            return await input.text('Введите пароль (если есть 2FA): ');
+          },
+          phoneCode: async () => {
+            if (!isEmptySession) {
+              throw new Error('Требуется интерактивный ввод, но STRING_SESSION уже установлена. Проверьте её корректность.');
+            }
+            return await input.text('Введите код из Telegram: ');
+          },
+          onError: (err: any) => console.error('❌ Ошибка Telegram клиента:', err),
+        });
+      } catch (error: any) {
+        if (error.errorMessage === 'AUTH_KEY_DUPLICATED') {
+          console.error('❌ AUTH_KEY_DUPLICATED: Сессия уже используется где-то еще');
+          console.error('💡 Решения:');
+          console.error('   1. Остановите другие боты/клиенты с этой сессией');
+          console.error('   2. Сгенерируйте новую STRING_SESSION');
+          console.error('   3. Подождите 5-10 минут и попробуйте снова');
+          
+          // Ждем 30 секунд перед повторной попыткой
+          console.log('⏳ Ждем 30 секунд перед повторной попыткой...');
+          await new Promise(resolve => setTimeout(resolve, 30000));
+          throw error;
+        }
+        throw error;
+      }
 
       console.log('✅ Авторизация в Telegram успешна');
-      console.log('🔐 Сессия:', this.client.session.save());
+      
+      // Показываем сессию для сохранения
+      const sessionString = this.client.session.save();
+      console.log('🔐 Сессия для сохранения в STRING_SESSION:');
+      console.log(sessionString);
+      
+      if (isEmptySession) {
+        console.log('💡 Скопируйте эту строку и установите как STRING_SESSION в переменных окружения');
+        console.log('💡 Затем перезапустите контейнер для использования сохраненной сессии');
+      }
 
       this.client.addEventHandler(this.handleMessage.bind(this));
       this.client.addEventHandler(this.handleAllUpdates.bind(this));

@@ -69,7 +69,7 @@ let http = {
         });
     },
     login: function (params, callback) {
-        instance.post('/login', params)
+        instance.post('/auth/login', params)
         .then((res) => {
             callback(res.data);
         })
