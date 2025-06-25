@@ -3,7 +3,6 @@ import { FastifyMongoObject } from '@fastify/mongodb';
 import { IPostRepository } from '../interfaces/repositories/IPostRepository';
 import { Post, CreatePostDto } from '../models/Post';
 import { PostQuery, PaginatedResponse, PostFilters } from '../types/PostQuery';
-import { NotFoundError } from '../exceptions/NotFoundError';
 
 export class PostRepository implements IPostRepository {
   constructor(private mongo: FastifyMongoObject) {}
@@ -56,7 +55,7 @@ export class PostRepository implements IPostRepository {
 
     return {
       data: posts as Post[],
-      pagination: {
+      params: {
         page: pagination.page,
         limit: pagination.limit,
         total,

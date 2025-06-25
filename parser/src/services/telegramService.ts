@@ -35,6 +35,18 @@ export class TelegramService {
     this.mediaService = new MediaService(config.mediaPath);
   }
 
+  async updateTargetChannels(newChannelIds: number[]): Promise<void> {
+    console.log('🔄 Обновляем целевые каналы...');
+    console.log('📋 Старые каналы:', this.config.targetChannelIds);
+    console.log('📋 Новые каналы:', newChannelIds);
+    
+    this.config.targetChannelIds = newChannelIds;
+    
+    if (newChannelIds.length > 0) {
+      await this.checkChannelsAccess();
+    }
+  }
+
   async start(): Promise<void> {
     try {
       await this.mongoService.connect();

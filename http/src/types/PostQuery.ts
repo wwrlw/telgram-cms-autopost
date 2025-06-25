@@ -24,7 +24,7 @@ export interface PostQuery {
 
 export interface PaginatedResponse<T> {
   data: T[];
-  pagination: {
+  params: {
     page: number;
     limit: number;
     total: number;
