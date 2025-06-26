@@ -202,16 +202,21 @@ const handleClearFilters = () => {
 
 const publishPost = async (post) => {
   try {
-    const response = await http.post(`/post/${post._id}/publish`);
-    
-    if (response.success) {
-      alert('Пост успешно опубликован в Telegram канал!');
-    } else {
-      alert('Ошибка при публикации: ' + response.message);
-    }
+    return new Promise((resolve, reject) => {
+      http.publishPost({ id: post._id }, (response) => {
+        if (response.success) {
+          alert('Пост успешно опубликован в Telegram канал!');
+          resolve(response);
+        } else {
+          alert('Ошибка при публикации: ' + response.message);
+          reject(new Error(response.message));
+        }
+      });
+    });
   } catch (error) {
     console.error('Error publishing post:', error);
     alert('Ошибка при публикации поста');
+    throw error;
   }
 };
 
@@ -238,16 +243,44 @@ const submitPublish = (formData) => {
 
 const deletePost = (postId) => {
   if (confirm('Вы уверены, что хотите удалить этот пост?')) {
-    console.log('Deleting post:', postId);
-    postsService();
+    http.deletePost({ id: postId }, (response) => {
+      if (response.success) {
+        // Обновляем список постов после успешного удаления
+        postsService();
+      } else {
+        alert('Ошибка при удалении поста: ' + response.message);
+      }
+    });
   }
 };
 
 const bulkDelete = () => {
+  if (selectedPosts.value.length === 0) {
+    alert('Выберите посты для удаления');
+    return;
+  }
+
   if (confirm(`Вы уверены, что хотите удалить ${selectedPosts.value.length} постов?`)) {
-    console.log('Deleting posts:', selectedPosts.value);
-    clearSelection();
-    postsService();
+    // Удаляем посты по одному
+    let deletedCount = 0;
+    const totalToDelete = selectedPosts.value.length;
+    
+    selectedPosts.value.forEach((postId, index) => {
+      http.deletePost({ id: postId }, (response) => {
+        if (response.success) {
+          deletedCount++;
+        }
+        
+        // Если все посты обработаны, обновляем список
+        if (deletedCount + index + 1 >= totalToDelete) {
+          clearSelection();
+          postsService();
+          if (deletedCount > 0) {
+            alert(`Успешно удалено ${deletedCount} из ${totalToDelete} постов`);
+          }
+        }
+      });
+    });
   }
 };
 

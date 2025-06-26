@@ -140,6 +140,28 @@ let http = {
             const errorMessage = err.response?.data?.message || 'Failed to delete channel';
             callback({ success: false, message: errorMessage });
         });
+    },
+
+    deletePost: function (params, callback) {
+        instance.delete(`/post/${params.id}`)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to delete post';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    publishPost: function (params, callback) {
+        instance.post(`/post/${params.id}/publish`)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to publish post';
+            callback({ success: false, message: errorMessage });
+        });
     }
 };
 

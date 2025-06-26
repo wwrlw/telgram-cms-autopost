@@ -9,6 +9,7 @@ import { AuthService } from '../services/AuthService';
 import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
 import { GetPostsWithQueryUseCase } from '../use-cases/GetPostsWithQueryUseCase';
+import { DeletePostUseCase } from '../use-cases/DeletePostUseCase';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
 import { LoginUseCase } from '../use-cases/LoginUseCase';
 import { CreateChannelUseCase } from '../use-cases/CreateChannelUseCase';
@@ -85,6 +86,10 @@ export class DependencyContainer {
 
   getGetPostsWithQueryUseCase(): GetPostsWithQueryUseCase {
     return new GetPostsWithQueryUseCase(this.getPostService());
+  }
+
+  getDeletePostUseCase(): DeletePostUseCase {
+    return new DeletePostUseCase(this.getPostService());
   }
 
   getCreateUserUseCase(): CreateUserUseCase {
