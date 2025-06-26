@@ -24,7 +24,7 @@
         :loading="loading"
         :selected-posts="selectedPosts"
         @update:selectedPosts="selectedPosts = $event"
-        @publish="publishPost"
+        @publish="handlePublish"
         @delete="deletePost"
         @page-change="changePage"
         @items-per-page-change="changeItemsPerPage" />
@@ -37,8 +37,8 @@
 
       <PublishModal 
         v-model:show="showPublishModal"
-        :initial-message="publishMessage"
-        @submit="submitPublish" />
+        :post="selectedPostForPublish"
+        @published="handlePublished" />
     </main>
   </div>
 </template>
@@ -68,7 +68,7 @@ const sortField = ref('created_at');
 const sortOrder = ref('desc');
 const selectedPosts = ref([]);
 const showPublishModal = ref(false);
-const publishMessage = ref('');
+const selectedPostForPublish = ref(null);
 const loading = ref(false);
 const totalCount = ref(0);
 
@@ -118,19 +118,19 @@ const postsService = async (params = {}) => {
         };
         totalCount.value = paginationData.total;
         loading.value = false;
-        if (setLoading) setLoading(false);
+        if (setLoading) setLoading(true);
         resolve(res.data);
       }, (err) => {
         console.error('Error loading posts:', err);
         loading.value = false;
-        if (setLoading) setLoading(false);
+        if (setLoading) setLoading(true);
         reject(err);
       });
     });
   } catch (error) {
     console.error('Error loading posts:', error);
     loading.value = false;
-    if (setLoading) setLoading(false);
+    if (setLoading) setLoading(true);
     throw error;
   }
 };
@@ -200,45 +200,24 @@ const handleClearFilters = () => {
   postsService({ page: 1 });
 };
 
-const publishPost = async (post) => {
-  try {
-    return new Promise((resolve, reject) => {
-      http.publishPost({ id: post._id }, (response) => {
-        if (response.success) {
-          alert('Пост успешно опубликован в Telegram канал!');
-          resolve(response);
-        } else {
-          alert('Ошибка при публикации: ' + response.message);
-          reject(new Error(response.message));
-        }
-      });
-    });
-  } catch (error) {
-    console.error('Error publishing post:', error);
-    alert('Ошибка при публикации поста');
-    throw error;
+const handlePublish = (post) => {
+  selectedPostForPublish.value = post;
+  showPublishModal.value = true;
+};
+
+const handlePublished = (result) => {
+  if (result.success) {
+    alert('Пост успешно опубликован в Telegram канал!');
+  } else {
+    alert('Ошибка при публикации: ' + result.message);
   }
+  selectedPostForPublish.value = null;
 };
 
 const bulkPublish = () => {
   if (selectedPosts.value.length > 0) {
-    const selectedTexts = posts.value
-      .filter(post => selectedPosts.value.includes(post._id))
-      .map(post => post.text)
-      .join('\n\n---\n\n');
-    
-    publishMessage.value = selectedTexts;
-    showPublishModal.value = true;
+    alert('Для публикации выберите один пост');
   }
-};
-
-const submitPublish = (formData) => {
-  console.log('Publishing to:', formData.channel);
-  console.log('Message:', formData.message);
-  
-  clearSelection();
-  
-  alert('Сообщение опубликовано!');
 };
 
 const deletePost = (postId) => {

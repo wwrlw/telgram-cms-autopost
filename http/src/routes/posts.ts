@@ -4,7 +4,6 @@ import { GetPostUseCase } from "../use-cases/GetPostUseCase";
 import { GetPostsUseCase } from "../use-cases/GetPostsUseCase";
 import { GetPostsWithQueryUseCase } from "../use-cases/GetPostsWithQueryUseCase";
 import { DeletePostUseCase } from "../use-cases/DeletePostUseCase";
-import { PublishPostUseCase } from "../use-cases/PublishPostUseCase";
 import { parsePostQuery } from "../utils/queryParser";
 import { postQuerySchema, postSearchResponseSchema } from "../schemas/postQuerySchema";
 
@@ -103,25 +102,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
         const result = await deletePostUseCase.execute(id);
         return {
           success: true,
-          message: result.message
-        };
-      } catch (error) {
-        throw error;
-      }
-    }
-  );
-
-  // Опубликовать пост в Telegram
-  fastify.post(
-    '/post/:id/publish',
-    { preValidation: [fastify.authenticate] },
-    async (request, reply) => {
-      try {
-        const id = (request.params as any).id;
-        const publishPostUseCase = container.getPublishPostUseCase();
-        const result = await publishPostUseCase.execute(id);
-        return {
-          success: result.success,
           message: result.message
         };
       } catch (error) {

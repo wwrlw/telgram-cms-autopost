@@ -36,6 +36,6 @@ export interface ParserConfig {
   sessionString: string;
   targetChannelIds: number[];
   mongoUri: string;
-  mongoDbName: string;
+  MONGO_DB: string;
   mediaPath: string;
 }

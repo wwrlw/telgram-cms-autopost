@@ -68,7 +68,7 @@ services:
       - API_HASH=${API_HASH}
       - MEDIA_PATH=${MEDIA_PATH}
       - TARGET_CHANNEL_IDS=${TARGET_CHANNEL_IDS}
-      - MONGO_DB_NAME=${MONGO_DB_NAME}
+      - MONGO_DB_NAME=parse-news
       - API_BASE_URL=http://backend:3001
       - API_USERNAME=${API_USERNAME:-myuser}
       - API_PASSWORD=${API_PASSWORD:-mypassword}

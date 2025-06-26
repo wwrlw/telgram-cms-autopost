@@ -24,7 +24,7 @@ export class TelegramService {
       sessionString: string;
       targetChannelIds: number[];
       mongoUri: string;
-      mongoDbName: string;
+      MONGO_DB: string;
       mediaPath: string;
     }
   ) {
@@ -38,7 +38,7 @@ export class TelegramService {
       systemLangCode: 'en',
     });
 
-    this.mongoService = new MongoService(config.mongoUri, config.mongoDbName);
+    this.mongoService = new MongoService(config.mongoUri, config.MONGO_DB);
     this.mediaService = new MediaService(config.mediaPath);
     this.publishService = new PublishService();
   }
