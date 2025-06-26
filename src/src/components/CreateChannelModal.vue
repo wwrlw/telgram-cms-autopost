@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeModal"></div>
+      <div class="fixed inset-0 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeModal"></div>
 
       <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
@@ -32,9 +32,6 @@
                              placeholder="@channel_name"
                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
                              :class="{ 'border-red-300': errors.username }">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 sm:text-sm">@</span>
-                      </div>
                     </div>
                     <p v-if="errors.username" class="mt-1 text-sm text-red-600">{{ errors.username }}</p>
                     <p class="mt-1 text-sm text-gray-500">Введите имя пользователя канала (например: @mychannel)</p>

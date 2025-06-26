@@ -5,11 +5,13 @@ import input from 'input';
 import { CreatePostDto } from '../types/index.js';
 import { MongoService } from './mongoService.js';
 import { MediaService } from './mediaService.js';
+import { PublishService } from './publishService.js';
 
 export class TelegramService {
   private client: TelegramClient;
   private mongoService: MongoService;
   private mediaService: MediaService;
+  private publishService: PublishService;
 
   // --- Добавлено для альбомов ---
   private albumBuffer: { [groupedId: string]: any[] } = {};
@@ -29,10 +31,16 @@ export class TelegramService {
     const stringSession = new StringSession(config.sessionString);
     this.client = new TelegramClient(stringSession, config.apiId, config.apiHash, {
       connectionRetries: 5,
+      deviceModel: 'Desktop',
+      systemVersion: 'Windows 10',
+      appVersion: '1.0.0',
+      langCode: 'en',
+      systemLangCode: 'en',
     });
 
     this.mongoService = new MongoService(config.mongoUri, config.mongoDbName);
     this.mediaService = new MediaService(config.mediaPath);
+    this.publishService = new PublishService();
   }
 
   async updateTargetChannels(newChannelIds: number[]): Promise<void> {
@@ -44,6 +52,9 @@ export class TelegramService {
     
     if (newChannelIds.length > 0) {
       await this.checkChannelsAccess();
+      console.log(`✅ Обновлено ${newChannelIds.length} целевых каналов`);
+    } else {
+      console.log('⚠️ Список целевых каналов пуст');
     }
   }
 
@@ -114,7 +125,7 @@ export class TelegramService {
       this.client.addEventHandler(this.handleMessage.bind(this));
       this.client.addEventHandler(this.handleAllUpdates.bind(this));
 
-      console.log('👂 Слушаем посты из всех каналов');
+      console.log(`👂 Слушаем посты из ${this.config.targetChannelIds.length} целевых каналов:`, this.config.targetChannelIds);
       
     } catch (error) {
       console.error('❌ Ошибка запуска сервиса:', error);
@@ -137,8 +148,16 @@ export class TelegramService {
     
     for (const channelId of this.config.targetChannelIds) {
       try {
-        const entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(channelId) as any }));
-        const username = (entity as any).username || `channel_${channelId}`;
+        // Определяем правильный формат ID для Telegram API
+        let telegramChannelId = channelId;
+        
+        // Если ID содержит префикс 100, убираем его для Telegram API
+        if (channelId > 1000000000000) {
+          telegramChannelId = channelId - 1000000000000;
+        }
+        
+        const entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
+        const username = (entity as any).username || `channel_${telegramChannelId}`;
         const title = (entity as any).title || 'Unknown';
         console.log(`✅ Канал ${channelId}: ${title} (@${username})`);
       } catch (error) {
@@ -178,6 +197,34 @@ export class TelegramService {
 
     if (!peer) {
       console.log('⏭️ Нет peer в сообщении');
+      return;
+    }
+
+    // Проверяем, что сообщение пришло из целевого канала
+    const channelId = Number(peer.channelId || peer.userId || peer.chatId || 0);
+    
+    // Проверяем ID канала в разных форматах
+    const isTargetChannel = this.config.targetChannelIds.some(targetId => {
+      // Сравниваем как есть
+      if (targetId === channelId) return true;
+      
+      // Если targetId содержит префикс 100, сравниваем без него
+      if (targetId > 1000000000000) {
+        const shortTargetId = targetId - 1000000000000;
+        if (shortTargetId === channelId) return true;
+      }
+      
+      // Если channelId короткий, сравниваем с полным ID
+      if (channelId < 1000000000000) {
+        const fullChannelId = channelId + 1000000000000;
+        if (fullChannelId === targetId) return true;
+      }
+      
+      return false;
+    });
+    
+    if (!isTargetChannel) {
+      console.log(`⏭️ Сообщение из канала ${channelId} не в списке целевых каналов [${this.config.targetChannelIds.join(', ')}], пропускаем`);
       return;
     }
 
@@ -222,6 +269,14 @@ export class TelegramService {
         await this.mongoService.savePost(postData);
         delete this.albumBuffer[groupId];
         delete this.albumTimers[groupId];
+
+         // Автоматически публикуем альбом в канал
+         try {
+          await this.publishService.publishPost(postData);
+        } catch (publishError) {
+          console.error('❌ Ошибка автоматической публикации альбома:', publishError);
+        }
+
         console.log(`📤 Сохранён альбом-пост из ${username}:`, postData);
       }, 1500);
       return; // Не сохраняем отдельные части альбома!
@@ -233,7 +288,7 @@ export class TelegramService {
       const entity = await this.client.getEntity(peer);
       const username = (entity as any).username || `channel_${peer.channelId || peer.userId || peer.chatId}`;
 
-      console.log(`📨 Сообщение из: ${username}`);
+      console.log(`📨 Сообщение из целевого канала: ${username} (ID: ${channelId})`);
 
       // Формируем URL поста
       const postUrl = `https://t.me/${username}/${msg.id}`;

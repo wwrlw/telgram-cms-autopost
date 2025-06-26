@@ -155,9 +155,6 @@
                   <span class="font-medium">{{ startItem }}</span>
                   по 
                   <span class="font-medium">{{ endItem }}</span>
-                  из 
-                  <span class="font-medium">{{ pagination.total }}</span>
-                  результатов
                 </p>
               </div>
               <div>

@@ -16,6 +16,8 @@ import { GetChannelsUseCase } from '../use-cases/GetChannelsUseCase';
 import { GetChannelUseCase } from '../use-cases/GetChannelUseCase';
 import { DeleteChannelUseCase } from '../use-cases/DeleteChannelUseCase';
 import { GetChannelIdsForParserUseCase } from '../use-cases/GetChannelIdsForParserUseCase';
+import { TelegramPublishService } from '../services/TelegramPublishService';
+import { PublishPostUseCase } from '../use-cases/PublishPostUseCase';
 
 export class DependencyContainer {
   private static instance: DependencyContainer;
@@ -37,6 +39,13 @@ export class DependencyContainer {
   getPostRepository(): PostRepository {
     if (!this.mongo) throw new Error('MongoDB not initialized');
     return new PostRepository(this.mongo);
+  }
+  getTelegramPublishService(): TelegramPublishService {
+    return new TelegramPublishService();
+  }
+  
+  getPublishPostUseCase(): PublishPostUseCase {
+    return new PublishPostUseCase(this.getPostRepository(), this.getTelegramPublishService());
   }
 
   getUserRepository(): UserRepository {

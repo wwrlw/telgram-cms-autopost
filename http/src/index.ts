@@ -10,6 +10,7 @@ import fastifyStatic from '@fastify/static'
 import path from 'path';
 import { DependencyContainer } from './container/DependencyContainer';
 import { errorHandler } from './middleware/ErrorHandler';
+import fastifyWebsocket from '@fastify/websocket';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ async function start() {
             origin: true,
             credentials: true,
           });
+        await fastify.register(fastifyWebsocket);
         await fastify.register(mongoConnector);
         const container = DependencyContainer.getInstance();
         container.setMongo(fastify.mongo);

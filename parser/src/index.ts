@@ -122,7 +122,7 @@ process.on('SIGTERM', async () => {
     await initializeParser();
     
     // Обновляем список каналов каждые 5 минут
-    setInterval(updateChannels, 5 * 60 * 1000);
+    setInterval(updateChannels, 5 * 60 * 100);
     
   } catch (error) {
     console.error('❌ Критическая ошибка:', error);
