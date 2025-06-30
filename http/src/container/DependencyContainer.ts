@@ -2,9 +2,11 @@ import { FastifyMongoObject } from '@fastify/mongodb';
 import { PostRepository } from '../repositories/PostRepository';
 import { UserRepository } from '../repositories/UserRepository';
 import { ChannelRepository } from '../repositories/ChannelRepository';
+import { PublicationChannelRepository } from '../repositories/PublicationChannelRepository';
 import { PostService } from '../services/PostService';
 import { UserService } from '../services/UserService';
 import { ChannelService } from '../services/ChannelService';
+import { PublicationChannelService } from '../services/PublicationChannelService';
 import { AuthService } from '../services/AuthService';
 import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
@@ -17,6 +19,11 @@ import { GetChannelsUseCase } from '../use-cases/GetChannelsUseCase';
 import { GetChannelUseCase } from '../use-cases/GetChannelUseCase';
 import { DeleteChannelUseCase } from '../use-cases/DeleteChannelUseCase';
 import { GetChannelIdsForParserUseCase } from '../use-cases/GetChannelIdsForParserUseCase';
+import { CreatePublicationChannelUseCase } from '../use-cases/CreatePublicationChannelUseCase';
+import { GetPublicationChannelsUseCase } from '../use-cases/GetPublicationChannelsUseCase';
+import { GetActivePublicationChannelsUseCase } from '../use-cases/GetActivePublicationChannelsUseCase';
+import { UpdatePublicationChannelUseCase } from '../use-cases/UpdatePublicationChannelUseCase';
+import { DeletePublicationChannelUseCase } from '../use-cases/DeletePublicationChannelUseCase';
 import { TelegramPublishService } from '../services/TelegramPublishService';
 import { PublishPostUseCase } from '../use-cases/PublishPostUseCase';
 
@@ -59,6 +66,11 @@ export class DependencyContainer {
     return new ChannelRepository(this.mongo);
   }
 
+  getPublicationChannelRepository(): PublicationChannelRepository {
+    if (!this.mongo) throw new Error('MongoDB not initialized');
+    return new PublicationChannelRepository(this.mongo);
+  }
+
   getAuthService(): AuthService {
     const jwtSecret = process.env.JWT_SECRET || 'supersecretkey';
     return new AuthService(jwtSecret);
@@ -74,6 +86,10 @@ export class DependencyContainer {
 
   getChannelService(): ChannelService {
     return new ChannelService(this.getChannelRepository());
+  }
+
+  getPublicationChannelService(): PublicationChannelService {
+    return new PublicationChannelService(this.getPublicationChannelRepository());
   }
 
   getGetPostUseCase(): GetPostUseCase {
@@ -118,5 +134,25 @@ export class DependencyContainer {
 
   getGetChannelIdsForParserUseCase(): GetChannelIdsForParserUseCase {
     return new GetChannelIdsForParserUseCase(this.getChannelService());
+  }
+
+  getCreatePublicationChannelUseCase(): CreatePublicationChannelUseCase {
+    return new CreatePublicationChannelUseCase(this.getPublicationChannelService());
+  }
+
+  getGetPublicationChannelsUseCase(): GetPublicationChannelsUseCase {
+    return new GetPublicationChannelsUseCase(this.getPublicationChannelService());
+  }
+
+  getGetActivePublicationChannelsUseCase(): GetActivePublicationChannelsUseCase {
+    return new GetActivePublicationChannelsUseCase(this.getPublicationChannelService());
+  }
+
+  getUpdatePublicationChannelUseCase(): UpdatePublicationChannelUseCase {
+    return new UpdatePublicationChannelUseCase(this.getPublicationChannelService());
+  }
+
+  getDeletePublicationChannelUseCase(): DeletePublicationChannelUseCase {
+    return new DeletePublicationChannelUseCase(this.getPublicationChannelService());
   }
 } 

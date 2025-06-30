@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Index from "@/views/Index.vue";
 import LoginPage from "@/views/LoginPage.vue";
 import Channels from "@/views/Channels.vue";
+import PublicationChannels from "@/views/PublicationChannels.vue";
 const page404 = () => import('@/views/Page404.vue');
 const Post = () => import('@/views/Post.vue');
 //
@@ -17,6 +18,11 @@ const routes = [
     path: "/channels",
     name: "channels",
     component: Channels,
+  },
+  {
+    path: "/publication-channels",
+    name: "publication-channels",
+    component: PublicationChannels,
   },
   {
     path: "/login",

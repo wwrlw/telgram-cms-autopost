@@ -7,6 +7,7 @@ import { postsRoutes } from './routes/posts';
 import { channelsRoutes } from './routes/channels';
 import postedChannelsRoutes from './routes/posted-channels';
 import publishRoutes from './routes/publish';
+import { publicationChannelsRoutes } from './routes/publication-channels';
 import cors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
 import path from 'path';
@@ -40,6 +41,7 @@ async function start() {
         await fastify.register(channelsRoutes);
         await fastify.register(postedChannelsRoutes);
         await fastify.register(publishRoutes);
+        await fastify.register(publicationChannelsRoutes);
         fastify.setErrorHandler(errorHandler);
         await fastify.ready();
         await fastify.listen({ port: Number(process.env.PORT) || 3001, host: '0.0.0.0' });

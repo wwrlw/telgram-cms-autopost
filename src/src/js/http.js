@@ -173,6 +173,62 @@ let http = {
             const errorMessage = err.response?.data?.message || 'Failed to publish post to channel';
             callback({ success: false, message: errorMessage });
         });
+    },
+
+    getPublicationChannels: function (callback, errorCallback) {
+        instance.get('/publication-channels')
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            if (errorCallback) errorCallback(err);
+            else callback({ success: false, message: 'Failed to load publication channels' });
+        });
+    },
+
+    getActivePublicationChannels: function (callback, errorCallback) {
+        instance.get('/publication-channels/active')
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            if (errorCallback) errorCallback(err);
+            else callback({ success: false, message: 'Failed to load active publication channels' });
+        });
+    },
+
+    createPublicationChannel: function (params, callback) {
+        instance.post('/publication-channels', params)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to create publication channel';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    updatePublicationChannel: function (params, callback) {
+        const { id, ...updateData } = params;
+        instance.put(`/publication-channels/${id}`, updateData)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to update publication channel';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    deletePublicationChannel: function (params, callback) {
+        instance.delete(`/publication-channels/${params.id}`)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to delete publication channel';
+            callback({ success: false, message: errorMessage });
+        });
     }
 };
 
