@@ -5,6 +5,7 @@ import authPlugin from './plugins/auth';
 import { authRoutes } from './routes/auth';
 import { postsRoutes } from './routes/posts';
 import { channelsRoutes } from './routes/channels';
+import { publicationChannelsRoutes } from './routes/publication-channels';
 import cors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
 import path from 'path';
@@ -36,6 +37,7 @@ async function start() {
         await fastify.register(authRoutes);
         await fastify.register(postsRoutes);
         await fastify.register(channelsRoutes);
+        await fastify.register(publicationChannelsRoutes);
         fastify.setErrorHandler(errorHandler);
         await fastify.ready();
         await fastify.listen({ port: Number(process.env.PORT) || 3001, host: '0.0.0.0' });

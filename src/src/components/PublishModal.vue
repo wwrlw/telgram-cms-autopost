@@ -25,16 +25,33 @@
                 <label for="channel" class="block text-sm font-medium text-gray-700 mb-2">
                   Канал
                 </label>
-                <select v-model="formData.channel" 
+                <div v-if="loadingChannels" class="text-sm text-gray-500">
+                  Загружаем каналы...
+                </div>
+                <select v-else 
+                        v-model="formData.channel" 
                         id="channel"
                         required
                         class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
                   <option value="">Выберите канал</option>
-                  <option value="@channel1">Основной канал</option>
-                  <option value="@channel2">Новостной канал</option>
-                  <option value="@channel3">Тестовый канал</option>
+                  <option v-for="channel in publicationChannels" 
+                          :key="channel.id" 
+                          :value="channel.channel_id">
+                    {{ channel.name }} 
+                    <span v-if="!channel.is_active">(неактивен)</span>
+                    ({{ channel.channel_type === 'public' ? 'публичный' : 'приватный' }})
+                  </option>
                 </select>
+                
+                <div v-if="!loadingChannels && publicationChannels.length === 0" 
+                     class="mt-2 text-sm text-red-600">
+                  Нет доступных каналов для публикации. 
+                  <router-link to="/publication-channels" class="underline">
+                    Добавить каналы
+                  </router-link>
+                </div>
               </div>
+              
               <div class="mb-4">
                 <label for="message" class="block text-sm font-medium text-gray-700 mb-2">
                   Сообщение
@@ -46,6 +63,7 @@
                           class="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
                           placeholder="Введите текст сообщения..."></textarea>
               </div>
+              
               <div class="flex justify-end space-x-3">
                 <button type="button" 
                         @click="$emit('update:show', false)"
@@ -53,7 +71,8 @@
                   Отмена
                 </button>
                 <button type="submit"
-                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        :disabled="!formData.channel || !formData.message || loadingChannels"
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
                   Опубликовать
                 </button>
               </div>
@@ -66,7 +85,8 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue';
+import { reactive, watch, ref, onMounted } from 'vue';
+import http from '../js/http.js';
 
 const props = defineProps({
   show: {
@@ -86,8 +106,28 @@ const formData = reactive({
   message: ''
 });
 
+const publicationChannels = ref([]);
+const loadingChannels = ref(false);
+
+const loadPublicationChannels = () => {
+  loadingChannels.value = true;
+  http.getActivePublicationChannels((response) => {
+    loadingChannels.value = false;
+    if (response.success) {
+      publicationChannels.value = response.data;
+    } else {
+      console.error('Ошибка загрузки каналов:', response.message);
+      publicationChannels.value = [];
+    }
+  });
+};
+
 const handleSubmit = () => {
-  emit('submit', { ...formData });
+  const selectedChannel = publicationChannels.value.find(ch => ch.channel_id === formData.channel);
+  emit('submit', { 
+    ...formData,
+    channelName: selectedChannel?.name || 'Неизвестный канал'
+  });
   formData.channel = '';
   formData.message = '';
   emit('update:show', false);
@@ -98,4 +138,16 @@ watch(() => props.initialMessage, (newMessage) => {
     formData.message = newMessage;
   }
 }, { immediate: true });
+
+watch(() => props.show, (newShow) => {
+  if (newShow) {
+    loadPublicationChannels();
+  }
+});
+
+onMounted(() => {
+  if (props.show) {
+    loadPublicationChannels();
+  }
+});
 </script> 
