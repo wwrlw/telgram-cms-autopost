@@ -176,7 +176,7 @@ let http = {
     },
 
     getPublicationChannels: function (callback, errorCallback) {
-        instance.get('/publication-channels')
+        instance.get('/posted-channels')
         .then((res) => {
             callback(res.data);
         })
@@ -187,7 +187,7 @@ let http = {
     },
 
     getActivePublicationChannels: function (callback, errorCallback) {
-        instance.get('/publication-channels/active')
+        instance.get('/posted-channels/active')
         .then((res) => {
             callback(res.data);
         })
@@ -198,7 +198,7 @@ let http = {
     },
 
     createPublicationChannel: function (params, callback) {
-        instance.post('/publication-channels', params)
+        instance.post('/posted-channels', params)
         .then((res) => {
             callback(res.data);
         })
@@ -210,7 +210,7 @@ let http = {
 
     updatePublicationChannel: function (params, callback) {
         const { id, ...updateData } = params;
-        instance.put(`/publication-channels/${id}`, updateData)
+        instance.put(`/posted-channels/${id}`, updateData)
         .then((res) => {
             callback(res.data);
         })
@@ -221,7 +221,7 @@ let http = {
     },
 
     deletePublicationChannel: function (params, callback) {
-        instance.delete(`/publication-channels/${params.id}`)
+        instance.delete(`/posted-channels/${params.id}`)
         .then((res) => {
             callback(res.data);
         })

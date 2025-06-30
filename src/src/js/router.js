@@ -20,8 +20,8 @@ const routes = [
     component: Channels,
   },
   {
-    path: "/publication-channels",
-    name: "publication-channels",
+    path: "/posted-channels",
+    name: "posted-channels",
     component: PublicationChannels,
   },
   {

@@ -17,7 +17,7 @@ export class PublicationChannelRepository implements IPublicationChannelReposito
       updated_at: now
     };
 
-    const result = await this.mongo.db.collection('publication_channels').insertOne(channel);
+    const result = await this.mongo.db.collection('posted_channels').insertOne(channel);
     return {
       _id: result.insertedId,
       ...channel
@@ -28,7 +28,7 @@ export class PublicationChannelRepository implements IPublicationChannelReposito
     if (!this.mongo.db) throw new Error('MongoDB is not connected');
     
     const objectId = new ObjectId(id);
-    const channel = await this.mongo.db.collection('publication_channels').findOne({ _id: objectId });
+    const channel = await this.mongo.db.collection('posted_channels').findOne({ _id: objectId });
     return channel as PublicationChannel | null;
   }
 
@@ -37,14 +37,14 @@ export class PublicationChannelRepository implements IPublicationChannelReposito
     
     console.log('Database name:', this.mongo.db.databaseName);
     console.log('Collections:', await this.mongo.db.listCollections().toArray());
-    const channels = await this.mongo.db.collection('publication_channels').find({}).toArray();
+    const channels = await this.mongo.db.collection('posted_channels').find({}).toArray();
     return channels as PublicationChannel[];
   }
 
   async findActiveChannels(): Promise<PublicationChannel[]> {
     if (!this.mongo.db) throw new Error('MongoDB is not connected');
     
-    const channels = await this.mongo.db.collection('publication_channels')
+    const channels = await this.mongo.db.collection('posted_channels')
       .find({ is_active: true })
       .toArray();
     return channels as PublicationChannel[];
@@ -59,7 +59,7 @@ export class PublicationChannelRepository implements IPublicationChannelReposito
       updated_at: new Date()
     };
 
-    const result = await this.mongo.db.collection('publication_channels').findOneAndUpdate(
+    const result = await this.mongo.db.collection('posted_channels').findOneAndUpdate(
       { _id: objectId },
       { $set: updateData },
       { returnDocument: 'after' }
@@ -72,7 +72,7 @@ export class PublicationChannelRepository implements IPublicationChannelReposito
     if (!this.mongo.db) throw new Error('MongoDB is not connected');
     
     const objectId = new ObjectId(id);
-    const result = await this.mongo.db.collection('publication_channels').deleteOne({ _id: objectId });
+    const result = await this.mongo.db.collection('posted_channels').deleteOne({ _id: objectId });
     return result.deletedCount > 0;
   }
 } 
