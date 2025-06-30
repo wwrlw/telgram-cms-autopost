@@ -1,53 +1,46 @@
-# Telegram Parser (TypeScript)
+# Telegram Parser
 
-TypeScript парсер для Telegram каналов с сохранением в MongoDB и обработкой медиа файлов.
+Парсер для сбора постов из Telegram каналов.
 
 ## Установка
 
-1. Установите зависимости:
 ```bash
 npm install
 ```
 
-2. Скопируйте файл конфигурации:
-```bash
-cp env.example .env
-```
+## Настройка
 
-3. Отредактируйте `.env` файл:
+Создайте файл `.env` в корне проекта:
+
 ```env
-# Telegram API credentials
-API_ID=your_api_id_here
-API_HASH=your_api_hash_here
-STRING_SESSION=your_session_string_here
+# Telegram API
+API_ID=your_api_id
+API_HASH=your_api_hash
+STRING_SESSION=your_session_string
 
-# Target channel IDs (comma separated)
-TARGET_CHANNEL_IDS=-1002624835396,-1002735773285
+# MongoDB
+MONGO_URI=mongodb://username:password@localhost:27017
+MONGO_DB_NAME=parse-news
 
-# MongoDB configuration
-MONGO_URI=mongodb://localhost:27017
-MONGO_DB_NAME=telegram_parser
+# API
+API_BASE_URL=http://localhost:3001
+API_USERNAME=your_username
+API_PASSWORD=your_password
 
-# Media storage path
+# Media
 MEDIA_PATH=./media
 ```
 
 ## Запуск
 
-### Разработка
 ```bash
-npm run dev
-```
-
-### Продакшн
-```bash
-npm run build
 npm start
 ```
 
-### Слежение за изменениями
+## Docker
+
 ```bash
-npm run watch
+docker-compose up parser
 ```
 
 ## Структура проекта

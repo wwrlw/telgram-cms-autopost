@@ -9,11 +9,11 @@ const mongoUsername = process.env.MONGO_USERNAME;
 const mongoPassword = process.env.MONGO_PASSWORD;
 const mongoHost = process.env.MONGO_HOST || 'localhost';
 const mongoPort = process.env.MONGO_PORT || '27019';
-const mongoDbName = process.env.MONGO_DB_NAME || 'telegram_parser';
+const MONGO_DB = process.env.MONGO_DB_NAME || 'parse-news';
 
-let mongoUri = `mongodb://${mongoHost}:${mongoPort}/${mongoDbName}`;
+let mongoUri = `mongodb://${mongoHost}:${mongoPort}/${MONGO_DB}`;
 if (mongoUsername && mongoPassword) {
-  mongoUri = `mongodb://${mongoUsername}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoDbName}?authSource=admin`;
+  mongoUri = `mongodb://${mongoUsername}:${mongoPassword}@${mongoHost}:${mongoPort}/${MONGO_DB}?authSource=admin`;
 }
 
 // Конфигурация API
@@ -31,7 +31,7 @@ const config = {
   apiHash: process.env.API_HASH!,
   sessionString: process.env.STRING_SESSION!,
   mongoUri: process.env.MONGO_URI || mongoUri,
-  mongoDbName,
+  MONGO_DB,
   mediaPath: process.env.MEDIA_PATH || './media'
 };
 

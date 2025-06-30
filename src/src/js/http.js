@@ -153,13 +153,24 @@ let http = {
         });
     },
 
-    publishPost: function (params, callback) {
-        instance.post(`/post/${params.id}/publish`)
+    getPostedChannels: function (callback) {
+        instance.get('/posted-channels/active')
         .then((res) => {
             callback(res.data);
         })
         .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to publish post';
+            const errorMessage = err.response?.data?.message || 'Failed to load posted channels';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    publishToChannel: function (postId, channelId, callback) {
+        instance.post(`/publish/${postId}/${channelId}`)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to publish post to channel';
             callback({ success: false, message: errorMessage });
         });
     },
