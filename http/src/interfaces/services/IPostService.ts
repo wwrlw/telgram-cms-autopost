@@ -8,4 +8,10 @@ export interface IPostService {
   createPost(post: CreatePostDto): Promise<Post>;
   getPostsByChannel(channel: string): Promise<Post[]>;
   deletePost(id: string): Promise<void>;
+  schedulePost(id: string, scheduledAt: Date, channelId: string): Promise<Post>;
+  getScheduledPosts(): Promise<Post[]>;
+  cancelScheduledPost(id: string): Promise<Post>;
+  markAsPublished(id: string, channelName: string): Promise<Post>;
+  getPublishedPosts(): Promise<Post[]>;
+  updatePost(id: string, updateData: Partial<Post>): Promise<Post>;
 } 

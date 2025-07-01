@@ -4,4 +4,5 @@ export interface PostedChannel {
   channel_id: string;
   channel_type: string;
   is_active: boolean;
+  signature: string;
 }

@@ -13,10 +13,8 @@ export class TelegramPublishService implements ITelegramPublishService {
 
   async publishPost(post: Post, channel: PostedChannel): Promise<{ success: boolean; message: string }> {
     try {
-      // Формируем текст сообщения
-      const messageText = this.formatMessageText(post);
+      const messageText = this.formatMessageText(post, channel);
       
-      // Отправляем сообщение в канал
       const response = await fetch(`${this.baseUrl}/sendMessage`, {
         method: 'POST',
         headers: {
@@ -26,16 +24,15 @@ export class TelegramPublishService implements ITelegramPublishService {
           chat_id: channel.channel_id,
           text: messageText,
           parse_mode: 'HTML',
-          disable_web_page_preview: false
+          disable_web_page_preview: true
         })
       });
 
       const result = await response.json();
 
       if (result.ok) {
-        // Если есть медиа, отправляем его отдельно
         if (post.media && post.media.length > 0) {
-          await this.sendMedia(post, channel);
+          await this.sendMedia(post, channel, messageText);
         }
 
         return { 
@@ -57,23 +54,17 @@ export class TelegramPublishService implements ITelegramPublishService {
     }
   }
 
-  private formatMessageText(post: Post): string {
+  private formatMessageText(post: Post, channel: PostedChannel): string {
     let text = post.text;
     
-    // Добавляем ссылку на оригинальный пост
-    if (post.url) {
-      text += `\n\n🔗 <a href="${post.url}">Читать полностью</a>`;
-    }
-    
-    // Добавляем источник
-    if (post.source_channel) {
-      text += `\n\n📰 Источник: ${post.source_channel}`;
+    if (channel.signature) {
+      text += `\n\n${channel.signature}`;
     }
 
     return text;
   }
 
-  private async sendMedia(post: Post, channel: PostedChannel): Promise<void> {
+  private async sendMedia(post: Post, channel: PostedChannel, caption: string): Promise<void> {
     try {
       for (const media of post.media) {
         const mediaType = media.type;
@@ -88,7 +79,7 @@ export class TelegramPublishService implements ITelegramPublishService {
             body: JSON.stringify({
               chat_id: channel.channel_id,
               [mediaType]: media.file_path,
-              caption: post.text,
+              caption,
               parse_mode: 'HTML'
             })
           });

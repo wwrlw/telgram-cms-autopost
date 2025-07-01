@@ -13,6 +13,7 @@ export class PublicationChannelRepository implements IPublicationChannelReposito
     const channel: Omit<PublicationChannel, '_id'> = {
       ...channelData,
       is_active: channelData.is_active ?? true,
+      signature: channelData.signature || '',
       created_at: now,
       updated_at: now
     };

@@ -53,6 +53,7 @@ export class PublicationChannelService implements IPublicationChannelService {
       channel_type: channel.channel_type,
       is_active: channel.is_active,
       bot_token: channel.bot_token,
+      signature: channel.signature,
       created_at: channel.created_at,
       updated_at: channel.updated_at
     };

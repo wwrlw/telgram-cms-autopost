@@ -77,6 +77,14 @@
                         <p class="text-sm text-gray-500 line-clamp-2">
                           {{ truncateText(post.text, 120) }}
                         </p>
+                        <div v-if="post.is_published || post.scheduled_at" class="mt-1 text-xs text-gray-400">
+                          <span v-if="post.is_published && post.published_at" class="text-green-600">
+                            ✅ Опубликован: {{ formatDate(post.published_at) }}
+                          </span>
+                          <span v-else-if="post.scheduled_at && !post.is_published" class="text-orange-600">
+                            📅 Запланирован на: {{ formatDate(post.scheduled_at) }}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -86,10 +94,14 @@
                                    class="text-indigo-600 hover:text-indigo-900 text-sm">
                         Просмотр
                       </router-link>
-                      <button @click="$emit('publish', post)" 
+                      <button v-if="!post.is_published"
+                              @click="$emit('publish', post)" 
                               class="text-green-600 hover:text-green-900 text-sm">
                         Опубликовать
                       </button>
+                      <span v-else class="text-green-500 text-sm font-medium">
+                        Опубликован
+                      </span>
                       <button @click="$emit('delete', post._id)" 
                               class="text-red-600 hover:text-red-900 text-sm">
                         Удалить
@@ -106,20 +118,37 @@
                     <time :datetime="post.timestamp">{{ formatDate(post.timestamp) }}</time>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span :class="[
-                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                      post.is_unique 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    ]">
-                      <svg :class="[
-                        'mr-1.5 h-2 w-2',
-                        post.is_unique ? 'text-green-400' : 'text-yellow-400'
-                      ]" fill="currentColor" viewBox="0 0 8 8">
-                        <circle cx="4" cy="4" r="3" />
-                      </svg>
-                      {{ post.is_unique ? 'Уникальный' : 'Оригинальный' }}
-                    </span>
+                    <div class="flex flex-col space-y-1">
+                      <!-- Статус публикации -->
+                      <span v-if="post.is_published" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <svg class="mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                          <circle cx="4" cy="4" r="3" />
+                        </svg>
+                        ✅ Опубликован
+                      </span>
+                      
+                      <span v-else-if="post.scheduled_at && !post.is_published" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        <svg class="mr-1.5 h-2 w-2 text-orange-400" fill="currentColor" viewBox="0 0 8 8">
+                          <circle cx="4" cy="4" r="3" />
+                        </svg>
+                        📅 Запланирован
+                      </span>
+                      
+                      <span :class="[
+                        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                        post.is_unique 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      ]">
+                        <svg :class="[
+                          'mr-1.5 h-2 w-2',
+                          post.is_unique ? 'text-blue-400' : 'text-gray-400'
+                        ]" fill="currentColor" viewBox="0 0 8 8">
+                          <circle cx="4" cy="4" r="3" />
+                        </svg>
+                        {{ post.is_unique ? 'Уникальный' : 'Оригинальный' }}
+                      </span>
+                    </div>
                   </td>
             
                 </tr>

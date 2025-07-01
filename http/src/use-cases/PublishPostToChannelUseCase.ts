@@ -17,22 +17,16 @@ export class PublishPostToChannelUseCase {
         return { success: false, message: 'Пост не найден' };
       }
 
-      // Получаем информацию о канале
       const channel = await this.postedChannelService.getPostedChannelByChannelId(channelId);
       if (!channel) {
         return { success: false, message: 'Канал не найден' };
       }
 
-      // Публикуем пост в Telegram
       const publishResult = await this.telegramPublishService.publishPost(post, channel);
       
       if (publishResult.success) {
-        // TODO: Добавить метод updatePost в IPostService или создать отдельный use case
-        // await this.postService.updatePost(postId, { 
-        //   isPublished: true, 
-        //   publishedAt: new Date(),
-        //   publishedToChannel: channel.name
-        // });
+        // Отмечаем пост как опубликованный
+        await this.postService.markAsPublished(postId, channel.name);
         
         return { 
           success: true, 

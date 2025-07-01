@@ -6,11 +6,11 @@ import { GetPostsWithQueryUseCase } from "../use-cases/GetPostsWithQueryUseCase"
 import { DeletePostUseCase } from "../use-cases/DeletePostUseCase";
 import { parsePostQuery } from "../utils/queryParser";
 import { postQuerySchema, postSearchResponseSchema } from "../schemas/postQuerySchema";
+import { Post } from "../models/Post";
 
 export async function postsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
 
-  // Новый endpoint с пагинацией, фильтрацией и сортировкой
   fastify.get(
     "/posts/search",
     { 
@@ -37,7 +37,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Обновленный endpoint /posts с поддержкой query параметров
   fastify.get(
     "/posts",
     { 
@@ -60,7 +59,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
           };
         }
 
-        // Иначе используем старую логику для обратной совместимости
         const getPostsUseCase = container.getGetPostsUseCase();
         const posts = await getPostsUseCase.execute();
         return {
@@ -91,7 +89,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Удалить пост
   fastify.delete(
     '/post/:id',
     { preValidation: [fastify.authenticate] },
@@ -103,6 +100,107 @@ export async function postsRoutes(fastify: FastifyInstance) {
         return {
           success: true,
           message: result.message
+        };
+      } catch (error) {
+        throw error;
+      }
+    }
+  );
+  // Запланировать пост
+  fastify.post(
+    '/posts/:id/schedule',
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const { id } = request.params as { id: string };
+        const { scheduled_at, channel_id } = request.body as { scheduled_at: string; channel_id: string };
+        
+        const postService = container.getPostService();
+        const result = await postService.schedulePost(id, new Date(scheduled_at), channel_id);
+        
+        return {
+          success: true,
+          data: result
+        };
+      } catch (error) {
+        throw error;
+      }
+    }
+  );
+  // Получить запланированные посты
+  fastify.get(
+    '/posts/scheduled',
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const postService = container.getPostService();
+        const scheduledPosts = await postService.getScheduledPosts();
+        
+        return {
+          success: true,
+          data: scheduledPosts
+        };
+      } catch (error) {
+        throw error;
+      }
+    }
+  );
+  // Отменить отложенную публикацию
+  fastify.delete(
+    '/posts/:id/schedule',
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const { id } = request.params as { id: string };
+        
+        const postService = container.getPostService();
+        const result = await postService.cancelScheduledPost(id);
+        
+        return {
+          success: true,
+          data: result
+        };
+      } catch (error) {
+        throw error;
+      }
+    }
+  );
+
+  // Получить опубликованные посты
+  fastify.get(
+    '/posts/published',
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const postService = container.getPostService();
+        const publishedPosts = await postService.getPublishedPosts();
+        
+        return {
+          success: true,
+          data: publishedPosts
+        };
+      } catch (error) {
+        throw error;
+      }
+    }
+  );
+
+  // Обновить пост
+  fastify.put(
+    '/posts/:id',
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const { id } = request.params as { id: string };
+        const updateData = request.body as Partial<Post>;
+        
+        const postService = container.getPostService();
+        const updatedPost = await postService.updatePost(id, updateData);
+        
+        return {
+          success: true,
+          data: updatedPost,
+          message: 'Пост успешно обновлен'
         };
       } catch (error) {
         throw error;

@@ -38,17 +38,24 @@
                 </div>
               </div>
 
-              <div class="flex justify-end space-x-3">
-                <button type="button" 
-                        @click="$emit('update:show', false)"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                  Отмена
-                </button>
+              <div class="flex justify-between space-x-3">
                 <button type="button"
-                        @click="showChannelSelector = true"
-                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                  Выбрать канал
+                        @click="showScheduleModal = true"
+                        class="px-4 py-2 border border-orange-300 rounded-md text-sm font-medium text-orange-700 hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                  📅 Отложенная публикация
                 </button>
+                <div class="flex space-x-3">
+                  <button type="button" 
+                          @click="$emit('update:show', false)"
+                          class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Отмена
+                  </button>
+                  <button type="button"
+                          @click="showChannelSelector = true"
+                          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Выбрать канал
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -56,12 +63,18 @@
       </div>
     </Transition>
 
-    <!-- Модальное окно выбора канала -->
     <PublishChannelModal
       :show="showChannelSelector"
       :post-id="postId"
       @close="showChannelSelector = false"
       @published="handlePublished"
+    />
+
+    <SchedulePublishModal
+      :show="showScheduleModal"
+      :post="post"
+      @update:show="showScheduleModal = $event"
+      @scheduled="handleScheduled"
     />
   </div>
 </template>
@@ -69,6 +82,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import PublishChannelModal from './PublishChannelModal.vue';
+import SchedulePublishModal from './SchedulePublishModal.vue';
 
 const props = defineProps({
   show: {
@@ -84,7 +98,8 @@ const props = defineProps({
 const emit = defineEmits(['update:show', 'published']);
 
 const showChannelSelector = ref(false);
-const postId = computed(() => props.post?._id || '');
+const showScheduleModal = ref(false);
+const postId = computed(() => props.post?._id?.toString() || '');
 
 const previewText = computed(() => {
   if (!props.post?.text) return 'Текст поста отсутствует';
@@ -102,9 +117,19 @@ const handlePublished = (result) => {
   }
 };
 
+const handleScheduled = (result) => {
+  showScheduleModal.value = false;
+  emit('published', result);
+  
+  if (result.success) {
+    emit('update:show', false);
+  }
+};
+
 watch(() => props.show, (newVal) => {
   if (!newVal) {
     showChannelSelector.value = false;
+    showScheduleModal.value = false;
   }
 });
 </script> 

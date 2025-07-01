@@ -6,7 +6,7 @@ import Channels from "@/views/Channels.vue";
 import PublicationChannels from "@/views/PublicationChannels.vue";
 const page404 = () => import('@/views/Page404.vue');
 const Post = () => import('@/views/Post.vue');
-//
+const ScheduledPosts = () => import('@/views/SheduledPosts.vue');
 
 const routes = [
   {
@@ -38,7 +38,12 @@ const routes = [
     path: '/post/:id',
     name: 'post',
     component: Post,
-  }
+  },
+  {
+    path: "/scheduled-posts",
+    name: "scheduled-posts",
+    component: ScheduledPosts,
+  },
 ];
 
 const router = createRouter({

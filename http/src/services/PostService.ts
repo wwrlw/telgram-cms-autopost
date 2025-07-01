@@ -37,4 +37,96 @@ export class PostService implements IPostService {
       throw new NotFoundError('Post not found');
     }
   }
+  async schedulePost(id: string, scheduledAt: Date, channelId: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+    
+    await this.postRepository.update(id, {
+      scheduled_at: scheduledAt,
+      scheduled_channel_id: channelId
+    });
+    
+    return {
+      ...post,
+      scheduled_at: scheduledAt,
+      scheduled_channel_id: channelId,
+      updated_at: new Date()
+    };
+  }
+
+  async getScheduledPosts(): Promise<Post[]> {
+    return await this.postRepository.findScheduled();
+  }
+
+  async cancelScheduledPost(id: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+    
+    const updatedPost = await this.postRepository.update(id, {
+      scheduled_at: undefined,
+      scheduled_channel_id: undefined
+    });
+    
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to cancel scheduled post');
+    }
+    
+    return updatedPost;
+  }
+
+  async markAsPublished(id: string, channelName: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+    
+    const updatedPost = await this.postRepository.update(id, {
+      is_published: true,
+      published_at: new Date(),
+      scheduled_at: undefined,
+      scheduled_channel_id: undefined,
+      updated_at: new Date()
+    });
+    
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to mark post as published');
+    }
+    
+    return updatedPost;
+  }
+
+  async getPublishedPosts(): Promise<Post[]> {
+    return await this.postRepository.findPublished();
+  }
+
+  async updatePost(id: string, updateData: Partial<Post>): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+
+    const allowedFields: (keyof Post)[] = ['text', 'url', 'source_channel', 'is_unique'];
+    const filteredUpdateData: Partial<Post> = {};
+    
+    for (const field of allowedFields) {
+      if (updateData[field] !== undefined) {
+        (filteredUpdateData as any)[field] = updateData[field];
+      }
+    }
+
+    const updatedPost = await this.postRepository.update(id, {
+      ...filteredUpdateData,
+      updated_at: new Date()
+    });
+
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to update post');
+    }
+
+    return updatedPost;
+  }
 } 

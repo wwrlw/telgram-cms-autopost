@@ -20,6 +20,13 @@
                         <span class="post-date">{{ formatDate(post.timestamp) }}</span>
                     </div>
                     <div class="post-actions">
+                        <button @click="handleEdit" class="edit-button">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="m18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            Редактировать
+                        </button>
                         <a :href="post.url" target="_blank" class="external-link">
                             <svg viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
@@ -97,6 +104,11 @@
             </div>
         </div>
 
+        <EditPostModal 
+            v-model:show="showEditModal"
+            :post="post"
+            @updated="handlePostUpdated" />
+
         <div v-if="showMediaModal" class="media-modal" @click="closeMediaModal">
             <div class="modal-content" @click.stop>
                 <button class="modal-close" @click="closeMediaModal">×</button>
@@ -123,14 +135,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, getCurrentInstance } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http from '@/js/http';
 import { getMediaUrl } from '@/js/utils';
+import EditPostModal from '@/components/EditPostModal.vue';
 
 const route = useRoute();
 const router = useRouter();
 const postId = route.params.id;
+const { proxy } = getCurrentInstance();
 
 const post = ref(null);
 const loading = ref(true);
@@ -138,6 +152,7 @@ const error = ref(null);
 const showMediaModal = ref(false);
 const selectedMedia = ref(null);
 const selectedMediaIndex = ref(0);
+const showEditModal = ref(false);
 
 const loadPost = async () => {
     loading.value = true;
@@ -182,6 +197,16 @@ const closeMediaModal = () => {
     showMediaModal.value = false;
     selectedMedia.value = null;
     selectedMediaIndex.value = 0;
+};
+
+const handleEdit = () => {
+    showEditModal.value = true;
+};
+
+const handlePostUpdated = (result) => {
+    if (result.success) {
+        loadPost();
+    }
 };
 
 onMounted(() => {
@@ -285,17 +310,28 @@ onMounted(() => {
     font-size: 0.9rem;
 }
 
+.post-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 180px;
+}
+
 .external-link {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     color: #3b82f6;
     text-decoration: none;
     font-weight: 500;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     border: 1px solid #3b82f6;
     border-radius: 0.5rem;
     transition: all 0.2s;
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .external-link:hover {
@@ -304,6 +340,34 @@ onMounted(() => {
 }
 
 .external-link svg {
+    width: 16px;
+    height: 16px;
+}
+
+.edit-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #8b5cf6;
+    background: transparent;
+    border: 1px solid #8b5cf6;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.edit-button:hover {
+    background: #8b5cf6;
+    color: white;
+}
+
+.edit-button svg {
     width: 16px;
     height: 16px;
 }

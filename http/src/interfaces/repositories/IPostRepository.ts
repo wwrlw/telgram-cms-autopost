@@ -9,4 +9,7 @@ export interface IPostRepository {
   findByChannel(channel: string): Promise<Post[]>;
   deleteById(id: string): Promise<boolean>;
   count(filters?: any): Promise<number>;
+  update(id: string, data: Partial<Post>): Promise<Post | null>;
+  findScheduled(): Promise<Post[]>;
+  findPublished(): Promise<Post[]>;
 } 

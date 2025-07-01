@@ -48,7 +48,8 @@ export class PostedChannelRepository implements IPostedChannelRepository {
       name: data.name || '',
       channel_id: data.channel_id || '',
       channel_type: data.channel_type || 'public',
-      is_active: data.is_active ?? true
+      is_active: data.is_active ?? true,
+      signature: data.signature || ''
     };
 
     const result = await this.mongo.db.collection('posted_channels').insertOne(newChannel);

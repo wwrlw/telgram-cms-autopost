@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Use environment variable with fallback to production API URL
 const apiUrl = import.meta.env.VITE_API_URL || 'https://tg.chiorio.com/api';
 
 const instance = axios.create({
@@ -230,6 +229,69 @@ let http = {
         })
         .catch((err) => {
             const errorMessage = err.response?.data?.message || 'Failed to delete publication channel';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    schedulePost: function (params, callback) {
+        instance.post(`/posts/${params.postId}/schedule`, {
+            scheduled_at: params.scheduledAt,
+            channel_id: params.channelId
+        })
+        .then((res) => {
+            callback(res.data);
+            console.log(res.data)
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to schedule post';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    getScheduledPosts: function (callback) {
+        instance.get('/posts/scheduled')
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to load scheduled posts';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+    
+    cancelScheduledPost: function (params, callback) {
+        console.log('HTTP cancelScheduledPost called with params:', params);
+        instance.delete(`/posts/${params.id}/schedule`)
+        .then((res) => {
+            console.log('HTTP cancelScheduledPost success response:', res.data);
+            callback(res.data);
+        })
+        .catch((err) => {
+            console.error('HTTP cancelScheduledPost error:', err);
+            const errorMessage = err.response?.data?.message || 'Failed to cancel scheduled post';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    getPublishedPosts: function (callback) {
+        instance.get('/posts/published')
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to load published posts';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    updatePost: function (params, callback) {
+        const { id, ...updateData } = params;
+        instance.put(`/posts/${id}`, updateData)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to update post';
             callback({ success: false, message: errorMessage });
         });
     }

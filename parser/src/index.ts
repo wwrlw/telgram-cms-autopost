@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { TelegramService } from './services/telegramService.js';
 import { ApiService } from './services/apiService.js';
+import { SchedulerService } from './services/SchedulerService.js';
 
 dotenv.config();
 
@@ -42,6 +43,8 @@ console.log('🗄️ MongoDB:', config.mongoUri);
 // Создаем API сервис для получения каналов
 const apiService = new ApiService(apiBaseUrl, apiUsername, apiPassword);
 
+const schedulerService = new SchedulerService(apiService);
+
 let telegramService: TelegramService;
 
 // Функция для получения каналов и запуска парсера
@@ -75,6 +78,8 @@ async function initializeParser() {
     });
 
     await telegramService.start();
+    schedulerService.start();
+
     
   } catch (error) {
     console.error('❌ Ошибка инициализации парсера:', error);
@@ -102,6 +107,7 @@ async function updateChannels() {
 // Обработка сигналов для graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Получен сигнал SIGINT, останавливаем сервис...');
+  schedulerService.stop();
   if (telegramService) {
     await telegramService.stop();
   }
@@ -110,6 +116,7 @@ process.on('SIGINT', async () => {
 
 process.on('SIGTERM', async () => {
   console.log('\n🛑 Получен сигнал SIGTERM, останавливаем сервис...');
+  schedulerService.stop();
   if (telegramService) {
     await telegramService.stop();
   }

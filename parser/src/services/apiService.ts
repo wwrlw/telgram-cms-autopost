@@ -10,6 +10,17 @@ export interface AuthResponse {
   userId: string;
 }
 
+export interface ScheduledPost {
+  _id: string;
+  text: string;
+  url?: string;
+  media?: any[];
+  scheduled_at: string;
+  scheduled_channel_id: string;
+  created_at: string;
+  source_channel: string;
+}
+
 export class ApiService {
   private baseUrl: string;
   private token: string | null = null;
@@ -145,6 +156,93 @@ export class ApiService {
     } catch (error) {
       console.error('❌ Error fetching channels:', error);
       throw error;
+    }
+  }
+  async getScheduledPosts(): Promise<ScheduledPost[]> {
+    await this.ensureAuthenticated();
+
+    try {
+      const response = await fetch(`${this.baseUrl}/posts/scheduled`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 401) {
+        this.token = null;
+        await this.ensureAuthenticated();
+        
+        const retryResponse = await fetch(`${this.baseUrl}/posts/scheduled`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!retryResponse.ok) {
+          throw new Error(`Failed to get scheduled posts: ${retryResponse.statusText}`);
+        }
+
+        const retryData = await retryResponse.json() as { success: boolean; data: ScheduledPost[] };
+        return retryData.data || [];
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to get scheduled posts: ${response.statusText}`);
+      }
+
+      const data = await response.json() as { success: boolean; data: ScheduledPost[] };
+      return data.data || [];
+    } catch (error) {
+      console.error('❌ Error fetching scheduled posts:', error);
+      throw error;
+    }
+  }
+
+  async publishToChannel(postId: string, channelId: string): Promise<boolean> {
+    await this.ensureAuthenticated();
+
+    try {
+      const response = await fetch(`${this.baseUrl}/publish/${postId}/${channelId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        this.token = null;
+        await this.ensureAuthenticated();
+        
+        const retryResponse = await fetch(`${this.baseUrl}/publish/${postId}/${channelId}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+          },
+        });
+
+        if (!retryResponse.ok) {
+          console.error(`Failed to publish post: ${retryResponse.statusText}`);
+          return false;
+        }
+
+        const retryData = await retryResponse.json() as { success: boolean };
+        return retryData.success;
+      }
+
+      if (!response.ok) {
+        console.error(`Failed to publish post: ${response.statusText}`);
+        return false;
+      }
+
+      const data = await response.json() as { success: boolean };
+      return data.success;
+    } catch (error) {
+      console.error('❌ Error publishing post:', error);
+      return false;
     }
   }
 } 

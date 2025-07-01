@@ -208,6 +208,7 @@ const handlePublish = (post) => {
 const handlePublished = (result) => {
   if (result.success) {
     alert('Пост успешно опубликован в Telegram канал!');
+    postsService();
   } else {
     alert('Ошибка при публикации: ' + result.message);
   }

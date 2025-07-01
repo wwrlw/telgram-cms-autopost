@@ -29,7 +29,7 @@
         
         <div v-else-if="channels.length === 0" class="p-8 text-center text-gray-500">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
           </svg>
           <h3 class="mt-2 text-sm font-medium text-gray-900">Нет каналов</h3>
           <p class="mt-1 text-sm text-gray-500">Начните с добавления первого канала для публикации.</p>
@@ -137,7 +137,18 @@
                   <option value="private">Приватный</option>
                 </select>
               </div>
-              
+
+              <div>
+                <label for="signature" class="block text-sm font-medium text-gray-700">Подпись (HTML)</label>
+                <textarea
+                  id="signature"
+                  v-model="formData.signature"
+                  rows="3"
+                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder="&lt;a href='https://t.me/...'&gt;👉 Подписаться!&lt;/a&gt;"
+                ></textarea>
+              </div>
+
               <div class="flex items-center">
                 <input
                   type="checkbox"
@@ -175,10 +186,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, getCurrentInstance } from 'vue';
+import { ref, reactive, onMounted, getCurrentInstance, inject, watch } from 'vue';
 import http from '../js/http.js';
 
 const { proxy } = getCurrentInstance();
+
+const refreshTrigger = inject('refreshTrigger', ref(0));
+const setLoading = inject('setLoading');
 
 const channels = ref([]);
 const loading = ref(true);
@@ -191,10 +205,13 @@ const formData = reactive({
   channel_id: '',
   channel_type: 'public',
   is_active: true,
+  signature: '',
 });
 
 const loadChannels = () => {
   loading.value = true;
+  if (setLoading) setLoading(true);
+  
   http.getPublicationChannels((response) => {
     if (response.success) {
       channels.value = response.data;
@@ -202,6 +219,7 @@ const loadChannels = () => {
       proxy.$toast.error('Ошибка загрузки каналов: ' + response.message);
     }
     loading.value = false;
+    if (setLoading) setLoading(false);
   });
 };
 
@@ -212,6 +230,7 @@ const openCreateModal = () => {
     channel_id: '',
     channel_type: 'public',
     is_active: true,
+    signature: '',
   });
   showModal.value = true;
 };
@@ -223,6 +242,7 @@ const openEditModal = (channel) => {
     channel_id: channel.channel_id,
     channel_type: channel.channel_type,
     is_active: channel.is_active,
+    signature: channel.signature,
   });
   showModal.value = true;
 };
@@ -234,7 +254,7 @@ const closeModal = () => {
 
 const saveChannel = () => {
   saving.value = true;
-  
+  showModal.value = false;
   const data = { ...formData };
   if (!data.bot_token) delete data.bot_token;
   
@@ -244,7 +264,6 @@ const saveChannel = () => {
       if (response.success) {
         proxy.$toast.success('Канал успешно обновлен');
         loadChannels();
-        closeModal();
       } else {
         proxy.$toast.error('Ошибка обновления канала: ' + response.message);
       }
@@ -255,12 +274,12 @@ const saveChannel = () => {
       if (response.success) {
         proxy.$toast.success('Канал успешно создан');
         loadChannels();
-        closeModal();
       } else {
         proxy.$toast.error('Ошибка создания канала: ' + response.message);
       }
     });
   }
+  loadChannels();
 };
 
 const toggleChannelStatus = (channel) => {
@@ -289,11 +308,16 @@ const deleteChannel = (channel) => {
       }
     });
   }
+  loadChannels();
 };
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString('ru-RU');
 };
+
+watch(refreshTrigger, () => {
+  loadChannels();
+});
 
 onMounted(() => {
   loadChannels();

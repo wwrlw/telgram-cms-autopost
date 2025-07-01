@@ -14,6 +14,11 @@ export interface Post {
   media: Media[];
   is_unique: boolean;
   created_at: Date;
+  scheduled_at?: Date;
+  scheduled_channel_id?: string;
+  is_published?: boolean;
+  published_at?: Date;
+  updated_at?: Date;
 }
 
 export interface CreatePostDto {
