@@ -1,6 +1,18 @@
 <template>
     <div class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 p-4 lg:p-8">
         <div class="max-w-4xl mx-auto">
+            <div class="mb-6">
+                <router-link 
+                    to="/" 
+                    class="inline-flex items-center gap-2 text-white hover:text-gray-200 transition-colors font-medium"
+                >
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m15 18-6-6 6-6"/>
+                    </svg>
+                    Назад к постам
+                </router-link>
+            </div>
+
             <div v-if="loading" class="text-center p-16 bg-white rounded-2xl shadow-xl">
                 <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
                 <p class="text-gray-600">Loading post...</p>

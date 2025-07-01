@@ -117,19 +117,19 @@ const postsService = async (params = {}) => {
         };
         totalCount.value = paginationData.total;
         loading.value = false;
-        if (setLoading) setLoading(true);
+        if (setLoading) setLoading(false);
         resolve(res.data);
       }, (err) => {
         console.error('Error loading posts:', err);
         loading.value = false;
-        if (setLoading) setLoading(true);
+        if (setLoading) setLoading(false);
         reject(err);
       });
     });
   } catch (error) {
     console.error('Error loading posts:', error);
     loading.value = false;
-    if (setLoading) setLoading(true);
+    if (setLoading) setLoading(false);
     throw error;
   }
 };
