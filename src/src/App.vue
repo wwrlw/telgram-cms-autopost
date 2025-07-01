@@ -5,12 +5,16 @@
     <div class="flex-1 overflow-auto">
       <RouterView />
     </div>
-  </Sidebar>   
+  </Sidebar>
+  
+  <!-- Глобальный компонент уведомлений -->
+  <Toast />
 </template>
 
 <script setup>
 import Header from '@/components/HeaderComponent.vue';
 import Sidebar from '@/components/Sidebar.vue';
+import Toast from '@/components/Toast.vue';
 import { ref, provide } from 'vue';
 
 const loading = ref(false);

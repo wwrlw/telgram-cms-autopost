@@ -51,9 +51,8 @@ import StatsCards from '@/components/StatsCards.vue';
 import Filters from '@/components/Filters.vue';
 import PostsTable from '@/components/PostsTable.vue';
 import Actions from '@/components/Actions.vue';
-import PublishModal from '@/components/PublishModal.vue';
+import PublishModal from '@/components/Modal/PublishModal.vue';
 
-// Получаем состояния из App.vue
 const globalLoading = inject('loading');
 const refreshTrigger = inject('refreshTrigger');
 const setLoading = inject('setLoading');
@@ -207,17 +206,17 @@ const handlePublish = (post) => {
 
 const handlePublished = (result) => {
   if (result.success) {
-    alert('Пост успешно опубликован в Telegram канал!');
+    window.$toast.success('Пост успешно опубликован в Telegram канал!');
     postsService();
   } else {
-    alert('Ошибка при публикации: ' + result.message);
+    window.$toast.error('Ошибка при публикации: ' + result.message);
   }
   selectedPostForPublish.value = null;
 };
 
 const bulkPublish = () => {
   if (selectedPosts.value.length > 0) {
-    alert('Для публикации выберите один пост');
+    window.$toast.error('Для публикации выберите один пост');
   }
 };
 
@@ -225,10 +224,10 @@ const deletePost = (postId) => {
   if (confirm('Вы уверены, что хотите удалить этот пост?')) {
     http.deletePost({ id: postId }, (response) => {
       if (response.success) {
-        // Обновляем список постов после успешного удаления
+        window.$toast.success('Пост успешно удален');
         postsService();
       } else {
-        alert('Ошибка при удалении поста: ' + response.message);
+        window.$toast.error('Ошибка при удалении поста: ' + response.message);
       }
     });
   }
@@ -236,7 +235,7 @@ const deletePost = (postId) => {
 
 const bulkDelete = () => {
   if (selectedPosts.value.length === 0) {
-    alert('Выберите посты для удаления');
+    window.$toast.error('Выберите посты для удаления');
     return;
   }
 
@@ -256,7 +255,7 @@ const bulkDelete = () => {
           clearSelection();
           postsService();
           if (deletedCount > 0) {
-            alert(`Успешно удалено ${deletedCount} из ${totalToDelete} постов`);
+            window.$toast.success(`Успешно удалено ${deletedCount} из ${totalToDelete} постов`);
           }
         }
       });

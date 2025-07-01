@@ -214,11 +214,12 @@ const loadChannels = () => {
   
   http.getPublicationChannels((response) => {
     if (response.success) {
-      channels.value = response.data;
+      channels.value = response.data || [];
+      loading.value = false;
     } else {
-      proxy.$toast.error('Ошибка загрузки каналов: ' + response.message);
+      window.$toast.error('Ошибка загрузки каналов: ' + response.message);
+      loading.value = false;
     }
-    loading.value = false;
     if (setLoading) setLoading(false);
   });
 };
@@ -262,20 +263,20 @@ const saveChannel = () => {
     http.updatePublicationChannel({ id: editingChannel.value.id, ...data }, (response) => {
       saving.value = false;
       if (response.success) {
-        proxy.$toast.success('Канал успешно обновлен');
+        window.$toast.success('Канал успешно обновлен');
         loadChannels();
       } else {
-        proxy.$toast.error('Ошибка обновления канала: ' + response.message);
+        window.$toast.error('Ошибка обновления канала: ' + response.message);
       }
     });
   } else {
     http.createPublicationChannel(data, (response) => {
       saving.value = false;
       if (response.success) {
-        proxy.$toast.success('Канал успешно создан');
+        window.$toast.success('Канал успешно создан');
         loadChannels();
       } else {
-        proxy.$toast.error('Ошибка создания канала: ' + response.message);
+        window.$toast.error('Ошибка создания канала: ' + response.message);
       }
     });
   }
@@ -289,10 +290,10 @@ const toggleChannelStatus = (channel) => {
     is_active: newStatus 
   }, (response) => {
     if (response.success) {
-      proxy.$toast.success(`Канал ${newStatus ? 'включен' : 'отключен'}`);
+      window.$toast.success(`Канал ${newStatus ? 'включен' : 'отключен'}`);
       loadChannels();
     } else {
-      proxy.$toast.error('Ошибка изменения статуса канала: ' + response.message);
+      window.$toast.error('Ошибка изменения статуса канала: ' + response.message);
     }
   });
 };
@@ -301,10 +302,10 @@ const deleteChannel = (channel) => {
   if (confirm(`Вы действительно хотите удалить канал "${channel.name}"?`)) {
     http.deletePublicationChannel({ id: channel.id }, (response) => {
       if (response.success) {
-        proxy.$toast.success('Канал успешно удален');
+        window.$toast.success('Канал успешно удален');
         loadChannels();
       } else {
-        proxy.$toast.error('Ошибка удаления канала: ' + response.message);
+        window.$toast.error('Ошибка удаления канала: ' + response.message);
       }
     });
   }

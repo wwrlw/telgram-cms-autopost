@@ -83,7 +83,7 @@
 </template>
 
 <script>
-import http from '../js/http.js';
+import http from '../../js/http.js';
 
 export default {
   name: 'PublishChannelModal',

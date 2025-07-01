@@ -103,7 +103,7 @@
   
   <script setup>
   import { reactive, watch, ref, onMounted, computed } from 'vue';
-  import http from '../js/http.js';
+  import http from '../../js/http.js';
   
   const props = defineProps({
     show: {

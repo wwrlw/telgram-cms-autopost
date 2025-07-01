@@ -43,14 +43,13 @@
 <script setup>
 import { ref, computed, onMounted, inject, watch } from "vue";
 import http from '@/js/http';
-import ChannelStatsCards from '@/components/ChannelStatsCards.vue';
-import ChannelFilters from '@/components/ChannelFilters.vue';
-import ChannelsTable from '@/components/ChannelsTable.vue';
-import ChannelActions from '@/components/ChannelActions.vue';
-import CreateChannelModal from '@/components/CreateChannelModal.vue';
+import ChannelStatsCards from '@/components/Channel/StatsCards.vue';
+import ChannelFilters from '@/components/Channel/Filters.vue';
+import ChannelsTable from '@/components/Channel/Table.vue';
+import ChannelActions from '@/components/Channel/Actions.vue';
+import CreateChannelModal from '@/components/Modal/CreateChannelModal.vue';
 import PostTableSkeleton from '@/components/PostTableSkeleton.vue';
 
-// Переименовываем компонент для скелетона каналов
 const ChannelTableSkeleton = PostTableSkeleton;
 
 // Получаем состояния из App.vue если они есть
@@ -176,20 +175,20 @@ const submitChannel = (formData) => {
     // Редактирование существующего канала
     http.updateChannel(formData, (res) => {
       if (res.success) {
-        alert('Канал успешно обновлен!');
+        window.$toast.success('Канал успешно обновлен!');
         channelsService();
       } else {
-        alert('Ошибка: ' + res.message);
+        window.$toast.error('Ошибка: ' + res.message);
       }
     });
   } else {
     // Создание нового канала
     http.createChannel(formData, (res) => {
       if (res.success) {
-        alert('Канал успешно создан!');
+        window.$toast.success('Канал успешно создан!');
         channelsService();
       } else {
-        alert('Ошибка: ' + res.message);
+        window.$toast.error('Ошибка: ' + res.message);
       }
     });
   }
@@ -199,10 +198,10 @@ const deleteChannel = (channelId) => {
   if (confirm('Вы уверены, что хотите удалить этот канал?')) {
     http.deleteChannel({ id: channelId }, (res) => {
       if (res.success) {
-        alert('Канал успешно удален!');
+        window.$toast.success('Канал успешно удален!');
         channelsService();
       } else {
-        alert('Ошибка: ' + res.message);
+        window.$toast.error('Ошибка: ' + res.message);
       }
     });
   }
@@ -217,7 +216,7 @@ const bulkDelete = () => {
     });
     
     Promise.all(deletePromises).then(() => {
-      alert('Выбранные каналы удалены!');
+      window.$toast.success('Выбранные каналы удалены!');
       clearSelection();
       channelsService();
     });

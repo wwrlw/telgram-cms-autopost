@@ -153,7 +153,7 @@
   <script setup>
   import { ref, onMounted, getCurrentInstance } from 'vue';
   import http from '../js/http.js';
-  import SchedulePublishModal from '../components/SchedulePublishModal.vue';
+  import SchedulePublishModal from '@/components/Modal/SchedulePublishModal.vue';
   
   const { proxy } = getCurrentInstance();
   
@@ -170,11 +170,12 @@
     loading.value = true;
     http.getScheduledPosts((response) => {
       if (response.success) {
-        scheduledPosts.value = response.data;
+        scheduledPosts.value = response.data || [];
+        loading.value = false;
       } else {
-        proxy.$toast.error('Ошибка загрузки отложенных публикаций: ' + response.message);
+        window.$toast.error('Ошибка загрузки отложенных публикаций: ' + response.message);
+        loading.value = false;
       }
-      loading.value = false;
     });
   };
   
@@ -182,11 +183,12 @@
     loadingPublished.value = true;
     http.getPublishedPosts((response) => {
       if (response.success) {
-        publishedPosts.value = response.data;
+        publishedPosts.value = response.data || [];
+        loadingPublished.value = false;
       } else {
-        proxy.$toast.error('Ошибка загрузки опубликованных постов: ' + response.message);
+        window.$toast.error('Ошибка загрузки опубликованных постов: ' + response.message);
+        loadingPublished.value = false;
       }
-      loadingPublished.value = false;
     });
   };
   
@@ -228,13 +230,12 @@
     console.log('Canceling scheduled post:', post);
     if (confirm(`Вы действительно хотите отменить публикацию поста "${getPreviewText(post.text)}"?`)) {
       console.log('User confirmed cancellation, calling API with ID:', post._id);
-      http.cancelScheduledPost({ id: post._id }, (response) => {
-        console.log('API response:', response);
+      http.cancelScheduledPost(post._id, (response) => {
         if (response.success) {
-          scheduledPosts.value = scheduledPosts.value.filter(p => p._id !== post._id);
-          proxy.$toast.success('Отложенная публикация отменена');
+          window.$toast.success('Отложенная публикация отменена');
+          loadScheduledPosts();
         } else {
-          proxy.$toast.error('Ошибка отмены публикации: ' + response.message);
+          window.$toast.error('Ошибка отмены публикации: ' + response.message);
         }
       });
     }
@@ -254,9 +255,9 @@
       } else {
         loadScheduledPosts();
       }
-      proxy.$toast.success(result.message || 'Расписание обновлено');
+      window.$toast.success(result.message || 'Расписание обновлено');
     } else {
-      proxy.$toast.error(result.message || 'Ошибка обновления расписания');
+      window.$toast.error(result.message || 'Ошибка обновления расписания');
     }
   };
   

@@ -1,34 +1,46 @@
 <template>
-    <div class="post-page">
-        <div class="container">
-            <div v-if="loading" class="loading-container">
-                <div class="loading-spinner"></div>
-                <p>Loading post...</p>
+    <div class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 p-4 lg:p-8">
+        <div class="max-w-4xl mx-auto">
+            <div v-if="loading" class="text-center p-16 bg-white rounded-2xl shadow-xl">
+                <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+                <p class="text-gray-600">Loading post...</p>
             </div>
 
-            <div v-else-if="error" class="error-container">
-                <div class="error-icon">⚠️</div>
-                <h2>Error Loading Post</h2>
-                <p>{{ error }}</p>
-                <button @click="loadPost" class="retry-button">Try Again</button>
+            <div v-else-if="error" class="text-center p-16 bg-white rounded-2xl shadow-xl">
+                <div class="text-5xl mb-4">⚠️</div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Error Loading Post</h2>
+                <p class="text-gray-600 mb-6">{{ error }}</p>
+                <button 
+                    @click="loadPost" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                >
+                    Try Again
+                </button>
             </div>
 
-            <div v-else-if="post" class="post-content">
-                <div class="post-header">
-                    <div class="post-meta">
-                        <span class="channel-name">{{ post.source_channel }}</span>
-                        <span class="post-date">{{ formatDate(post.timestamp) }}</span>
+            <div v-else-if="post" class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-8 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div class="flex flex-col gap-2">
+                        <span class="font-semibold text-blue-500 text-lg">{{ post.source_channel }}</span>
+                        <span class="text-gray-500 text-sm">{{ formatDate(post.timestamp) }}</span>
                     </div>
-                    <div class="post-actions">
-                        <button @click="handleEdit" class="edit-button">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
+                    <div class="flex flex-col gap-3 w-full lg:w-44">
+                        <button 
+                            @click="handleEdit" 
+                            class="flex items-center justify-center gap-2 text-purple-500 border border-purple-500 hover:bg-purple-500 hover:text-white px-4 py-3 rounded-lg font-medium transition-all text-sm w-full"
+                        >
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                 <path d="m18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                             </svg>
                             Редактировать
                         </button>
-                        <a :href="post.url" target="_blank" class="external-link">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
+                        <a 
+                            :href="post.url" 
+                            target="_blank" 
+                            class="flex items-center justify-center gap-2 text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white px-4 py-3 rounded-lg font-medium transition-all text-sm w-full"
+                        >
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
                             </svg>
                             View on Telegram
@@ -36,58 +48,61 @@
                     </div>
                 </div>
 
-                <div class="post-text">
-                    <p>{{ post.text }}</p>
+                <div class="p-8">
+                    <p class="text-lg leading-relaxed text-gray-700 whitespace-pre-wrap">{{ post.text }}</p>
                 </div>
 
-                <div v-if="post.media && post.media.length > 0" class="media-gallery">
-                    <h3>Media</h3>
-                    <div class="media-grid">
+                <div v-if="post.media && post.media.length > 0" class="px-8 pb-8">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Media</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         <div 
                             v-for="(media, index) in post.media" 
                             :key="index" 
-                            class="media-item"
+                            class="border border-gray-200 rounded-lg overflow-hidden cursor-pointer transition-transform hover:scale-105"
                             @click="openMediaModal(media, index)"
                         >
-                            <div class="media-preview">
+                            <div class="relative h-36 bg-gray-50 flex items-center justify-center">
                                 <img 
                                     v-if="media.type === 'photo'" 
                                     :src="getMediaUrl(media.file_path)" 
                                     :alt="`Media ${index + 1}`"
+                                    class="w-full h-full object-cover"
                                 />
-                                <div v-else-if="media.type === 'video'" class="video-preview">
-                                    <video :src="getMediaUrl(media.file_path)" muted></video>
-                                    <div class="play-icon">▶️</div>
+                                <div v-else-if="media.type === 'video'" class="relative w-full h-full">
+                                    <video :src="getMediaUrl(media.file_path)" muted class="w-full h-full object-cover"></video>
+                                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-70 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl">
+                                        ▶️
+                                    </div>
                                 </div>
-                                <div v-else class="document-preview">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                <div v-else class="flex flex-col items-center gap-2 text-gray-500">
+                                    <svg class="w-12 h-12" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                                         <polyline points="14,2 14,8 20,8"/>
                                         <line x1="16" y1="13" x2="8" y2="13"/>
                                         <line x1="16" y1="17" x2="8" y2="17"/>
                                         <polyline points="10,9 9,9 8,9"/>
                                     </svg>
-                                    <span>Document</span>
+                                    <span class="text-sm">Document</span>
                                 </div>
                             </div>
-                            <div class="media-info">
-                                <span class="media-type">{{ media.type }}</span>
+                            <div class="p-3 bg-gray-50">
+                                <span class="text-xs text-gray-500 capitalize">{{ media.type }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="post-footer">
-                    <div class="post-stats">
-                        <span class="stat">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
+                <div class="px-8 py-6 border-t border-gray-200 bg-gray-50">
+                    <div class="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                        <span class="flex items-center gap-2 text-gray-500 text-sm">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
                             {{ post.is_unique ? 'Unique' : 'Duplicate' }}
                         </span>
-                        <span class="stat">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
+                        <span class="flex items-center gap-2 text-gray-500 text-sm">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                             </svg>
                             {{ formatDate(post.created_at) }}
@@ -96,11 +111,16 @@
                 </div>
             </div>
 
-            <div v-else class="not-found">
-                <div class="not-found-icon">📄</div>
-                <h2>Post Not Found</h2>
-                <p>The post you're looking for doesn't exist or has been removed.</p>
-                <router-link to="/" class="back-button">Back to Posts</router-link>
+            <div v-else class="text-center p-16 bg-white rounded-2xl shadow-xl">
+                <div class="text-6xl mb-4">📄</div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Post Not Found</h2>
+                <p class="text-gray-600 mb-6">The post you're looking for doesn't exist or has been removed.</p>
+                <router-link 
+                    to="/" 
+                    class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                >
+                    Back to Posts
+                </router-link>
             </div>
         </div>
 
@@ -109,25 +129,32 @@
             :post="post"
             @updated="handlePostUpdated" />
 
-        <div v-if="showMediaModal" class="media-modal" @click="closeMediaModal">
-            <div class="modal-content" @click.stop>
-                <button class="modal-close" @click="closeMediaModal">×</button>
-                <div class="modal-media">
+        <div v-if="showMediaModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50" @click="closeMediaModal">
+            <div class="relative max-w-[90vw] max-h-[90vh]" @click.stop>
+                <button 
+                    class="absolute -top-10 right-0 text-white text-3xl hover:text-gray-300 transition-colors z-10"
+                    @click="closeMediaModal"
+                >
+                    ×
+                </button>
+                <div class="flex items-center justify-center">
                     <img 
                         v-if="selectedMedia && selectedMedia.type === 'photo'" 
                         :src="getMediaUrl(selectedMedia.file_path)" 
                         :alt="`Media ${selectedMediaIndex + 1}`"
+                        class="max-w-full max-h-[80vh] object-contain"
                     />
                     <video 
                         v-else-if="selectedMedia && selectedMedia.type === 'video'" 
                         :src="getMediaUrl(selectedMedia.file_path)" 
                         controls
                         autoplay
+                        class="max-w-full max-h-[80vh] object-contain"
                     ></video>
                 </div>
-                <div class="modal-info">
-                    <span class="media-type">{{ selectedMedia?.type }}</span>
-                    <span class="media-index">{{ selectedMediaIndex + 1 }} / {{ post?.media?.length }}</span>
+                <div class="absolute -bottom-10 left-0 text-white flex gap-4">
+                    <span class="capitalize">{{ selectedMedia?.type }}</span>
+                    <span>{{ selectedMediaIndex + 1 }} / {{ post?.media?.length }}</span>
                 </div>
             </div>
         </div>
@@ -139,7 +166,7 @@ import { ref, onMounted, getCurrentInstance } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http from '@/js/http';
 import { getMediaUrl } from '@/js/utils';
-import EditPostModal from '@/components/EditPostModal.vue';
+import EditPostModal from '@/components/Modal/EditPostModal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -205,7 +232,10 @@ const handleEdit = () => {
 
 const handlePostUpdated = (result) => {
     if (result.success) {
+        window.$toast.success('Пост успешно обновлен');
         loadPost();
+    } else {
+        window.$toast.error('Ошибка обновления поста: ' + (result.message || 'Неизвестная ошибка'));
     }
 };
 
@@ -215,383 +245,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.post-page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem 1rem;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-/* Loading state */
-.loading-container {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3b82f6;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 1rem;
-}
-
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-.error-container {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.error-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.retry-button {
-    background: #3b82f6;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-weight: 600;
-    margin-top: 1rem;
-}
-
-.retry-button:hover {
-    background: #2563eb;
-}
-
-.post-content {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-}
-
-.post-header {
-    padding: 2rem;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.post-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.channel-name {
-    font-weight: 600;
-    color: #3b82f6;
-    font-size: 1.1rem;
-}
-
-.post-date {
-    color: #6b7280;
-    font-size: 0.9rem;
-}
-
-.post-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    min-width: 180px;
-}
-
-.external-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    color: #3b82f6;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 0.75rem 1rem;
-    border: 1px solid #3b82f6;
-    border-radius: 0.5rem;
-    transition: all 0.2s;
-    font-size: 0.9rem;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.external-link:hover {
-    background: #3b82f6;
-    color: white;
-}
-
-.external-link svg {
-    width: 16px;
-    height: 16px;
-}
-
-.edit-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    color: #8b5cf6;
-    background: transparent;
-    border: 1px solid #8b5cf6;
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.9rem;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.edit-button:hover {
-    background: #8b5cf6;
-    color: white;
-}
-
-.edit-button svg {
-    width: 16px;
-    height: 16px;
-}
-
-.post-text {
-    padding: 2rem;
-    font-size: 1.1rem;
-    line-height: 1.6;
-    color: #374151;
-}
-
-.post-text p {
-    margin: 0;
-    white-space: pre-wrap;
-}
-
-.media-gallery {
-    padding: 0 2rem 2rem;
-}
-
-.media-gallery h3 {
-    margin-bottom: 1rem;
-    color: #374151;
-    font-size: 1.2rem;
-}
-
-.media-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.media-item {
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.media-item:hover {
-    transform: scale(1.02);
-}
-
-.media-preview {
-    position: relative;
-    height: 150px;
-    background: #f9fafb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.media-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.video-preview {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.video-preview video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.play-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 2rem;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.document-preview {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    color: #6b7280;
-}
-
-.document-preview svg {
-    width: 48px;
-    height: 48px;
-}
-
-.media-info {
-    padding: 0.75rem;
-    background: #f9fafb;
-}
-
-.media-type {
-    font-size: 0.8rem;
-    color: #6b7280;
-    text-transform: capitalize;
-}
-
-.post-footer {
-    padding: 1.5rem 2rem;
-    border-top: 1px solid #e5e7eb;
-    background: #f9fafb;
-}
-
-.post-stats {
-    display: flex;
-    gap: 1.5rem;
-}
-
-.stat {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #6b7280;
-    font-size: 0.9rem;
-}
-
-.stat svg {
-    width: 16px;
-    height: 16px;
-}
-
-.not-found {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.not-found-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-}
-
-.back-button {
-    display: inline-block;
-    background: #3b82f6;
-    color: white;
-    text-decoration: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    margin-top: 1rem;
-}
-
-.back-button:hover {
-    background: #2563eb;
-}
-
-.media-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    position: relative;
-    max-width: 90vw;
-    max-height: 90vh;
-}
-
-.modal-close {
-    position: absolute;
-    top: -40px;
-    right: 0;
-    background: none;
-    border: none;
-    color: white;
-    font-size: 2rem;
-    cursor: pointer;
-    z-index: 1001;
-}
-
-.modal-media img,
-.modal-media video {
-    max-width: 100%;
-    max-height: 80vh;
-    object-fit: contain;
-}
-
-.modal-info {
-    position: absolute;
-    bottom: -40px;
-    left: 0;
-    color: white;
-    display: flex;
-    gap: 1rem;
-}
-
-@media (max-width: 768px) {
-    .post-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-    }
-    
-    .media-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-    
-    .post-stats {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
 }
 </style>

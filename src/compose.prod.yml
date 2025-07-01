@@ -5,7 +5,7 @@ services:
       target: prod
       dockerfile: dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-https://tg.chiorio.com/api}
+        - VITE_API_URL=${VITE_API_URL:-https://tg.chiorio.com/api/}
     container_name: tg-parse-frontend-prod
     restart: unless-stopped
     ports:

@@ -106,7 +106,7 @@
   
   <script setup>
   import { ref, watch, getCurrentInstance } from 'vue';
-  import http from '../js/http.js';
+  import http from '../../js/http.js';
   
   const props = defineProps({
     show: {
@@ -149,7 +149,7 @@
   
   const updatePost = () => {
     if (!props.post?._id) {
-      proxy.$toast.error('Ошибка: ID поста не найден');
+      window.$toast.error('Ошибка: ID поста не найден');
       return;
     }
   
@@ -175,11 +175,11 @@
       saving.value = false;
       
       if (response.success) {
-        proxy.$toast.success('Пост успешно обновлен');
+        window.$toast.success('Пост успешно обновлен');
         emit('updated', response);
         close();
       } else {
-        proxy.$toast.error('Ошибка обновления поста: ' + response.message);
+        window.$toast.error('Ошибка обновления поста: ' + response.message);
       }
     });
   };
