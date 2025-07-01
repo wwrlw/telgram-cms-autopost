@@ -73,7 +73,8 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
             channel_id: { type: 'string' },
             channel_type: { type: 'string', enum: ['public', 'private'] },
             is_active: { type: 'boolean' },
-            bot_token: { type: 'string' }
+            bot_token: { type: 'string' },
+            signature: { type: 'string' }
           }
         }
       }
@@ -106,7 +107,8 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
             channel_id: { type: 'string' },
             channel_type: { type: 'string', enum: ['public', 'private'] },
             is_active: { type: 'boolean' },
-            bot_token: { type: 'string' }
+            bot_token: { type: 'string' },
+            signature: { type: 'string' }
           }
         }
       }
