@@ -6,8 +6,9 @@ import path from 'path';
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
   server: {
-    host: true,
+    host: '0.0.0.0',
     port: 5173,
+    allowedHosts: ['tg.chiorio.com']
   },
   resolve: {
     alias: {

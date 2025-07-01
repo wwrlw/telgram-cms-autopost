@@ -1,7 +1,10 @@
 import axios from "axios";
 
+// Use environment variable with fallback to production API URL
+const apiUrl = import.meta.env.VITE_API_URL || 'https://tg.chiorio.com/api';
+
 const instance = axios.create({
-    baseURL: 'http://127.0.0.1:3001'
+    baseURL: apiUrl
 });
 
 instance.interceptors.response.use(
