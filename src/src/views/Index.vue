@@ -27,7 +27,8 @@
         @publish="handlePublish"
         @delete="deletePost"
         @page-change="changePage"
-        @items-per-page-change="changeItemsPerPage" />
+        @items-per-page-change="changeItemsPerPage"
+        @create="openCreate" />
 
       <Actions 
         :selected-posts="selectedPosts"
@@ -39,6 +40,8 @@
         v-model:show="showPublishModal"
         :post="selectedPostForPublish"
         @published="handlePublished" />
+
+      <CreatePostModal v-model:show="showCreateModal" @created="handleCreated" />
     </main>
   </div>
 </template>
@@ -52,6 +55,7 @@ import Filters from '@/components/Filters.vue';
 import PostsTable from '@/components/PostsTable.vue';
 import Actions from '@/components/Actions.vue';
 import PublishModal from '@/components/Modal/PublishModal.vue';
+import CreatePostModal from '@/components/Modal/CreatePostModal.vue';
 
 const globalLoading = inject('loading');
 const refreshTrigger = inject('refreshTrigger');
@@ -70,6 +74,7 @@ const showPublishModal = ref(false);
 const selectedPostForPublish = ref(null);
 const loading = ref(false);
 const totalCount = ref(0);
+const showCreateModal = ref(false);
 
 const pagination = ref({
   page: 1,
@@ -265,6 +270,14 @@ const bulkDelete = () => {
 
 const clearSelection = () => {
   selectedPosts.value = [];
+};
+
+const openCreate = () => {
+  showCreateModal.value = true;
+};
+
+const handleCreated = () => {
+  postsService();
 };
 
 watch(refreshTrigger, () => {

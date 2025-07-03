@@ -12,6 +12,8 @@ import fastifyStatic from '@fastify/static'
 import path from 'path';
 import { DependencyContainer } from './container/DependencyContainer';
 import { errorHandler } from './middleware/ErrorHandler';
+// @ts-ignore – нет типов для fastify v4
+import multipart from '@fastify/multipart'
 
 dotenv.config();
 
@@ -26,6 +28,8 @@ async function start() {
         await fastify.register(mongoConnector);
         const container = DependencyContainer.getInstance();
         container.setMongo(fastify.mongo);
+        
+        await fastify.register(multipart, { limits: { files: 10 } });
         
         // Настройка раздачи статических файлов для медиа
         await fastify.register(fastifyStatic, {

@@ -7,6 +7,9 @@ import { DeletePostUseCase } from "../use-cases/DeletePostUseCase";
 import { parsePostQuery } from "../utils/queryParser";
 import { postQuerySchema, postSearchResponseSchema } from "../schemas/postQuerySchema";
 import { Post } from "../models/Post";
+import { pipeline } from 'node:stream/promises';
+import fs from 'fs';
+import path from 'path';
 
 export async function postsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
@@ -205,6 +208,47 @@ export async function postsRoutes(fastify: FastifyInstance) {
       } catch (error) {
         throw error;
       }
+    }
+  );
+
+  fastify.post(
+    '/posts',
+    { preValidation: [fastify.authenticate] },
+    async (request: any, reply) => {
+      const container = DependencyContainer.getInstance();
+      const parts = request.parts();
+      const fields: any = {};
+      const media: any[] = [];
+
+      for await (const part of parts) {
+        if (part.type === 'file') {
+          const fileExt = path.extname(part.filename);
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2,8)}${fileExt}`;
+          const uploadPath = path.join(process.cwd(), 'media', fileName);
+          await pipeline(part.file, fs.createWriteStream(uploadPath));
+          media.push({ type: part.mimetype.startsWith('video') ? 'video' : part.mimetype.startsWith('audio') ? 'audio' : 'photo', file_path: `/media/${fileName}` });
+        } else if (part.type === 'field') {
+          fields[part.fieldname] = part.value;
+        }
+      }
+
+      const dto = {
+        text: fields.text || '',
+        media,
+        is_unique: fields.is_unique === 'true',
+        url: fields.url || (Date.now().toString(36) + Math.random().toString(36).slice(2))
+      } as any;
+
+      const useCase = container.getCreateManualPostUseCase();
+      const post = await useCase.execute(dto);
+
+      // если scheduled_at присутствует -> планируем
+      if (fields.scheduled_at && fields.channel_id) {
+        const postService = container.getPostService();
+        await postService.schedulePost(post._id!.toString(), new Date(fields.scheduled_at), fields.channel_id);
+      }
+
+      return { success: true, data: post };
     }
   );
 }

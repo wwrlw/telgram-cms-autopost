@@ -10,10 +10,15 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.8",
+    "@tiptap/extension-link": "^2.3.0",
+    "@tiptap/extension-underline": "^2.3.0",
+    "@tiptap/starter-kit": "^2.3.0",
+    "@tiptap/vue-3": "^2.3.0",
     "axios": "^1.9.0",
     "lodash-es": "^4.17.21",
     "pinia": "^3.0.3",
     "tailwindcss": "^4.1.8",
+    "turndown": "^7.2.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1"
   },

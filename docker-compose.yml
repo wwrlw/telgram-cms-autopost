@@ -1,0 +1,102 @@
+version: '3.0'
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    ports:
+      - 27019:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - ./data:/data/db
+    networks:
+      - bots_bots
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - 127.0.0.1:8089:8081
+    environment:
+      #- ME_CONFIG_BASICAUTH_USERNAME=grappa
+      #- ME_CONFIG_BASICAUTH_PASSWORD=12345
+      - ME_CONFIG_SITE_BASEURL=/mongo
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_USERNAME}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_PASSWORD}
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_BASICAUTH=false
+    depends_on:
+      - mongo
+    networks:
+      - bots_bots
+ 
+  backend:
+    build: ./http
+    container_name: tg-parse-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./parser/media:/app/media
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017
+      - MONGODB_DB=parse-news
+    depends_on:
+      - mongo
+    networks:
+      - bots_bots
+  parser:
+    build: ./parser
+    container_name: tg-parse-parser
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3002:3002"
+    volumes:
+      - ./parser:/app
+      - /app/node_modules
+      - ./parser/media:/app/media
+    environment:
+      - NODE_ENV=development
+      - STRING_SESSION=${STRING_SESSION}
+      - MONGO_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017
+      - API_ID=${API_ID}
+      - API_HASH=${API_HASH}
+      - MEDIA_PATH=${MEDIA_PATH}
+      - TARGET_CHANNEL_IDS=${TARGET_CHANNEL_IDS}
+      - MONGO_DB_NAME=${MONGO_DB_NAME}
+      - API_BASE_URL=http://backend:3001
+      - API_USERNAME=${API_USERNAME:-admin}
+      - API_PASSWORD=${API_PASSWORD:-123456}
+    depends_on:
+      - mongo
+      - backend
+    networks:
+      - bots_bots
+  frontend:
+    build:
+      context: ./src
+      target: dev
+      dockerfile: dockerfile
+    container_name: tg-parse-frontend
+    restart: unless-stopped
+    volumes:
+      - ./src:/app/
+      - /app/node_modules
+    ports:
+      - '127.0.0.1:5173:5173'
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3001/
+    depends_on:
+      - backend
+    networks:
+      - bots_bots
+
+networks:
+  bots_bots:
+    external: true

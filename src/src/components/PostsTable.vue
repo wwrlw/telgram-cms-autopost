@@ -11,6 +11,10 @@
                 <option value="25">25</option>
                 <option value="50">50</option>
               </select>
+              <button
+                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+                @click="$emit('create')"
+              >Создать пост</button>
             </div>
           </div>
 
@@ -250,7 +254,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:selectedPosts', 'publish', 'delete', 'page-change', 'items-per-page-change'])
+const emit = defineEmits(['update:selectedPosts', 'publish', 'delete', 'page-change', 'items-per-page-change', 'create'])
 
 const selectAll = ref(false)
 

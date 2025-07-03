@@ -294,6 +294,16 @@ let http = {
             const errorMessage = err.response?.data?.message || 'Failed to update post';
             callback({ success: false, message: errorMessage });
         });
+    },
+
+    createPost: function (formData, cb, errCb) {
+        instance.post('/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+        .then((res) => {
+            cb && cb(res.data);
+        })
+        .catch((err) => {
+            errCb && errCb(err);
+        });
     }
 };
 
