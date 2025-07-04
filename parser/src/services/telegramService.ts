@@ -13,7 +13,6 @@ export class TelegramService {
   private mediaService: MediaService;
   private publishService: PublishService;
 
-  // --- Добавлено для альбомов ---
   private albumBuffer: { [groupedId: string]: any[] } = {};
   private albumTimers: { [groupedId: string]: NodeJS.Timeout } = {};
 
@@ -64,7 +63,6 @@ export class TelegramService {
 
       console.log('🔐 Подключаемся к Telegram...');
       
-      // Если STRING_SESSION пустая - используем интерактивную авторизацию
       const isEmptySession = !this.config.sessionString || this.config.sessionString.trim() === '';
       
       if (isEmptySession) {
@@ -102,7 +100,6 @@ export class TelegramService {
           console.error('   2. Сгенерируйте новую STRING_SESSION');
           console.error('   3. Подождите 5-10 минут и попробуйте снова');
           
-          // Ждем 30 секунд перед повторной попыткой
           console.log('⏳ Ждем 30 секунд перед повторной попыткой...');
           await new Promise(resolve => setTimeout(resolve, 30000));
           throw error;
@@ -112,7 +109,6 @@ export class TelegramService {
 
       console.log('✅ Авторизация в Telegram успешна');
       
-      // Показываем сессию для сохранения
       const sessionString = this.client.session.save();
       console.log('🔐 Сессия для сохранения в STRING_SESSION:');
       console.log(sessionString);
@@ -148,12 +144,10 @@ export class TelegramService {
     
     for (const channelId of this.config.targetChannelIds) {
       try {
-        // Определяем правильный формат ID для Telegram API
-        let telegramChannelId = channelId;
-        
-        // Если ID содержит префикс 100, убираем его для Telegram API
-        if (channelId > 1000000000000) {
-          telegramChannelId = channelId - 1000000000000;
+        let telegramChannelId = Math.abs(channelId);
+
+        if (telegramChannelId > 1_000_000_000_000) {
+          telegramChannelId -= 1_000_000_000_000;
         }
         
         const entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
@@ -183,10 +177,8 @@ export class TelegramService {
   private async handleMessage(update: any): Promise<void> {
     console.log('📨 Получено обновление:', update.className || 'unknown');
     
-    // Обрабатываем все обновления, не фильтруем
     console.log('📨 Обрабатываем обновление:', update);
     
-    // Проверяем, есть ли сообщение в обновлении
     if (!update.message) {
       console.log('⏭️ Нет сообщения в обновлении');
       return;
@@ -200,35 +192,26 @@ export class TelegramService {
       return;
     }
 
-    // Проверяем, что сообщение пришло из целевого канала
     const channelId = Number(peer.channelId || peer.userId || peer.chatId || 0);
     
-    // Проверяем ID канала в разных форматах
-    const isTargetChannel = this.config.targetChannelIds.some(targetId => {
-      // Сравниваем как есть
-      if (targetId === channelId) return true;
-      
-      // Если targetId содержит префикс 100, сравниваем без него
-      if (targetId > 1000000000000) {
-        const shortTargetId = targetId - 1000000000000;
-        if (shortTargetId === channelId) return true;
+    const normalizeId = (id: number): number => {
+      let n = Math.abs(id);
+      if (n > 1_000_000_000_000) {
+        n -= 1_000_000_000_000;
       }
-      
-      // Если channelId короткий, сравниваем с полным ID
-      if (channelId < 1000000000000) {
-        const fullChannelId = channelId + 1000000000000;
-        if (fullChannelId === targetId) return true;
-      }
-      
-      return false;
-    });
+      return n;
+    };
+
+    const normalizedIncomingId = normalizeId(channelId);
+    const isTargetChannel = this.config.targetChannelIds
+      .map(normalizeId)
+      .includes(normalizedIncomingId);
     
     if (!isTargetChannel) {
       console.log(`⏭️ Сообщение из канала ${channelId} не в списке целевых каналов [${this.config.targetChannelIds.join(', ')}], пропускаем`);
       return;
     }
 
-    // --- Новый код для альбомов ---
     if (msg.groupedId) {
       const groupId = msg.groupedId.toString();
       if (!this.albumBuffer[groupId]) {
@@ -236,12 +219,10 @@ export class TelegramService {
       }
       this.albumBuffer[groupId].push(msg);
 
-      // Сбросить старый таймер, если есть
       if (this.albumTimers[groupId]) {
         clearTimeout(this.albumTimers[groupId]);
       }
 
-      // Установить новый таймер: если в течение 1.5 сек не пришло новых частей — собрать альбом
       this.albumTimers[groupId] = setTimeout(async () => {
         const albumMsgs = this.albumBuffer[groupId];
         let allMedia: any[] = [];
@@ -270,7 +251,6 @@ export class TelegramService {
         delete this.albumBuffer[groupId];
         delete this.albumTimers[groupId];
 
-         // Автоматически публикуем альбом в канал
          try {
           await this.publishService.publishPost(postData);
         } catch (publishError) {
@@ -279,28 +259,23 @@ export class TelegramService {
 
         console.log(`📤 Сохранён альбом-пост из ${username}:`, postData);
       }, 1500);
-      return; // Не сохраняем отдельные части альбома!
+      return;
     }
-    // --- Конец нового кода ---
 
-    // Обычные сообщения (без groupedId)
     try {
       const entity = await this.client.getEntity(peer);
       const username = (entity as any).username || `channel_${peer.channelId || peer.userId || peer.chatId}`;
 
       console.log(`📨 Сообщение из целевого канала: ${username} (ID: ${channelId})`);
 
-      // Формируем URL поста
       const postUrl = `https://t.me/${username}/${msg.id}`;
 
-      // Проверяем, не обрабатывали ли мы уже этот пост
       const exists = await this.mongoService.checkPostExists(postUrl);
       if (exists) {
         console.log(`⏭️ Пост ${postUrl} уже существует, пропускаем`);
         return;
       }
 
-      // Обрабатываем медиа
       const media = await this.mediaService.processMedia(
         this.client,
         msg,
@@ -308,7 +283,6 @@ export class TelegramService {
         msg.id
       );
 
-      // Создаем объект поста
       const postData: CreatePostDto = {
         source_channel: username,
         text: (msg as any).message || '',
@@ -317,7 +291,6 @@ export class TelegramService {
         is_unique: false
       };
 
-      // Сохраняем в MongoDB
       await this.mongoService.savePost(postData);
 
       console.log(`📤 Обработан пост из ${username}:`, 
