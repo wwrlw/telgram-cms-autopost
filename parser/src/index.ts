@@ -5,7 +5,6 @@ import { SchedulerService } from './services/SchedulerService.js';
 
 dotenv.config();
 
-// Формируем URI для MongoDB с учетом аутентификации
 const mongoUsername = process.env.MONGO_USERNAME;
 const mongoPassword = process.env.MONGO_PASSWORD;
 const mongoHost = process.env.MONGO_HOST || 'localhost';
@@ -17,10 +16,9 @@ if (mongoUsername && mongoPassword) {
   mongoUri = `mongodb://${mongoUsername}:${mongoPassword}@${mongoHost}:${mongoPort}/${MONGO_DB}?authSource=admin`;
 }
 
-// Конфигурация API
 const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:3001';
-const apiUsername = process.env.API_USERNAME || "admin";
-const apiPassword = process.env.API_PASSWORD || "123";
+const apiUsername = process.env.API_USERNAME || "myuser";
+const apiPassword = process.env.API_PASSWORD || "mypassword";
 
 if (!apiUsername || !apiPassword) {
   console.error('❌ API_USERNAME и API_PASSWORD должны быть установлены в переменных окружения');
@@ -40,38 +38,32 @@ console.log('🔗 API URL:', apiBaseUrl);
 console.log('📁 Media path:', config.mediaPath);
 console.log('🗄️ MongoDB:', config.mongoUri);
 
-// Создаем API сервис для получения каналов
 const apiService = new ApiService(apiBaseUrl, apiUsername, apiPassword);
 
 const schedulerService = new SchedulerService(apiService);
 
 let telegramService: TelegramService;
 
-// Функция для получения каналов и запуска парсера
 async function initializeParser() {
   try {
     console.log('🔍 Получаем каналы из API...');
     
-    // Получаем ID каналов из API
     const channelIds = await apiService.getChannelIds();
     
     if (channelIds.length === 0) {
       console.warn('⚠️ Не найдено каналов для парсинга. Добавьте каналы через веб-интерфейс.');
-      // Ждем 30 секунд и пробуем снова
       setTimeout(initializeParser, 30000);
       return;
     }
     
     console.log('🎯 Target channel IDs:', channelIds);
     
-    // Получаем полную информацию о каналах для логирования
     const channels = await apiService.getAllChannels();
     console.log('📋 Channels info:');
     channels.forEach(channel => {
       console.log(`  - ${channel.username} (ID: ${channel.channel_id})`);
     });
 
-    // Создаем TelegramService с полученными каналами
     telegramService = new TelegramService({
       ...config,
       targetChannelIds: channelIds
@@ -88,7 +80,6 @@ async function initializeParser() {
   }
 }
 
-// Функция для периодического обновления списка каналов
 async function updateChannels() {
   try {
     console.log('🔄 Обновляем список каналов...');
@@ -104,7 +95,6 @@ async function updateChannels() {
   }
 }
 
-// Обработка сигналов для graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Получен сигнал SIGINT, останавливаем сервис...');
   schedulerService.stop();
@@ -123,12 +113,11 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-// Запуск сервиса
 (async () => {
   try {
     await initializeParser();
     
-    // Обновляем список каналов каждые 5 минут
+    // Обновляем список каналов каждые 2,5 минут
     setInterval(updateChannels, 5 * 60 * 100);
     
   } catch (error) {

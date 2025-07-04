@@ -4,7 +4,6 @@ import { DependencyContainer } from "../container/DependencyContainer";
 export async function channelsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
 
-  // Получить все каналы
   fastify.get(
     "/channels",
     { preValidation: [fastify.authenticate] },
@@ -22,7 +21,6 @@ export async function channelsRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Получить канал по ID
   fastify.get(
     "/channels/:id",
     { preValidation: [fastify.authenticate] },
@@ -41,7 +39,6 @@ export async function channelsRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Создать новый канал
   fastify.post(
     "/channels",
     { 
@@ -72,7 +69,6 @@ export async function channelsRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Удалить канал
   fastify.delete(
     "/channels/:id",
     { preValidation: [fastify.authenticate] },
@@ -91,7 +87,6 @@ export async function channelsRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Получить ID каналов для парсера (специальный endpoint)
   fastify.get(
     "/channels/parser/ids",
     { preValidation: [fastify.authenticate] },
@@ -102,6 +97,24 @@ export async function channelsRoutes(fastify: FastifyInstance) {
         return {
           success: true,
           data: channelIds
+        };
+      } catch (error) {
+        throw error;
+      }
+    }
+  );
+  fastify.put(
+    "/channels/:id",
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const id = (request.params as any).id;
+        const channelData = request.body as any;
+        const updateChannelUseCase = container.getUpdateChannelUseCase();
+        const updated = await updateChannelUseCase.execute(id, channelData);
+        return {
+          success: true,
+          data: { updated }
         };
       } catch (error) {
         throw error;

@@ -15,6 +15,7 @@ import { DeletePostUseCase } from '../use-cases/DeletePostUseCase';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
 import { LoginUseCase } from '../use-cases/LoginUseCase';
 import { CreateChannelUseCase } from '../use-cases/CreateChannelUseCase';
+import { UpdateChannelUseCase } from '../use-cases/UpdateChannelUseCase';
 import { GetChannelsUseCase } from '../use-cases/GetChannelsUseCase';
 import { GetChannelUseCase } from '../use-cases/GetChannelUseCase';
 import { DeleteChannelUseCase } from '../use-cases/DeleteChannelUseCase';
@@ -27,6 +28,7 @@ import { DeletePublicationChannelUseCase } from '../use-cases/DeletePublicationC
 import { TelegramPublishService } from '../services/TelegramPublishService';
 import { PublishPostUseCase } from '../use-cases/PublishPostUseCase';
 import { CreateManualPostUseCase } from '../use-cases/CreateManualPostUseCase';
+
 
 export class DependencyContainer {
   private static instance: DependencyContainer;
@@ -119,6 +121,10 @@ export class DependencyContainer {
 
   getCreateChannelUseCase(): CreateChannelUseCase {
     return new CreateChannelUseCase(this.getChannelService());
+  }
+
+  getUpdateChannelUseCase(): UpdateChannelUseCase {
+    return new UpdateChannelUseCase(this.getChannelService());
   }
 
   getGetChannelsUseCase(): GetChannelsUseCase {
