@@ -1,1 +1,0 @@
-db.users.insertMany([ { "_id": ObjectId("685584ff7d868b9ccb589a92"), "username": "myuser", "password": "$2b$10$QdybdrztapbxTR807H57t.egVFzOJP/vq0DGVVfgU7KJIKvQ.Hnry" }, { "_id": ObjectId("685ab82301e37da2a10eb4dd"), "username": "newuser", "password": "$2b$10$xq8z05pB0bYrJYf2Q4MvJOyePPSHao14dG8hCb0CWqPEgYZNUQF8y", "created_at": new Date("2025-06-24T14:37:23.339Z") }] );
