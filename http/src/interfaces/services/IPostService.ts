@@ -7,6 +7,8 @@ export interface IPostService {
   getPostsWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>>;
   createPost(post: CreatePostDto): Promise<Post>;
   getPostsByChannel(channel: string): Promise<Post[]>;
+  getPostsByCategory(categoryId: string): Promise<Post[]>;
+  getPostsByCategoryAndChannel(categoryId: string, channel: string): Promise<Post[]>;
   deletePost(id: string): Promise<void>;
   schedulePost(id: string, scheduledAt: Date, channelId: string): Promise<Post>;
   getScheduledPosts(): Promise<Post[]>;
@@ -14,4 +16,5 @@ export interface IPostService {
   markAsPublished(id: string, channelName: string): Promise<Post>;
   getPublishedPosts(): Promise<Post[]>;
   updatePost(id: string, updateData: Partial<Post>): Promise<Post>;
+  updatePostCategory(id: string, categoryId: string): Promise<Post>;
 } 

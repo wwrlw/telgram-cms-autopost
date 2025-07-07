@@ -35,7 +35,7 @@
                     Действия
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Источник
+                    Категория
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Дата
@@ -113,10 +113,10 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <a :href="post.url" 
-                       target="_blank" 
-                       rel="noopener noreferrer"
-                       class="text-sm text-indigo-600 hover:text-indigo-900">{{ post.source_channel || 'Не указан' }}</a>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                          :class="getCategoryStyle(post.category_id)">
+                      {{ getCategoryName(post.category_id) }}
+                    </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <time :datetime="post.timestamp">{{ formatDate(post.timestamp) }}</time>
@@ -251,6 +251,10 @@ const props = defineProps({
   selectedPosts: {
     type: Array,
     default: () => []
+  },
+  categories: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -337,6 +341,30 @@ const truncateText = (text, length) => {
 
 const getMediaPath = (filePath) => {
   return `/api/media${filePath.split('/media').pop()}`
+}
+
+const getCategoryName = (categoryId) => {
+  if (!categoryId) return 'Без категории'
+  const category = props.categories.find(cat => cat.id === categoryId)
+  return category ? category.name : 'Неизвестная категория'
+}
+
+const getCategoryStyle = (categoryId) => {
+  if (!categoryId) {
+    return 'bg-gray-100 text-gray-800'
+  }
+  const category = props.categories.find(cat => cat.id === categoryId)
+  if (category && category.color) {
+    // Простая логика для определения контрастного цвета текста
+    const color = category.color.replace('#', '')
+    const r = parseInt(color.substr(0, 2), 16)
+    const g = parseInt(color.substr(2, 2), 16)
+    const b = parseInt(color.substr(4, 2), 16)
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000
+    const textColor = brightness > 155 ? 'text-gray-900' : 'text-white'
+    return `bg-[${category.color}] ${textColor}`
+  }
+  return 'bg-blue-100 text-blue-800'
 }
 
 const toggleSelectAll = () => {

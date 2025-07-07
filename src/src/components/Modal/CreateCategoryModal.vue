@@ -16,65 +16,72 @@
               </div>
               <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                 <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                  {{ isEditing ? 'Редактировать канал' : 'Добавить новый канал' }}
+                  {{ isEditing ? 'Редактировать категорию' : 'Добавить новую категорию' }}
                 </h3>
                 <div class="mt-4 space-y-4">
                   <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700">
-                      Имя пользователя канала *
+                    <label for="name" class="block text-sm font-medium text-gray-700">
+                      Название категории *
                     </label>
                     <div class="mt-1 relative">
-                      <input v-model="formData.username" 
+                      <input v-model="formData.name" 
                              type="text" 
-                             name="username" 
-                             id="username" 
+                             name="name" 
+                             id="name" 
                              required
-                             placeholder="@channel_name"
+                             placeholder="Название категории"
                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
-                             :class="{ 'border-red-300': errors.username }">
+                             :class="{ 'border-red-300': errors.name }">
                     </div>
-                    <p v-if="errors.username" class="mt-1 text-sm text-red-600">{{ errors.username }}</p>
-                    <p class="mt-1 text-sm text-gray-500">Введите имя пользователя канала (например: @mychannel)</p>
+                    <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
                   </div>
 
                   <div>
-                    <label for="channel_id" class="block text-sm font-medium text-gray-700">
-                      Channel ID *
+                    <label for="description" class="block text-sm font-medium text-gray-700">
+                      Описание
                     </label>
                     <div class="mt-1">
-                      <input v-model.number="formData.channel_id" 
-                             type="number" 
-                             name="channel_id" 
-                             id="channel_id" 
-                             required
-                             placeholder="1234567890"
-                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
-                             :class="{ 'border-red-300': errors.channel_id }">
+                      <textarea v-model="formData.description" 
+                                name="description" 
+                                id="description" 
+                                rows="3"
+                                placeholder="Описание категории (необязательно)"
+                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
+                                :class="{ 'border-red-300': errors.description }"></textarea>
                     </div>
-                    <p v-if="errors.channel_id" class="mt-1 text-sm text-red-600">{{ errors.channel_id }}</p>
-                    <p class="mt-1 text-sm text-gray-500">Уникальный числовой идентификатор Telegram канала</p>
+                    <p v-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description }}</p>
                   </div>
 
                   <div>
-                    <label for="category_id" class="block text-sm font-medium text-gray-700">
-                      Категория
+                    <label for="color" class="block text-sm font-medium text-gray-700">
+                      Цвет категории
                     </label>
-                    <div class="mt-1">
-                      <select v-model="formData.category_id" 
-                              name="category_id" 
-                              id="category_id"
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
-                              :class="{ 'border-red-300': errors.category_id }">
-                        <option value="">Выберите категорию</option>
-                        <option v-for="category in categories" 
-                                :key="category.id" 
-                                :value="category.id">
-                          {{ category.name }}
-                        </option>
-                      </select>
+                    <div class="mt-1 flex items-center space-x-3">
+                      <input v-model="formData.color" 
+                             type="color" 
+                             name="color" 
+                             id="color"
+                             class="h-10 w-16 border border-gray-300 rounded-md shadow-sm"
+                             :class="{ 'border-red-300': errors.color }">
+                      <input v-model="formData.color" 
+                             type="text" 
+                             placeholder="#3B82F6"
+                             class="flex-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
+                             :class="{ 'border-red-300': errors.color }">
                     </div>
-                    <p v-if="errors.category_id" class="mt-1 text-sm text-red-600">{{ errors.category_id }}</p>
-                    <p class="mt-1 text-sm text-gray-500">Выберите категорию для группировки канала (необязательно)</p>
+                    <p v-if="errors.color" class="mt-1 text-sm text-red-600">{{ errors.color }}</p>
+                    <p class="mt-1 text-sm text-gray-500">Выберите цвет для отображения категории в интерфейсе</p>
+                  </div>
+
+                  <div class="flex items-center">
+                    <input v-model="formData.is_active" 
+                           type="checkbox" 
+                           name="is_active" 
+                           id="is_active"
+                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                      Активная категория
+                    </label>
                   </div>
                 </div>
               </div>
@@ -103,15 +110,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import http from '@/js/http'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   show: {
     type: Boolean,
     default: false
   },
-  channel: {
+  category: {
     type: Object,
     default: null
   }
@@ -120,30 +126,26 @@ const props = defineProps({
 const emit = defineEmits(['update:show', 'submit'])
 
 const formData = ref({
-  username: '',
-  channel_id: null,
-  category_id: ''
+  name: '',
+  description: '',
+  color: '#3B82F6',
+  is_active: true
 })
 
 const errors = ref({})
 const isSubmitting = ref(false)
-const categories = ref([])
 
-const isEditing = computed(() => !!props.channel)
+const isEditing = computed(() => !!props.category)
 
 const validateForm = () => {
   errors.value = {}
   
-  if (!formData.value.username) {
-    errors.value.username = 'Имя пользователя обязательно'
-  } else if (!formData.value.username.startsWith('@')) {
-    formData.value.username = '@' + formData.value.username.replace('@', '')
+  if (!formData.value.name) {
+    errors.value.name = 'Название категории обязательно'
   }
   
-  if (!formData.value.channel_id) {
-    errors.value.channel_id = 'Channel ID обязателен'
-  } else if (!Number.isInteger(formData.value.channel_id)) {
-    errors.value.channel_id = 'Channel ID должен быть числом'
+  if (formData.value.color && !formData.value.color.match(/^#[0-9A-F]{6}$/i)) {
+    errors.value.color = 'Цвет должен быть в формате HEX (например: #3B82F6)'
   }
   
   return Object.keys(errors.value).length === 0
@@ -157,7 +159,7 @@ const submitForm = async () => {
   try {
     const submitData = {
       ...formData.value,
-      ...(isEditing.value && { id: props.channel.id })
+      ...(isEditing.value && { id: props.category.id })
     }
     
     emit('submit', submitData)
@@ -174,39 +176,29 @@ const closeModal = () => {
   resetForm()
 }
 
-const loadCategories = () => {
-  http.categories((response) => {
-    if (response.success && response.data) {
-      categories.value = response.data
-    }
-  })
-}
-
 const resetForm = () => {
   formData.value = {
-    username: '',
-    channel_id: null,
-    category_id: ''
+    name: '',
+    description: '',
+    color: '#3B82F6',
+    is_active: true
   }
   errors.value = {}
   isSubmitting.value = false
 }
 
 watch(() => props.show, (newValue) => {
-  if (newValue && props.channel) {
+  if (newValue && props.category) {
     // Editing mode
     formData.value = {
-      username: props.channel.username,
-      channel_id: props.channel.channel_id,
-      category_id: props.channel.category_id || ''
+      name: props.category.name,
+      description: props.category.description || '',
+      color: props.category.color || '#3B82F6',
+      is_active: props.category.is_active !== false
     }
   } else if (newValue) {
     // Create mode
     resetForm()
   }
-})
-
-onMounted(() => {
-  loadCategories()
 })
 </script> 

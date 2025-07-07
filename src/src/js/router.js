@@ -4,6 +4,7 @@ import Index from "@/views/Index.vue";
 import LoginPage from "@/views/LoginPage.vue";
 import Channels from "@/views/Channels.vue";
 import PublicationChannels from "@/views/PublicationChannels.vue";
+import Categories from "@/views/Categories.vue";
 const page404 = () => import('@/views/Page404.vue');
 const Post = () => import('@/views/Post.vue');
 const ScheduledPosts = () => import('@/views/SheduledPosts.vue');
@@ -23,6 +24,11 @@ const routes = [
     path: "/posted-channels",
     name: "posted-channels",
     component: PublicationChannels,
+  },
+  {
+    path: "/categories",
+    name: "categories",
+    component: Categories,
   },
   {
     path: "/login",

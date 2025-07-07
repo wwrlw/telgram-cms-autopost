@@ -7,6 +7,8 @@ export interface IPostRepository {
   findWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>>;
   create(post: CreatePostDto): Promise<Post>;
   findByChannel(channel: string): Promise<Post[]>;
+  findByCategory(categoryId: string): Promise<Post[]>;
+  findByCategoryAndChannel(categoryId: string, channel: string): Promise<Post[]>;
   deleteById(id: string): Promise<boolean>;
   count(filters?: any): Promise<number>;
   update(id: string, data: Partial<Post>): Promise<Post | null>;

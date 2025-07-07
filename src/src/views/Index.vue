@@ -8,9 +8,10 @@
       <Filters 
         :loading="loading" 
         :posts="posts"
+        :categories="categories"
         @update:searchQuery="handleSearchChange"
         @update:statusFilter="handleStatusFilterChange"
-        @update:sourceChannelFilter="handleSourceChannelFilterChange"
+        @update:categoryFilter="handleCategoryFilterChange"
         @update:dateFilters="handleDateFiltersChange"
         @update:sortOptions="handleSortOptionsChange"
         @clearFilters="handleClearFilters" />
@@ -22,6 +23,7 @@
         :posts="posts"
         :pagination="pagination"
         :loading="loading"
+        :categories="categories"
         :selected-posts="selectedPosts"
         @update:selectedPosts="selectedPosts = $event"
         @publish="handlePublish"
@@ -64,7 +66,7 @@ const setLoading = inject('setLoading');
 const posts = ref([]);
 const searchQuery = ref('');
 const statusFilter = ref('');
-const sourceChannelFilter = ref('');
+const categoryFilter = ref('');
 const dateFromFilter = ref('');
 const dateToFilter = ref('');
 const sortField = ref('created_at');
@@ -75,6 +77,7 @@ const selectedPostForPublish = ref(null);
 const loading = ref(false);
 const totalCount = ref(0);
 const showCreateModal = ref(false);
+const categories = ref([]);
 
 const pagination = ref({
   page: 1,
@@ -96,7 +99,7 @@ const postsService = async (params = {}) => {
         limit: params.limit || pagination.value.limit,
         text: searchQuery.value || undefined,
         is_unique: statusFilter.value ? (statusFilter.value === 'unique' ? true : false) : undefined,
-        source_channel: sourceChannelFilter.value || undefined,
+        category_id: categoryFilter.value || undefined,
         date_from: dateFromFilter.value ? new Date(dateFromFilter.value).toISOString() : undefined,
         date_to: dateToFilter.value ? new Date(dateToFilter.value + 'T23:59:59').toISOString() : undefined,
         sort_field: sortField.value,
@@ -169,13 +172,10 @@ const handleStatusFilterChange = (status) => {
   postsService({ page: 1 });
 };
 
-const handleSourceChannelFilterChange = (sourceChannel) => {
-  sourceChannelFilter.value = sourceChannel;
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    pagination.value.page = 1;
-    postsService({ page: 1 });
-  }, 500);
+const handleCategoryFilterChange = (categoryId) => {
+  categoryFilter.value = categoryId;
+  pagination.value.page = 1;
+  postsService({ page: 1 });
 };
 
 const handleDateFiltersChange = (dateFilters) => {
@@ -195,7 +195,7 @@ const handleSortOptionsChange = (sortOptions) => {
 const handleClearFilters = () => {
   searchQuery.value = '';
   statusFilter.value = '';
-  sourceChannelFilter.value = '';
+  categoryFilter.value = '';
   dateFromFilter.value = '';
   dateToFilter.value = '';
   sortField.value = 'created_at';
@@ -280,6 +280,14 @@ const handleCreated = () => {
   postsService();
 };
 
+const loadCategories = () => {
+  http.categories((response) => {
+    if (response.success && response.data) {
+      categories.value = response.data;
+    }
+  });
+};
+
 watch(refreshTrigger, () => {
   if (refreshTrigger && refreshTrigger.value > 0) {
     postsService();
@@ -288,5 +296,6 @@ watch(refreshTrigger, () => {
 
 onMounted(() => {
   postsService();
+  loadCategories();
 });
 </script>

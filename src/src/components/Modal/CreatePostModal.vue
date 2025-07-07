@@ -6,7 +6,6 @@
         <button class="text-gray-400 hover:text-gray-600" @click="close">✕</button>
       </div>
 
-      <!-- Editor -->
       <div class="mb-4">
         <div class="flex flex-wrap gap-1 p-2 border-b">
           <button v-for="btn in toolbar" :key="btn.title" :title="btn.title" @click="btn.action" class="px-2 py-1 text-sm rounded hover:bg-gray-200" :class="{ 'bg-indigo-100 text-indigo-700': btn.isActive() }">{{ btn.label }}</button>
@@ -14,7 +13,6 @@
         <EditorContent :editor="editor" class="p-3 min-h-[150px] custom-editor-content" />
       </div>
 
-      <!-- Медиа -->
       <div class="space-y-2 mb-4">
         <label class="sr-only">Файлы</label>
         <div class="flex items-center gap-2">
@@ -30,7 +28,6 @@
         </div>
       </div>
 
-      <!-- Schedule -->
       <div class="space-y-4 mb-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Канал для публикации</label>
@@ -53,7 +50,6 @@
         </div>
       </div>
 
-      <!-- Buttons -->
       <div class="flex justify-end gap-3">
         <button @click="close" class="px-4 py-2 rounded bg-gray-200">Отмена</button>
         <button @click="publishNow" class="px-4 py-2 rounded bg-indigo-600 text-white">Опубликовать сейчас</button>
@@ -94,7 +90,6 @@ watch(
     if (!v && editor.value) editor.value.commands.setContent('');
     if (v) {
       loadChannels();
-      // Устанавливаем время по умолчанию (через час)
       const futureTime = new Date(Date.now() + 60 * 60 * 1000);
       scheduledAt.value = futureTime.toISOString().slice(0, 16);
     }
@@ -107,7 +102,6 @@ onBeforeUnmount(() => {
 
 function close() {
   emit('update:show', false);
-  // Сброс формы
   schedule.value = false;
   scheduledAt.value = '';
   selectedChannel.value = '';
@@ -127,9 +121,7 @@ function handleFiles(e) {
 }
 
 function send(publishLater) {
-  // Получаем HTML из редактора
   const html = editor.value?.getHTML() || '';
-  // Конвертируем HTML в Markdown
   const markdown = turndownService.turndown(html);
   if (!markdown.trim() && files.value.length === 0) {
     window?.$toast?.error('Добавьте текст или медиа');
@@ -151,7 +143,6 @@ function send(publishLater) {
   if (publishLater) {
     fd.append('scheduled_at', new Date(scheduledAt.value).toISOString());
   }
-  // Выводим FormData в консоль
   for (let pair of fd.entries()) {
     console.log('FormData:', pair[0], pair[1]);
   }
@@ -168,7 +159,6 @@ function send(publishLater) {
             window.location.href = '/scheduled-posts';
           }, 300);
         } else {
-          // Сразу публикуем пост в Telegram
           const postId = response.data._id;
           http.publishToChannel(postId, selectedChannel.value, (publishRes) => {
             if (publishRes.success) {
@@ -215,10 +205,8 @@ const toolbar = computed(() => {
 </script>
 
 <style scoped>
-/* минимальные стили тулбара */
 button:disabled { opacity:0.5; cursor: not-allowed; }
 
-/* Убрать border вокруг редактора, добавить caret */
 .custom-editor-content {
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -241,7 +229,6 @@ button:disabled { opacity:0.5; cursor: not-allowed; }
   border: 1px solid #d1d5db !important;
 }
 
-/* Кастомная кнопка для файлов */
 .file-btn {
   display: inline-flex;
   align-items: center;

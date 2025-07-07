@@ -48,6 +48,17 @@
             </li>
             <li>
               <router-link 
+                :to="{ name: 'categories' }" 
+                class="flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors"
+                :class="{ 'bg-gray-700': $route.path === '/categories' }">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V3a1 1 0 011 1v10.586l2.707 2.707A1 1 0 0119 19H5a1 1 0 01-.707-1.707L7 14.586V4z"/>
+                </svg>
+                Категории
+              </router-link>
+            </li>
+            <li>
+              <router-link 
                 :to="{ name: 'posted-channels' }" 
                 class="flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors"
                 :class="{ 'bg-gray-700': $route.path === '/posted-channels' }">

@@ -97,6 +97,12 @@ export class PostRepository implements IPostRepository {
       mongoFilters.is_unique = filters.is_unique;
     }
 
+    if (filters.category_id) {
+      if (ObjectId.isValid(filters.category_id)) {
+        mongoFilters.category_id = new ObjectId(filters.category_id);
+      }
+    }
+
     if (filters.date_from || filters.date_to) {
       mongoFilters.created_at = {};
       if (filters.date_from) {
@@ -209,6 +215,41 @@ export class PostRepository implements IPostRepository {
       })
       .sort({ published_at: -1 })
       .limit(50) // Ограничиваем последними 50 опубликованными постами
+      .toArray();
+
+    return posts as Post[];
+  }
+
+  async findByCategory(categoryId: string): Promise<Post[]> {
+    if (!this.mongo.db) throw new Error("MongoDB is not connected");
+
+    if (!ObjectId.isValid(categoryId)) {
+      throw new Error("Invalid category ID");
+    }
+
+    const posts = await this.mongo.db
+      .collection("posts")
+      .find({ category_id: new ObjectId(categoryId) })
+      .sort({ created_at: -1 })
+      .toArray();
+
+    return posts as Post[];
+  }
+
+  async findByCategoryAndChannel(categoryId: string, channel: string): Promise<Post[]> {
+    if (!this.mongo.db) throw new Error("MongoDB is not connected");
+
+    if (!ObjectId.isValid(categoryId)) {
+      throw new Error("Invalid category ID");
+    }
+
+    const posts = await this.mongo.db
+      .collection("posts")
+      .find({ 
+        category_id: new ObjectId(categoryId),
+        source_channel: channel 
+      })
+      .sort({ created_at: -1 })
       .toArray();
 
     return posts as Post[];

@@ -32,13 +32,18 @@
 
           <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
             <div class="flex-1">
-              <input v-model="sourceChannelFilter" 
-                     @input="updateSourceChannelFilter"
-                     type="text" 
-                     name="source_channel" 
-                     id="source_channel" 
-                     class="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" 
-                     placeholder="Фильтр по каналу...">
+              <select v-model="categoryFilter" 
+                      @change="updateCategoryFilter"
+                      name="category" 
+                      id="category" 
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">Все категории</option>
+                <option v-for="category in categories" 
+                        :key="category.id" 
+                        :value="category.id">
+                  {{ category.name }}
+                </option>
+              </select>
             </div>
             <div class="flex space-x-3">
               <input v-model="dateFromFilter" 
@@ -95,13 +100,17 @@ const props = defineProps({
   posts: {
     type: Array,
     default: () => []
+  },
+  categories: {
+    type: Array,
+    default: () => []
   }
 });
 
 const emit = defineEmits([
   'update:searchQuery', 
   'update:statusFilter', 
-  'update:sourceChannelFilter',
+  'update:categoryFilter',
   'update:dateFilters',
   'update:sortOptions',
   'clearFilters'
@@ -109,7 +118,7 @@ const emit = defineEmits([
 
 const searchQuery = ref('');
 const statusFilter = ref('');
-const sourceChannelFilter = ref('');
+const categoryFilter = ref('');
 const dateFromFilter = ref('');
 const dateToFilter = ref('');
 const sortField = ref('created_at');
@@ -123,8 +132,8 @@ const updateStatusFilter = () => {
   emit('update:statusFilter', statusFilter.value);
 };
 
-const updateSourceChannelFilter = () => {
-  emit('update:sourceChannelFilter', sourceChannelFilter.value);
+const updateCategoryFilter = () => {
+  emit('update:categoryFilter', categoryFilter.value);
 };
 
 const updateDateFilters = () => {
@@ -144,7 +153,7 @@ const updateSortOptions = () => {
 const clearAllFilters = () => {
   searchQuery.value = '';
   statusFilter.value = '';
-  sourceChannelFilter.value = '';
+  categoryFilter.value = '';
   dateFromFilter.value = '';
   dateToFilter.value = '';
   sortField.value = 'created_at';

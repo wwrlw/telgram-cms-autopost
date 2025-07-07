@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { IPostService } from '../interfaces/services/IPostService';
 import { IPostRepository } from '../interfaces/repositories/IPostRepository';
 import { Post, CreatePostDto } from '../models/Post';
@@ -125,6 +126,32 @@ export class PostService implements IPostService {
 
     if (!updatedPost) {
       throw new NotFoundError('Failed to update post');
+    }
+
+    return updatedPost;
+  }
+
+  async getPostsByCategory(categoryId: string): Promise<Post[]> {
+    return await this.postRepository.findByCategory(categoryId);
+  }
+
+  async getPostsByCategoryAndChannel(categoryId: string, channel: string): Promise<Post[]> {
+    return await this.postRepository.findByCategoryAndChannel(categoryId, channel);
+  }
+
+  async updatePostCategory(id: string, categoryId: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+
+    const updatedPost = await this.postRepository.update(id, {
+      category_id: new ObjectId(categoryId),
+      updated_at: new Date()
+    });
+
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to update post category');
     }
 
     return updatedPost;

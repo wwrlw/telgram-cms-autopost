@@ -103,4 +103,19 @@ export class ChannelRepository implements IChannelRepository {
 
     return result.deletedCount > 0;
   }
+
+  async findByCategory(categoryId: string): Promise<Channel[]> {
+    if (!this.mongo.db) throw new Error('MongoDB is not connected');
+    
+    if (!ObjectId.isValid(categoryId)) {
+      throw new Error('Invalid category ID');
+    }
+
+    const channels = await this.mongo.db.collection('channels')
+      .find({ category_id: new ObjectId(categoryId) })
+      .sort({ created_at: -1 })
+      .toArray();
+
+    return channels as Channel[];
+  }
 } 

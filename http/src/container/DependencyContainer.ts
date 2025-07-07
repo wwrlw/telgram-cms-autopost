@@ -3,10 +3,12 @@ import { PostRepository } from '../repositories/PostRepository';
 import { UserRepository } from '../repositories/UserRepository';
 import { ChannelRepository } from '../repositories/ChannelRepository';
 import { PublicationChannelRepository } from '../repositories/PublicationChannelRepository';
+import { CategoryRepository } from '../repositories/CategoryRepository';
 import { PostService } from '../services/PostService';
 import { UserService } from '../services/UserService';
 import { ChannelService } from '../services/ChannelService';
 import { PublicationChannelService } from '../services/PublicationChannelService';
+import { CategoryService } from '../services/CategoryService';
 import { AuthService } from '../services/AuthService';
 import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
@@ -28,6 +30,11 @@ import { DeletePublicationChannelUseCase } from '../use-cases/DeletePublicationC
 import { TelegramPublishService } from '../services/TelegramPublishService';
 import { PublishPostUseCase } from '../use-cases/PublishPostUseCase';
 import { CreateManualPostUseCase } from '../use-cases/CreateManualPostUseCase';
+import { CreateCategoryUseCase } from '../use-cases/CreateCategoryUseCase';
+import { GetCategoriesUseCase } from '../use-cases/GetCategoriesUseCase';
+import { GetCategoryUseCase } from '../use-cases/GetCategoryUseCase';
+import { UpdateCategoryUseCase } from '../use-cases/UpdateCategoryUseCase';
+import { DeleteCategoryUseCase } from '../use-cases/DeleteCategoryUseCase';
 
 
 export class DependencyContainer {
@@ -74,6 +81,11 @@ export class DependencyContainer {
     return new PublicationChannelRepository(this.mongo);
   }
 
+  getCategoryRepository(): CategoryRepository {
+    if (!this.mongo) throw new Error('MongoDB not initialized');
+    return new CategoryRepository(this.mongo);
+  }
+
   getAuthService(): AuthService {
     const jwtSecret = process.env.JWT_SECRET || 'supersecretkey';
     return new AuthService(jwtSecret);
@@ -93,6 +105,10 @@ export class DependencyContainer {
 
   getPublicationChannelService(): PublicationChannelService {
     return new PublicationChannelService(this.getPublicationChannelRepository());
+  }
+
+  getCategoryService(): CategoryService {
+    return new CategoryService(this.getCategoryRepository());
   }
 
   getGetPostUseCase(): GetPostUseCase {
@@ -165,5 +181,26 @@ export class DependencyContainer {
 
   getCreateManualPostUseCase(): CreateManualPostUseCase {
     return new CreateManualPostUseCase(this.getPostService());
+  }
+
+  // Category Use Cases
+  getCreateCategoryUseCase(): CreateCategoryUseCase {
+    return new CreateCategoryUseCase(this.getCategoryService());
+  }
+
+  getGetCategoriesUseCase(): GetCategoriesUseCase {
+    return new GetCategoriesUseCase(this.getCategoryService());
+  }
+
+  getGetCategoryUseCase(): GetCategoryUseCase {
+    return new GetCategoryUseCase(this.getCategoryService());
+  }
+
+  getUpdateCategoryUseCase(): UpdateCategoryUseCase {
+    return new UpdateCategoryUseCase(this.getCategoryService());
+  }
+
+  getDeleteCategoryUseCase(): DeleteCategoryUseCase {
+    return new DeleteCategoryUseCase(this.getCategoryService());
   }
 } 

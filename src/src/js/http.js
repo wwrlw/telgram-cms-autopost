@@ -46,6 +46,7 @@ let http = {
         if (params.text) queryParams.append('text', params.text);
         if (params.is_unique !== undefined) queryParams.append('is_unique', params.is_unique);
         if (params.source_channel) queryParams.append('source_channel', params.source_channel);
+        if (params.category_id) queryParams.append('category_id', params.category_id);
         if (params.date_from) queryParams.append('date_from', params.date_from);
         if (params.date_to) queryParams.append('date_to', params.date_to);
         if (params.sort_field) queryParams.append('sort_field', params.sort_field);
@@ -140,6 +141,52 @@ let http = {
         })
         .catch((err) => {
             const errorMessage = err.response?.data?.message || 'Failed to delete channel';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+    
+    // Методы для работы с категориями
+    categories: function (callback, errorCallback) {
+        instance.get('/categories')
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            if (errorCallback) errorCallback(err);
+            else callback({ success: false, message: 'Failed to load categories' });
+        });
+    },
+    
+    createCategory: function (params, callback) {
+        instance.post('/categories', params)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to create category';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+    
+    updateCategory: function (params, callback) {
+        const { id, ...updateData } = params;
+        instance.put(`/categories/${id}`, updateData)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to update category';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+    
+    deleteCategory: function (params, callback) {
+        instance.delete(`/categories/${params.id}`)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to delete category';
             callback({ success: false, message: errorMessage });
         });
     },

@@ -7,6 +7,7 @@ export interface PostFilters {
   source_channel?: string;
   text?: string;
   is_unique?: boolean;
+  category_id?: string;
   date_from?: Date;
   date_to?: Date;
 }

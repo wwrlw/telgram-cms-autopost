@@ -13,6 +13,7 @@ export interface Post {
   url: string;
   media: Media[];
   is_unique: boolean;
+  category_id?: ObjectId;
   created_at: Date;
   scheduled_at?: Date;
   scheduled_channel_id?: string;
@@ -27,4 +28,5 @@ export interface CreatePostDto {
   url: string;
   media?: Media[];
   is_unique?: boolean;
+  category_id?: ObjectId;
 } 

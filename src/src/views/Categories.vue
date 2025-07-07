@@ -1,0 +1,199 @@
+<template>
+  <div class="min-h-screen bg-gray-50">
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <CategoryStatsCards 
+        v-if="!loading || categories.length > 0"
+        :totalCount="totalCount" 
+        :categories="categories" />
+
+      <CategoryFilters 
+        :loading="loading" 
+        :categories="categories"
+        @update:searchQuery="handleSearchChange"
+        @clearFilters="handleClearFilters" />
+
+      <CategoryTableSkeleton v-if="loading && categories.length === 0" :item-count="5" />
+
+      <CategoriesTable 
+        v-else
+        :categories="categories"
+        :loading="loading"
+        :selected-categories="selectedCategories"
+        @update:selectedCategories="selectedCategories = $event"
+        @delete="deleteCategory"
+        @edit="editCategory"
+        @create-category="createCategory" />
+
+      <CategoryActions 
+        :selected-categories="selectedCategories"
+        @bulk-delete="bulkDelete"
+        @clear-selection="clearSelection" />
+
+      <CreateCategoryModal 
+        v-model:show="showCreateModal"
+        :category="editingCategory"
+        @submit="submitCategory" />
+    </main>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, inject, watch } from "vue";
+import http from '@/js/http';
+import CategoryStatsCards from '@/components/Category/StatsCards.vue';
+import CategoryFilters from '@/components/Category/Filters.vue';
+import CategoriesTable from '@/components/Category/Table.vue';
+import CategoryActions from '@/components/Category/Actions.vue';
+import CreateCategoryModal from '@/components/Modal/CreateCategoryModal.vue';
+import PostTableSkeleton from '@/components/PostTableSkeleton.vue';
+
+const CategoryTableSkeleton = PostTableSkeleton;
+
+// Получаем состояния из App.vue если они есть
+const globalLoading = inject('loading', null);
+const refreshTrigger = inject('refreshTrigger', null);
+const setLoading = inject('setLoading', null);
+
+const categories = ref([]);
+const searchQuery = ref('');
+const selectedCategories = ref([]);
+const showCreateModal = ref(false);
+const editingCategory = ref(null);
+const loading = ref(false);
+const totalCount = ref(0);
+
+const categoriesService = async (params = {}) => {
+  loading.value = true;
+  if (setLoading) setLoading(true);
+  
+  try {
+    return new Promise((resolve, reject) => {
+      http.categories((res) => {
+        if (res.success) {
+          let filteredCategories = res.data || [];
+          
+          // Фильтрация по поисковому запросу
+          if (searchQuery.value) {
+            filteredCategories = filteredCategories.filter(category => 
+              category.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+              (category.description && category.description.toLowerCase().includes(searchQuery.value.toLowerCase()))
+            );
+          }
+          
+          categories.value = filteredCategories;
+          totalCount.value = filteredCategories.length;
+        } else {
+          categories.value = [];
+          totalCount.value = 0;
+        }
+        
+        loading.value = false;
+        if (setLoading) setLoading(false);
+        resolve(res.data);
+      }, (err) => {
+        console.error('Error loading categories:', err);
+        loading.value = false;
+        if (setLoading) setLoading(false);
+        reject(err);
+      });
+    });
+  } catch (error) {
+    console.error('Error loading categories:', error);
+    loading.value = false;
+    if (setLoading) setLoading(false);
+    throw error;
+  }
+};
+
+// Добавляем debounce для поиска
+let searchTimeout;
+const handleSearchChange = (query) => {
+  searchQuery.value = query;
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    categoriesService();
+  }, 500);
+};
+
+const handleClearFilters = () => {
+  searchQuery.value = '';
+  categoriesService();
+};
+
+const createCategory = () => {
+  editingCategory.value = null;
+  showCreateModal.value = true;
+};
+
+const editCategory = (category) => {
+  editingCategory.value = category;
+  showCreateModal.value = true;
+};
+
+const submitCategory = (formData) => {
+  if (editingCategory.value) {
+    // Редактирование существующей категории
+    http.updateCategory(formData, (res) => {
+      if (res.success) {
+        window.$toast.success('Категория успешно обновлена!');
+        categoriesService();
+      } else {
+        window.$toast.error('Ошибка: ' + res.message);
+      }
+    });
+  } else {
+    // Создание новой категории
+    http.createCategory(formData, (res) => {
+      if (res.success) {
+        window.$toast.success('Категория успешно создана!');
+        categoriesService();
+      } else {
+        window.$toast.error('Ошибка: ' + res.message);
+      }
+    });
+  }
+};
+
+const deleteCategory = (categoryId) => {
+  if (confirm('Вы уверены, что хотите удалить эту категорию?')) {
+    http.deleteCategory({ id: categoryId }, (res) => {
+      if (res.success) {
+        window.$toast.success('Категория успешно удалена!');
+        categoriesService();
+      } else {
+        window.$toast.error('Ошибка: ' + res.message);
+      }
+    });
+  }
+};
+
+const bulkDelete = () => {
+  if (confirm(`Вы уверены, что хотите удалить ${selectedCategories.value.length} категорий?`)) {
+    const deletePromises = selectedCategories.value.map(categoryId => {
+      return new Promise((resolve) => {
+        http.deleteCategory({ id: categoryId }, resolve);
+      });
+    });
+    
+    Promise.all(deletePromises).then(() => {
+      window.$toast.success('Выбранные категории удалены!');
+      clearSelection();
+      categoriesService();
+    });
+  }
+};
+
+const clearSelection = () => {
+  selectedCategories.value = [];
+};
+
+watch(refreshTrigger, () => {
+  if (refreshTrigger && refreshTrigger.value > 0) {
+    categoriesService();
+  }
+});
+
+onMounted(() => {
+  categoriesService();
+});
+</script> 
