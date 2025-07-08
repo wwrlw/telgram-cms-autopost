@@ -15,6 +15,7 @@
     "@tiptap/starter-kit": "^2.3.0",
     "@tiptap/vue-3": "^2.3.0",
     "axios": "^1.9.0",
+    "emoji-picker-element": "^1.26.3",
     "lodash-es": "^4.17.21",
     "pinia": "^3.0.3",
     "tailwindcss": "^4.1.8",

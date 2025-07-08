@@ -1,264 +1,408 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 p-4 lg:p-8">
-        <div class="max-w-4xl mx-auto">
-            <div class="mb-6">
-                <router-link 
-                    to="/" 
-                    class="inline-flex items-center gap-2 text-white hover:text-gray-200 transition-colors font-medium"
-                >
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m15 18-6-6 6-6"/>
-                    </svg>
-                    Назад к постам
-                </router-link>
+    <div class="min-h-screen bg-white flex flex-col">
+        <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
+            <!-- Заголовок и кнопка закрытия -->
+            <div class="flex items-start justify-between mb-4">
+                <h2 class="text-lg font-semibold">Редактировать пост</h2>
+                <button @click="cancel" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
             </div>
 
-            <div v-if="loading" class="text-center p-16 bg-white rounded-2xl shadow-xl">
-                <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-                <p class="text-gray-600">Loading post...</p>
-            </div>
-
-            <div v-else-if="error" class="text-center p-16 bg-white rounded-2xl shadow-xl">
-                <div class="text-5xl mb-4">⚠️</div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Error Loading Post</h2>
-                <p class="text-gray-600 mb-6">{{ error }}</p>
-                <button 
-                    @click="loadPost" 
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
-                >
-                    Try Again
-                </button>
-            </div>
-
-            <div v-else-if="post" class="bg-white rounded-2xl shadow-xl overflow-hidden">
-                <div class="p-8 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                    <div class="flex flex-col gap-2">
-                        <span class="font-semibold text-blue-500 text-lg">{{ post.source_channel }}</span>
-                        <span class="text-gray-500 text-sm">{{ formatDate(post.timestamp) }}</span>
-                    </div>
-                    <div class="flex flex-col gap-3 w-full lg:w-44">
-                        <button 
-                            @click="handleEdit" 
-                            class="flex items-center justify-center gap-2 text-purple-500 border border-purple-500 hover:bg-purple-500 hover:text-white px-4 py-3 rounded-lg font-medium transition-all text-sm w-full"
+            <!-- Редактор -->
+            <div class="mb-4 flex flex-col">
+                <div class="relative">
+                    <div class="flex flex-wrap gap-1 p-2 border-b">
+                        <button
+                            v-for="btn in toolbar"
+                            :key="btn.title"
+                            :title="btn.title"
+                            @click="btn.action"
+                            class="px-2 py-1 text-sm rounded hover:bg-gray-200"
+                            :class="{ 'bg-indigo-100 text-indigo-700': btn.isActive() }"
                         >
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="m18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                            Редактировать
+                            {{ btn.label }}
                         </button>
-                        <a 
-                            :href="post.url" 
-                            target="_blank" 
-                            class="flex items-center justify-center gap-2 text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white px-4 py-3 rounded-lg font-medium transition-all text-sm w-full"
-                        >
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
-                            </svg>
-                            View on Telegram
-                        </a>
                     </div>
-                </div>
-
-                <div class="p-8">
-                    <p class="text-lg leading-relaxed text-gray-700 whitespace-pre-wrap">{{ post.text }}</p>
-                </div>
-
-                <div v-if="post.media && post.media.length > 0" class="px-8 pb-8">
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Media</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        <div 
-                            v-for="(media, index) in post.media" 
-                            :key="index" 
-                            class="border border-gray-200 rounded-lg overflow-hidden cursor-pointer transition-transform hover:scale-105"
-                            @click="openMediaModal(media, index)"
-                        >
-                            <div class="relative h-36 bg-gray-50 flex items-center justify-center">
-                                <img 
-                                    v-if="media.type === 'photo'" 
-                                    :src="getMediaUrl(media.file_path)" 
-                                    :alt="`Media ${index + 1}`"
-                                    class="w-full h-full object-cover"
-                                />
-                                <div v-else-if="media.type === 'video'" class="relative w-full h-full">
-                                    <video :src="getMediaUrl(media.file_path)" muted class="w-full h-full object-cover"></video>
-                                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-70 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl">
-                                        ▶️
-                                    </div>
-                                </div>
-                                <div v-else class="flex flex-col items-center gap-2 text-gray-500">
-                                    <svg class="w-12 h-12" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                        <polyline points="14,2 14,8 20,8"/>
-                                        <line x1="16" y1="13" x2="8" y2="13"/>
-                                        <line x1="16" y1="17" x2="8" y2="17"/>
-                                        <polyline points="10,9 9,9 8,9"/>
-                                    </svg>
-                                    <span class="text-sm">Document</span>
-                                </div>
-                            </div>
-                            <div class="p-3 bg-gray-50">
-                                <span class="text-xs text-gray-500 capitalize">{{ media.type }}</span>
-                            </div>
+                    <!-- Emoji Picker -->
+                    <div v-if="showEmojiPicker" class="absolute top-full left-0 mt-1 bg-white border rounded shadow p-2 z-50 w-72 h-60 overflow-hidden">
+                        <emoji-picker @emoji-click="insertEmojiEvent" style="--emoji-size: 20px; width:100%; height:100%;" />
+                    </div>
+                    <!-- Link Input -->
+                    <div v-if="showLinkInput" class="absolute top-full left-0 mt-1 bg-white border rounded shadow p-3 z-50 w-64">
+                        <input v-model="linkUrl" placeholder="https://example.com" class="border rounded w-full text-sm px-2 py-1 mb-2" />
+                        <div class="flex justify-end gap-2">
+                            <button @click.stop="cancelLink" class="px-2 py-1 text-sm bg-gray-200 rounded">Отмена</button>
+                            <button @click.stop="confirmLink" class="px-2 py-1 text-sm bg-indigo-600 text-white rounded">OK</button>
                         </div>
                     </div>
                 </div>
+                <EditorContent :editor="editor" class="p-3 h-64 custom-editor-content overflow-y-auto" />
+            </div>
 
-                <div class="px-8 py-6 border-t border-gray-200 bg-gray-50">
-                    <div class="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                        <span class="flex items-center gap-2 text-gray-500 text-sm">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                            {{ post.is_unique ? 'Unique' : 'Duplicate' }}
-                        </span>
-                        <span class="flex items-center gap-2 text-gray-500 text-sm">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                            </svg>
-                            {{ formatDate(post.created_at) }}
-                        </span>
+            <!-- Прикрепление файлов -->
+            <div class="space-y-4 mb-4">
+                <div class="flex items-center gap-2">
+                    <button type="button" class="file-btn" @click="triggerFile">
+                        <svg class="w-5 h-5 mr-1 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a2 2 0 10-2.828-2.828z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V3a1 1 0 00-1-1h-4a1 1 0 00-1 1v4" />
+                        </svg>
+                        <span>Прикрепить файлы</span>
+                    </button>
+                    <input
+                        ref="fileInputRef"
+                        type="file"
+                        multiple
+                        accept="image/*,video/*,audio/*"
+                        @change="handleFiles"
+                        class="hidden"
+                    />
+                    <span class="text-xs text-gray-500">До 10 файлов</span>
+                </div>
+                <!-- Превью добавленных файлов -->
+                <div v-if="previews.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
+                    <div v-for="(item, idx) in previews" :key="idx" class="relative group border rounded overflow-hidden">
+                        <img v-if="item.isImage" :src="item.url" class="w-full h-32 object-cover" />
+                        <video v-else muted :src="item.url" class="w-full h-32 object-cover"></video>
+                        <button @click="removeFile(idx)" class="absolute top-1 right-1 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
                     </div>
                 </div>
             </div>
 
-            <div v-else class="text-center p-16 bg-white rounded-2xl shadow-xl">
-                <div class="text-6xl mb-4">📄</div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Post Not Found</h2>
-                <p class="text-gray-600 mb-6">The post you're looking for doesn't exist or has been removed.</p>
-                <router-link 
-                    to="/" 
-                    class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
-                >
-                    Back to Posts
-                </router-link>
+            <!-- Настройки публикации -->
+            <div class="space-y-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Канал для публикации</label>
+                    <select v-model="selectedChannel" class="border rounded p-2 text-sm w-full">
+                        <option value="">Выберите канал</option>
+                        <option v-for="channel in channels" :key="channel._id" :value="channel.channel_id">
+                            {{ channel.name }}
+                        </option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input id="schedule" type="checkbox" v-model="schedule" />
+                    <label for="schedule" class="text-sm">Опубликовать позже</label>
+                </div>
+                <div v-if="schedule" class="space-y-3 pl-6 border-l-2 border-gray-200">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Дата и время публикации</label>
+                        <input v-model="scheduledAt" type="datetime-local" class="border rounded p-2 text-sm w-full" />
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <EditPostModal 
-            v-model:show="showEditModal"
-            :post="post"
-            @updated="handlePostUpdated" />
-
-        <div v-if="showMediaModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50" @click="closeMediaModal">
-            <div class="relative max-w-[90vw] max-h-[90vh]" @click.stop>
-                <button 
-                    class="absolute -top-10 right-0 text-white text-3xl hover:text-gray-300 transition-colors z-10"
-                    @click="closeMediaModal"
-                >
-                    ×
-                </button>
-                <div class="flex items-center justify-center">
-                    <img 
-                        v-if="selectedMedia && selectedMedia.type === 'photo'" 
-                        :src="getMediaUrl(selectedMedia.file_path)" 
-                        :alt="`Media ${selectedMediaIndex + 1}`"
-                        class="max-w-full max-h-[80vh] object-contain"
-                    />
-                    <video 
-                        v-else-if="selectedMedia && selectedMedia.type === 'video'" 
-                        :src="getMediaUrl(selectedMedia.file_path)" 
-                        controls
-                        autoplay
-                        class="max-w-full max-h-[80vh] object-contain"
-                    ></video>
-                </div>
-                <div class="absolute -bottom-10 left-0 text-white flex gap-4">
-                    <span class="capitalize">{{ selectedMedia?.type }}</span>
-                    <span>{{ selectedMediaIndex + 1 }} / {{ post?.media?.length }}</span>
-                </div>
+            <!-- Кнопки действий -->
+            <div class="flex justify-end gap-3 mt-4">
+                <button @click="cancel" class="px-4 py-2 rounded bg-gray-200">Отмена</button>
+                <button @click="publishLater" class="px-4 py-2 rounded bg-blue-600 text-white">Опубликовать позже</button>
+                <button @click="publishNow" class="px-4 py-2 rounded bg-indigo-600 text-white">Опубликовать сейчас</button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, getCurrentInstance } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, onMounted, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { EditorContent, useEditor } from '@tiptap/vue-3';
+import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
 import http from '@/js/http';
+import TurndownService from 'turndown';
 import { getMediaUrl } from '@/js/utils';
-import EditPostModal from '@/components/Modal/EditPostModal.vue';
+import 'emoji-picker-element';
 
-const route = useRoute();
 const router = useRouter();
+const route = useRoute();
 const postId = route.params.id;
-const { proxy } = getCurrentInstance();
 
-const post = ref(null);
-const loading = ref(true);
-const error = ref(null);
-const showMediaModal = ref(false);
-const selectedMedia = ref(null);
-const selectedMediaIndex = ref(0);
-const showEditModal = ref(false);
+const files = ref([]);
+const fileInputRef = ref(null);
+const schedule = ref(false);
+const scheduledAt = ref('');
+const selectedChannel = ref('');
+const channels = ref([]);
+const loadingPost = ref(false);
+const postData = ref(null);
+const previews = ref([]);
 
-const loadPost = async () => {
-    loading.value = true;
-    error.value = null;
-    
-    try {
-        await http.post({ id: postId }, (res) => {
-            loading.value = false;
-            if (res && res.success) {
-                post.value = res.data;
-            } else {
-                error.value = res?.message || 'Failed to load post';
-            }
-        });
-    } catch (err) {
-        loading.value = false;
-        error.value = 'Network error occurred';
-        console.error('Post loading error:', err);
-    }
-};
-
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
-
-
-const openMediaModal = (media, index) => {
-    selectedMedia.value = media;
-    selectedMediaIndex.value = index;
-    showMediaModal.value = true;
-};
-
-const closeMediaModal = () => {
-    showMediaModal.value = false;
-    selectedMedia.value = null;
-    selectedMediaIndex.value = 0;
-};
-
-const handleEdit = () => {
-    showEditModal.value = true;
-};
-
-const handlePostUpdated = (result) => {
-    if (result.success) {
-        window.$toast.success('Пост успешно обновлен');
-        loadPost();
-    } else {
-        window.$toast.error('Ошибка обновления поста: ' + (result.message || 'Неизвестная ошибка'));
-    }
-};
-
-onMounted(() => {
-    loadPost();
+// Инициализируем редактор
+const editor = useEditor({
+    extensions: [StarterKit, Link, Underline],
+    content: '',
 });
+
+const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+
+// поддержка подчёркивания и зачёркивания для MarkdownV2 Telegram
+turndownService.addRule('underline', {
+    filter: ['u'],
+    replacement: (content) => `__${content}__`,
+});
+
+turndownService.addRule('strikethrough', {
+    filter: ['s', 'strike', 'del'],
+    replacement: (content) => `~~${content}~~`,
+});
+
+// Загрузка каналов и установка времени по умолчанию
+onMounted(() => {
+    loadChannels();
+    const futureTime = new Date(Date.now() + 60 * 60 * 1000);
+    scheduledAt.value = futureTime.toISOString().slice(0, 16);
+    if (postId) {
+        loadPost();
+    }
+});
+
+function loadChannels() {
+    http.getActivePublicationChannels((response) => {
+        if (response.success) {
+            channels.value = response.data || [];
+        }
+    });
+}
+
+function addFiles(newArr) {
+    const spaceLeft = 10 - files.value.length;
+    const slice = newArr.slice(0, spaceLeft);
+    slice.forEach((file) => {
+        files.value.push(file);
+        const url = URL.createObjectURL(file);
+        previews.value.push({ url, isImage: file.type.startsWith('image') });
+    });
+}
+
+function handleFiles(e) {
+    addFiles(Array.from(e.target.files));
+    e.target.value = '';
+}
+
+function triggerFile() {
+    fileInputRef.value?.click();
+}
+
+function cancel() {
+    router.back();
+}
+
+function send(publishLater) {
+    const html = editor.value?.getHTML() || '';
+    const markdown = turndownService.turndown(html);
+    if (!markdown.trim() && files.value.length === 0) {
+        window?.$toast?.error('Добавьте текст или медиа');
+        return;
+    }
+    if (!selectedChannel.value) {
+        window?.$toast?.error('Выберите канал для публикации');
+        return;
+    }
+    if (publishLater) {
+        if (!scheduledAt.value) {
+            window?.$toast?.error('Укажите дату');
+            return;
+        }
+    }
+
+    const fd = new FormData();
+    fd.append('text', markdown);
+    files.value.forEach((f) => fd.append('file', f));
+    fd.append('channel_id', selectedChannel.value);
+    if (publishLater) {
+        fd.append('scheduled_at', new Date(scheduledAt.value).toISOString());
+    }
+
+    http.createPost(
+        fd,
+        (response) => {
+            if (response.success) {
+                if (publishLater) {
+                    window?.$toast?.success('Пост запланирован');
+                    router.push('/scheduled-posts');
+                } else {
+                    const postId = response.data._id;
+                    http.publishToChannel(postId, selectedChannel.value, (publishRes) => {
+                        if (publishRes.success) {
+                            window?.$toast?.success('Пост опубликован в Telegram!');
+                            router.push('/');
+                        } else {
+                            window?.$toast?.error('Ошибка публикации: ' + (publishRes.message || ''));
+                        }
+                    });
+                }
+            } else {
+                window?.$toast?.error(response.message || 'Ошибка создания поста');
+            }
+        },
+        (error) => {
+            console.error('Error creating post:', error);
+            window?.$toast?.error('Ошибка создания поста');
+        }
+    );
+}
+
+function publishNow() {
+    send(false);
+}
+function publishLater() {
+    send(true);
+}
+
+function loadPost() {
+    loadingPost.value = true;
+    http.post({ id: postId }, async (res) => {
+        loadingPost.value = false;
+        if (res && res.success) {
+            postData.value = res.data;
+            initializeEditorContent(res.data);
+            await preloadMedia(res.data);
+        } else {
+            window?.$toast?.error(res?.message || 'Не удалось загрузить пост');
+        }
+    });
+}
+
+function initializeEditorContent(post) {
+    if (!post) return;
+    // Если текст хранится как markdown, можно добавить конвертацию. Пока вставляем как plain text.
+    const htmlContent = (post.text || '').replace(/\n/g, '<br>');
+    if (editor.value) {
+        editor.value.commands.setContent(htmlContent);
+    }
+}
+
+async function preloadMedia(post) {
+    if (!post || !post.media || !post.media.length) return;
+    const arr = [];
+    for (const m of post.media.slice(0, 10)) {
+        try {
+            const url = getMediaUrl(m.file_path);
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const filename = m.file_path.split('/').pop() || 'media';
+            const file = new File([blob], filename, { type: blob.type });
+            arr.push(file);
+        } catch (e) {
+            console.error('Ошибка загрузки медиа', e);
+        }
+    }
+    addFiles(arr);
+}
+
+// Кнопки тулбара
+const toolbar = computed(() => {
+    if (!editor.value) return [];
+    return [
+        { label: 'B', title: 'Bold', action: () => editor.value.chain().focus().toggleBold().run(), isActive: () => editor.value.isActive && editor.value.isActive('bold') },
+        { label: 'I', title: 'Italic', action: () => editor.value.chain().focus().toggleItalic().run(), isActive: () => editor.value.isActive && editor.value.isActive('italic') },
+        { label: 'U', title: 'Underline', action: () => editor.value.chain().focus().toggleUnderline().run(), isActive: () => editor.value.isActive && editor.value.isActive('underline') },
+        { label: 'S', title: 'Strike', action: () => editor.value.chain().focus().toggleStrike().run(), isActive: () => editor.value.isActive && editor.value.isActive('strike') },
+        { label: '</>', title: 'Code', action: () => editor.value.chain().focus().toggleCodeBlock().run(), isActive: () => editor.value.isActive && editor.value.isActive('codeBlock') },
+        { label: '{}', title: 'Inline code', action: () => editor.value.chain().focus().toggleCode().run(), isActive: () => editor.value.isActive && editor.value.isActive('code') },
+        { label: '"', title: 'Quote', action: () => editor.value.chain().focus().toggleBlockquote().run(), isActive: () => editor.value.isActive && editor.value.isActive('blockquote') },
+        { label: '• List', title: 'Bullet List', action: () => editor.value.chain().focus().toggleBulletList().run(), isActive: () => editor.value.isActive && editor.value.isActive('bulletList') },
+        { label: '1. List', title: 'Ordered List', action: () => editor.value.chain().focus().toggleOrderedList().run(), isActive: () => editor.value.isActive && editor.value.isActive('orderedList') },
+        { label: '😀', title: 'Emoji', action: toggleEmojiPicker, isActive: () => false },
+        { label: '🔗', title: 'Link', action: toggleLinkInput, isActive: () => editor.value.isActive && editor.value.isActive('link') },
+    ];
+});
+
+function removeFile(index) {
+    files.value.splice(index, 1);
+    const prev = previews.value.splice(index, 1)[0];
+    if (prev?.url) URL.revokeObjectURL(prev.url);
+}
+
+const showEmojiPicker = ref(false);
+const showLinkInput = ref(false);
+const linkUrl = ref('');
+
+function toggleEmojiPicker() {
+    showLinkInput.value = false;
+    showEmojiPicker.value = !showEmojiPicker.value;
+}
+
+function insertEmojiEvent(e) {
+    const emoji = e.detail.unicode;
+    if (emoji) editor.value.chain().focus().insertContent(emoji).run();
+}
+
+function toggleLinkInput() {
+    showLinkInput.value = !showLinkInput.value;
+    showEmojiPicker.value = false;
+    linkUrl.value = '';
+}
+
+function confirmLink() {
+    if (linkUrl.value.trim()) {
+        editor.value.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.value.trim() }).run();
+    }
+    showLinkInput.value = false;
+}
+
+function cancelLink() {
+    showLinkInput.value = false;
+}
 </script>
 
 <style scoped>
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.custom-editor-content {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    outline: none;
+    min-height: 150px;
+    background: #fff;
+    caret-color: #3b82f6;
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: text;
+}
+.custom-editor-content:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: 1px solid #d1d5db !important;
+}
+.custom-editor-content .ProseMirror:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.file-btn {
+    display: inline-flex;
+    align-items: center;
+    background: #eef2ff;
+    color: #3730a3;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.file-btn:hover {
+    background: #c7d2fe;
+}
+</style>
+
+<style>
+:global(.custom-editor-content .ProseMirror),
+:global(.custom-editor-content .ProseMirror:focus) {
+    outline: none !important;
+    box-shadow: none !important;
+    border: 1px solid #d1d5db !important;
+}
+:global(.ProseMirror),
+:global(.ProseMirror:focus) {
+    outline: none !important;
+    box-shadow: none !important;
+    border: 1px solid #d1d5db !important;
 }
 </style>
