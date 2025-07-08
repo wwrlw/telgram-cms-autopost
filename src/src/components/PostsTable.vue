@@ -59,16 +59,16 @@
                   
                   <td class="px-6 py-4">
                     <div class="flex items-start space-x-3">
-                      <div v-if="post.media" class="flex-shrink-0">
+                      <div class="flex-shrink-0">
                         <LazyImage 
-                          v-if="post.media.type === 'MessageMediaPhoto'" 
-                          :src="getMediaPath(post.media.file_path)"
-                          alt="Post media" 
-                          container-class="h-12 w-12 rounded-lg"
-                          image-class="h-12 w-12 rounded-lg object-cover"
-                          placeholder-class="h-12 w-12 rounded-lg" />
-                        <div v-else 
-                             class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
+                          v-if="hasPhoto(post)" 
+                          :src="getMediaPath(getFirstPhoto(post).file_path)"
+                          alt="Preview" 
+                          container-class="h-16 w-16 rounded-lg"
+                          image-class="h-16 w-16 rounded-lg object-cover"
+                          placeholder-class="h-16 w-16 rounded-lg" />
+                        <div v-else
+                             class="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center">
                           <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                           </svg>
@@ -78,8 +78,8 @@
                         <p class="text-sm font-medium text-gray-900 truncate">
                           {{ extractTitle(post.text) }}
                         </p>
-                        <p class="text-sm text-gray-500 line-clamp-2">
-                          {{ truncateText(post.text, 120) }}
+                        <p class="text-sm text-gray-500 line-clamp-6">
+                          {{ post.text }}
                         </p>
                         <div v-if="post.is_published || post.scheduled_at" class="mt-1 text-xs text-gray-400">
                           <span v-if="post.is_published && post.published_at" class="text-green-600">
@@ -234,6 +234,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import LazyImage from '@/components/LazyImage.vue'
+import { getMediaUrl } from '@/js/utils'
 
 const props = defineProps({
   posts: {
@@ -340,7 +341,7 @@ const truncateText = (text, length) => {
 }
 
 const getMediaPath = (filePath) => {
-  return `/api/media${filePath.split('/media').pop()}`
+  return getMediaUrl(filePath)
 }
 
 const getCategoryName = (categoryId) => {
@@ -393,6 +394,22 @@ const goToPage = (page) => {
   }
 }
 
+const hasPhoto = (post) => {
+  if (!post.media) return false
+  if (Array.isArray(post.media)) {
+    return post.media.some(m => m.type === 'photo' || m.type === 'MessageMediaPhoto')
+  }
+  return post.media.type === 'photo' || post.media.type === 'MessageMediaPhoto'
+}
+
+const getFirstPhoto = (post) => {
+  if (!post.media) return null
+  if (Array.isArray(post.media)) {
+    return post.media.find(m => m.type === 'photo' || m.type === 'MessageMediaPhoto') || null
+  }
+  return post.media
+}
+
 watch(selectedPosts, () => {
   selectAll.value = selectedPosts.value.length === paginatedPosts.value.length && paginatedPosts.value.length > 0
 })
@@ -402,6 +419,13 @@ watch(selectedPosts, () => {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-6 {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
