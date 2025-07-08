@@ -43,7 +43,6 @@
         :post="selectedPostForPublish"
         @published="handlePublished" />
 
-      <CreatePostModal v-model:show="showCreateModal" @created="handleCreated" />
     </main>
   </div>
 </template>
@@ -57,7 +56,6 @@ import Filters from '@/components/Filters.vue';
 import PostsTable from '@/components/PostsTable.vue';
 import Actions from '@/components/Actions.vue';
 import PublishModal from '@/components/Modal/PublishModal.vue';
-import CreatePostModal from '@/components/Modal/CreatePostModal.vue';
 
 const globalLoading = inject('loading');
 const refreshTrigger = inject('refreshTrigger');

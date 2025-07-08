@@ -5,8 +5,10 @@ import LoginPage from "@/views/LoginPage.vue";
 import Channels from "@/views/Channels.vue";
 import PublicationChannels from "@/views/PublicationChannels.vue";
 import Categories from "@/views/Categories.vue";
+import Post from "@/views/Post.vue";
+const CreatePost = () => import('@/views/CreatePost.vue');
 const page404 = () => import('@/views/Page404.vue');
-const Post = () => import('@/views/Post.vue');
+
 const ScheduledPosts = () => import('@/views/SheduledPosts.vue');
 
 const routes = [
@@ -34,6 +36,11 @@ const routes = [
     path: "/login",
     name: "login",
     component: LoginPage,
+  },
+  {
+    path: '/create-post',
+    name: 'create-post',
+    component: CreatePost,
   },
   {
     path: "/:catchAll(.*)",

@@ -145,7 +145,6 @@ let http = {
         });
     },
     
-    // Методы для работы с категориями
     categories: function (callback, errorCallback) {
         instance.get('/categories')
         .then((res) => {
@@ -350,6 +349,16 @@ let http = {
         })
         .catch((err) => {
             errCb && errCb(err);
+        });
+    },
+    
+    uploadMedia: function (formData, callback, error) {
+        instance.post('/media/upload', formData, { headers: {'Content-Type' : 'multipart/form-data'} })
+        then((res) => {
+            callback && callback(res.data);
+        })
+        .catch((err) => {
+            err && error(err);
         });
     }
 };

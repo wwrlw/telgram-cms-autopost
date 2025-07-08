@@ -11,10 +11,9 @@
                 <option value="25">25</option>
                 <option value="50">50</option>
               </select>
-              <button
+              <router-link :to="{ name: 'create-post' }" 
                 class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
-                @click="$emit('create')"
-              >Создать пост</button>
+              >Создать пост</router-link>
             </div>
           </div>
 

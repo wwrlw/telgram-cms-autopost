@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-white flex flex-col">
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
             <div class="flex items-start justify-between mb-4">
-                <h2 class="text-lg font-semibold">Редактировать пост</h2>
+                <h2 class="text-lg font-semibold">Создать пост</h2>
                 <button @click="cancel" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
             </div>
 
@@ -164,11 +164,11 @@ const triggerFile = () => {
     fileInputRef.value?.click();
 }
 
-function cancel() {
+const cancel = () => {
     router.back();
 }
 
-function send(publishLater) {
+const send = (publishLater) => {
     const html = editor.value?.getHTML() || '';
     const markdown = turndownService.turndown(html);
     if (!markdown.trim() && files.value.length === 0) {

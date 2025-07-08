@@ -18,12 +18,10 @@ export class SchedulerService {
     console.log('📅 Запуск планировщика отложенных публикаций...');
     this.isRunning = true;
     
-    // Проверяем отложенные публикации каждую минуту
     this.intervalId = setInterval(() => {
       this.processScheduledPosts();
-    }, 60000); // 60 секунд
+    }, 60000);
 
-    // Сразу выполняем первую проверку
     this.processScheduledPosts();
   }
 
@@ -58,7 +56,6 @@ export class SchedulerService {
       for (const post of scheduledPosts) {
         const scheduledTime = new Date(post.scheduled_at);
         
-        // Если время публикации наступило или прошло
         if (scheduledTime <= now) {
           await this.publishScheduledPost(post);
         }
