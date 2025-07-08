@@ -13,64 +13,41 @@ export class TelegramPublishService implements ITelegramPublishService {
 
   async publishPost(post: Post, channel: PostedChannel): Promise<{ success: boolean; message: string }> {
     try {
-      console.log('Пост:', {
-        id: post._id,
-        text: post.text?.substring(0, 100) + '...',
-        media: post.media?.length || 0
-      });
-      console.log('Канал:', {
-        id: channel.channel_id,
-        name: channel.name
-      });
-
+      console.log('Начинаем публикацию поста:', { id: post._id });
+  
       const messageText = this.formatMessageText(post, channel);
-      console.log('Отформатированный текст:', messageText);
-      
-      const requestBody = {
-        chat_id: channel.channel_id,
-        text: messageText,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      };
-      
-      console.log('Запрос к Telegram API:', JSON.stringify(requestBody, null, 2));
-
-      const response = await fetch(`${this.baseUrl}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      const result = await response.json();
-      console.log('Ответ от Telegram API:', JSON.stringify(result, null, 2));
-
-      if (result.ok) {
-        console.log('✅ Текстовое сообщение отправлено успешно');
-        
-        if (post.media && post.media.length > 0) {
-          console.log(`📎 Отправляем ${post.media.length} медиа-файлов`);
-          await this.sendMedia(post, channel, messageText);
-        }
-
-        return { 
-          success: true, 
-          message: `Пост успешно опубликован в канал ${channel.name}` 
-        };
+  
+      if (post.media && post.media.length > 0) {
+        console.log(`📎 Обнаружено ${post.media.length} медиа-файлов. Отправляем медиа с подписью.`);
+        await this.sendMedia(post, channel, messageText);
       } else {
-        console.error('❌ Ошибка Telegram API:', result.description);
-        return { 
-          success: false, 
-          message: `Ошибка Telegram API: ${result.description}` 
+        console.log('📝 Медиа не найдено. Отправляем текстовое сообщение.');
+        const requestBody = {
+          chat_id: channel.channel_id,
+          text: messageText,
+          parse_mode: 'HTML',
+          disable_web_page_preview: true
         };
+  
+        const response = await fetch(`${this.baseUrl}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+  
+        const result = await response.json();
+        if (!result.ok) {
+          console.error('❌ Ошибка Telegram API при отправке текста:', result.description);
+          return { success: false, message: `Ошибка Telegram API: ${result.description}` };
+        }
       }
+  
+      console.log('✅ Пост успешно опубликован');
+      return { success: true, message: `Пост успешно опубликован в канал ${channel.name}` };
+  
     } catch (error) {
       console.error('❌ Ошибка при публикации в Telegram:', error);
-      return { 
-        success: false, 
-        message: 'Ошибка при отправке в Telegram' 
-      };
+      return { success: false, message: 'Критическая ошибка при отправке в Telegram' };
     } finally {
       console.log('=== КОНЕЦ ПУБЛИКАЦИИ В TELEGRAM ===');
     }
@@ -110,6 +87,13 @@ export class TelegramPublishService implements ITelegramPublishService {
   }
 
   private async sendMedia(post: Post, channel: PostedChannel, caption: string): Promise<void> {
+
+    const getMediaUrl = (filePath: string) => {
+      const cleanPath = filePath.replace('/app/', '');
+      const baseUrl = process.env.VITE_API_URL || 'https://tg.chiorio.com/api/';
+      return `${baseUrl}${cleanPath}`;
+    };
+  
     try {
       for (let i = 0; i < post.media.length; i++) {
         const media = post.media[i];
@@ -117,15 +101,14 @@ export class TelegramPublishService implements ITelegramPublishService {
           type: media.type,
           file_path: media.file_path
         });
-
+        
         const mediaType = media.type;
         const method = this.getMediaMethod(mediaType);
         
         if (method) {
-          const publicUrl = `http://localhost:3001${media.file_path}`;
+          const publicUrl = getMediaUrl(media.file_path);
           console.log('Публичный URL медиа:', publicUrl);
           
-          // Проверяем доступность файла
           try {
             const fileCheckResponse = await fetch(publicUrl, { method: 'HEAD' });
             console.log('Статус доступности файла:', fileCheckResponse.status);
@@ -139,7 +122,7 @@ export class TelegramPublishService implements ITelegramPublishService {
           const mediaRequestBody = {
             chat_id: channel.channel_id,
             [mediaType]: publicUrl,
-            caption: this.markdownToHtml(caption),
+            caption: caption.substring(0, 1024), 
             parse_mode: 'HTML'
           };
           
@@ -183,7 +166,6 @@ export class TelegramPublishService implements ITelegramPublishService {
   }
 
   private markdownToHtml(text: string): string {
-    // Простое преобразование Markdown в HTML
     return text
       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')  // **жирный** -> <b>жирный</b>
       .replace(/\*(.*?)\*/g, '<i>$1</i>')      // *курсив* -> <i>курсив</i>
