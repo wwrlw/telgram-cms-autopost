@@ -1,5 +1,5 @@
 import { MongoClient, Db, Collection } from 'mongodb';
-import { Post, CreatePostDto } from '../types/index.js';
+import { Post, CreatePostDto, PostStats } from '../types/index.js';
 
 export class MongoService {
   private client: MongoClient;
@@ -111,5 +111,36 @@ export class MongoService {
       { url },
       { $set: { is_unique: true } }
     );
+  }
+
+  async getRecentPosts(days: number): Promise<Post[]> {
+    if (!this.postsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    return await this.postsCollection.find({
+      created_at: { $gte: cutoffDate }
+    }).toArray();
+  }
+
+  async updatePostStats(url: string, stats: PostStats): Promise<void> {
+    if (!this.postsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    await this.postsCollection.updateOne(
+      { url },
+      { 
+        $set: { 
+          stats,
+          updated_at: new Date()
+        }
+      }
+    );
+
+    console.log(`📊 Статистика обновлена для поста: ${url}`);
   }
 } 

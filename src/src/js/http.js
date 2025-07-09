@@ -354,7 +354,7 @@ let http = {
     
     uploadMedia: function (formData, callback, error) {
         instance.post('/media/upload', formData, { headers: {'Content-Type' : 'multipart/form-data'} })
-        then((res) => {
+        .then((res) => {
             callback && callback(res.data);
         })
         .catch((err) => {

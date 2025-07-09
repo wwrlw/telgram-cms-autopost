@@ -5,6 +5,14 @@ export interface Media {
   file_path: string;
 }
 
+export interface PostStats {
+  views?: number;
+  reactions?: number;
+  comments?: number;
+  forwards?: number;
+  reactions_detail?: { [emoji: string]: number };
+}
+
 export interface Post {
   _id?: ObjectId;
   source_channel: string;
@@ -13,6 +21,7 @@ export interface Post {
   url: string;
   media: Media[];
   is_unique: boolean;
+  stats?: PostStats;
   category_id?: ObjectId;
   created_at: Date;
   scheduled_at?: Date;
@@ -28,5 +37,6 @@ export interface CreatePostDto {
   url: string;
   media?: Media[];
   is_unique?: boolean;
+  stats?: PostStats;
   category_id?: ObjectId;
 } 

@@ -37,6 +37,9 @@
                     Категория
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Статистика
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Дата
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -116,6 +119,29 @@
                           :class="getCategoryStyle(post.category_id)">
                       {{ getCategoryName(post.category_id) }}
                     </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div v-if="post.stats" class="flex flex-col space-y-1 text-xs text-gray-600">
+                      <div v-if="post.stats.views !== undefined" class="flex items-center space-x-1">
+                        <span>👁️</span>
+                        <span>{{ formatNumber(post.stats.views) }}</span>
+                      </div>
+                      <div v-if="post.stats.reactions !== undefined" class="flex items-center space-x-1">
+                        <span>😍</span>
+                        <span>{{ formatNumber(post.stats.reactions) }}</span>
+                      </div>
+                      <div v-if="post.stats.comments !== undefined" class="flex items-center space-x-1">
+                        <span>💬</span>
+                        <span>{{ formatNumber(post.stats.comments) }}</span>
+                      </div>
+                      <div v-if="post.stats.forwards !== undefined" class="flex items-center space-x-1">
+                        <span>🔄</span>
+                        <span>{{ formatNumber(post.stats.forwards) }}</span>
+                      </div>
+                    </div>
+                    <div v-else class="text-xs text-gray-400">
+                      Нет данных
+                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <time :datetime="post.timestamp">{{ formatDate(post.timestamp) }}</time>
@@ -407,6 +433,11 @@ const getFirstPhoto = (post) => {
     return post.media.find(m => m.type === 'photo' || m.type === 'MessageMediaPhoto') || null
   }
   return post.media
+}
+
+const formatNumber = (num) => {
+  if (num === undefined || num === null) return '0'
+  return num.toLocaleString('ru-RU')
 }
 
 watch(selectedPosts, () => {

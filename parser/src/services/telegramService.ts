@@ -2,7 +2,7 @@ import { TelegramClient } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
 import { Api } from 'telegram';
 import input from 'input';
-import { CreatePostDto } from '../types/index.js';
+import { CreatePostDto, PostStats } from '../types/index.js';
 import { MongoService } from './mongoService.js';
 import { MediaService } from './mediaService.js';
 import { PublishService } from './publishService.js';
@@ -98,7 +98,8 @@ export class TelegramService {
           console.error('💡 Решения:');
           console.error('   1. Остановите другие боты/клиенты с этой сессией');
           console.error('   2. Сгенерируйте новую STRING_SESSION');
-          console.error('   3. Подождите 5-10 минут и попробуйте снова');
+          console.error('   3. Для этого необходимо локально через npm run dev запустить с папки parser, перенеся туда переменные окружения');
+          console.error('   4. Вводим стринг session в переменные окружения главного env файла и удаляем env из папки parser');
           
           console.log('⏳ Ждем 30 секунд перед повторной попыткой...');
           await new Promise(resolve => setTimeout(resolve, 30000));
@@ -139,6 +140,54 @@ export class TelegramService {
     }
   }
 
+  async updatePostsStats(): Promise<void> {
+    try {
+      console.log('🔄 Начинаем обновление статистики постов...');
+      
+      const recentPosts = await this.mongoService.getRecentPosts(7);
+      console.log(`📊 Найдено ${recentPosts.length} постов для обновления статистики`);
+      
+      for (const post of recentPosts) {
+        try {
+          const urlMatch = post.url.match(/https:\/\/t\.me\/([^/]+)\/(\d+)/);
+          if (!urlMatch) {
+            console.log(`⚠️ Не удалось извлечь данные из URL: ${post.url}`);
+            continue;
+          }
+          
+          const [, channelUsername, messageIdStr] = urlMatch;
+          const messageId = parseInt(messageIdStr);
+          
+          // Получаем entity канала
+          const entity = await this.client.getEntity(channelUsername);
+          
+          // Получаем обновленное сообщение
+          const messages = await this.client.getMessages(entity, { ids: [messageId] });
+          
+          if (messages && messages.length > 0) {
+            const message = messages[0];
+            const updatedStats = this.getPostStatsFromMessage(message);
+            
+            if (updatedStats) {
+              await this.mongoService.updatePostStats(post.url, updatedStats);
+              console.log(`✅ Обновлена статистика для ${post.url}:`, updatedStats);
+            }
+          }
+          
+          // Пауза между запросами для избежания лимитов
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+        } catch (error) {
+          console.error(`❌ Ошибка обновления статистики для ${post.url}:`, error);
+        }
+      }
+      
+      console.log('✅ Обновление статистики завершено');
+    } catch (error) {
+      console.error('❌ Ошибка при обновлении статистики постов:', error);
+    }
+  }
+
   private async checkChannelsAccess(): Promise<void> {
     console.log('🔍 Проверяем доступ к каналам...');
     
@@ -171,6 +220,49 @@ export class TelegramService {
       });
     } catch (error) {
       console.error('❌ Ошибка получения информации о канале:', error);
+    }
+  }
+
+  private getPostStatsFromMessage(message: any): PostStats | undefined {
+    try {
+      console.log(`📊 Извлекаем статистику из сообщения ${message.id}`);
+      
+      const stats: PostStats = {};
+
+      if (message.views !== undefined) {
+        stats.views = message.views;
+        console.log(`👁️ Просмотры: ${stats.views}`);
+      }
+
+      if (message.forwards !== undefined) {
+        stats.forwards = message.forwards;
+        console.log(`🔄 Пересылки: ${stats.forwards}`);
+      }
+
+      if (message.replies && message.replies.replies !== undefined) {
+        stats.comments = message.replies.replies;
+        console.log(`💬 Комментарии: ${stats.comments}`);
+      }
+
+      if (message.reactions && message.reactions.results) {
+        stats.reactions = message.reactions.results.reduce((total: number, reaction: any) => total + (reaction.count || 0), 0);
+        stats.reactions_detail = {};
+        
+        for (const reaction of message.reactions.results) {
+          if (reaction.reaction && 'emoticon' in reaction.reaction) {
+            const emoji = reaction.reaction.emoticon;
+            stats.reactions_detail[emoji] = reaction.count || 0;
+          }
+        }
+        
+        console.log(`😍 Реакции: ${stats.reactions}`, stats.reactions_detail);
+      }
+
+      return Object.keys(stats).length > 0 ? stats : undefined;
+      
+    } catch (error) {
+      console.error('❌ Ошибка извлечения статистики из сообщения:', error);
+      return undefined;
     }
   }
 
@@ -227,6 +319,7 @@ export class TelegramService {
         const albumMsgs = this.albumBuffer[groupId];
         let allMedia: any[] = [];
         let text = '';
+        
         for (const m of albumMsgs) {
           const media = await this.mediaService.processMedia(
             this.client,
@@ -237,16 +330,22 @@ export class TelegramService {
           allMedia = allMedia.concat(media);
           if (m.message && !text) text = m.message;
         }
+        
         const entity = await this.client.getEntity(peer);
         const username = (entity as any).username || `channel_${peer.channelId || peer.userId || peer.chatId}`;
         const postUrl = `https://t.me/${username}/${albumMsgs[0].id}`;
+        
+        const stats = this.getPostStatsFromMessage(albumMsgs[0]);
+        
         const postData: CreatePostDto = {
           source_channel: username,
           text,
           url: postUrl,
           media: allMedia,
-          is_unique: false
+          is_unique: false,
+          stats
         };
+        
         await this.mongoService.savePost(postData);
         delete this.albumBuffer[groupId];
         delete this.albumTimers[groupId];
@@ -283,12 +382,15 @@ export class TelegramService {
         msg.id
       );
 
+      const stats = this.getPostStatsFromMessage(msg);
+
       const postData: CreatePostDto = {
         source_channel: username,
         text: (msg as any).message || '',
         url: postUrl,
         media: media,
-        is_unique: false
+        is_unique: false,
+        stats
       };
 
       await this.mongoService.savePost(postData);

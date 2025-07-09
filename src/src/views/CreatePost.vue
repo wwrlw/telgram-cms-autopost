@@ -85,9 +85,13 @@
             </div>
 
             <div class="flex justify-end gap-3 mt-4">
-                <button @click="cancel" class="px-4 py-2 rounded bg-gray-200">Отмена</button>
-                <button @click="publishLater" class="px-4 py-2 rounded bg-blue-600 text-white">Опубликовать позже</button>
-                <button @click="publishNow" class="px-4 py-2 rounded bg-indigo-600 text-white">Опубликовать сейчас</button>
+                <button @click="cancel" class="px-4 py-2 rounded bg-gray-200" :disabled="isSubmitting">Отмена</button>
+                <button @click="publishLater" class="px-4 py-2 rounded bg-blue-600 text-white" :disabled="isSubmitting">
+                    {{ isSubmitting ? 'Планирование...' : 'Опубликовать позже' }}
+                </button>
+                <button @click="publishNow" class="px-4 py-2 rounded bg-indigo-600 text-white" :disabled="isSubmitting">
+                    {{ isSubmitting ? 'Публикация...' : 'Опубликовать сейчас' }}
+                </button>
             </div>
         </div>
     </div>
@@ -118,6 +122,7 @@ const channels = ref([]);
 const loadingPost = ref(false);
 const postData = ref(null);
 const previews = ref([]);
+const isSubmitting = ref(false);
 
 const editor = useEditor({
     extensions: [StarterKit, Link, Underline],
@@ -168,7 +173,9 @@ const cancel = () => {
     router.back();
 }
 
-const send = (publishLater) => {
+const send = async (publishLater) => {
+    if (isSubmitting.value) return;
+    
     const html = editor.value?.getHTML() || '';
     const markdown = turndownService.turndown(html);
     if (!markdown.trim() && files.value.length === 0) {
@@ -186,41 +193,77 @@ const send = (publishLater) => {
         }
     }
 
-    const fd = new FormData();
-    fd.append('text', markdown);
-    files.value.forEach((f) => fd.append('file', f));
-    fd.append('channel_id', selectedChannel.value);
-    if (publishLater) {
-        fd.append('scheduled_at', new Date(scheduledAt.value).toISOString());
-    }
+    isSubmitting.value = true;
 
-    http.createPost(
-        fd,
-        (response) => {
-            if (response.success) {
-                if (publishLater) {
-                    window?.$toast?.success('Пост запланирован');
-                    router.push('/scheduled-posts');
-                } else {
-                    const postId = response.data._id;
-                    http.publishToChannel(postId, selectedChannel.value, (publishRes) => {
-                        if (publishRes.success) {
-                            window?.$toast?.success('Пост опубликован в Telegram!');
-                            router.push('/');
-                        } else {
-                            window?.$toast?.error('Ошибка публикации: ' + (publishRes.message || ''));
-                        }
+    try {
+        const uploadedFiles = [];
+        if (files.value.length > 0) {
+            for (const file of files.value) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const uploadResult = await new Promise((resolve, reject) => {
+                        http.uploadMedia(formData, resolve, reject);
                     });
+                    
+                    if (uploadResult.success) {
+                        uploadedFiles.push(uploadResult.data);
+                    } else {
+                        window?.$toast?.error(`Ошибка загрузки файла ${file.name}: ${uploadResult.message}`);
+                        return;
+                    }
+                } catch (error) {
+                    window?.$toast?.error(`Ошибка загрузки файла ${file.name}`);
+                    return;
                 }
-            } else {
-                window?.$toast?.error(response.message || 'Ошибка создания поста');
             }
-        },
-        (error) => {
-            console.error('Error creating post:', error);
-            window?.$toast?.error('Ошибка создания поста');
         }
-    );
+
+        const postData = {
+            text: markdown,
+            channel_id: selectedChannel.value,
+            media: uploadedFiles
+        };
+
+        if (publishLater) {
+            postData.scheduled_at = new Date(scheduledAt.value).toISOString();
+        }
+
+        http.createPost(
+            postData,
+            (response) => {
+                isSubmitting.value = false;
+                if (response.success) {
+                    if (publishLater) {
+                        window?.$toast?.success('Пост запланирован');
+                        router.push('/scheduled-posts');
+                    } else {
+                        const postId = response.data._id;
+                        http.publishToChannel(postId, selectedChannel.value, (publishRes) => {
+                            if (publishRes.success) {
+                                window?.$toast?.success('Пост опубликован в Telegram!');
+                                router.push('/');
+                            } else {
+                                window?.$toast?.error('Ошибка публикации: ' + (publishRes.message || ''));
+                            }
+                        });
+                    }
+                } else {
+                    window?.$toast?.error(response.message || 'Ошибка создания поста');
+                }
+            },
+            (error) => {
+                isSubmitting.value = false;
+                console.error('Error creating post:', error);
+                window?.$toast?.error('Ошибка создания поста');
+            }
+        );
+    } catch (error) {
+        isSubmitting.value = false;
+        console.error('Error in send function:', error);
+        window?.$toast?.error('Произошла ошибка при отправке поста');
+    }
 }
 
 function publishNow() {

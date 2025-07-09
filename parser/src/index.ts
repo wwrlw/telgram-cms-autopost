@@ -95,6 +95,17 @@ async function updateChannels() {
   }
 }
 
+async function updatePostsStats() {
+  try {
+    if (telegramService) {
+      console.log('📊 Запускаем обновление статистики постов...');
+      await telegramService.updatePostsStats();
+    }
+  } catch (error) {
+    console.error('❌ Ошибка обновления статистики постов:', error);
+  }
+}
+
 process.on('SIGINT', async () => {
   console.log('\n🛑 Получен сигнал SIGINT, останавливаем сервис...');
   schedulerService.stop();
@@ -119,6 +130,9 @@ process.on('SIGTERM', async () => {
     
     // Обновляем список каналов каждые 2,5 минут
     setInterval(updateChannels, 5 * 60 * 100);
+    
+    // Обновляем статистику постов каждые 2 часа
+    setInterval(updatePostsStats, 2 * 60 * 60 * 1000);
     
   } catch (error) {
     console.error('❌ Критическая ошибка:', error);

@@ -44,7 +44,7 @@
                                 placeholder="••••••••">
                         </div>
 
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center">
                             <label class="flex items-center">
                                 <input type="checkbox"
                                     class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
