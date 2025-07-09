@@ -8,8 +8,8 @@ import Categories from "@/views/Categories.vue";
 import Post from "@/views/Post.vue";
 const CreatePost = () => import('@/views/CreatePost.vue');
 const page404 = () => import('@/views/Page404.vue');
-
 const ScheduledPosts = () => import('@/views/SheduledPosts.vue');
+const Analytics = () => import('@/views/Analytics.vue');
 
 const routes = [
   {
@@ -26,6 +26,11 @@ const routes = [
     path: "/posted-channels",
     name: "posted-channels",
     component: PublicationChannels,
+  },
+  {
+    path: "/analytics",
+    name: "analytics",
+    component: Analytics,
   },
   {
     path: "/categories",

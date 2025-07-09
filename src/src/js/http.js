@@ -29,6 +29,8 @@ instance.interceptors.response.use(
 instance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
+        console.log('Request interceptor - URL:', config.url);
+        console.log('Request interceptor - Token:', token ? 'Present' : 'Missing');
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
@@ -359,6 +361,22 @@ let http = {
         })
         .catch((err) => {
             err && error(err);
+        });
+    },
+
+    getChannelAnalytics: function (channelId, callback, errorCallback) {
+        console.log('getChannelAnalytics called with channelId:', channelId);
+        console.log('Token from localStorage:', localStorage.getItem('token'));
+        
+        instance.get(`/analytics?channelid=${channelId}`)
+        .then((res) => {
+            console.log('Analytics API response:', res.data);
+            callback(res.data);
+        })
+        .catch((err) => {
+            console.error('Analytics API error:', err);
+            if (errorCallback) errorCallback(err);
+            else callback({ success: false, message: 'Failed to load channel analytics' });
         });
     }
 };
