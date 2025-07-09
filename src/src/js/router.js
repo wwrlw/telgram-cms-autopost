@@ -6,6 +6,7 @@ import Channels from "@/views/Channels.vue";
 import PublicationChannels from "@/views/PublicationChannels.vue";
 import Categories from "@/views/Categories.vue";
 import Post from "@/views/Post.vue";
+import Posts from "@/views/Posts.vue"
 const CreatePost = () => import('@/views/CreatePost.vue');
 const page404 = () => import('@/views/Page404.vue');
 
@@ -16,6 +17,11 @@ const routes = [
     path: "/",
     name: "index",
     component: Index,
+  },
+  {
+    path: "/posts",
+    name: "posts",
+    component: Posts,
   },
   {
     path: "/channels",

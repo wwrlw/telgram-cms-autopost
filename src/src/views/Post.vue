@@ -53,6 +53,47 @@
                     />
                     <span class="text-xs text-gray-500">До 10 файлов</span>
                 </div>
+
+                <!-- Existing Media from Post (if editing) -->
+                <div v-if="postData && postData.media && postData.media.length" class="mb-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Текущие медиафайлы:</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <div v-for="(media, idx) in postData.media" :key="'existing-' + idx" class="relative group border rounded overflow-hidden">
+                            <img 
+                                v-if="isImageMedia(media)" 
+                                :src="getMediaUrl(media.file_path)" 
+                                class="w-full h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                                @click="openMediaViewer(media, idx)"
+                            />
+                            <div 
+                                v-else-if="isVideoMedia(media)" 
+                                class="relative cursor-pointer hover:opacity-90 transition-opacity"
+                                @click="openMediaViewer(media, idx)"
+                            >
+                                <video 
+                                    :src="getMediaUrl(media.file_path)" 
+                                    class="w-full h-32 object-cover" 
+                                    muted
+                                    preload="metadata"
+                                />
+                                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                                    <div class="w-8 h-8 bg-black bg-opacity-70 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="w-full h-32 bg-gray-200 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New Files Preview -->
                 <div v-if="previews.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
                     <div v-for="(item, idx) in previews" :key="idx" class="relative group border rounded overflow-hidden">
                         <img v-if="item.isImage" :src="item.url" class="w-full h-32 object-cover" />
@@ -61,6 +102,19 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Media Viewer Modal -->
+            <MediaViewer 
+                :show="showMediaViewer"
+                :media="currentMedia"
+                :current-index="currentMediaIndex"
+                :total-count="postData?.media?.length || 0"
+                :can-go-previous="currentMediaIndex > 0"
+                :can-go-next="currentMediaIndex < (postData?.media?.length || 0) - 1"
+                @close="closeMediaViewer"
+                @previous="previousMedia"
+                @next="nextMedia"
+            />
 
             <div class="space-y-4 mb-4">
                 <div>
@@ -104,6 +158,7 @@ import http from '@/js/http';
 import TurndownService from 'turndown';
 import { getMediaUrl } from '@/js/utils';
 import 'emoji-picker-element';
+import MediaViewer from '@/components/MediaViewer.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -322,6 +377,45 @@ function confirmLink() {
 
 function cancelLink() {
     showLinkInput.value = false;
+}
+
+const showMediaViewer = ref(false);
+const currentMediaIndex = ref(0);
+const currentMedia = ref(null);
+
+function openMediaViewer(media, index) {
+    currentMediaIndex.value = index;
+    currentMedia.value = media;
+    showMediaViewer.value = true;
+}
+
+function closeMediaViewer() {
+    showMediaViewer.value = false;
+    currentMedia.value = null;
+}
+
+function previousMedia() {
+    currentMediaIndex.value--;
+    if (currentMediaIndex.value < 0) {
+        currentMediaIndex.value = postData.value.media.length - 1;
+    }
+    currentMedia.value = postData.value.media[currentMediaIndex.value];
+}
+
+function nextMedia() {
+    currentMediaIndex.value++;
+    if (currentMediaIndex.value >= postData.value.media.length) {
+        currentMediaIndex.value = 0;
+    }
+    currentMedia.value = postData.value.media[currentMediaIndex.value];
+}
+
+function isImageMedia(media) {
+    return media.type === 'photo' || media.type === 'MessageMediaPhoto';
+}
+
+function isVideoMedia(media) {
+    return media.type === 'video' || media.type === 'MessageMediaDocument' || media.type === 'document';
 }
 
 onMounted(() => {
