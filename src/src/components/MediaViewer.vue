@@ -1,7 +1,7 @@
 <template>
   <div 
     v-if="show" 
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
+    class="fixed inset-0 z-50 flex w-full h-full items-center justify-center bg-black bg-opacity-90"
     @click="$emit('close')"
   >
     <div class="relative max-w-5xl max-h-[90vh] w-full mx-4" @click.stop>
@@ -107,7 +107,6 @@ function getMediaType(media) {
 </script>
 
 <style scoped>
-/* Добавляем плавную анимацию для появления */
 .fixed {
   animation: fadeIn 0.2s ease-out;
 }

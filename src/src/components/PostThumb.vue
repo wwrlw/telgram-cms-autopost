@@ -140,7 +140,7 @@
 </template>
 
 <script setup>
-import { getMediaUrl } from '@/js/utils'
+import { getMediaUrl, formatNumber, extractTitle, formatDate } from '@/js/utils'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -157,23 +157,6 @@ const props = defineProps({
 })
 
 defineEmits(['publish', 'delete', 'quickview'])
-
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const extractTitle = (text) => {
-  if (!text) return 'Без заголовка'
-  const firstSentence = text.split('\n\n')[0]
-  return firstSentence.length > 80 ? firstSentence.substring(0, 80) + '...' : firstSentence
-}
 
 const getMediaPath = (filePath) => {
   return getMediaUrl(filePath)
@@ -236,15 +219,6 @@ const getFirstVideo = (post) => {
     return post.media.find(m => m.type === 'video' || m.type === 'MessageMediaDocument' || m.type === 'document') || null
   }
   return post.media
-}
-
-const formatNumber = (num) => {
-  if (num === undefined || num === null) return '0'
-  return num.toLocaleString('ru-RU')
-}
-
-const navigateToPost = () => {
-  router.push({ name: 'post', params: { id: post._id } })
 }
 </script>
 

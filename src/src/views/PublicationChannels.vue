@@ -187,7 +187,8 @@
 
 <script setup>
 import { ref, reactive, onMounted, getCurrentInstance, inject, watch } from 'vue';
-import http from '../js/http.js';
+import http from '@/js/http.js';
+import { formatDate } from '@/js/utils';
 
 const { proxy } = getCurrentInstance();
 
@@ -312,9 +313,6 @@ const deleteChannel = (channel) => {
   loadChannels();
 };
 
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleString('ru-RU');
-};
 
 watch(refreshTrigger, () => {
   loadChannels();

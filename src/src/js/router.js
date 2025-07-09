@@ -16,12 +16,12 @@ const routes = [
   {
     path: "/",
     name: "index",
-    component: Index,
+    component: Posts,
   },
   {
     path: "/posts",
     name: "posts",
-    component: Posts,
+    component: Index,
   },
   {
     path: "/channels",

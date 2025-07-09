@@ -54,21 +54,20 @@
                     <span class="text-xs text-gray-500">До 10 файлов</span>
                 </div>
 
-                <!-- Existing Media from Post (if editing) -->
-                <div v-if="postData && postData.media && postData.media.length" class="mb-4">
+                <div v-if="postData && postData.media.length" class="mb-4">
                     <h4 class="text-sm font-medium text-gray-700 mb-3">Текущие медиафайлы:</h4>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <div v-for="(media, idx) in postData.media" :key="'existing-' + idx" class="relative group border rounded overflow-hidden">
+                        <div v-for="(media, id) in postData.media" :key="'id-' + id" class="relative group border rounded overflow-hidden">
                             <img 
                                 v-if="isImageMedia(media)" 
                                 :src="getMediaUrl(media.file_path)" 
                                 class="w-full h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity" 
-                                @click="openMediaViewer(media, idx)"
+                                @click="openMediaViewer(media, id)"
                             />
                             <div 
                                 v-else-if="isVideoMedia(media)" 
                                 class="relative cursor-pointer hover:opacity-90 transition-opacity"
-                                @click="openMediaViewer(media, idx)"
+                                @click="openMediaViewer(media, id)"
                             >
                                 <video 
                                     :src="getMediaUrl(media.file_path)" 
@@ -93,17 +92,15 @@
                     </div>
                 </div>
 
-                <!-- New Files Preview -->
-                <div v-if="previews.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
+                <!-- <div v-if="previews.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
                     <div v-for="(item, idx) in previews" :key="idx" class="relative group border rounded overflow-hidden">
                         <img v-if="item.isImage" :src="item.url" class="w-full h-32 object-cover" />
                         <video v-else muted :src="item.url" class="w-full h-32 object-cover"></video>
                         <button @click="removeFile(idx)" class="absolute top-1 right-1 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
                     </div>
-                </div>
+                </div> -->
             </div>
 
-            <!-- Media Viewer Modal -->
             <MediaViewer 
                 :show="showMediaViewer"
                 :media="currentMedia"

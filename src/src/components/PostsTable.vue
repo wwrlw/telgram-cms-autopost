@@ -64,7 +64,7 @@
                       <div class="flex-shrink-0">
                         <LazyImage 
                           v-if="hasPhoto(post)" 
-                          :src="getMediaPath(getFirstPhoto(post).file_path)"
+                          :src="getMediaUrl(getFirstPhoto(post).file_path)"
                           alt="Preview" 
                           container-class="h-16 w-16 rounded-lg"
                           image-class="h-16 w-16 rounded-lg object-cover"
@@ -88,7 +88,7 @@
                             ✅ Опубликован: {{ formatDate(post.published_at) }}
                           </span>
                           <span v-else-if="post.scheduled_at && !post.is_published" class="text-orange-600">
-                            📅 Запланирован на: {{ formatDate(post.scheduled_at) }}
+                            Запланирован на: {{ formatDate(post.scheduled_at) }}
                           </span>
                         </div>
                       </div>
@@ -259,7 +259,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import LazyImage from '@/components/LazyImage.vue'
-import { getMediaUrl } from '@/js/utils'
+import { getMediaUrl, formatDate, extractTitle, hasPhoto, formatNumber } from '@/js/utils'
 
 const props = defineProps({
   posts: {
@@ -342,31 +342,12 @@ const visiblePages = computed(() => {
   return pages
 })
 
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const extractTitle = (text) => {
-  const firstSentence = text.split('\n\n')[0]
-  return firstSentence.length > 80 ? firstSentence.substring(0, 80) + '...' : firstSentence
-}
 
 const truncateText = (text, length) => {
   if (text.length > length) {
     return text.substring(0, length) + '...'
   }
   return text
-}
-
-const getMediaPath = (filePath) => {
-  return getMediaUrl(filePath)
 }
 
 const getCategoryName = (categoryId) => {
@@ -419,25 +400,12 @@ const goToPage = (page) => {
   }
 }
 
-const hasPhoto = (post) => {
-  if (!post.media) return false
-  if (Array.isArray(post.media)) {
-    return post.media.some(m => m.type === 'photo' || m.type === 'MessageMediaPhoto')
-  }
-  return post.media.type === 'photo' || post.media.type === 'MessageMediaPhoto'
-}
-
 const getFirstPhoto = (post) => {
   if (!post.media) return null
   if (Array.isArray(post.media)) {
     return post.media.find(m => m.type === 'photo' || m.type === 'MessageMediaPhoto') || null
   }
   return post.media
-}
-
-const formatNumber = (num) => {
-  if (num === undefined || num === null) return '0'
-  return num.toLocaleString('ru-RU')
 }
 
 watch(selectedPosts, () => {

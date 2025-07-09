@@ -80,7 +80,7 @@
                         {{ getPreviewText(post.text) }}
                       </p>
                       <div class="mt-1 text-sm text-gray-500">
-                        <p>📅 Время публикации: {{ formatDateTime(post.scheduled_at) }}</p>
+                        <p>📅 Время публикации: {{ formatDate(post.scheduled_at) }}</p>
                         <p>📺 Канал: {{ getChannelName(post.scheduled_channel_id) }}</p>
                         <p v-if="post.url">🔗 Ссылка: {{ post.url }}</p>
                         <p v-if="post.media?.length">📎 Медиафайлов: {{ post.media.length }}</p>
@@ -136,8 +136,8 @@
                         {{ getPreviewText(post.text) }}
                       </p>
                       <div class="mt-1 text-sm text-gray-500">
-                        <p>✅ Опубликовано: {{ formatDateTime(post.published_at) }}</p>
-                        <p v-if="post.scheduled_at">📅 Было запланировано на: {{ formatDateTime(post.scheduled_at) }}</p>
+                        <p>✅ Опубликовано: {{ formatDate(post.published_at) }}</p>
+                        <p v-if="post.scheduled_at">📅 Было запланировано на: {{ formatDate(post.scheduled_at) }}</p>
                         <p>📺 Канал: {{ getChannelName(post.scheduled_channel_id) }}</p>
                         <p v-if="post.url">🔗 Ссылка: {{ post.url }}</p>
                         <p v-if="post.media?.length">📎 Медиафайлов: {{ post.media.length }}</p>
@@ -167,7 +167,7 @@
   import { ref, onMounted, getCurrentInstance, onActivated } from 'vue';
   import http from '../js/http.js';
   import SchedulePublishModal from '@/components/Modal/SchedulePublishModal.vue';
-  
+  import { formatDate } from '@/js/utils.js';
   const { proxy } = getCurrentInstance();
   
   const scheduledPosts = ref([]);
@@ -177,7 +177,7 @@
   const showEditModal = ref(false);
   const editingPost = ref(null);
   const channels = ref([]);
-  const activeTab = ref('scheduled'); // 'scheduled' or 'published'
+  const activeTab = ref('scheduled');
   
   const loadScheduledPosts = () => {
     loading.value = true;
@@ -222,11 +222,6 @@
   const getPreviewText = (text) => {
     if (!text) return 'Текст отсутствует';
     return text.length > 80 ? text.substring(0, 80) + '...' : text;
-  };
-  
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('ru-RU');
   };
   
   const isOverdue = (scheduledDate) => {
@@ -286,7 +281,6 @@
     loadChannels();
   });
 
-  // Обновляем данные при активации страницы (например, при возврате с другой страницы)
   onActivated(() => {
     refreshData();
   });

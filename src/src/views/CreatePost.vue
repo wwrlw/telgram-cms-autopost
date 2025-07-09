@@ -422,18 +422,3 @@ button:disabled {
     background: #c7d2fe;
 }
 </style>
-
-<style>
-:global(.custom-editor-content .ProseMirror),
-:global(.custom-editor-content .ProseMirror:focus) {
-    outline: none !important;
-    box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
-}
-:global(.ProseMirror),
-:global(.ProseMirror:focus) {
-    outline: none !important;
-    box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
-}
-</style>

@@ -71,7 +71,7 @@
   
   const pagination = ref({
     page: 1,
-    limit: 25,
+    limit: 24,
     total: 0,
     totalPages: 0,
     hasNext: false,
@@ -258,14 +258,6 @@
   
   const clearSelection = () => {
     selectedPosts.value = [];
-  };
-  
-  const openCreate = () => {
-    showCreateModal.value = true;
-  };
-  
-  const handleCreated = () => {
-    postsService();
   };
   
   const loadCategories = () => {
