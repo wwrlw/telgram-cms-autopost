@@ -7,6 +7,7 @@ import { postsRoutes } from './routes/posts';
 import { channelsRoutes } from './routes/channels';
 import { postedChannelsRoutes } from './routes/posted-channels';
 import { categoriesRoutes } from './routes/categories';
+import { analyticsRoutes } from './routes/analytics';
 import publishRoutes from './routes/publish';
 import cors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
@@ -45,6 +46,7 @@ async function start() {
         await fastify.register(channelsRoutes);
         await fastify.register(postedChannelsRoutes);
         await fastify.register(categoriesRoutes);
+        await fastify.register(analyticsRoutes);
         await fastify.register(publishRoutes);
         fastify.setErrorHandler(errorHandler);
         await fastify.ready();
