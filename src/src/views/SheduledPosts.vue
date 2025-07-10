@@ -160,6 +160,12 @@
         @update:show="showEditModal = $event"
         @scheduled="handleScheduleUpdated"
       />
+      <ConfirmModal
+        :show="showConfirmModal"
+        :message="confirmMessage"
+        @confirm="onConfirm"
+        @cancel="onCancelConfirm"
+      />
     </div>
   </template>
   
@@ -167,6 +173,7 @@
   import { ref, onMounted, getCurrentInstance, onActivated } from 'vue';
   import http from '../js/http.js';
   import SchedulePublishModal from '@/components/Modal/SchedulePublishModal.vue';
+  import ConfirmModal from '@/components/Modal/ConfirmModal.vue';
   import { formatDate } from '@/js/utils.js';
   const { proxy } = getCurrentInstance();
   
@@ -178,6 +185,28 @@
   const editingPost = ref(null);
   const channels = ref([]);
   const activeTab = ref('scheduled');
+  
+  const showConfirmModal = ref(false);
+  const confirmMessage = ref('');
+  let confirmAction = null;
+  let confirmPayload = null;
+
+  function showConfirm(message, action, payload = null) {
+    confirmMessage.value = message;
+    confirmAction = action;
+    confirmPayload = payload;
+    showConfirmModal.value = true;
+  }
+
+  function onConfirm() {
+    showConfirmModal.value = false;
+    if (confirmAction) confirmAction(confirmPayload);
+  }
+  function onCancelConfirm() {
+    showConfirmModal.value = false;
+    confirmAction = null;
+    confirmPayload = null;
+  }
   
   const loadScheduledPosts = () => {
     loading.value = true;
@@ -241,10 +270,8 @@
   };
   
   const cancelSchedule = (post) => {
-    console.log('Canceling scheduled post:', post);
-    if (confirm(`Вы действительно хотите отменить публикацию поста "${getPreviewText(post.text)}"?`)) {
-      console.log('User confirmed cancellation, calling API with ID:', post._id);
-      http.cancelScheduledPost(post._id, (response) => {
+    showConfirm(`Вы действительно хотите отменить публикацию поста "${getPreviewText(post.text)}"?`, (id) => {
+      http.cancelScheduledPost(id, (response) => {
         if (response.success) {
           window.$toast.success('Отложенная публикация отменена');
           loadScheduledPosts();
@@ -252,7 +279,7 @@
           window.$toast.error('Ошибка отмены публикации: ' + response.message);
         }
       });
-    }
+    }, post._id);
   };
   
   const handleScheduleUpdated = (result) => {

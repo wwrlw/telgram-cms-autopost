@@ -182,6 +182,12 @@
         </div>
       </div>
     </div>
+    <ConfirmModal
+      :show="showConfirmModal"
+      :message="confirmMessage"
+      @confirm="onConfirm"
+      @cancel="onCancelConfirm"
+    />
   </div>
 </template>
 
@@ -189,6 +195,7 @@
 import { ref, reactive, onMounted, getCurrentInstance, inject, watch } from 'vue';
 import http from '@/js/http.js';
 import { formatDate } from '@/js/utils';
+import ConfirmModal from '@/components/Modal/ConfirmModal.vue';
 
 const { proxy } = getCurrentInstance();
 
@@ -200,6 +207,28 @@ const loading = ref(true);
 const showModal = ref(false);
 const editingChannel = ref(null);
 const saving = ref(false);
+
+const showConfirmModal = ref(false);
+const confirmMessage = ref('');
+let confirmAction = null;
+let confirmPayload = null;
+
+function showConfirm(message, action, payload = null) {
+  confirmMessage.value = message;
+  confirmAction = action;
+  confirmPayload = payload;
+  showConfirmModal.value = true;
+}
+
+function onConfirm() {
+  showConfirmModal.value = false;
+  if (confirmAction) confirmAction(confirmPayload);
+}
+function onCancelConfirm() {
+  showConfirmModal.value = false;
+  confirmAction = null;
+  confirmPayload = null;
+}
 
 const formData = reactive({
   name: '',
@@ -300,8 +329,8 @@ const toggleChannelStatus = (channel) => {
 };
 
 const deleteChannel = (channel) => {
-  if (confirm(`Вы действительно хотите удалить канал "${channel.name}"?`)) {
-    http.deletePublicationChannel({ id: channel.id }, (response) => {
+  showConfirm(`Вы действительно хотите удалить канал "${channel.name}"?`, (ch) => {
+    http.deletePublicationChannel({ id: ch.id }, (response) => {
       if (response.success) {
         window.$toast.success('Канал успешно удален');
         loadChannels();
@@ -309,8 +338,7 @@ const deleteChannel = (channel) => {
         window.$toast.error('Ошибка удаления канала: ' + response.message);
       }
     });
-  }
-  loadChannels();
+  }, channel);
 };
 
 

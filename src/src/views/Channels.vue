@@ -36,6 +36,13 @@
         v-model:show="showCreateModal"
         :channel="editingChannel"
         @submit="submitChannel" />
+
+      <ConfirmModal
+        :show="showConfirmModal"
+        :message="confirmMessage"
+        @confirm="onConfirm"
+        @cancel="onCancelConfirm"
+      />
     </main>
   </div>
 </template>
@@ -49,6 +56,7 @@ import ChannelsTable from '@/components/Channel/Table.vue';
 import ChannelActions from '@/components/Channel/Actions.vue';
 import CreateChannelModal from '@/components/Modal/CreateChannelModal.vue';
 import PostTableSkeleton from '@/components/PostTableSkeleton.vue';
+import ConfirmModal from '@/components/Modal/ConfirmModal.vue';
 
 const ChannelTableSkeleton = PostTableSkeleton;
 
@@ -194,9 +202,26 @@ const submitChannel = (formData) => {
   }
 };
 
+const showConfirm = (message, action, payload = null) => {
+  confirmMessage.value = message;
+  confirmAction = action;
+  confirmPayload = payload;
+  showConfirmModal.value = true;
+};
+
+const onConfirm = () => {
+  showConfirmModal.value = false;
+  if (confirmAction) confirmAction(confirmPayload);
+};
+const onCancelConfirm = () => {
+  showConfirmModal.value = false;
+  confirmAction = null;
+  confirmPayload = null;
+};
+
 const deleteChannel = (channelId) => {
-  if (confirm('Вы уверены, что хотите удалить этот канал?')) {
-    http.deleteChannel({ id: channelId }, (res) => {
+  showConfirm('Вы уверены, что хотите удалить этот канал?', (id) => {
+    http.deleteChannel({ id }, (res) => {
       if (res.success) {
         window.$toast.success('Канал успешно удален!');
         channelsService();
@@ -204,23 +229,22 @@ const deleteChannel = (channelId) => {
         window.$toast.error('Ошибка: ' + res.message);
       }
     });
-  }
+  }, channelId);
 };
 
 const bulkDelete = () => {
-  if (confirm(`Вы уверены, что хотите удалить ${selectedChannels.value.length} каналов?`)) {
+  showConfirm(`Вы уверены, что хотите удалить ${selectedChannels.value.length} каналов?`, () => {
     const deletePromises = selectedChannels.value.map(channelId => {
       return new Promise((resolve) => {
         http.deleteChannel({ id: channelId }, resolve);
       });
     });
-    
     Promise.all(deletePromises).then(() => {
       window.$toast.success('Выбранные каналы удалены!');
       clearSelection();
       channelsService();
     });
-  }
+  });
 };
 
 const clearSelection = () => {

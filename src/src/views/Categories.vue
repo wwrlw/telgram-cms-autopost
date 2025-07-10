@@ -33,6 +33,13 @@
         v-model:show="showCreateModal"
         :category="editingCategory"
         @submit="submitCategory" />
+
+      <ConfirmModal
+        :show="showConfirmModal"
+        :message="confirmMessage"
+        @confirm="onConfirm"
+        @cancel="onCancelConfirm"
+      />
     </main>
   </div>
 </template>
@@ -46,6 +53,7 @@ import CategoriesTable from '@/components/Category/Table.vue';
 import CategoryActions from '@/components/Category/Actions.vue';
 import CreateCategoryModal from '@/components/Modal/CreateCategoryModal.vue';
 import PostTableSkeleton from '@/components/PostTableSkeleton.vue';
+import ConfirmModal from '@/components/Modal/ConfirmModal.vue';
 
 const CategoryTableSkeleton = PostTableSkeleton;
 
@@ -61,6 +69,28 @@ const showCreateModal = ref(false);
 const editingCategory = ref(null);
 const loading = ref(false);
 const totalCount = ref(0);
+
+const showConfirmModal = ref(false);
+const confirmMessage = ref('');
+let confirmAction = null;
+let confirmPayload = null;
+
+function showConfirm(message, action, payload = null) {
+  confirmMessage.value = message;
+  confirmAction = action;
+  confirmPayload = payload;
+  showConfirmModal.value = true;
+}
+
+function onConfirm() {
+  showConfirmModal.value = false;
+  if (confirmAction) confirmAction(confirmPayload);
+}
+function onCancelConfirm() {
+  showConfirmModal.value = false;
+  confirmAction = null;
+  confirmPayload = null;
+}
 
 const categoriesService = async (params = {}) => {
   loading.value = true;
@@ -155,8 +185,8 @@ const submitCategory = (formData) => {
 };
 
 const deleteCategory = (categoryId) => {
-  if (confirm('Вы уверены, что хотите удалить эту категорию?')) {
-    http.deleteCategory({ id: categoryId }, (res) => {
+  showConfirm('Вы уверены, что хотите удалить эту категорию?', (id) => {
+    http.deleteCategory({ id }, (res) => {
       if (res.success) {
         window.$toast.success('Категория успешно удалена!');
         categoriesService();
@@ -164,23 +194,22 @@ const deleteCategory = (categoryId) => {
         window.$toast.error('Ошибка: ' + res.message);
       }
     });
-  }
+  }, categoryId);
 };
 
 const bulkDelete = () => {
-  if (confirm(`Вы уверены, что хотите удалить ${selectedCategories.value.length} категорий?`)) {
+  showConfirm(`Вы уверены, что хотите удалить ${selectedCategories.value.length} категорий?`, () => {
     const deletePromises = selectedCategories.value.map(categoryId => {
       return new Promise((resolve) => {
         http.deleteCategory({ id: categoryId }, resolve);
       });
     });
-    
     Promise.all(deletePromises).then(() => {
       window.$toast.success('Выбранные категории удалены!');
       clearSelection();
       categoriesService();
     });
-  }
+  });
 };
 
 const clearSelection = () => {

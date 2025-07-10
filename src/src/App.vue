@@ -1,14 +1,18 @@
 <template>
-  <Sidebar>
-    <Header :loading="loading" @refreshPosts="refreshPosts" class="bg-white shadow-sm border-b border-gray-200 flex-shrink-0"/>
+  <div v-if="$route.name !== 'login'">
+    <Sidebar>
+      <Header :loading="loading" @refreshPosts="refreshPosts" class="bg-white shadow-sm border-b border-gray-200 flex-shrink-0"/>
+      
+      <div class="flex-1 overflow-auto">
+        <RouterView />
+      </div>
+    </Sidebar>
     
-    <div class="flex-1 overflow-auto">
-      <RouterView />
-    </div>
-  </Sidebar>
+    <!-- Глобальный компонент уведомлений -->
+    <Toast />
+  </div>
   
-  <!-- Глобальный компонент уведомлений -->
-  <Toast />
+  <router-view v-else />
 </template>
 
 <script setup>
