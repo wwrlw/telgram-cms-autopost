@@ -37,6 +37,12 @@
           :post="selectedPostForPublish"
           @published="handlePublished" />
   
+        <ConfirmModal
+          :show="showConfirmModal"
+          :message="confirmMessage"
+          @confirm="onConfirm"
+          @cancel="onCancelConfirm"
+        />
       </main>
     </div>
   </template>
@@ -48,7 +54,8 @@
   import Filters from '@/components/Filters.vue';
   import Actions from '@/components/Actions.vue';
   import PublishModal from '@/components/Modal/PublishModal.vue';
-  import Thumbs from '@/components/Thumbs.vue'
+  import Thumbs from '@/components/Thumbs.vue';
+  import ConfirmModal from '@/components/Modal/ConfirmModal.vue';
   const globalLoading = inject('loading');
   const refreshTrigger = inject('refreshTrigger');
   const setLoading = inject('setLoading');
@@ -215,9 +222,31 @@
     }
   };
   
+  const showConfirmModal = ref(false);
+  const confirmMessage = ref('');
+  let confirmAction = null;
+  let confirmPayload = null;
+
+  function showConfirm(message, action, payload = null) {
+    confirmMessage.value = message;
+    confirmAction = action;
+    confirmPayload = payload;
+    showConfirmModal.value = true;
+  }
+
+  function onConfirm() {
+    showConfirmModal.value = false;
+    if (confirmAction) confirmAction(confirmPayload);
+  }
+  function onCancelConfirm() {
+    showConfirmModal.value = false;
+    confirmAction = null;
+    confirmPayload = null;
+  }
+  
   const deletePost = (postId) => {
-    if (confirm('Вы уверены, что хотите удалить этот пост?')) {
-      http.deletePost({ id: postId }, (response) => {
+    showConfirm('Вы уверены, что хотите удалить этот пост?', (id) => {
+      http.deletePost({ id }, (response) => {
         if (response.success) {
           window.$toast.success('Пост успешно удален');
           postsService();
@@ -225,7 +254,7 @@
           window.$toast.error('Ошибка при удалении поста: ' + response.message);
         }
       });
-    }
+    }, postId);
   };
   
   const bulkDelete = () => {
@@ -233,17 +262,14 @@
       window.$toast.error('Выберите посты для удаления');
       return;
     }
-  
-    if (confirm(`Вы уверены, что хотите удалить ${selectedPosts.value.length} постов?`)) {
+    showConfirm(`Вы уверены, что хотите удалить ${selectedPosts.value.length} постов?`, () => {
       let deletedCount = 0;
       const totalToDelete = selectedPosts.value.length;
-      
       selectedPosts.value.forEach((postId, index) => {
         http.deletePost({ id: postId }, (response) => {
           if (response.success) {
             deletedCount++;
           }
-          
           if (deletedCount + index + 1 >= totalToDelete) {
             clearSelection();
             postsService();
@@ -253,7 +279,7 @@
           }
         });
       });
-    }
+    });
   };
   
   const clearSelection = () => {
