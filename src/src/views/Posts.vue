@@ -20,11 +20,8 @@
             :posts="posts" 
             :categories="categories"
             :loading="loading"
-            :pagination="pagination"
             @publish="handlePublish"
-            @delete="deletePost"
-            @page-change="changePage"
-            @items-per-page-change="changeItemsPerPage" />
+            @delete="deletePost" />
   
         <Actions 
           :selected-posts="selectedPosts"
@@ -43,20 +40,24 @@
           @confirm="onConfirm"
           @cancel="onCancelConfirm"
         />
+        <Pagination :pagination="pagination"
+          @page-change="changePage"
+          @items-per-page-change="changeItemsPerPage"
+        />
       </main>
     </div>
   </template>
   
   <script setup>
-  import { ref, computed, onMounted, inject, watch } from "vue";
+  import { ref, onMounted, inject, watch } from "vue";
   import http from '@/js/http';
   import StatsCards from '@/components/StatsCards.vue';
-  import Filters from '@/components/Filters.vue';
-  import Actions from '@/components/Actions.vue';
+  import Filters from '@/components/Shared/Filters.vue';
+  import Actions from '@/components/Shared/Actions.vue';
   import PublishModal from '@/components/Modal/PublishModal.vue';
   import Thumbs from '@/components/Thumbs.vue';
   import ConfirmModal from '@/components/Modal/ConfirmModal.vue';
-  const globalLoading = inject('loading');
+  import Pagination from "@/components/Shared/Pagination.vue";
   const refreshTrigger = inject('refreshTrigger');
   const setLoading = inject('setLoading');
   
@@ -73,7 +74,6 @@
   const selectedPostForPublish = ref(null);
   const loading = ref(false);
   const totalCount = ref(0);
-  const showCreateModal = ref(false);
   const categories = ref([]);
   
   const pagination = ref({

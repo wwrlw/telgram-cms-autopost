@@ -144,7 +144,6 @@ export class TelegramService {
     try {
       console.log('🔄 Начинаем обновление статистики постов...');
       
-      // Получаем лимит из переменной окружения или используем значение по умолчанию
       const statsLimit = Number(process.env.STATS_UPDATE_LIMIT) || 50;
       const recentPosts = await this.mongoService.getRecentPostsForStats(statsLimit);
       console.log(`📊 Найдено ${recentPosts.length} постов для обновления статистики (ограничение: ${statsLimit})`);
@@ -166,13 +165,10 @@ export class TelegramService {
           
           let entity;
           
-          // Пытаемся получить entity разными способами
           try {
-            // Сначала пробуем как username
             if (!channelIdentifier.startsWith('channel_')) {
               entity = await this.client.getEntity(channelIdentifier);
             } else {
-              // Если это ID канала, извлекаем ID и получаем entity по ID
               const channelId = parseInt(channelIdentifier.replace('channel_', ''));
               let telegramChannelId = Math.abs(channelId);
               
@@ -207,7 +203,6 @@ export class TelegramService {
             skippedCount++;
           }
           
-          // Пауза между запросами для избежания лимитов
           await new Promise(resolve => setTimeout(resolve, 1000));
           
         } catch (error) {

@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 //
-import Index from "@/views/Index.vue";
 import LoginPage from "@/views/LoginPage.vue";
 import Channels from "@/views/Channels.vue";
 import PublicationChannels from "@/views/PublicationChannels.vue";
@@ -17,11 +16,6 @@ const routes = [
     path: "/",
     name: "index",
     component: Posts,
-  },
-  {
-    path: "/posts",
-    name: "posts",
-    component: Index,
   },
   {
     path: "/channels",

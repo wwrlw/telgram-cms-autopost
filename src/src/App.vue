@@ -18,7 +18,7 @@
 <script setup>
 import Header from '@/components/HeaderComponent.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import Toast from '@/components/Toast.vue';
+import Toast from '@/components/Shared/Toast.vue';
 import { ref, provide } from 'vue';
 
 const loading = ref(false);
