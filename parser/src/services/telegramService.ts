@@ -144,24 +144,50 @@ export class TelegramService {
     try {
       console.log('🔄 Начинаем обновление статистики постов...');
       
-      const recentPosts = await this.mongoService.getRecentPosts(7);
-      console.log(`📊 Найдено ${recentPosts.length} постов для обновления статистики`);
+      // Получаем лимит из переменной окружения или используем значение по умолчанию
+      const statsLimit = Number(process.env.STATS_UPDATE_LIMIT) || 50;
+      const recentPosts = await this.mongoService.getRecentPostsForStats(statsLimit);
+      console.log(`📊 Найдено ${recentPosts.length} постов для обновления статистики (ограничение: ${statsLimit})`);
+      
+      let updatedCount = 0;
+      let skippedCount = 0;
       
       for (const post of recentPosts) {
         try {
           const urlMatch = post.url.match(/https:\/\/t\.me\/([^/]+)\/(\d+)/);
           if (!urlMatch) {
             console.log(`⚠️ Не удалось извлечь данные из URL: ${post.url}`);
+            skippedCount++;
             continue;
           }
           
-          const [, channelUsername, messageIdStr] = urlMatch;
+          const [, channelIdentifier, messageIdStr] = urlMatch;
           const messageId = parseInt(messageIdStr);
           
-          // Получаем entity канала
-          const entity = await this.client.getEntity(channelUsername);
+          let entity;
           
-          // Получаем обновленное сообщение
+          // Пытаемся получить entity разными способами
+          try {
+            // Сначала пробуем как username
+            if (!channelIdentifier.startsWith('channel_')) {
+              entity = await this.client.getEntity(channelIdentifier);
+            } else {
+              // Если это ID канала, извлекаем ID и получаем entity по ID
+              const channelId = parseInt(channelIdentifier.replace('channel_', ''));
+              let telegramChannelId = Math.abs(channelId);
+              
+              if (telegramChannelId > 1_000_000_000_000) {
+                telegramChannelId -= 1_000_000_000_000;
+              }
+              
+              entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
+            }
+          } catch (entityError) {
+            console.log(`⚠️ Не удалось получить entity для ${channelIdentifier}, пропускаем: ${entityError}`);
+            skippedCount++;
+            continue;
+          }
+          
           const messages = await this.client.getMessages(entity, { ids: [messageId] });
           
           if (messages && messages.length > 0) {
@@ -171,7 +197,14 @@ export class TelegramService {
             if (updatedStats) {
               await this.mongoService.updatePostStats(post.url, updatedStats);
               console.log(`✅ Обновлена статистика для ${post.url}:`, updatedStats);
+              updatedCount++;
+            } else {
+              console.log(`⚠️ Нет статистики для ${post.url}`);
+              skippedCount++;
             }
+          } else {
+            console.log(`⚠️ Сообщение не найдено для ${post.url}`);
+            skippedCount++;
           }
           
           // Пауза между запросами для избежания лимитов
@@ -179,12 +212,21 @@ export class TelegramService {
           
         } catch (error) {
           console.error(`❌ Ошибка обновления статистики для ${post.url}:`, error);
+          skippedCount++;
         }
       }
       
-      console.log('✅ Обновление статистики завершено');
+      console.log(`✅ Обновление статистики завершено. Обновлено: ${updatedCount}, Пропущено: ${skippedCount}`);
     } catch (error) {
       console.error('❌ Ошибка при обновлении статистики постов:', error);
+    }
+  }
+
+  async cleanupDuplicates(): Promise<void> {
+    try {
+      await this.mongoService.cleanupDuplicates();
+    } catch (error) {
+      console.error('❌ Ошибка при очистке дубликатов:', error);
     }
   }
 
@@ -304,6 +346,13 @@ export class TelegramService {
       return;
     }
 
+    // Проверяем дубликат по тексту на ранней стадии
+    const messageText = (msg as any).message || '';
+    if (messageText && await this.mongoService.checkTextDuplicate(messageText)) {
+      console.log(`⏭️ Дубликат текста обнаружен на ранней стадии, пропускаем: ${messageText.substring(0, 50)}...`);
+      return;
+    }
+
     if (msg.groupedId) {
       const groupId = msg.groupedId.toString();
       if (!this.albumBuffer[groupId]) {
@@ -375,6 +424,9 @@ export class TelegramService {
         return;
       }
 
+      console.log(`📝 Обрабатываем новый пост: ${postUrl}`);
+      console.log(`📄 Текст: ${(msg as any).message ? (msg as any).message.substring(0, 100) + '...' : 'Без текста'}`);
+
       const media = await this.mediaService.processMedia(
         this.client,
         msg,
@@ -395,8 +447,8 @@ export class TelegramService {
 
       await this.mongoService.savePost(postData);
 
-      console.log(`📤 Обработан пост из ${username}:`, 
-        postData.text.substring(0, 100) + (postData.text.length > 100 ? '...' : ''));
+      console.log(`✅ Пост успешно сохранен: ${postUrl}`);
+      console.log(`📊 Статистика: ${stats ? JSON.stringify(stats) : 'Нет данных'}`);
 
     } catch (error) {
       console.error('❌ Ошибка при обработке сообщения:', error);

@@ -106,6 +106,17 @@ async function updatePostsStats() {
   }
 }
 
+async function cleanupDuplicates() {
+  try {
+    if (telegramService) {
+      console.log('🧹 Запускаем очистку дубликатов...');
+      await telegramService.cleanupDuplicates();
+    }
+  } catch (error) {
+    console.error('❌ Ошибка очистки дубликатов:', error);
+  }
+}
+
 process.on('SIGINT', async () => {
   console.log('\n🛑 Получен сигнал SIGINT, останавливаем сервис...');
   schedulerService.stop();
@@ -128,11 +139,11 @@ process.on('SIGTERM', async () => {
   try {
     await initializeParser();
     
-    // Обновляем список каналов каждые 2,5 минут
-    setInterval(updateChannels, 5 * 60 * 100);
+    setInterval(updateChannels, 10 * 60 * 1000);
     
-    // Обновляем статистику постов каждые 2 часа
-    setInterval(updatePostsStats, 2 * 60 * 60 * 1000);
+    setInterval(updatePostsStats, 30 * 60 * 1000);
+    
+    setInterval(cleanupDuplicates, 60 * 60 * 1000);
     
   } catch (error) {
     console.error('❌ Критическая ошибка:', error);

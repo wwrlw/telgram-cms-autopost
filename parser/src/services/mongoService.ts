@@ -89,9 +89,30 @@ export class MongoService {
       throw new Error('MongoDB не подключена');
     }
 
-    // Проверяем точное совпадение текста
+    // Если текст пустой, не считаем его дубликатом
+    if (!text || text.trim().length === 0) {
+      return false;
+    }
+
     const exactTextMatch = await this.postsCollection.findOne({ text });
-    return !!exactTextMatch;
+    if (exactTextMatch) {
+      console.log(`🔍 Найден точный дубликат текста: ${text.substring(0, 50)}...`);
+      return true;
+    }
+
+    if (text.length > 20) {
+      const similarTexts = await this.postsCollection.find({
+        text: { $regex: text.substring(0, Math.min(50, text.length)), $options: 'i' },
+        created_at: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      }).toArray();
+
+      if (similarTexts.length > 0) {
+        console.log(`🔍 Найден похожий текст за последние 24 часа: ${text.substring(0, 50)}...`);
+        return true;
+      }
+    }
+
+    return false;
   }
 
   async getPostByUrl(url: string): Promise<Post | null> {
@@ -126,6 +147,17 @@ export class MongoService {
     }).toArray();
   }
 
+  async getRecentPostsForStats(limit: number = 50): Promise<Post[]> {
+    if (!this.postsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    return await this.postsCollection.find({})
+      .sort({ created_at: -1 })
+      .limit(limit)
+      .toArray();
+  }
+
   async updatePostStats(url: string, stats: PostStats): Promise<void> {
     if (!this.postsCollection) {
       throw new Error('MongoDB не подключена');
@@ -142,5 +174,57 @@ export class MongoService {
     );
 
     console.log(`📊 Статистика обновлена для поста: ${url}`);
+  }
+
+  async cleanupDuplicates(): Promise<void> {
+    if (!this.postsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    try {
+      console.log('🧹 Начинаем очистку дубликатов...');
+      
+      // Находим дубликаты по тексту
+      const duplicates = await this.postsCollection.aggregate([
+        {
+          $match: {
+            text: { $ne: "" } // Исключаем пустые тексты
+          }
+        },
+        {
+          $group: {
+            _id: "$text",
+            count: { $sum: 1 },
+            posts: { $push: "$$ROOT" }
+          }
+        },
+        {
+          $match: {
+            count: { $gt: 1 }
+          }
+        }
+      ]).toArray();
+
+      let removedCount = 0;
+      
+      for (const duplicate of duplicates) {
+        // Оставляем самый старый пост, удаляем остальные
+        const sortedPosts = duplicate.posts.sort((a: Post, b: Post) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        
+        const toRemove = sortedPosts.slice(1);
+        
+        for (const post of toRemove) {
+          await this.postsCollection.deleteOne({ _id: post._id });
+          removedCount++;
+          console.log(`🗑️ Удален дубликат: ${post.url}`);
+        }
+      }
+      
+      console.log(`✅ Очистка завершена. Удалено ${removedCount} дубликатов`);
+    } catch (error) {
+      console.error('❌ Ошибка при очистке дубликатов:', error);
+    }
   }
 } 
