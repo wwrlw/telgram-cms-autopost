@@ -1,9 +1,9 @@
 <template>
     <div class="min-h-screen bg-white flex flex-col">
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
-            <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-3 justify-start mb-4">
+                <button @click="cancel" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
                 <h2 class="text-lg font-semibold">Редактировать пост</h2>
-                <button @click="cancel" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
             </div>
 
             <div class="mb-4 flex flex-col">
@@ -92,13 +92,6 @@
                     </div>
                 </div>
 
-                <!-- <div v-if="previews.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
-                    <div v-for="(item, idx) in previews" :key="idx" class="relative group border rounded overflow-hidden">
-                        <img v-if="item.isImage" :src="item.url" class="w-full h-32 object-cover" />
-                        <video v-else muted :src="item.url" class="w-full h-32 object-cover"></video>
-                        <button @click="removeFile(idx)" class="absolute top-1 right-1 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-                    </div>
-                </div> -->
             </div>
 
             <MediaViewer 

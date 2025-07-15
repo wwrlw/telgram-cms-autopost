@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject, watch } from "vue";
+import { ref, onMounted, inject, watch } from "vue";
 import http from '@/js/http';
 import ChannelStatsCards from '@/components/Channel/StatsCards.vue';
 import ChannelFilters from '@/components/Channel/Filters.vue';
@@ -72,6 +72,9 @@ const showCreateModal = ref(false);
 const editingChannel = ref(null);
 const loading = ref(false);
 const totalCount = ref(0);
+// const showConfirm = ref(false);
+const confirmMessage = ref('');
+let confirmCallback = null;
 
 const pagination = ref({
   page: 1,
@@ -180,7 +183,6 @@ const editChannel = (channel) => {
 
 const submitChannel = (formData) => {
   if (editingChannel.value) {
-    // Редактирование существующего канала
     http.updateChannel(formData, (res) => {
       if (res.success) {
         window.$toast.success('Канал успешно обновлен!');
@@ -190,7 +192,6 @@ const submitChannel = (formData) => {
       }
     });
   } else {
-    // Создание нового канала
     http.createChannel(formData, (res) => {
       if (res.success) {
         window.$toast.success('Канал успешно создан!');
@@ -233,7 +234,9 @@ const deleteChannel = (channelId) => {
 };
 
 const bulkDelete = () => {
-  showConfirm(`Вы уверены, что хотите удалить ${selectedChannels.value.length} каналов?`, () => {
+    confirmMessage.value = `Вы уверены, что хотите удалить ${selectedChannels.value.length} каналов?`;
+    showConfirm.value = true;
+    confirmCallback = () => {
     const deletePromises = selectedChannels.value.map(channelId => {
       return new Promise((resolve) => {
         http.deleteChannel({ id: channelId }, resolve);
@@ -244,7 +247,7 @@ const bulkDelete = () => {
       clearSelection();
       channelsService();
     });
-  });
+  };
 };
 
 const clearSelection = () => {
@@ -256,6 +259,18 @@ watch(refreshTrigger, () => {
     channelsService();
   }
 });
+
+const handleConfirm = () => {
+  showConfirm.value = false;
+  if (typeof confirmCallback === 'function') confirmCallback();
+  confirmCallback = null;
+};
+
+const handleCancel = () => {
+  showConfirm.value = false;
+  confirmCallback = null;
+};
+
 
 onMounted(() => {
   channelsService();
