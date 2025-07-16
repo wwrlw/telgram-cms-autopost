@@ -13,6 +13,8 @@ services:
       - NODE_ENV=development
       - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017
       - MONGODB_DB=${MONGODB_DB}
+      - YANDEX_API_FOLDER=${YANDEX_API_FOLDER}
+      - IAM_TOKEN=${IAM_TOKEN}
     networks:
       - bots_bots
   parser:

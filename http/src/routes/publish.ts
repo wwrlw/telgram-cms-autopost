@@ -5,10 +5,12 @@ import { PostRepository } from '../repositories/PostRepository';
 import { PostedChannelService } from '../services/PostedChannelService';
 import { PostedChannelRepository } from '../repositories/PostedChannelRepository';
 import { TelegramPublishService } from '../services/TelegramPublishService';
+import { YandexGPTService } from '../services/YandexGPTService';
 
 export default async function publishRoutes(fastify: FastifyInstance) {
   const postRepository = new PostRepository(fastify.mongo);
-  const postService = new PostService(postRepository);
+  const yandexGPTService = new YandexGPTService();
+  const postService = new PostService(postRepository, yandexGPTService);
   const postedChannelRepository = new PostedChannelRepository(fastify.mongo);
   const postedChannelService = new PostedChannelService(postedChannelRepository);
   const telegramPublishService = new TelegramPublishService();

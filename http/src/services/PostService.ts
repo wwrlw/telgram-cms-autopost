@@ -4,9 +4,13 @@ import { IPostRepository } from '../interfaces/repositories/IPostRepository';
 import { Post, CreatePostDto } from '../models/Post';
 import { PostQuery, PaginatedResponse } from '../types/PostQuery';
 import { NotFoundError } from '../exceptions/NotFoundError';
+import { YandexGPTService } from './YandexGPTService';
 
 export class PostService implements IPostService {
-  constructor(private postRepository: IPostRepository) {}
+  constructor(
+    private postRepository: IPostRepository,
+    private yandexGPTService: YandexGPTService
+  ) {}
 
   async getPost(id: string): Promise<Post> {
     const post = await this.postRepository.findById(id);
@@ -152,6 +156,31 @@ export class PostService implements IPostService {
 
     if (!updatedPost) {
       throw new NotFoundError('Failed to update post category');
+    }
+
+    return updatedPost;
+  }
+
+  async uniquizePost(id: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+
+    if (!post.text || post.text.trim() === '') {
+      throw new NotFoundError('Post has no text to uniquize');
+    }
+
+    const uniquizedText = await this.yandexGPTService.uniquizeText(post.text);
+    
+    const updatedPost = await this.postRepository.update(id, {
+      text: uniquizedText,
+      is_unique: true,
+      updated_at: new Date()
+    });
+
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to update post with uniquized text');
     }
 
     return updatedPost;

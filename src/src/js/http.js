@@ -40,6 +40,7 @@ instance.interceptors.request.use(
 );
 
 let http = {
+    instance: instance,
     posts: function (params = {}, callback, errorCallback) {
         const queryParams = new URLSearchParams();
         

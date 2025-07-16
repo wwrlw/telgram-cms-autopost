@@ -17,4 +17,5 @@ export interface IPostService {
   getPublishedPosts(): Promise<Post[]>;
   updatePost(id: string, updateData: Partial<Post>): Promise<Post>;
   updatePostCategory(id: string, categoryId: string): Promise<Post>;
+  uniquizePost(id: string): Promise<Post>;
 } 

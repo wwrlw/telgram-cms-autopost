@@ -9,6 +9,7 @@
         @publish="$emit('publish', $event)"
         @delete="$emit('delete', $event)"
         @quickview="handleQuickview"
+        @uniquized="handleUniquized"
       />
     </div>
 
@@ -90,7 +91,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['publish', 'delete'])
+const emit = defineEmits(['publish', 'delete', 'uniquized'])
 
 const showQuickviewer = ref(false)
 const currentQuickviewMedia = ref(null)
@@ -125,5 +126,16 @@ const nextQuickviewMedia = () => {
     currentQuickviewIndex.value++
     currentQuickviewMedia.value = quickviewPost.value.media[currentQuickviewIndex.value]
   }
+}
+
+const handleUniquized = (updatedPost) => {
+  // Обновляем пост в локальном состоянии
+  const index = props.posts.findIndex(p => p._id === updatedPost._id)
+  if (index !== -1) {
+    props.posts[index] = updatedPost
+  }
+  
+  // Передаем событие выше
+  emit('uniquized', updatedPost)
 }
 </script>

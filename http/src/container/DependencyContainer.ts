@@ -10,10 +10,12 @@ import { ChannelService } from '../services/ChannelService';
 import { PublicationChannelService } from '../services/PublicationChannelService';
 import { CategoryService } from '../services/CategoryService';
 import { AuthService } from '../services/AuthService';
+import { YandexGPTService } from '../services/YandexGPTService';
 import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
 import { GetPostsWithQueryUseCase } from '../use-cases/GetPostsWithQueryUseCase';
 import { DeletePostUseCase } from '../use-cases/DeletePostUseCase';
+import { UniquizePostUseCase } from '../use-cases/UniquizePostUseCase';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
 import { LoginUseCase } from '../use-cases/LoginUseCase';
 import { CreateChannelUseCase } from '../use-cases/CreateChannelUseCase';
@@ -91,8 +93,12 @@ export class DependencyContainer {
     return new AuthService(jwtSecret);
   }
 
+  getYandexGPTService(): YandexGPTService {
+    return new YandexGPTService();
+  }
+
   getPostService(): PostService {
-    return new PostService(this.getPostRepository());
+    return new PostService(this.getPostRepository(), this.getYandexGPTService());
   }
 
   getUserService(): UserService {
@@ -202,5 +208,9 @@ export class DependencyContainer {
 
   getDeleteCategoryUseCase(): DeleteCategoryUseCase {
     return new DeleteCategoryUseCase(this.getCategoryService());
+  }
+
+  getUniquizePostUseCase(): UniquizePostUseCase {
+    return new UniquizePostUseCase(this.getPostService());
   }
 } 

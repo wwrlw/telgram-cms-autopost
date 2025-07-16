@@ -251,4 +251,55 @@ export async function postsRoutes(fastify: FastifyInstance) {
       return { success: true, data: post };
     }
   );
+
+  // Тестовый роут для проверки настроек Yandex GPT
+  fastify.get(
+    "/posts/test-yandex-config",
+    { 
+      preValidation: [fastify.authenticate]
+    },
+    async (request, reply) => {
+      return {
+        success: true,
+        data: {
+          hasYandexApiFolder: !!process.env.YANDEX_API_FOLDER,
+          hasIamToken: !!process.env.IAM_TOKEN,
+          yandexApiFolder: process.env.YANDEX_API_FOLDER ? 
+            process.env.YANDEX_API_FOLDER.substring(0, 8) + '...' : null,
+          iamTokenLength: process.env.IAM_TOKEN ? process.env.IAM_TOKEN.length : 0
+        }
+      };
+    }
+  );
+
+  // Роут для уникализации поста
+  fastify.post(
+    "/posts/:id/uniquize",
+    { 
+      preValidation: [fastify.authenticate],
+      schema: {
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' }
+          },
+          required: ['id']
+        }
+      }
+    },
+    async (request, reply) => {
+      try {
+        const { id } = request.params as { id: string };
+        const uniquizePostUseCase = container.getUniquizePostUseCase();
+        const uniquizedPost = await uniquizePostUseCase.execute(id);
+        
+        return {
+          success: true,
+          data: uniquizedPost
+        };
+      } catch (error) {
+        throw error;
+      }
+    }
+  );
 }
