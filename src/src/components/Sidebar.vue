@@ -5,7 +5,9 @@
       :class="isCollapsed ? 'w-16' : 'w-56'"
     >
       <div class="p-4 border-b border-gray-700 flex items-center justify-between">
-        <h1 v-if="!isCollapsed" class="text-xl font-semibold">TG ADMIN</h1>
+        <router-link to="/" class="text-xl font-semibold hover:text-indigo-600 transition-colors cursor-pointer">
+          TG ADMIN
+        </router-link>
         <button 
           @click="toggleCollapse"
           class="p-1 rounded hover:bg-gray-700 transition-colors"
@@ -136,8 +138,12 @@
       </nav>
       <div class="p-4 border-t border-gray-700">
         <div v-if="!isCollapsed" class="text-xs text-gray-400">
-          Logged in as:<br>
-          <span class="text-white font-medium"></span>
+          Logged in as: <span class="text-white font-medium">{{ username }}</span>
+        </div>
+        <div v-else class="text-center">
+          <div class="w-8 h-8 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center">
+            <span class="text-white text-xs font-bold">{{ username.charAt(0).toUpperCase() }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -151,12 +157,28 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
+const username = ref('');
 const route = useRoute();
 const isCollapsed = ref(false);
 
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value;
   localStorage.setItem('sidebarCollapsed', isCollapsed.value.toString());
+};
+
+const loadUserData = () => {
+  try {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      username.value = user.username || user.name || user.email || user.displayName || 'Пользователь';
+    } else {
+      username.value = 'Пользователь';
+    }
+  } catch (error) {
+    console.error('Error loading user data:', error);
+    username.value = 'Пользователь';
+  }
 };
 
 onMounted(() => {
@@ -166,5 +188,11 @@ onMounted(() => {
   } else if (window.innerWidth <= 640) {
     isCollapsed.value = true;
   }
+  loadUserData();
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'user') {
+      loadUserData();
+    }
+  });
 });
 </script> 

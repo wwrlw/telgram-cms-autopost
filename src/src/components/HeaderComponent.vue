@@ -4,7 +4,9 @@
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <h1 class="text-2xl font-bold text-gray-900">Управление контентом</h1>
+              <router-link to="/" class="text-2xl font-bold text-gray-900 hover:text-indigo-600 transition-colors cursor-pointer">
+                Управление контентом
+              </router-link>
             </div>
           </div>
           <div class="flex items-center space-x-4">
