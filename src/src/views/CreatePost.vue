@@ -86,10 +86,13 @@
 
             <div class="flex justify-end gap-3 mt-4">
                 <button @click="cancel" class="px-4 py-2 rounded bg-gray-200" :disabled="isSubmitting">Отмена</button>
-                <button @click="publishLater" class="px-4 py-2 rounded bg-blue-600 text-white" :disabled="isSubmitting">
+                <button @click="savePost" class="px-4 py-2 rounded bg-green-600 text-white" :disabled="isSubmitting">
+                    {{ isSubmitting ? 'Сохранение...' : 'Сохранить' }}
+                </button>
+                <button v-if="schedule" @click="publishLater" class="px-4 py-2 rounded bg-blue-600 text-white" :disabled="isSubmitting">
                     {{ isSubmitting ? 'Планирование...' : 'Опубликовать позже' }}
                 </button>
-                <button @click="publishNow" class="px-4 py-2 rounded bg-indigo-600 text-white" :disabled="isSubmitting">
+                <button v-if="!schedule" @click="publishNow" class="px-4 py-2 rounded bg-indigo-600 text-white" :disabled="isSubmitting">
                     {{ isSubmitting ? 'Публикация...' : 'Опубликовать сейчас' }}
                 </button>
             </div>
@@ -266,6 +269,76 @@ const send = async (publishLater) => {
     }
 }
 
+function savePost() {
+    savePostToDatabase();
+}
+
+const savePostToDatabase = async () => {
+    if (isSubmitting.value) return;
+    
+    const html = editor.value?.getHTML() || '';
+    const markdown = turndownService.turndown(html);
+    if (!markdown.trim() && files.value.length === 0) {
+        window?.$toast?.error('Добавьте текст или медиа');
+        return;
+    }
+
+    isSubmitting.value = true;
+
+    try {
+        const uploadedFiles = [];
+        if (files.value.length > 0) {
+            for (const file of files.value) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const uploadResult = await new Promise((resolve, reject) => {
+                        http.uploadMedia(formData, resolve, reject);
+                    });
+                    
+                    if (uploadResult.success) {
+                        uploadedFiles.push(uploadResult.data);
+                    } else {
+                        window?.$toast?.error(`Ошибка загрузки файла ${file.name}: ${uploadResult.message}`);
+                        return;
+                    }
+                } catch (error) {
+                    window?.$toast?.error(`Ошибка загрузки файла ${file.name}`);
+                    return;
+                }
+            }
+        }
+
+        const postData = {
+            text: markdown,
+            media: uploadedFiles
+        };
+
+        http.createPost(
+            postData,
+            (response) => {
+                isSubmitting.value = false;
+                if (response.success) {
+                    window?.$toast?.success('Пост сохранен в базе данных!');
+                    router.push('/');
+                } else {
+                    window?.$toast?.error(response.message || 'Ошибка сохранения поста');
+                }
+            },
+            (error) => {
+                isSubmitting.value = false;
+                console.error('Error saving post:', error);
+                window?.$toast?.error('Ошибка сохранения поста');
+            }
+        );
+    } catch (error) {
+        isSubmitting.value = false;
+        console.error('Error in savePostToDatabase function:', error);
+        window?.$toast?.error('Произошла ошибка при сохранении поста');
+    }
+}
+
 function publishNow() {
     send(false);
 }
@@ -362,6 +435,7 @@ function confirmLink() {
     }
     showLinkInput.value = false;
 }
+
 
 function cancelLink() {
     showLinkInput.value = false;

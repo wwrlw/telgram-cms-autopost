@@ -297,6 +297,7 @@
   watch(refreshTrigger, () => {
     if (refreshTrigger && refreshTrigger.value > 0) {
       postsService();
+      loadCategories();
     }
   });
   

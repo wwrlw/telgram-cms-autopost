@@ -72,9 +72,10 @@ const showCreateModal = ref(false);
 const editingChannel = ref(null);
 const loading = ref(false);
 const totalCount = ref(0);
-// const showConfirm = ref(false);
+const showConfirmModal = ref(false);
 const confirmMessage = ref('');
-let confirmCallback = null;
+let confirmAction = null;
+let confirmPayload = null;
 
 const pagination = ref({
   page: 1,
@@ -234,9 +235,7 @@ const deleteChannel = (channelId) => {
 };
 
 const bulkDelete = () => {
-    confirmMessage.value = `Вы уверены, что хотите удалить ${selectedChannels.value.length} каналов?`;
-    showConfirm.value = true;
-    confirmCallback = () => {
+    showConfirm(`Вы уверены, что хотите удалить ${selectedChannels.value.length} каналов?`, () => {
     const deletePromises = selectedChannels.value.map(channelId => {
       return new Promise((resolve) => {
         http.deleteChannel({ id: channelId }, resolve);
@@ -247,7 +246,7 @@ const bulkDelete = () => {
       clearSelection();
       channelsService();
     });
-  };
+  });
 };
 
 const clearSelection = () => {
