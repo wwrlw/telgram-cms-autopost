@@ -59,20 +59,6 @@
             </svg>
           </button>
 
-          <button @click.prevent.stop="uniquizePost(post._id)"
-            class="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
-            :disabled="uniquizing"
-            title="Уникализировать с ИИ">
-            <svg v-if="!uniquizing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-
           <button @click.prevent.stop="$emit('delete', post._id)"
             class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors" title="Удалить">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,44 +141,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['publish', 'delete', 'quickview', 'uniquized'])
-
-const uniquizing = ref(false)
-
-const uniquizePost = async (postId) => {
-  try {
-    uniquizing.value = true
-    const response = await http.instance.post(`/posts/${postId}/uniquize`)
-    
-    if (response.data.success) {
-      toast.success('Текст успешно уникализирован!')
-      emit('uniquized', response.data.data)
-    } else {
-      toast.error('Ошибка при уникализации текста')
-    }
-  } catch (error) {
-    console.error('Error uniquizing post:', error)
-    
-    let errorMessage = 'Ошибка при уникализации текста'
-    
-    if (error.response) {
-      // Ошибка от сервера
-      const statusCode = error.response.status
-      const serverMessage = error.response.data?.message || error.response.data?.error || 'Неизвестная ошибка сервера'
-      errorMessage = `Ошибка ${statusCode}: ${serverMessage}`
-    } else if (error.request) {
-      // Ошибка сети
-      errorMessage = 'Ошибка сети. Проверьте подключение к интернету'
-    } else {
-      // Другие ошибки
-      errorMessage = error.message || 'Неизвестная ошибка'
-    }
-    
-    toast.error(errorMessage)
-  } finally {
-    uniquizing.value = false
-  }
-}
+const emit = defineEmits(['publish', 'delete', 'quickview'])
 
 const getMediaPath = (filePath) => {
   return getMediaUrl(filePath)
@@ -218,43 +167,37 @@ const getCategoryStyle = (categoryId) => {
     const textColor = brightness > 155 ? 'text-gray-900' : 'text-white'
     return `bg-[${category.color}] ${textColor}`
   }
-  return 'bg-blue-100 text-blue-800'
+  return 'bg-gray-100 text-gray-800'
+}
+
+const navigateToPost = () => {
+  router.push(`/posts/${props.post._id}`)
 }
 
 const hasPhoto = (post) => {
-  if (!post.media) return false
-  if (Array.isArray(post.media)) {
-    return post.media.some(m => m.type === 'photo' || m.type === 'MessageMediaPhoto')
-  }
-  return post.media.type === 'photo' || post.media.type === 'MessageMediaPhoto'
+  return post.media && post.media.some(media => media.type === 'photo' || media.type === 'MessageMediaPhoto')
 }
 
 const hasVideo = (post) => {
-  if (!post.media) return false
-  if (Array.isArray(post.media)) {
-    return post.media.some(m => m.type === 'video' || m.type === 'MessageMediaDocument' || m.type === 'document')
-  }
-  return post.media.type === 'video' || post.media.type === 'MessageMediaDocument' || post.media.type === 'document'
+  return post.media && post.media.some(media => media.type === 'video' || media.type === 'MessageMediaDocument' || media.type === 'document')
 }
 
 const hasMedia = (post) => {
-  return hasPhoto(post) || hasVideo(post)
+  return post.media && post.media.length > 0
 }
 
 const getFirstPhoto = (post) => {
-  if (!post.media) return null
-  if (Array.isArray(post.media)) {
-    return post.media.find(m => m.type === 'photo' || m.type === 'MessageMediaPhoto') || null
-  }
-  return post.media
+  return post.media.find(media => media.type === 'photo' || media.type === 'MessageMediaPhoto')
 }
 
 const getFirstVideo = (post) => {
-  if (!post.media) return null
-  if (Array.isArray(post.media)) {
-    return post.media.find(m => m.type === 'video' || m.type === 'MessageMediaDocument' || m.type === 'document') || null
-  }
-  return post.media
+  return post.media.find(media => media.type === 'video' || media.type === 'MessageMediaDocument' || media.type === 'document')
+}
+
+const getFileSize = (size) => {
+  if (size < 1024) return size + ' B'
+  if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB'
+  return (size / (1024 * 1024)).toFixed(1) + ' MB'
 }
 </script>
 

@@ -9,7 +9,6 @@
         @publish="$emit('publish', $event)"
         @delete="$emit('delete', $event)"
         @quickview="handleQuickview"
-        @uniquized="handleUniquized"
       />
     </div>
 
@@ -91,7 +90,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['publish', 'delete', 'uniquized'])
+const emit = defineEmits(['publish', 'delete'])
 
 const showQuickviewer = ref(false)
 const currentQuickviewMedia = ref(null)
@@ -99,12 +98,12 @@ const currentQuickviewIndex = ref(0)
 const quickviewPost = ref(null)
 
 const handleQuickview = (post) => {
-  if (!post.media || !post.media.length) return
-  
-  quickviewPost.value = post
-  currentQuickviewIndex.value = 0
-  currentQuickviewMedia.value = post.media[0]
-  showQuickviewer.value = true
+  if (post.media && post.media.length > 0) {
+    quickviewPost.value = post
+    currentQuickviewMedia.value = post.media[0]
+    currentQuickviewIndex.value = 0
+    showQuickviewer.value = true
+  }
 }
 
 const closeQuickview = () => {
@@ -114,28 +113,17 @@ const closeQuickview = () => {
   currentQuickviewIndex.value = 0
 }
 
-const previousQuickviewMedia = () => {
-  if (currentQuickviewIndex.value > 0) {
-    currentQuickviewIndex.value--
-    currentQuickviewMedia.value = quickviewPost.value.media[currentQuickviewIndex.value]
-  }
-}
-
 const nextQuickviewMedia = () => {
-  if (currentQuickviewIndex.value < quickviewPost.value.media.length - 1) {
+  if (quickviewPost.value && currentQuickviewIndex.value < quickviewPost.value.media.length - 1) {
     currentQuickviewIndex.value++
     currentQuickviewMedia.value = quickviewPost.value.media[currentQuickviewIndex.value]
   }
 }
 
-const handleUniquized = (updatedPost) => {
-  // Обновляем пост в локальном состоянии
-  const index = props.posts.findIndex(p => p._id === updatedPost._id)
-  if (index !== -1) {
-    props.posts[index] = updatedPost
+const previousQuickviewMedia = () => {
+  if (quickviewPost.value && currentQuickviewIndex.value > 0) {
+    currentQuickviewIndex.value--
+    currentQuickviewMedia.value = quickviewPost.value.media[currentQuickviewIndex.value]
   }
-  
-  // Передаем событие выше
-  emit('uniquized', updatedPost)
 }
 </script>

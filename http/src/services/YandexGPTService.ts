@@ -1,5 +1,4 @@
 import axios from 'axios';
-
 export interface YandexGPTResponse {
   result: {
     alternatives: Array<{
@@ -37,21 +36,15 @@ export interface YandexGPTRequest {
 export class YandexGPTService {
   private readonly apiUrl = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion';
   private readonly folderId: string;
-  private readonly iamToken: string;
+  private readonly apiKey: string;
 
   constructor() {
     this.folderId = process.env.YANDEX_API_FOLDER!;
-    this.iamToken = process.env.IAM_TOKEN?.trim().replace(/\s+/g, '') || '';
+    this.apiKey = process.env.YANDEX_API_KEY!;
     
-    if (!this.folderId || !this.iamToken) {
-      throw new Error('YANDEX_API_FOLDER and IAM_TOKEN environment variables are required');
+    if (!this.folderId || !this.apiKey) {
+      throw new Error('YANDEX_API_FOLDER and YANDEX_API_KEY environment variables are required');
     }
-    
-    console.log('YandexGPTService initialized:');
-    console.log('Folder ID:', this.folderId);
-    console.log('IAM Token length:', this.iamToken.length);
-    console.log('IAM Token preview:', this.iamToken.substring(0, 20) + '...');
-    console.log('IAM Token ends with:', '...' + this.iamToken.substring(this.iamToken.length - 10));
   }
 
   async uniquizeText(text: string): Promise<string> {
@@ -78,22 +71,24 @@ export class YandexGPTService {
         ]
       };
 
-      const cleanToken = this.iamToken.trim();
-
       const response = await axios.post<YandexGPTResponse>(
         this.apiUrl,
         request,
         {
           headers: {
-            'Authorization': `Bearer ${cleanToken}`,
+            'Authorization': `Api-Key ${this.apiKey}`,
             'Content-Type': 'application/json'
           }
         }
       );
 
+      if (response.data.result.alternatives.length === 0) {
+        throw new Error('No alternatives returned from Yandex GPT API');
+      }
 
       const uniquizedText = response.data.result.alternatives[0].message.text;
       
+      // Проверяем, что ответ не является шаблонным
       if (uniquizedText.includes('интернете есть много сайтов') || 
           uniquizedText.includes('Посмотрите, что нашлось в поиске') ||
           uniquizedText.includes('ya.ru')) {
@@ -125,7 +120,7 @@ export class YandexGPTService {
           retryRequest,
           {
             headers: {
-              'Authorization': `Bearer ${cleanToken}`,
+              'Authorization': `Api-Key ${this.apiKey}`,
               'Content-Type': 'application/json'
             }
           }
@@ -134,6 +129,7 @@ export class YandexGPTService {
         if (retryResponse.data.result.alternatives.length > 0) {
           const retryText = retryResponse.data.result.alternatives[0].message.text;
           
+          // Если и второй запрос дает шаблонный ответ, возвращаем оригинальный текст
           if (retryText.includes('интернете есть много сайтов') || 
               retryText.includes('Посмотрите, что нашлось в поиске')) {
             return text;
@@ -151,6 +147,7 @@ export class YandexGPTService {
       if (error.response) {
         console.error('Response status:', error.response.status);
       }
+      
       throw new Error('Failed to uniquize text');
     }
   }
