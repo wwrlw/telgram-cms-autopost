@@ -2,12 +2,6 @@
     <div class="min-h-screen bg-white flex flex-col">
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
             <div class="flex items-center gap-3 justify-start mb-4">
-                <button
-                    @click="cancel"
-                    class="text-gray-400 hover:text-gray-600 text-xl leading-none"
-                >
-                    X
-                </button>
                 <h2 class="text-lg font-semibold">Редактировать пост</h2>
             </div>
 

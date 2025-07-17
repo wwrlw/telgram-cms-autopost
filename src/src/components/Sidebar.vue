@@ -82,62 +82,6 @@
                     </li>
                     <li :class="isCollapsed ? 'flex justify-center' : ''">
                         <router-link
-                            :to="{ name: 'favorites' }"
-                            :class="[
-                                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
-                                isCollapsed ? 'justify-center' : '',
-                                { 'bg-gray-700': $route.path === '/favorites' },
-                            ]"
-                            :title="isCollapsed ? 'Избранное' : ''"
-                        >
-                            <svg
-                                :class="
-                                    isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
-                                "
-                                width="100%"
-                                height="100%"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                                />
-                            </svg>
-                            <span v-if="!isCollapsed">Избранное</span>
-                        </router-link>
-                    </li>
-                    <li :class="isCollapsed ? 'flex justify-center' : ''">
-                        <router-link
-                            :to="{ name: 'channels' }"
-                            :class="[
-                                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
-                                isCollapsed ? 'justify-center' : '',
-                                { 'bg-gray-700': $route.path === '/channels' },
-                            ]"
-                            :title="isCollapsed ? 'Каналы' : ''"
-                        >
-                            <svg
-                                :class="
-                                    isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
-                                "
-                                width="100%"
-                                height="100%"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                />
-                            </svg>
-                            <span v-if="!isCollapsed">Каналы</span>
-                        </router-link>
-                    </li>
-                    <li :class="isCollapsed ? 'flex justify-center' : ''">
-                        <router-link
                             :to="{ name: 'create-post' }"
                             :class="[
                                 'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
@@ -171,6 +115,67 @@
                     </li>
                     <li :class="isCollapsed ? 'flex justify-center' : ''">
                         <router-link
+                            :to="{ name: 'favorites' }"
+                            :class="[
+                                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
+                                isCollapsed ? 'justify-center' : '',
+                                { 'bg-gray-700': $route.path === '/favorites' },
+                            ]"
+                            :title="isCollapsed ? 'Избранное' : ''"
+                        >
+                            <svg
+                                :class="
+                                    isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
+                                "
+                                width="100%"
+                                height="100%"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                                />
+                            </svg>
+                            <span v-if="!isCollapsed">Избранное</span>
+                        </router-link>
+                    </li>
+                    <li :class="isCollapsed ? 'flex justify-center' : ''">
+                        <router-link
+                            :to="{ name: 'scheduled-posts' }"
+                            :class="[
+                                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
+                                isCollapsed ? 'justify-center' : '',
+                                {
+                                    'bg-gray-700':
+                                        $route.path === '/scheduled-posts',
+                                },
+                            ]"
+                            :title="isCollapsed ? 'Отложенные публикации' : ''"
+                        >
+                            <svg
+                                :class="
+                                    isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
+                                "
+                                width="100%"
+                                height="100%"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                            <span v-if="!isCollapsed"
+                                >Отложенные публикации</span
+                            >
+                        </router-link>
+                    </li>
+                    <li :class="isCollapsed ? 'flex justify-center' : ''">
+                        <router-link
                             :to="{ name: 'categories' }"
                             :class="[
                                 'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
@@ -200,6 +205,36 @@
                                 />
                             </svg>
                             <span v-if="!isCollapsed">Категории</span>
+                        </router-link>
+                    </li>
+                    <li :class="isCollapsed ? 'flex justify-center' : ''">
+                        <router-link
+                            :to="{ name: 'channels' }"
+                            :class="[
+                                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
+                                isCollapsed ? 'justify-center' : '',
+                                { 'bg-gray-700': $route.path === '/channels' },
+                            ]"
+                            :title="isCollapsed ? 'Каналы' : ''"
+                        >
+                            <svg
+                                :class="
+                                    isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
+                                "
+                                width="100%"
+                                height="100%"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                            </svg>
+                            <span v-if="!isCollapsed">Каналы</span>
                         </router-link>
                     </li>
                     <li :class="isCollapsed ? 'flex justify-center' : ''">
@@ -263,41 +298,6 @@
                                 />
                             </svg>
                             <span v-if="!isCollapsed">Аналитика</span>
-                        </router-link>
-                    </li>
-                    <li :class="isCollapsed ? 'flex justify-center' : ''">
-                        <router-link
-                            :to="{ name: 'scheduled-posts' }"
-                            :class="[
-                                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
-                                isCollapsed ? 'justify-center' : '',
-                                {
-                                    'bg-gray-700':
-                                        $route.path === '/scheduled-posts',
-                                },
-                            ]"
-                            :title="isCollapsed ? 'Отложенные публикации' : ''"
-                        >
-                            <svg
-                                :class="
-                                    isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
-                                "
-                                width="100%"
-                                height="100%"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                            </svg>
-                            <span v-if="!isCollapsed"
-                                >Отложенные публикации</span
-                            >
                         </router-link>
                     </li>
                 </ul>

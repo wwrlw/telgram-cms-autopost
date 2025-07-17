@@ -313,11 +313,10 @@ import {
     formatDate,
 } from "@/js/utils";
 import { useRouter } from "vue-router";
-import { ref, inject, computed, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useFavorites } from "@/composables/useFavorites";
 
 const router = useRouter();
-const toast = inject("toast");
 const { isFavorite, toggleFavorite, initializeFavorites } = useFavorites();
 
 const props = defineProps({

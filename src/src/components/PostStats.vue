@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <div class="bg-white rounded-lg border border-gray-200 p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">
             📊 Статистика поста
@@ -146,4 +146,4 @@ const formatNumber = (num) => {
 };
 </script>
 
-<style scoped></style>
+<style scoped></style> -->

@@ -1,6 +1,5 @@
 <template>
     <div>
-        <!-- Основное модальное окно -->
         <Transition
             enter-active-class="transition ease-out duration-300"
             enter-from-class="opacity-0"
