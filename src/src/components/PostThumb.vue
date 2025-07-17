@@ -73,13 +73,27 @@
     <div class="p-4">
       <router-link :to="{ name: 'post', params: { id: post._id } }"
         class="font-medium text-gray-900 mb-2 line-clamp-2 cursor-pointer">
-        {{ extractTitle(post.text) }}
+        {{ extractTitle(displayText) }}
       </router-link>
 
       <router-link :to="{ name: 'post', params: { id: post._id } }"
         class="text-sm text-gray-600 mb-3 line-clamp-3 cursor-pointer">
-        {{ post.text }}
+        {{ displayText }}
       </router-link>
+
+      <!-- Кнопка переключения текста -->
+      <div v-if="post.is_unique && post.unique_text" class="mb-3">
+        <button 
+          @click.prevent="toggleTextMode"
+          class="text-xs bg-orange-100 text-orange-800 hover:bg-orange-200 px-2 py-1 rounded flex items-center gap-1"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <span>{{ showingUniqueText ? 'Оригинал' : 'Уникальный' }}</span>
+        </button>
+      </div>
 
       <div class="mb-3">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
@@ -124,7 +138,7 @@
 <script setup>
 import { getMediaUrl, formatNumber, extractTitle, formatDate } from '@/js/utils'
 import { useRouter } from 'vue-router'
-import { ref, inject } from 'vue'
+import { ref, inject, computed } from 'vue'
 import http from '@/js/http'
 
 const router = useRouter()
@@ -142,6 +156,19 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['publish', 'delete', 'quickview'])
+
+const showingUniqueText = ref(false)
+
+const displayText = computed(() => {
+  if (showingUniqueText.value && props.post.unique_text) {
+    return props.post.unique_text;
+  }
+  return props.post.text || '';
+})
+
+const toggleTextMode = () => {
+  showingUniqueText.value = !showingUniqueText.value;
+}
 
 const getMediaPath = (filePath) => {
   return getMediaUrl(filePath)

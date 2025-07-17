@@ -134,6 +134,7 @@ export class PostRepository implements IPostRepository {
       created_at: new Date(),
       is_unique: post.is_unique ?? false,
       media: post.media ?? [],
+      ...(post.unique_text && { unique_text: post.unique_text }),
     };
 
     const result = await this.mongo.db.collection("posts").insertOne(newPost);

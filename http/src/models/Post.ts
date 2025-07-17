@@ -17,6 +17,7 @@ export interface Post {
   _id?: ObjectId;
   source_channel: string;
   text: string;
+  unique_text?: string;
   timestamp: Date;
   url: string;
   media: Media[];
@@ -34,6 +35,7 @@ export interface Post {
 export interface CreatePostDto {
   source_channel: string;
   text: string;
+  unique_text?: string;
   url: string;
   media?: Media[];
   is_unique?: boolean;

@@ -174,7 +174,7 @@ export class PostService implements IPostService {
     const uniquizedText = await this.yandexGPTService.uniquizeText(post.text);
     
     const updatedPost = await this.postRepository.update(id, {
-      text: uniquizedText,
+      unique_text: uniquizedText,
       is_unique: true,
       updated_at: new Date()
     });

@@ -130,7 +130,21 @@
 
             <div class="flex justify-end gap-3 mt-4">
                 <button @click="cancel" class="px-4 py-2 rounded bg-gray-200">Отмена</button>
-                <button 
+                
+                <!-- Кнопка переключения текста -->
+                <button v-if="postData && postData.is_unique && postData.unique_text"
+                    @click="toggleTextMode" 
+                    class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <span>{{ showingUniqueText ? 'Показать оригинал' : 'Показать уникальный' }}</span>
+                </button>
+                
+                <!-- Кнопка уникализации -->
+                <button v-if="postData && !postData.is_unique"
                     @click="uniquizePost" 
                     :disabled="uniquizing || !hasText"
                     class="px-4 py-2 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -145,6 +159,7 @@
                     </svg>
                     <span>{{ uniquizing ? 'Уникализация...' : 'Уникализировать с ИИ' }}</span>
                 </button>
+                
                 <button @click="publishLater" class="px-4 py-2 rounded bg-blue-600 text-white">Опубликовать позже</button>
                 <button @click="publishNow" class="px-4 py-2 rounded bg-indigo-600 text-white">Опубликовать сейчас</button>
             </div>
@@ -179,6 +194,7 @@ const loadingPost = ref(false);
 const postData = ref(null);
 const previews = ref([]);
 const uniquizing = ref(false);
+const showingUniqueText = ref(false);
 
 const editor = useEditor({
     extensions: [StarterKit, Link, Underline],
@@ -248,6 +264,7 @@ function send(publishLater) {
     }
 
     const fd = new FormData();
+    // Отправляем тот текст, который отображается в редакторе
     fd.append('text', markdown);
     files.value.forEach((f) => fd.append('file', f));
     fd.append('channel_id', selectedChannel.value);
@@ -297,6 +314,7 @@ function loadPost() {
         loadingPost.value = false;
         if (res && res.success) {
             postData.value = res.data;
+            // console.log(res.data);
             initializeEditorContent(res.data);
             await preloadMedia(res.data);
         } else {
@@ -307,10 +325,22 @@ function loadPost() {
 
 function initializeEditorContent(post) {
     if (!post) return;
-    const htmlContent = (post.text || '').replace(/\n/g, '<br>');
+    
+    // Определяем какой текст показывать
+    let textToShow = post.text || '';
+    if (showingUniqueText.value && post.unique_text) {
+        textToShow = post.unique_text;
+    }
+    
+    const htmlContent = textToShow.replace(/\n/g, '<br>');
     if (editor.value) {
         editor.value.commands.setContent(htmlContent);
     }
+}
+
+function toggleTextMode() {
+    showingUniqueText.value = !showingUniqueText.value;
+    initializeEditorContent(postData.value);
 }
 
 async function preloadMedia(post) {
@@ -438,6 +468,8 @@ async function uniquizePost() {
         if (response.data.success) {
             const updatedPost = response.data.data;
             postData.value = updatedPost;
+            // Переключаемся на показ уникального текста
+            showingUniqueText.value = true;
             initializeEditorContent(updatedPost);
             window?.$toast?.success('Пост уникализирован!');
         } else {
