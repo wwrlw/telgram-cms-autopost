@@ -65,7 +65,54 @@ export class UserService implements IUserService {
 
     return {
       id: user._id?.toString() || '',
-      username: user.username
+      username: user.username,
+      favorite_posts: user.favorite_posts?.map(postId => postId.toString()) || []
+    };
+  }
+
+  async addFavoritePost(userId: string, postId: string): Promise<UserResponse> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const { ObjectId } = await import('mongodb');
+    const postObjectId = new ObjectId(postId);
+    
+    if (!user.favorite_posts) {
+      user.favorite_posts = [];
+    }
+
+    if (!user.favorite_posts.some(id => id.equals(postObjectId))) {
+      user.favorite_posts.push(postObjectId);
+      await this.userRepository.update(userId, { favorite_posts: user.favorite_posts });
+    }
+
+    return {
+      id: user._id?.toString() || '',
+      username: user.username,
+      favorite_posts: user.favorite_posts.map(postId => postId.toString())
+    };
+  }
+
+  async removeFavoritePost(userId: string, postId: string): Promise<UserResponse> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const { ObjectId } = await import('mongodb');
+    const postObjectId = new ObjectId(postId);
+    
+    if (user.favorite_posts) {
+      user.favorite_posts = user.favorite_posts.filter(id => !id.equals(postObjectId));
+      await this.userRepository.update(userId, { favorite_posts: user.favorite_posts });
+    }
+
+    return {
+      id: user._id?.toString() || '',
+      username: user.username,
+      favorite_posts: user.favorite_posts?.map(postId => postId.toString()) || []
     };
   }
 

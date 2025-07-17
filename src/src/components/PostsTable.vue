@@ -62,19 +62,6 @@
                   <td class="px-6 py-4">
                     <div class="flex items-start space-x-3">
                       <div class="flex-shrink-0">
-                        <!-- <LazyImage 
-                          v-if="hasPhoto(post)" 
-                          :src="getMediaUrl(getFirstPhoto(post).file_path)"
-                          alt="Preview" 
-                          container-class="h-16 w-16 rounded-lg"
-                          image-class="h-16 w-16 rounded-lg object-cover"
-                          placeholder-class="h-16 w-16 rounded-lg" />
-                        <div v-else
-                             class="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center">
-                          <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                          </svg>
-                        </div> -->
                       </div>
                       <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium text-gray-900 truncate">
@@ -96,6 +83,23 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex items-center space-x-2 gap-2">
+                      <button 
+                        @click="toggleFavorite(post._id)"
+                        :class="[
+                          'text-sm transition-colors flex items-center space-x-1',
+                          isFavorite(post._id) 
+                            ? 'text-red-500 hover:text-red-700' 
+                            : 'text-gray-400 hover:text-red-500'
+                        ]"
+                        :title="isFavorite(post._id) ? 'Удалить из избранного' : 'Добавить в избранное'"
+                      >
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path v-if="isFavorite(post._id)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                          <path v-else d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span class="text-xs">{{ isFavorite(post._id) ? 'Убрать' : 'В избранное' }}</span>
+                      </button>
+
                       <router-link :to="{ name: 'post', params: { id: post._id } }"
                                    class="text-indigo-600 hover:text-indigo-900 text-sm">
                         Просмотр
@@ -198,9 +202,13 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { formatDate, extractTitle, formatNumber } from '@/js/utils'
 import Pagination from './Shared/Pagination.vue'
+import { useFavorites } from '@/composables/useFavorites'
+
+const selectAll = ref(false)
+const { favoritePosts, isLoading: isLoadingFavorites, isFavorite, toggleFavorite, initializeFavorites } = useFavorites()
 
 const props = defineProps({
   posts: {
@@ -223,7 +231,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selectedPosts', 'publish', 'delete', 'create'])
 
-const selectAll = ref(false)
 
 const selectedPosts = computed({
   get: () => props.selectedPosts,
@@ -266,6 +273,10 @@ const toggleSelectAll = () => {
 
 watch(selectedPosts, () => {
   selectAll.value = selectedPosts.value.length === paginatedPosts.value.length && paginatedPosts.value.length > 0
+})
+
+onMounted(() => {
+  initializeFavorites()
 })
 </script>
 
