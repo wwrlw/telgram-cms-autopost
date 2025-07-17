@@ -1,9 +1,9 @@
 import axios from "axios";
 
-const apiUrl = import.meta.env.VITE_API_URL || 'https://tg.chiorio.com/api';
+const apiUrl = import.meta.env.VITE_API_URL || "https://tg.chiorio.com/api";
 
 const instance = axios.create({
-    baseURL: apiUrl
+    baseURL: apiUrl,
 });
 
 instance.interceptors.response.use(
@@ -28,11 +28,14 @@ instance.interceptors.response.use(
 
 instance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
-        console.log('Request interceptor - URL:', config.url);
-        console.log('Request interceptor - Token:', token ? 'Present' : 'Missing');
+        const token = localStorage.getItem("token");
+        console.log("Request interceptor - URL:", config.url);
+        console.log(
+            "Request interceptor - Token:",
+            token ? "Present" : "Missing"
+        );
         if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
+            config.headers["Authorization"] = `Bearer ${token}`;
         }
         return config;
     },
@@ -43,53 +46,61 @@ let http = {
     instance: instance,
     posts: function (params = {}, callback, errorCallback) {
         const queryParams = new URLSearchParams();
-        
+
         for (const key in params) {
             if (params[key] !== undefined) {
                 queryParams.append(key, params[key]);
             }
         }
-        
-        const url = queryParams.toString() ? `/posts?${queryParams.toString()}` : '/posts';
-        
-        instance.get(url)
-          .then((res) => {
-            callback(res.data);
-          })
-          .catch((err) => {
-            if (errorCallback) errorCallback(err);
-          });
+
+        const url = queryParams.toString()
+            ? `/posts?${queryParams.toString()}`
+            : "/posts";
+
+        instance
+            .get(url)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+            });
     },
     post: function (params, callback) {
-        instance.get(`/post/${params.id}`) 
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            callback({ success: false, message: 'Failed to load post' });
-        });
+        instance
+            .get(`/post/${params.id}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                callback({ success: false, message: "Failed to load post" });
+            });
     },
     login: function (params, callback) {
-        instance.post('/auth/login', params)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Network error occurred';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .post("/auth/login", params)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Network error occurred";
+                callback({ success: false, message: errorMessage });
+            });
     },
     register: function (params, callback) {
-        instance.post('/auth/register', params)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Registration failed';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .post("/auth/register", params)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Registration failed";
+                callback({ success: false, message: errorMessage });
+            });
     },
-    
+
     channels: function (params = {}, callback, errorCallback) {
         const queryParams = new URLSearchParams();
         for (const key in params) {
@@ -97,315 +108,399 @@ let http = {
                 queryParams.append(key, params[key]);
             }
         }
-        const url = queryParams.toString() ? `/channels?${queryParams.toString()}` : '/channels';
-        
-        instance.get(url)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            if (errorCallback) errorCallback(err);
-            else callback({ success: false, message: 'Failed to load channels' });
-        });
+        const url = queryParams.toString()
+            ? `/channels?${queryParams.toString()}`
+            : "/channels";
+
+        instance
+            .get(url)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load channels",
+                    });
+            });
     },
-    
+
     createChannel: function (params, callback) {
-        instance.post('/channels', params)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to create channel';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .post("/channels", params)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to create channel";
+                callback({ success: false, message: errorMessage });
+            });
     },
-    
+
     updateChannel: function (params, callback) {
         const { id, ...updateData } = params;
-        instance.put(`/channels/${id}`, updateData)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to update channel';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .put(`/channels/${id}`, updateData)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to update channel";
+                callback({ success: false, message: errorMessage });
+            });
     },
-    
+
     deleteChannel: function (params, callback) {
-        instance.delete(`/channels/${params.id}`)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to delete channel';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .delete(`/channels/${params.id}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to delete channel";
+                callback({ success: false, message: errorMessage });
+            });
     },
-    
+
     categories: function (callback, errorCallback) {
-        instance.get('/categories')
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            if (errorCallback) errorCallback(err);
-            else callback({ success: false, message: 'Failed to load categories' });
-        });
+        instance
+            .get("/categories")
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load categories",
+                    });
+            });
     },
-    
+
     createCategory: function (params, callback) {
-        instance.post('/categories', params)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to create category';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .post("/categories", params)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to create category";
+                callback({ success: false, message: errorMessage });
+            });
     },
-    
+
     updateCategory: function (params, callback) {
         const { id, ...updateData } = params;
-        instance.put(`/categories/${id}`, updateData)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to update category';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .put(`/categories/${id}`, updateData)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to update category";
+                callback({ success: false, message: errorMessage });
+            });
     },
-    
+
     deleteCategory: function (params, callback) {
-        instance.delete(`/categories/${params.id}`)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to delete category';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .delete(`/categories/${params.id}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to delete category";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     deletePost: function (params, callback) {
-        instance.delete(`/post/${params.id}`)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to delete post';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .delete(`/post/${params.id}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to delete post";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     getPostedChannels: function (callback) {
-        instance.get('/posted-channels/active')
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to load posted channels';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .get("/posted-channels/active")
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to load posted channels";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     publishToChannel: function (postId, channelId, callback) {
-        instance.post(`/publish/${postId}/${channelId}`)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to publish post to channel';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .post(`/publish/${postId}/${channelId}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to publish post to channel";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     getPublicationChannels: function (callback, errorCallback) {
-        instance.get('/posted-channels')
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            if (errorCallback) errorCallback(err);
-            else callback({ success: false, message: 'Failed to load publication channels' });
-        });
+        instance
+            .get("/posted-channels")
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load publication channels",
+                    });
+            });
     },
 
     getActivePublicationChannels: function (callback, errorCallback) {
-        instance.get('/posted-channels/active')
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            if (errorCallback) errorCallback(err);
-            else callback({ success: false, message: 'Failed to load active publication channels' });
-        });
+        instance
+            .get("/posted-channels/active")
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load active publication channels",
+                    });
+            });
     },
 
     createPublicationChannel: function (params, callback) {
-        instance.post('/posted-channels', params)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to create publication channel';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .post("/posted-channels", params)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to create publication channel";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     updatePublicationChannel: function (params, callback) {
         const { id, ...updateData } = params;
-        instance.put(`/posted-channels/${id}`, updateData)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to update publication channel';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .put(`/posted-channels/${id}`, updateData)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to update publication channel";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     deletePublicationChannel: function (params, callback) {
-        instance.delete(`/posted-channels/${params.id}`)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to delete publication channel';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .delete(`/posted-channels/${params.id}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to delete publication channel";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     schedulePost: function (params, callback) {
-        instance.post(`/posts/${params.postId}/schedule`, {
-            scheduled_at: params.scheduledAt,
-            channel_id: params.channelId
-        })
-        .then((res) => {
-            callback(res.data);
-            console.log(res.data)
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to schedule post';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .post(`/posts/${params.postId}/schedule`, {
+                scheduled_at: params.scheduledAt,
+                channel_id: params.channelId,
+            })
+            .then((res) => {
+                callback(res.data);
+                console.log(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to schedule post";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     getScheduledPosts: function (callback) {
-        instance.get('/posts/scheduled')
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to load scheduled posts';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .get("/posts/scheduled")
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to load scheduled posts";
+                callback({ success: false, message: errorMessage });
+            });
     },
-    
+
     cancelScheduledPost: function (params, callback) {
-        instance.delete(`/posts/${params.id}/schedule`)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            console.error('HTTP cancelScheduledPost error:', err);
-            const errorMessage = err.response?.data?.message || 'Failed to cancel scheduled post';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .delete(`/posts/${params.id}/schedule`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                console.error("HTTP cancelScheduledPost error:", err);
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to cancel scheduled post";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     getPublishedPosts: function (callback) {
-        instance.get('/posts/published')
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to load published posts';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .get("/posts/published")
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to load published posts";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     updatePost: function (params, callback) {
         const { id, ...updateData } = params;
-        instance.put(`/posts/${id}`, updateData)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to update post';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .put(`/posts/${id}`, updateData)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to update post";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     createPost: function (formData, cb, errCb) {
-        instance.post('/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-        .then((res) => {
-            cb && cb(res.data);
-        })
-        .catch((err) => {
-            errCb && errCb(err);
-        });
+        instance
+            .post("/posts", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((res) => {
+                cb && cb(res.data);
+            })
+            .catch((err) => {
+                errCb && errCb(err);
+            });
     },
-    
+
     uploadMedia: function (formData, callback, error) {
-        instance.post('/media/upload', formData, { headers: {'Content-Type' : 'multipart/form-data'} })
-        .then((res) => {
-            callback && callback(res.data);
-        })
-        .catch((err) => {
-            err && error(err);
-        });
+        instance
+            .post("/media/upload", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((res) => {
+                callback && callback(res.data);
+            })
+            .catch((err) => {
+                err && error(err);
+            });
     },
 
     getChannelAnalytics: function (channelId, callback, errorCallback) {
-        console.log('getChannelAnalytics called with channelId:', channelId);
-        console.log('Token from localStorage:', localStorage.getItem('token'));
-        
-        instance.get(`/analytics?channelid=${channelId}`)
-        .then((res) => {
-            console.log('Analytics API response:', res.data);
-            callback(res.data);
-        })
-        .catch((err) => {
-            console.error('Analytics API error:', err);
-            if (errorCallback) errorCallback(err);
-            else callback({ success: false, message: 'Failed to load channel analytics' });
-        });
+        console.log("getChannelAnalytics called with channelId:", channelId);
+        console.log("Token from localStorage:", localStorage.getItem("token"));
+
+        instance
+            .get(`/analytics?channelid=${channelId}`)
+            .then((res) => {
+                console.log("Analytics API response:", res.data);
+                callback(res.data);
+            })
+            .catch((err) => {
+                console.error("Analytics API error:", err);
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load channel analytics",
+                    });
+            });
     },
 
     addFavoritePost: function (userId, postId, callback) {
-        instance.post('/auth/favorites/add', { userId, postId })
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to add favorite post';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .post("/auth/favorites/add", { userId, postId })
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to add favorite post";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     removeFavoritePost: function (userId, postId, callback) {
-        instance.post('/auth/favorites/remove', { userId, postId })
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to remove favorite post';
-            callback({ success: false, message: errorMessage });
-        });
+        instance
+            .post("/auth/favorites/remove", { userId, postId })
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to remove favorite post";
+                callback({ success: false, message: errorMessage });
+            });
     },
 
     getFavoritePosts: function (userId, callback) {
-        instance.get(`/auth/favorites/${userId}`)
-        .then((res) => {
-            callback(res.data);
-        })
-        .catch((err) => {
-            const errorMessage = err.response?.data?.message || 'Failed to load favorite posts';
-            callback({ success: false, message: errorMessage });
-        });
-    }
+        instance
+            .get(`/auth/favorites/${userId}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to load favorite posts";
+                callback({ success: false, message: errorMessage });
+            });
+    },
 };
 
 export default http;

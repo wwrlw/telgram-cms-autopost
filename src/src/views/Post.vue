@@ -2,7 +2,12 @@
     <div class="min-h-screen bg-white flex flex-col">
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
             <div class="flex items-center gap-3 justify-start mb-4">
-                <button @click="cancel" class="text-gray-400 hover:text-gray-600 text-xl leading-none">X</button>
+                <button
+                    @click="cancel"
+                    class="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                >
+                    X
+                </button>
                 <h2 class="text-lg font-semibold">Редактировать пост</h2>
             </div>
 
@@ -15,31 +20,77 @@
                             :title="btn.title"
                             @click="btn.action"
                             class="px-2 py-1 text-sm rounded hover:bg-gray-200"
-                            :class="{ 'bg-indigo-100 text-indigo-700': btn.isActive() }"
+                            :class="{
+                                'bg-indigo-100 text-indigo-700': btn.isActive(),
+                            }"
                         >
                             {{ btn.label }}
                         </button>
                     </div>
-                    <div v-if="showEmojiPicker" class="absolute top-full left-0 mt-1 bg-white border rounded shadow p-2 z-50 w-72 h-60 overflow-hidden">
-                        <emoji-picker @emoji-click="insertEmojiEvent" style="--emoji-size: 20px; width:100%; height:100%;" />
+                    <div
+                        v-if="showEmojiPicker"
+                        class="absolute top-full left-0 mt-1 bg-white border rounded shadow p-2 z-50 w-72 h-60 overflow-hidden"
+                    >
+                        <emoji-picker
+                            @emoji-click="insertEmojiEvent"
+                            style="
+                                --emoji-size: 20px;
+                                width: 100%;
+                                height: 100%;
+                            "
+                        />
                     </div>
-                    <div v-if="showLinkInput" class="absolute top-full left-0 mt-1 bg-white border rounded shadow p-3 z-50 w-64">
-                        <input v-model="linkUrl" placeholder="https://example.com" class="border rounded w-full text-sm px-2 py-1 mb-2" />
+                    <div
+                        v-if="showLinkInput"
+                        class="absolute top-full left-0 mt-1 bg-white border rounded shadow p-3 z-50 w-64"
+                    >
+                        <input
+                            v-model="linkUrl"
+                            placeholder="https://example.com"
+                            class="border rounded w-full text-sm px-2 py-1 mb-2"
+                        />
                         <div class="flex justify-end gap-2">
-                            <button @click.stop="cancelLink" class="px-2 py-1 text-sm bg-gray-200 rounded">Отмена</button>
-                            <button @click.stop="confirmLink" class="px-2 py-1 text-sm bg-indigo-600 text-white rounded">OK</button>
+                            <button
+                                @click.stop="cancelLink"
+                                class="px-2 py-1 text-sm bg-gray-200 rounded"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                @click.stop="confirmLink"
+                                class="px-2 py-1 text-sm bg-indigo-600 text-white rounded"
+                            >
+                                OK
+                            </button>
                         </div>
                     </div>
                 </div>
-                <EditorContent :editor="editor" class="p-3 h-64 custom-editor-content overflow-y-auto" />
+                <EditorContent
+                    :editor="editor"
+                    class="p-3 h-64 custom-editor-content overflow-y-auto"
+                />
             </div>
 
             <div class="space-y-4 mb-4">
                 <div class="flex items-center gap-2">
                     <button type="button" class="file-btn" @click="triggerFile">
-                        <svg class="w-5 h-5 mr-1 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a2 2 0 10-2.828-2.828z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V3a1 1 0 00-1-1h-4a1 1 0 00-1 1v4" />
+                        <svg
+                            class="w-5 h-5 mr-1 text-indigo-600"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a2 2 0 10-2.828-2.828z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M16 7V3a1 1 0 00-1-1h-4a1 1 0 00-1 1v4"
+                            />
                         </svg>
                         <span>Прикрепить файлы</span>
                     </button>
@@ -55,52 +106,82 @@
                 </div>
 
                 <div v-if="postData && postData.media.length" class="mb-4">
-                    <h4 class="text-sm font-medium text-gray-700 mb-3">Текущие медиафайлы:</h4>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <div v-for="(media, id) in postData.media" :key="'id-' + id" class="relative group border rounded overflow-hidden">
-                            <img 
-                                v-if="isImageMedia(media)" 
-                                :src="getMediaUrl(media.file_path)" 
-                                class="w-full h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">
+                        Текущие медиафайлы:
+                    </h4>
+                    <div
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+                    >
+                        <div
+                            v-for="(media, id) in postData.media"
+                            :key="'id-' + id"
+                            class="relative group border rounded overflow-hidden"
+                        >
+                            <img
+                                v-if="isImageMedia(media)"
+                                :src="getMediaUrl(media.file_path)"
+                                class="w-full h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity"
                                 @click="openMediaViewer(media, id)"
                             />
-                            <div 
-                                v-else-if="isVideoMedia(media)" 
+                            <div
+                                v-else-if="isVideoMedia(media)"
                                 class="relative cursor-pointer hover:opacity-90 transition-opacity"
                                 @click="openMediaViewer(media, id)"
                             >
-                                <video 
-                                    :src="getMediaUrl(media.file_path)" 
-                                    class="w-full h-32 object-cover" 
+                                <video
+                                    :src="getMediaUrl(media.file_path)"
+                                    class="w-full h-32 object-cover"
                                     muted
                                     preload="metadata"
                                 />
-                                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                                    <div class="w-8 h-8 bg-black bg-opacity-70 rounded-full flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8 5v14l11-7z"/>
+                                <div
+                                    class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30"
+                                >
+                                    <div
+                                        class="w-8 h-8 bg-black bg-opacity-70 rounded-full flex items-center justify-center"
+                                    >
+                                        <svg
+                                            class="w-4 h-4 text-white ml-0.5"
+                                            fill="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path d="M8 5v14l11-7z" />
                                         </svg>
                                     </div>
                                 </div>
                             </div>
-                            <div v-else class="w-full h-32 bg-gray-200 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            <div
+                                v-else
+                                class="w-full h-32 bg-gray-200 flex items-center justify-center"
+                            >
+                                <svg
+                                    class="w-8 h-8 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
                                 </svg>
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            <MediaViewer 
+            <MediaViewer
                 :show="showMediaViewer"
                 :media="currentMedia"
                 :current-index="currentMediaIndex"
                 :total-count="postData?.media?.length || 0"
                 :can-go-previous="currentMediaIndex > 0"
-                :can-go-next="currentMediaIndex < (postData?.media?.length || 0) - 1"
+                :can-go-next="
+                    currentMediaIndex < (postData?.media?.length || 0) - 1
+                "
                 @close="closeMediaViewer"
                 @previous="previousMedia"
                 @next="nextMedia"
@@ -108,77 +189,149 @@
 
             <div class="space-y-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Канал для публикации</label>
-                    <select v-model="selectedChannel" class="border rounded p-2 text-sm w-full">
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                        >Канал для публикации</label
+                    >
+                    <select
+                        v-model="selectedChannel"
+                        class="border rounded p-2 text-sm w-full"
+                    >
                         <option value="">Выберите канал</option>
-                        <option v-for="channel in channels" :key="channel._id" :value="channel.channel_id">
+                        <option
+                            v-for="channel in channels"
+                            :key="channel._id"
+                            :value="channel.channel_id"
+                        >
                             {{ channel.name }}
                         </option>
                     </select>
                 </div>
                 <div class="flex items-center gap-2">
                     <input id="schedule" type="checkbox" v-model="schedule" />
-                    <label for="schedule" class="text-sm">Опубликовать позже</label>
+                    <label for="schedule" class="text-sm"
+                        >Опубликовать позже</label
+                    >
                 </div>
-                <div v-if="schedule" class="space-y-3 pl-6 border-l-2 border-gray-200">
+                <div
+                    v-if="schedule"
+                    class="space-y-3 pl-6 border-l-2 border-gray-200"
+                >
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Дата и время публикации</label>
-                        <input v-model="scheduledAt" type="datetime-local" class="border rounded p-2 text-sm w-full" />
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                            >Дата и время публикации</label
+                        >
+                        <input
+                            v-model="scheduledAt"
+                            type="datetime-local"
+                            class="border rounded p-2 text-sm w-full"
+                        />
                     </div>
                 </div>
             </div>
 
             <div class="flex justify-end gap-3 mt-4">
-                <button @click="cancel" class="px-4 py-2 rounded bg-gray-200">Отмена</button>
-                
+                <button @click="cancel" class="px-4 py-2 rounded bg-gray-200">
+                    Отмена
+                </button>
+
                 <!-- Кнопка переключения текста -->
-                <button v-if="postData && postData.is_unique && postData.unique_text"
-                    @click="toggleTextMode" 
+                <button
+                    v-if="
+                        postData && postData.is_unique && postData.unique_text
+                    "
+                    @click="toggleTextMode"
                     class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
                 >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
                     </svg>
-                    <span>{{ showingUniqueText ? 'Показать оригинал' : 'Показать уникальный' }}</span>
+                    <span>{{
+                        showingUniqueText
+                            ? "Показать оригинал"
+                            : "Показать уникальный"
+                    }}</span>
                 </button>
-                
+
                 <!-- Кнопка уникализации -->
-                <button v-if="postData && !postData.is_unique"
-                    @click="uniquizePost" 
+                <button
+                    v-if="postData && !postData.is_unique"
+                    @click="uniquizePost"
                     :disabled="uniquizing || !hasText"
                     class="px-4 py-2 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                    <svg v-if="uniquizing" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <svg
+                        v-if="uniquizing"
+                        class="w-4 h-4 animate-spin"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
                     </svg>
-                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    <svg
+                        v-else
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                        />
                     </svg>
-                    <span>{{ uniquizing ? 'Уникализация...' : 'Уникализировать с ИИ' }}</span>
+                    <span>{{
+                        uniquizing ? "Уникализация..." : "Уникализировать с ИИ"
+                    }}</span>
                 </button>
-                
-                <button @click="publishLater" class="px-4 py-2 rounded bg-blue-600 text-white">Опубликовать позже</button>
-                <button @click="publishNow" class="px-4 py-2 rounded bg-indigo-600 text-white">Опубликовать сейчас</button>
+
+                <button
+                    @click="publishLater"
+                    class="px-4 py-2 rounded bg-blue-600 text-white"
+                >
+                    Опубликовать позже
+                </button>
+                <button
+                    @click="publishNow"
+                    class="px-4 py-2 rounded bg-indigo-600 text-white"
+                >
+                    Опубликовать сейчас
+                </button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { EditorContent, useEditor } from '@tiptap/vue-3';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import Underline from '@tiptap/extension-underline';
-import http from '@/js/http';
-import TurndownService from 'turndown';
-import { getMediaUrl } from '@/js/utils';
-import 'emoji-picker-element';
-import MediaViewer from '@/components/MediaViewer.vue';
+import { ref, onMounted, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { EditorContent, useEditor } from "@tiptap/vue-3";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
+import http from "@/js/http";
+import TurndownService from "turndown";
+import { getMediaUrl } from "@/js/utils";
+import "emoji-picker-element";
+import MediaViewer from "@/components/MediaViewer.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -187,8 +340,8 @@ const postId = route.params.id;
 const files = ref([]);
 const fileInputRef = ref(null);
 const schedule = ref(false);
-const scheduledAt = ref('');
-const selectedChannel = ref('');
+const scheduledAt = ref("");
+const selectedChannel = ref("");
 const channels = ref([]);
 const loadingPost = ref(false);
 const postData = ref(null);
@@ -198,21 +351,23 @@ const showingUniqueText = ref(false);
 
 const editor = useEditor({
     extensions: [StarterKit, Link, Underline],
-    content: '',
+    content: "",
 });
 
-const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+const turndownService = new TurndownService({
+    headingStyle: "atx",
+    codeBlockStyle: "fenced",
+});
 
-turndownService.addRule('underline', {
-    filter: ['u'],
+turndownService.addRule("underline", {
+    filter: ["u"],
     replacement: (content) => `__${content}__`,
 });
 
-turndownService.addRule('strikethrough', {
-    filter: ['s', 'strike', 'del'],
+turndownService.addRule("strikethrough", {
+    filter: ["s", "strike", "del"],
     replacement: (content) => `~~${content}~~`,
 });
-
 
 const loadChannels = () => {
     http.getActivePublicationChannels((response) => {
@@ -220,7 +375,7 @@ const loadChannels = () => {
             channels.value = response.data || [];
         }
     });
-}
+};
 
 const addFiles = (newArr) => {
     const spaceLeft = 10 - files.value.length;
@@ -228,48 +383,48 @@ const addFiles = (newArr) => {
     slice.forEach((file) => {
         files.value.push(file);
         const url = URL.createObjectURL(file);
-        previews.value.push({ url, isImage: file.type.startsWith('image') });
+        previews.value.push({ url, isImage: file.type.startsWith("image") });
     });
-}
+};
 
 const handleFiles = (e) => {
     addFiles(Array.from(e.target.files));
-    e.target.value = '';
-}
+    e.target.value = "";
+};
 
 const triggerFile = () => {
     fileInputRef.value?.click();
-}
+};
 
 function cancel() {
     router.back();
 }
 
 function send(publishLater) {
-    const html = editor.value?.getHTML() || '';
+    const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
     if (!markdown.trim() && files.value.length === 0) {
-        window?.$toast?.error('Добавьте текст или медиа');
+        window?.$toast?.error("Добавьте текст или медиа");
         return;
     }
     if (!selectedChannel.value) {
-        window?.$toast?.error('Выберите канал для публикации');
+        window?.$toast?.error("Выберите канал для публикации");
         return;
     }
     if (publishLater) {
         if (!scheduledAt.value) {
-            window?.$toast?.error('Укажите дату');
+            window?.$toast?.error("Укажите дату");
             return;
         }
     }
 
     const fd = new FormData();
     // Отправляем тот текст, который отображается в редакторе
-    fd.append('text', markdown);
-    files.value.forEach((f) => fd.append('file', f));
-    fd.append('channel_id', selectedChannel.value);
+    fd.append("text", markdown);
+    files.value.forEach((f) => fd.append("file", f));
+    fd.append("channel_id", selectedChannel.value);
     if (publishLater) {
-        fd.append('scheduled_at', new Date(scheduledAt.value).toISOString());
+        fd.append("scheduled_at", new Date(scheduledAt.value).toISOString());
     }
 
     http.createPost(
@@ -277,26 +432,37 @@ function send(publishLater) {
         (response) => {
             if (response.success) {
                 if (publishLater) {
-                    window?.$toast?.success('Пост запланирован');
-                    router.push('/scheduled-posts');
+                    window?.$toast?.success("Пост запланирован");
+                    router.push("/scheduled-posts");
                 } else {
                     const postId = response.data._id;
-                    http.publishToChannel(postId, selectedChannel.value, (publishRes) => {
-                        if (publishRes.success) {
-                            window?.$toast?.success('Пост опубликован в Telegram!');
-                            router.push('/');
-                        } else {
-                            window?.$toast?.error('Ошибка публикации: ' + (publishRes.message || ''));
+                    http.publishToChannel(
+                        postId,
+                        selectedChannel.value,
+                        (publishRes) => {
+                            if (publishRes.success) {
+                                window?.$toast?.success(
+                                    "Пост опубликован в Telegram!"
+                                );
+                                router.push("/");
+                            } else {
+                                window?.$toast?.error(
+                                    "Ошибка публикации: " +
+                                        (publishRes.message || "")
+                                );
+                            }
                         }
-                    });
+                    );
                 }
             } else {
-                window?.$toast?.error(response.message || 'Ошибка создания поста');
+                window?.$toast?.error(
+                    response.message || "Ошибка создания поста"
+                );
             }
         },
         (error) => {
-            console.error('Error creating post:', error);
-            window?.$toast?.error('Ошибка создания поста');
+            console.error("Error creating post:", error);
+            window?.$toast?.error("Ошибка создания поста");
         }
     );
 }
@@ -318,21 +484,21 @@ function loadPost() {
             initializeEditorContent(res.data);
             await preloadMedia(res.data);
         } else {
-            window?.$toast?.error(res?.message || 'Не удалось загрузить пост');
+            window?.$toast?.error(res?.message || "Не удалось загрузить пост");
         }
     });
 }
 
 function initializeEditorContent(post) {
     if (!post) return;
-    
+
     // Определяем какой текст показывать
-    let textToShow = post.text || '';
+    let textToShow = post.text || "";
     if (showingUniqueText.value && post.unique_text) {
         textToShow = post.unique_text;
     }
-    
-    const htmlContent = textToShow.replace(/\n/g, '<br>');
+
+    const htmlContent = textToShow.replace(/\n/g, "<br>");
     if (editor.value) {
         editor.value.commands.setContent(htmlContent);
     }
@@ -351,11 +517,11 @@ async function preloadMedia(post) {
             const url = getMediaUrl(m.file_path);
             const response = await fetch(url);
             const blob = await response.blob();
-            const filename = m.file_path.split('/').pop() || 'media';
+            const filename = m.file_path.split("/").pop() || "media";
             const file = new File([blob], filename, { type: blob.type });
             arr.push(file);
         } catch (e) {
-            console.error('Ошибка загрузки медиа', e);
+            console.error("Ошибка загрузки медиа", e);
         }
     }
     addFiles(arr);
@@ -364,17 +530,83 @@ async function preloadMedia(post) {
 const toolbar = computed(() => {
     if (!editor.value) return [];
     return [
-        { label: 'B', title: 'Bold', action: () => editor.value.chain().focus().toggleBold().run(), isActive: () => editor.value.isActive && editor.value.isActive('bold') },
-        { label: 'I', title: 'Italic', action: () => editor.value.chain().focus().toggleItalic().run(), isActive: () => editor.value.isActive && editor.value.isActive('italic') },
-        { label: 'U', title: 'Underline', action: () => editor.value.chain().focus().toggleUnderline().run(), isActive: () => editor.value.isActive && editor.value.isActive('underline') },
-        { label: 'S', title: 'Strike', action: () => editor.value.chain().focus().toggleStrike().run(), isActive: () => editor.value.isActive && editor.value.isActive('strike') },
-        { label: '</>', title: 'Code', action: () => editor.value.chain().focus().toggleCodeBlock().run(), isActive: () => editor.value.isActive && editor.value.isActive('codeBlock') },
-        { label: '{}', title: 'Inline code', action: () => editor.value.chain().focus().toggleCode().run(), isActive: () => editor.value.isActive && editor.value.isActive('code') },
-        { label: '"', title: 'Quote', action: () => editor.value.chain().focus().toggleBlockquote().run(), isActive: () => editor.value.isActive && editor.value.isActive('blockquote') },
-        { label: '• List', title: 'Bullet List', action: () => editor.value.chain().focus().toggleBulletList().run(), isActive: () => editor.value.isActive && editor.value.isActive('bulletList') },
-        { label: '1. List', title: 'Ordered List', action: () => editor.value.chain().focus().toggleOrderedList().run(), isActive: () => editor.value.isActive && editor.value.isActive('orderedList') },
-        { label: '😀', title: 'Emoji', action: toggleEmojiPicker, isActive: () => false },
-        { label: '🔗', title: 'Link', action: toggleLinkInput, isActive: () => editor.value.isActive && editor.value.isActive('link') },
+        {
+            label: "B",
+            title: "Bold",
+            action: () => editor.value.chain().focus().toggleBold().run(),
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("bold"),
+        },
+        {
+            label: "I",
+            title: "Italic",
+            action: () => editor.value.chain().focus().toggleItalic().run(),
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("italic"),
+        },
+        {
+            label: "U",
+            title: "Underline",
+            action: () => editor.value.chain().focus().toggleUnderline().run(),
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("underline"),
+        },
+        {
+            label: "S",
+            title: "Strike",
+            action: () => editor.value.chain().focus().toggleStrike().run(),
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("strike"),
+        },
+        {
+            label: "</>",
+            title: "Code",
+            action: () => editor.value.chain().focus().toggleCodeBlock().run(),
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("codeBlock"),
+        },
+        {
+            label: "{}",
+            title: "Inline code",
+            action: () => editor.value.chain().focus().toggleCode().run(),
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("code"),
+        },
+        {
+            label: '"',
+            title: "Quote",
+            action: () => editor.value.chain().focus().toggleBlockquote().run(),
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("blockquote"),
+        },
+        {
+            label: "• List",
+            title: "Bullet List",
+            action: () => editor.value.chain().focus().toggleBulletList().run(),
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("bulletList"),
+        },
+        {
+            label: "1. List",
+            title: "Ordered List",
+            action: () =>
+                editor.value.chain().focus().toggleOrderedList().run(),
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("orderedList"),
+        },
+        {
+            label: "😀",
+            title: "Emoji",
+            action: toggleEmojiPicker,
+            isActive: () => false,
+        },
+        {
+            label: "🔗",
+            title: "Link",
+            action: toggleLinkInput,
+            isActive: () =>
+                editor.value.isActive && editor.value.isActive("link"),
+        },
     ];
 });
 
@@ -386,7 +618,7 @@ function removeFile(index) {
 
 const showEmojiPicker = ref(false);
 const showLinkInput = ref(false);
-const linkUrl = ref('');
+const linkUrl = ref("");
 
 function toggleEmojiPicker() {
     showLinkInput.value = false;
@@ -401,12 +633,17 @@ function insertEmojiEvent(e) {
 function toggleLinkInput() {
     showLinkInput.value = !showLinkInput.value;
     showEmojiPicker.value = false;
-    linkUrl.value = '';
+    linkUrl.value = "";
 }
 
 function confirmLink() {
     if (linkUrl.value.trim()) {
-        editor.value.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.value.trim() }).run();
+        editor.value
+            .chain()
+            .focus()
+            .extendMarkRange("link")
+            .setLink({ href: linkUrl.value.trim() })
+            .run();
     }
     showLinkInput.value = false;
 }
@@ -447,49 +684,58 @@ function nextMedia() {
 }
 
 function isImageMedia(media) {
-    return media.type === 'photo' || media.type === 'MessageMediaPhoto';
+    return media.type === "photo" || media.type === "MessageMediaPhoto";
 }
 
 function isVideoMedia(media) {
-    return media.type === 'video' || media.type === 'MessageMediaDocument' || media.type === 'document';
+    return (
+        media.type === "video" ||
+        media.type === "MessageMediaDocument" ||
+        media.type === "document"
+    );
 }
 
 async function uniquizePost() {
     if (!postId) {
-        window?.$toast?.error('ID поста не найден');
+        window?.$toast?.error("ID поста не найден");
         return;
     }
 
     uniquizing.value = true;
-    
+
     try {
         const response = await http.instance.post(`/posts/${postId}/uniquize`);
-        
+
         if (response.data.success) {
             const updatedPost = response.data.data;
             postData.value = updatedPost;
             // Переключаемся на показ уникального текста
             showingUniqueText.value = true;
             initializeEditorContent(updatedPost);
-            window?.$toast?.success('Пост уникализирован!');
+            window?.$toast?.success("Пост уникализирован!");
         } else {
-            window?.$toast?.error('Ошибка уникализации: ' + (response.data.message || ''));
+            window?.$toast?.error(
+                "Ошибка уникализации: " + (response.data.message || "")
+            );
         }
     } catch (error) {
-        console.error('Error uniquizing post:', error);
-        
-        let errorMessage = 'Ошибка уникализации';
-        
+        console.error("Error uniquizing post:", error);
+
+        let errorMessage = "Ошибка уникализации";
+
         if (error.response) {
             const statusCode = error.response.status;
-            const serverMessage = error.response.data?.message || error.response.data?.error || 'Неизвестная ошибка сервера';
+            const serverMessage =
+                error.response.data?.message ||
+                error.response.data?.error ||
+                "Неизвестная ошибка сервера";
             errorMessage = `Ошибка ${statusCode}: ${serverMessage}`;
         } else if (error.request) {
-            errorMessage = 'Ошибка сети. Проверьте подключение к интернету';
+            errorMessage = "Ошибка сети. Проверьте подключение к интернету";
         } else {
-            errorMessage = error.message || 'Неизвестная ошибка';
+            errorMessage = error.message || "Неизвестная ошибка";
         }
-        
+
         window?.$toast?.error(errorMessage);
     } finally {
         uniquizing.value = false;
@@ -497,8 +743,8 @@ async function uniquizePost() {
 }
 
 const hasText = computed(() => {
-    const html = editor.value?.getHTML() || '';
-    const text = html.replace(/<[^>]*>/g, '').trim();
+    const html = editor.value?.getHTML() || "";
+    const text = html.replace(/<[^>]*>/g, "").trim();
     return text.length > 0;
 });
 
