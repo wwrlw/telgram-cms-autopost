@@ -1,6 +1,6 @@
 <template>
     <div
-        class="mb-6 bg-white p-4 rounded-lg shadow"
+        class="mb-3 bg-white p-4 rounded-lg shadow"
         v-if="!loading || categories.length > 0"
     >
         <div class="space-y-4">
@@ -66,17 +66,6 @@
 
 <script setup>
 import { ref } from "vue";
-
-const props = defineProps({
-    loading: {
-        type: Boolean,
-        default: false,
-    },
-    categories: {
-        type: Array,
-        default: () => [],
-    },
-});
 
 const emit = defineEmits(["update:searchQuery", "clearFilters"]);
 

@@ -438,7 +438,6 @@ const getCategoryStyle = (categoryId) => {
     }
     const category = props.categories.find((cat) => cat.id === categoryId);
     if (category && category.color) {
-        // Простая логика для определения контрастного цвета текста
         const color = category.color.replace("#", "");
         const r = parseInt(color.substr(0, 2), 16);
         const g = parseInt(color.substr(2, 2), 16);

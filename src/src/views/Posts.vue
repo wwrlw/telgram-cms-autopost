@@ -4,7 +4,14 @@
             <StatsCards
                 v-if="!loading || posts.length > 0"
                 :totalCount="totalCount"
+                :data="posts"
+                type="posts"
+            />
+
+            <Search
+                :loading="loading"
                 :posts="posts"
+                @update:searchQuery="handleSearchChange"
             />
 
             <Filters
@@ -27,12 +34,6 @@
                 @delete="deletePost"
             />
 
-            <Actions
-                :selected-posts="selectedPosts"
-                @bulk-publish="bulkPublish"
-                @bulk-delete="bulkDelete"
-                @clear-selection="clearSelection"
-            />
 
             <PublishModal
                 v-model:show="showPublishModal"
@@ -60,11 +61,12 @@ import { ref, onMounted, inject, watch } from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
 import Filters from "@/components/Shared/Filters.vue";
-import Actions from "@/components/Shared/Actions.vue";
 import PublishModal from "@/components/Modal/PublishModal.vue";
 import Thumbs from "@/components/Thumbs.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 import Pagination from "@/components/Shared/Pagination.vue";
+import Search from "@/components/Shared/Search.vue";
+
 const refreshTrigger = inject("refreshTrigger");
 const setLoading = inject("setLoading");
 
@@ -76,7 +78,6 @@ const dateFromFilter = ref("");
 const dateToFilter = ref("");
 const sortField = ref("created_at");
 const sortOrder = ref("desc");
-const selectedPosts = ref([]);
 const showPublishModal = ref(false);
 const selectedPostForPublish = ref(null);
 const loading = ref(false);
@@ -235,12 +236,6 @@ const handlePublished = (result) => {
     selectedPostForPublish.value = null;
 };
 
-const bulkPublish = () => {
-    if (selectedPosts.value.length > 0) {
-        window.$toast.error("Для публикации выберите один пост");
-    }
-};
-
 const showConfirmModal = ref(false);
 const confirmMessage = ref("");
 let confirmAction = null;
@@ -280,40 +275,6 @@ const deletePost = (postId) => {
         },
         postId
     );
-};
-
-const bulkDelete = () => {
-    if (selectedPosts.value.length === 0) {
-        window.$toast.error("Выберите посты для удаления");
-        return;
-    }
-    showConfirm(
-        `Вы уверены, что хотите удалить ${selectedPosts.value.length} постов?`,
-        () => {
-            let deletedCount = 0;
-            const totalToDelete = selectedPosts.value.length;
-            selectedPosts.value.forEach((postId, index) => {
-                http.deletePost({ id: postId }, (response) => {
-                    if (response.success) {
-                        deletedCount++;
-                    }
-                    if (deletedCount + index + 1 >= totalToDelete) {
-                        clearSelection();
-                        postsService();
-                        if (deletedCount > 0) {
-                            window.$toast.success(
-                                `Успешно удалено ${deletedCount} из ${totalToDelete} постов`
-                            );
-                        }
-                    }
-                });
-            });
-        }
-    );
-};
-
-const clearSelection = () => {
-    selectedPosts.value = [];
 };
 
 const loadCategories = () => {

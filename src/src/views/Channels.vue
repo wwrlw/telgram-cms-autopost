@@ -1,10 +1,11 @@
 <template>
     <div class="min-h-screen bg-gray-50">
         <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <ChannelStatsCards
+            <StatsCards
                 v-if="!loading || channels.length > 0"
                 :totalCount="totalCount"
-                :channels="channels"
+                :data="channels"
+                type="channels"
             />
 
             <ChannelFilters
@@ -33,7 +34,7 @@
                 @items-per-page-change="changeItemsPerPage"
             />
 
-            <ChannelActions
+            <Actions
                 :selected-channels="selectedChannels"
                 @bulk-delete="bulkDelete"
                 @clear-selection="clearSelection"
@@ -58,18 +59,16 @@
 <script setup>
 import { ref, onMounted, inject, watch } from "vue";
 import http from "@/js/http";
-import ChannelStatsCards from "@/components/Channel/StatsCards.vue";
+import StatsCards from "@/components/StatsCards.vue";
 import ChannelFilters from "@/components/Channel/Filters.vue";
 import ChannelsTable from "@/components/Channel/Table.vue";
-import ChannelActions from "@/components/Channel/Actions.vue";
+import Actions from "@/components/Shared/Actions.vue";
 import CreateChannelModal from "@/components/Modal/CreateChannelModal.vue";
 import PostTableSkeleton from "@/components/PostTableSkeleton.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 
 const ChannelTableSkeleton = PostTableSkeleton;
 
-// Получаем состояния из App.vue если они есть
-const globalLoading = inject("loading", null);
 const refreshTrigger = inject("refreshTrigger", null);
 const setLoading = inject("setLoading", null);
 
@@ -278,17 +277,6 @@ watch(refreshTrigger, () => {
         channelsService();
     }
 });
-
-const handleConfirm = () => {
-    showConfirm.value = false;
-    if (typeof confirmCallback === "function") confirmCallback();
-    confirmCallback = null;
-};
-
-const handleCancel = () => {
-    showConfirm.value = false;
-    confirmCallback = null;
-};
 
 onMounted(() => {
     channelsService();

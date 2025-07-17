@@ -144,12 +144,6 @@ function isVideo(media) {
         media.type === "document"
     );
 }
-
-function getMediaType(media) {
-    if (isImage(media)) return "Изображение";
-    if (isVideo(media)) return "Видео";
-    return "Файл";
-}
 </script>
 
 <style scoped>

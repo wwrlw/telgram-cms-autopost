@@ -305,12 +305,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, getCurrentInstance, onActivated } from "vue";
+import { ref, onMounted, onActivated } from "vue";
 import http from "../js/http.js";
 import SchedulePublishModal from "@/components/Modal/SchedulePublishModal.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 import { formatDate } from "@/js/utils.js";
-const { proxy } = getCurrentInstance();
 
 const scheduledPosts = ref([]);
 const publishedPosts = ref([]);

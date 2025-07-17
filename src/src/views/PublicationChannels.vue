@@ -288,19 +288,10 @@
 </template>
 
 <script setup>
-import {
-    ref,
-    reactive,
-    onMounted,
-    getCurrentInstance,
-    inject,
-    watch,
-} from "vue";
+import { ref, reactive, onMounted, inject, watch } from "vue";
 import http from "@/js/http.js";
 import { formatDate } from "@/js/utils";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
-
-const { proxy } = getCurrentInstance();
 
 const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading");

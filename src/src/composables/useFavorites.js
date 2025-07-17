@@ -1,13 +1,11 @@
 import { ref, computed } from "vue";
 import http from "@/js/http";
 
-// Глобальное состояние для избранных постов
 const favoritePosts = ref([]);
 const isLoading = ref(false);
 const isLoaded = ref(false);
 const userId = ref(null);
 
-// Загрузка пользователя
 const loadUser = () => {
     try {
         const userData = localStorage.getItem("user");
@@ -21,7 +19,6 @@ const loadUser = () => {
     }
 };
 
-// Загрузка избранных постов
 const loadFavorites = async () => {
     if (!userId.value || isLoading.value || isLoaded.value) return;
 
@@ -44,12 +41,10 @@ const loadFavorites = async () => {
     });
 };
 
-// Проверка, является ли пост избранным
 const isFavorite = (postId) => {
     return favoritePosts.value.includes(postId);
 };
 
-// Добавление поста в избранное
 const addToFavorites = async (postId) => {
     if (!userId.value) {
         if (window._notify) {
@@ -79,7 +74,6 @@ const addToFavorites = async (postId) => {
     });
 };
 
-// Удаление поста из избранного
 const removeFromFavorites = async (postId) => {
     if (!userId.value) {
         if (window._notify) {
@@ -111,7 +105,6 @@ const removeFromFavorites = async (postId) => {
     });
 };
 
-// Переключение избранного
 const toggleFavorite = async (postId) => {
     if (isFavorite(postId)) {
         return await removeFromFavorites(postId);
@@ -120,7 +113,6 @@ const toggleFavorite = async (postId) => {
     }
 };
 
-// Инициализация
 const initializeFavorites = async () => {
     loadUser();
     if (userId.value && !isLoaded.value) {
@@ -130,13 +122,11 @@ const initializeFavorites = async () => {
 
 export function useFavorites() {
     return {
-        // State
         favoritePosts: computed(() => favoritePosts.value),
         isLoading: computed(() => isLoading.value),
         isLoaded: computed(() => isLoaded.value),
         userId: computed(() => userId.value),
 
-        // Methods
         loadUser,
         loadFavorites,
         isFavorite,

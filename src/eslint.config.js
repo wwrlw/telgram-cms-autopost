@@ -12,18 +12,18 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
-        __dirname: "readonly"
-      }
+        __dirname: "readonly",
+      },
     },
     plugins: {
-      prettier
+      prettier,
     },
     rules: {
       "prettier/prettier": "error",
       "vue/multi-word-component-names": "off",
       "vue/require-toggle-inside-transition": "off",
-      "no-unused-vars": "warn",
-      "no-undef": "warn"
-    }
-  }
+      // "no-unused-vars": "warn",
+      "no-undef": "warn",
+    },
+  },
 ];

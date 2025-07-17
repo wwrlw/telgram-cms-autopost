@@ -610,12 +610,6 @@ const toolbar = computed(() => {
     ];
 });
 
-function removeFile(index) {
-    files.value.splice(index, 1);
-    const prev = previews.value.splice(index, 1)[0];
-    if (prev?.url) URL.revokeObjectURL(prev.url);
-}
-
 const showEmojiPicker = ref(false);
 const showLinkInput = ref(false);
 const linkUrl = ref("");

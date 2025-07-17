@@ -8,14 +8,18 @@
         leave-to-class="opacity-0 transform translate-y-4 sm:translate-y-0 sm:scale-95"
     >
         <div
-            v-if="selectedPosts.length > 0"
+            v-if="(selectedPosts?.length > 0) || (selectedCategories?.length > 0) || (selectedChannels?.length > 0)"
             class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 px-6 py-4 z-10"
         >
             <div class="flex items-center space-x-4">
-                <span class="text-sm text-gray-600"
-                    >{{ selectedPosts.length }} выбрано</span
+                <span v-if="route.name === 'categories'" class="text-sm text-gray-600"
+                    >{{ selectedCategories.length }} выбрано</span
+                >
+                <span v-else class="text-sm text-gray-600"
+                    >{{ selectedChannels.length }} выбрано</span
                 >
                 <button
+                    v-if="route.name === '!channels'"
                     @click="$emit('bulkPublish')"
                     class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
@@ -39,10 +43,21 @@
 </template>
 
 <script setup>
+import { useRoute } from "vue-router";
+const route = useRoute();
+
 const props = defineProps({
     selectedPosts: {
         type: Array,
-        required: true,
+        default: () => [],
+    },
+    selectedCategories: {
+        type: Array,
+        default: () => [],
+    },
+    selectedChannels: {
+        type: Array,
+        default: () => [],
     },
 });
 

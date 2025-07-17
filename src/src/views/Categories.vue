@@ -1,13 +1,14 @@
 <template>
     <div class="min-h-screen bg-gray-50">
         <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <CategoryStatsCards
+            <StatsCards
                 v-if="!loading || categories.length > 0"
                 :totalCount="totalCount"
-                :categories="categories"
+                :data="categories"
+                type="categories"
             />
 
-            <CategoryFilters
+            <Search
                 :loading="loading"
                 :categories="categories"
                 @update:searchQuery="handleSearchChange"
@@ -30,7 +31,7 @@
                 @create-category="createCategory"
             />
 
-            <CategoryActions
+            <Actions
                 :selected-categories="selectedCategories"
                 @bulk-delete="bulkDelete"
                 @clear-selection="clearSelection"
@@ -53,20 +54,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject, watch } from "vue";
+import { ref, onMounted, inject, watch } from "vue";
 import http from "@/js/http";
-import CategoryStatsCards from "@/components/Category/StatsCards.vue";
-import CategoryFilters from "@/components/Category/Filters.vue";
+import StatsCards from "@/components/StatsCards.vue";
+// import CategoryFilters from "@/components/Category/Filters.vue";
+import Search from "@/components/Shared/Search.vue";
 import CategoriesTable from "@/components/Category/Table.vue";
-import CategoryActions from "@/components/Category/Actions.vue";
+import Actions from "@/components/Shared/Actions.vue";
+// import CategoryActions from "@/components/Category/Actions.vue";
 import CreateCategoryModal from "@/components/Modal/CreateCategoryModal.vue";
 import PostTableSkeleton from "@/components/PostTableSkeleton.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 
 const CategoryTableSkeleton = PostTableSkeleton;
 
-// Получаем состояния из App.vue если они есть
-const globalLoading = inject("loading", null);
 const refreshTrigger = inject("refreshTrigger", null);
 const setLoading = inject("setLoading", null);
 
@@ -100,7 +101,7 @@ function onCancelConfirm() {
     confirmPayload = null;
 }
 
-const categoriesService = async (params = {}) => {
+const categoriesService = async () => {
     loading.value = true;
     if (setLoading) setLoading(true);
 
