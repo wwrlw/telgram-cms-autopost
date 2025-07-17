@@ -5,6 +5,7 @@ export interface User {
   username: string;
   password: string;
   created_at?: Date;
+  favorite_posts?: ObjectId[];
 }
 
 export interface CreateUserDto {
@@ -20,6 +21,7 @@ export interface LoginDto {
 export interface UserResponse {
   id: string;
   username: string;
+  favorite_posts?: string[];
 }
 
 export interface AuthResponse {

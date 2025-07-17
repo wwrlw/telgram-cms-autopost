@@ -59,6 +59,18 @@
             </svg>
           </button>
 
+          <button @click.prevent.stop="toggleFavorite(post._id)"
+            :class="[
+              'p-2 rounded-full transition-colors',
+              isFavorite(post._id) ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-200 text-gray-400 hover:bg-red-100 hover:text-red-500'
+            ]"
+            :title="isFavorite(post._id) ? 'Убрать из избранного' : 'В избранное'">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path v-if="isFavorite(post._id)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              <path v-else d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
+
           <button @click.prevent.stop="$emit('delete', post._id)"
             class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors" title="Удалить">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,7 +93,6 @@
         {{ displayText }}
       </router-link>
 
-      <!-- Кнопка переключения текста -->
       <div v-if="post.is_unique && post.unique_text" class="mb-3">
         <button 
           @click.prevent="toggleTextMode"
@@ -138,11 +149,12 @@
 <script setup>
 import { getMediaUrl, formatNumber, extractTitle, formatDate } from '@/js/utils'
 import { useRouter } from 'vue-router'
-import { ref, inject, computed } from 'vue'
-import http from '@/js/http'
+import { ref, inject, computed, onMounted } from 'vue'
+import { useFavorites } from '@/composables/useFavorites'
 
 const router = useRouter()
 const toast = inject('toast')
+const { isFavorite, toggleFavorite, initializeFavorites } = useFavorites()
 
 const props = defineProps({
   post: {
@@ -155,9 +167,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['publish', 'delete', 'quickview'])
-
-const showingUniqueText = ref(false)
+const emit = defineEmits(['publish', 'delete', 'quickview', 'remove-from-favorites'])
 
 const displayText = computed(() => {
   if (showingUniqueText.value && props.post.unique_text) {
@@ -165,6 +175,8 @@ const displayText = computed(() => {
   }
   return props.post.text || '';
 })
+
+const showingUniqueText = ref(false)
 
 const toggleTextMode = () => {
   showingUniqueText.value = !showingUniqueText.value;
@@ -198,7 +210,7 @@ const getCategoryStyle = (categoryId) => {
 }
 
 const navigateToPost = () => {
-  router.push(`/posts/${props.post._id}`)
+  router.push({ name: 'post', params: { id: props.post._id } })
 }
 
 const hasPhoto = (post) => {
@@ -226,6 +238,10 @@ const getFileSize = (size) => {
   if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB'
   return (size / (1024 * 1024)).toFixed(1) + ' MB'
 }
+
+onMounted(() => {
+  initializeFavorites()
+})
 </script>
 
 <style scoped>

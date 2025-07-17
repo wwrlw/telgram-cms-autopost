@@ -5,7 +5,7 @@
       :class="isCollapsed ? 'w-16' : 'w-56'"
     >
       <div class="p-4 border-b border-gray-700 flex items-center justify-between">
-        <router-link to="/" class="text-xl font-semibold hover:text-indigo-600 transition-colors cursor-pointer">
+        <router-link v-if="!isCollapsed" to="/" class="text-xl font-semibold hover:text-indigo-600 transition-colors cursor-pointer">
           TG ADMIN
         </router-link>
         <button 
@@ -36,6 +36,22 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v14l-5-3-5 3V5z"/>
               </svg>
               <span v-if="!isCollapsed">Посты</span>
+            </router-link>
+          </li>
+          <li :class="isCollapsed ? 'flex justify-center' : ''">
+            <router-link 
+              :to="{ name: 'favorites' }"
+              :class="[
+                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
+                isCollapsed ? 'justify-center' : '',
+                { 'bg-gray-700': $route.path === '/favorites' }
+              ]"
+              :title="isCollapsed ? 'Избранное' : ''"
+            >
+              <svg :class="isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'" width="100%" height="100%" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              <span v-if="!isCollapsed">Избранное</span>
             </router-link>
           </li>
           <li :class="isCollapsed ? 'flex justify-center' : ''">

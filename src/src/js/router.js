@@ -6,6 +6,7 @@ import PublicationChannels from "@/views/PublicationChannels.vue";
 import Categories from "@/views/Categories.vue";
 import Post from "@/views/Post.vue";
 import Posts from "@/views/Posts.vue"
+import Favorites from "@/views/Favorites.vue";
 const CreatePost = () => import('@/views/CreatePost.vue');
 const page404 = () => import('@/views/Page404.vue');
 const ScheduledPosts = () => import('@/views/SheduledPosts.vue');
@@ -26,6 +27,11 @@ const routes = [
     path: "/posted-channels",
     name: "posted-channels",
     component: PublicationChannels,
+  },
+  {
+    path: "/favorites",
+    name: "favorites",
+    component: Favorites,
   },
   {
     path: "/analytics",

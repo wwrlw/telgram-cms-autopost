@@ -372,6 +372,39 @@ let http = {
             if (errorCallback) errorCallback(err);
             else callback({ success: false, message: 'Failed to load channel analytics' });
         });
+    },
+
+    addFavoritePost: function (userId, postId, callback) {
+        instance.post('/auth/favorites/add', { userId, postId })
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to add favorite post';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    removeFavoritePost: function (userId, postId, callback) {
+        instance.post('/auth/favorites/remove', { userId, postId })
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to remove favorite post';
+            callback({ success: false, message: errorMessage });
+        });
+    },
+
+    getFavoritePosts: function (userId, callback) {
+        instance.get(`/auth/favorites/${userId}`)
+        .then((res) => {
+            callback(res.data);
+        })
+        .catch((err) => {
+            const errorMessage = err.response?.data?.message || 'Failed to load favorite posts';
+            callback({ success: false, message: errorMessage });
+        });
     }
 };
 

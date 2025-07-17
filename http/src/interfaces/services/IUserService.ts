@@ -5,4 +5,6 @@ export interface IUserService {
   login(loginData: LoginDto): Promise<AuthResponse>;
   getUserById(id: string): Promise<UserResponse>;
   verifyPassword(password: string, hash: string): Promise<boolean>;
+  addFavoritePost(userId: string, postId: string): Promise<UserResponse>;
+  removeFavoritePost(userId: string, postId: string): Promise<UserResponse>;
 } 
