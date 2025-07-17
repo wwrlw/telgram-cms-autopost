@@ -132,6 +132,7 @@ export class PostRepository implements IPostRepository {
       ...post,
       timestamp: new Date(),
       created_at: new Date(),
+      updated_at: new Date(),
       is_unique: post.is_unique ?? false,
       media: post.media ?? [],
       ...(post.unique_text && { unique_text: post.unique_text }),

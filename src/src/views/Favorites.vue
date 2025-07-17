@@ -172,27 +172,50 @@ const onCancelConfirm = () => {
     confirmPayload.value = null;
 };
 
-const deletePost = (postId) => {
+const deletePost = (post) => {
     showConfirm(
-        "Вы уверены, что хотите удалить этот пост?",
-        (id) => {
-            http.deletePost({ id }, (response) => {
-                if (response.success) {
-                    favoritePosts.value = favoritePosts.value.filter(
-                        (post) => post._id !== id
-                    );
-
-                    if (window._notify) {
-                        window._notify("success", "Пост удалён");
+        "Вы уверены, что хотите удалить этот пост?" + (post.is_published && post.telegram_message_id ? " (Пост также будет удалён из Telegram)" : ""),
+        (postObj) => {
+            if (postObj.is_published && postObj.telegram_message_id) {
+                http.deletePostFromTelegram(postObj._id.toString(), (tgRes) => {
+                    if (!tgRes.success) {
+                        if (window._notify) {
+                            window._notify("error", "Ошибка при удалении из Telegram: " + tgRes.message);
+                        }
                     }
-                } else {
-                    if (window._notify) {
-                        window._notify("error", "Ошибка при удалении поста");
+                    http.deletePost({ id: postObj._id }, (response) => {
+                        if (response.success) {
+                            favoritePosts.value = favoritePosts.value.filter(
+                                (post) => post._id !== postObj._id
+                            );
+                            if (window._notify) {
+                                window._notify("success", "Пост удалён (и из Telegram, если был опубликован)");
+                            }
+                        } else {
+                            if (window._notify) {
+                                window._notify("error", "Ошибка при удалении поста: " + response.message);
+                            }
+                        }
+                    });
+                });
+            } else {
+                http.deletePost({ id: postObj._id }, (response) => {
+                    if (response.success) {
+                        favoritePosts.value = favoritePosts.value.filter(
+                            (post) => post._id !== postObj._id
+                        );
+                        if (window._notify) {
+                            window._notify("success", "Пост удалён");
+                        }
+                    } else {
+                        if (window._notify) {
+                            window._notify("error", "Ошибка при удалении поста: " + response.message);
+                        }
                     }
-                }
-            });
+                });
+            }
         },
-        postId
+        post
     );
 };
 

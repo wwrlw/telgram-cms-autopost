@@ -212,7 +212,7 @@
                                         Опубликован
                                     </span>
                                     <button
-                                        @click="$emit('delete', post._id)"
+                                        @click="$emit('delete', post)"
                                         class="text-red-600 hover:text-red-900 text-sm"
                                     >
                                         Удалить
@@ -416,7 +416,6 @@ const emit = defineEmits([
     "update:selectedPosts",
     "publish",
     "delete",
-    "create",
 ]);
 
 const selectedPosts = computed({

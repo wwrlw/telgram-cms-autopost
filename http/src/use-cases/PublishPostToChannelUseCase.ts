@@ -25,8 +25,12 @@ export class PublishPostToChannelUseCase {
       const publishResult = await this.telegramPublishService.publishPost(post, channel);
       
       if (publishResult.success) {
-        // Отмечаем пост как опубликованный
-        await this.postService.markAsPublished(postId, channel.name);
+        // Отмечаем пост как опубликованный с сохранением telegram_message_id
+        if (publishResult.messageId) {
+          await this.postService.markAsPublishedWithTelegramId(postId, channelId, publishResult.messageId);
+        } else {
+          await this.postService.markAsPublished(postId, channel.name);
+        }
         
         return { 
           success: true, 

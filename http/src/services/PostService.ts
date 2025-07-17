@@ -104,6 +104,50 @@ export class PostService implements IPostService {
     return updatedPost;
   }
 
+  async markAsPublishedWithTelegramId(id: string, channelId: string, telegramMessageId: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+    
+    const updatedPost = await this.postRepository.update(id, {
+      is_published: true,
+      published_at: new Date(),
+      published_channel_id: channelId,
+      telegram_message_id: telegramMessageId,
+      scheduled_at: undefined,
+      scheduled_channel_id: undefined,
+      updated_at: new Date()
+    });
+    
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to mark post as published');
+    }
+    
+    return updatedPost;
+  }
+
+  async unmarkAsPublished(id: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+    
+    const updatedPost = await this.postRepository.update(id, {
+      is_published: false,
+      published_at: undefined,
+      published_channel_id: undefined,
+      telegram_message_id: undefined,
+      updated_at: new Date()
+    });
+    
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to unmark post as published');
+    }
+    
+    return updatedPost;
+  }
+
   async getPublishedPosts(): Promise<Post[]> {
     return await this.postRepository.findPublished();
   }

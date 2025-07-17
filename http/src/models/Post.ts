@@ -29,7 +29,9 @@ export interface Post {
   scheduled_channel_id?: string;
   is_published?: boolean;
   published_at?: Date;
-  updated_at?: Date;
+  telegram_message_id?: string;
+  published_channel_id?: string;
+  updated_at: Date;
 }
 
 export interface CreatePostDto {

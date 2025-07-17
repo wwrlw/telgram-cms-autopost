@@ -11,15 +11,25 @@ export class TelegramPublishService implements ITelegramPublishService {
     this.baseUrl = `https://api.telegram.org/bot${this.botToken}`;
   }
 
-  async publishPost(post: Post, channel: PostedChannel): Promise<{ success: boolean; message: string }> {
+  async publishPost(post: Post, channel: PostedChannel): Promise<{ success: boolean; message: string; messageId?: string }> {
     try {
       console.log('Начинаем публикацию поста:', { id: post._id });
   
       const messageText = this.formatMessageText(post, channel);
   
-      if (post.media && post.media.length > 0) {
-        console.log(`📎 Обнаружено ${post.media.length} медиа-файлов. Отправляем медиа с подписью.`);
-        await this.sendMedia(post, channel, messageText);
+              if (post.media && post.media.length > 0) {
+          console.log(`📎 Обнаружено ${post.media.length} медиа-файлов. Отправляем медиа с подписью.`);
+          const result = await this.sendMedia(post, channel, messageText);
+          if (result.success) {
+            console.log('✅ Пост успешно опубликован');
+            return { 
+              success: true, 
+              message: `Пост успешно опубликован в канал ${channel.name}`,
+              messageId: result.messageId
+            };
+          } else {
+            return { success: false, message: result.message };
+          }
       } else {
         console.log('📝 Медиа не найдено. Отправляем текстовое сообщение.');
         const requestBody = {
@@ -36,20 +46,58 @@ export class TelegramPublishService implements ITelegramPublishService {
         });
   
         const result = await response.json();
+        console.log('Ответ от Telegram API (sendMessage):', JSON.stringify(result, null, 2));
+        
         if (!result.ok) {
           console.error('❌ Ошибка Telegram API при отправке текста:', result.description);
           return { success: false, message: `Ошибка Telegram API: ${result.description}` };
         }
-      }
   
-      console.log('✅ Пост успешно опубликован');
-      return { success: true, message: `Пост успешно опубликован в канал ${channel.name}` };
+        console.log('✅ Пост успешно опубликован');
+        return { 
+          success: true, 
+          message: `Пост успешно опубликован в канал ${channel.name}`,
+          messageId: result.result.message_id.toString()
+        };
+      }
   
     } catch (error) {
       console.error('❌ Ошибка при публикации в Telegram:', error);
       return { success: false, message: 'Критическая ошибка при отправке в Telegram' };
     } finally {
       console.log('=== КОНЕЦ ПУБЛИКАЦИИ В TELEGRAM ===');
+    }
+  }
+
+  async deletePost(messageId: string, channelId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      console.log('Начинаем удаление поста из Telegram:', { messageId, channelId });
+
+      const requestBody = {
+        chat_id: channelId,
+        message_id: parseInt(messageId)
+      };
+
+      const response = await fetch(`${this.baseUrl}/deleteMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+
+      const result = await response.json();
+      console.log('Ответ от Telegram API (deleteMessage):', JSON.stringify(result, null, 2));
+
+      if (!result.ok) {
+        console.error('❌ Ошибка Telegram API при удалении сообщения:', result.description);
+        return { success: false, message: `Ошибка Telegram API: ${result.description}` };
+      }
+
+      console.log('✅ Пост успешно удален из Telegram');
+      return { success: true, message: 'Пост успешно удален из Telegram' };
+
+    } catch (error) {
+      console.error('❌ Ошибка при удалении поста из Telegram:', error);
+      return { success: false, message: 'Критическая ошибка при удалении из Telegram' };
     }
   }
 
@@ -86,7 +134,7 @@ export class TelegramPublishService implements ITelegramPublishService {
       .replace(/>/g, '&gt;');
   }
 
-  private async sendMedia(post: Post, channel: PostedChannel, caption: string): Promise<void> {
+  private async sendMedia(post: Post, channel: PostedChannel, caption: string): Promise<{ success: boolean; message: string; messageId?: string }> {
 
     const getMediaUrl = (filePath: string) => {
       const cleanPath = filePath.replace('/app/', '');
@@ -141,15 +189,20 @@ export class TelegramPublishService implements ITelegramPublishService {
 
           if (mediaResult.ok) {
             console.log(`✅ Медиа ${i + 1} отправлено успешно`);
+            return { success: true, message: 'Медиа отправлено успешно', messageId: mediaResult.result.message_id.toString() };
           } else {
             console.error(`❌ Ошибка отправки медиа ${i + 1}:`, mediaResult.description);
+            return { success: false, message: `Ошибка отправки медиа ${i + 1}: ${mediaResult.description}` };
           }
         } else {
           console.error(`❌ Неизвестный тип медиа: ${mediaType}`);
+          return { success: false, message: `Неизвестный тип медиа: ${mediaType}` };
         }
       }
+      return { success: true, message: 'Медиа отправлено успешно', messageId: undefined }; // Should not reach here if media is present
     } catch (error) {
       console.error('❌ Ошибка при отправке медиа:', error);
+      return { success: false, message: 'Критическая ошибка при отправке медиа' };
     }
   }
 

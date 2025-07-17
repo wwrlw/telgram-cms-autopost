@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { PublishPostToChannelUseCase } from '../use-cases/PublishPostToChannelUseCase';
+import { DeletePostFromTelegramUseCase } from '../use-cases/DeletePostFromTelegramUseCase';
 import { PostService } from '../services/PostService';
 import { PostRepository } from '../repositories/PostRepository';
 import { PostedChannelService } from '../services/PostedChannelService';
@@ -21,6 +22,11 @@ export default async function publishRoutes(fastify: FastifyInstance) {
     telegramPublishService
   );
 
+  const deletePostFromTelegramUseCase = new DeletePostFromTelegramUseCase(
+    postService,
+    telegramPublishService
+  );
+
   // Публикация поста в конкретный канал
   fastify.post('/publish/:postId/:channelId', async (request, reply) => {
     try {
@@ -35,6 +41,24 @@ export default async function publishRoutes(fastify: FastifyInstance) {
       }
     } catch (error) {
       console.error('Ошибка при публикации поста:', error);
+      return reply.status(500).send({ success: false, message: 'Внутренняя ошибка сервера' });
+    }
+  });
+
+  // Удаление поста из Telegram
+  fastify.delete('/publish/:postId', async (request, reply) => {
+    try {
+      const { postId } = request.params as { postId: string };
+      
+      const result = await deletePostFromTelegramUseCase.execute(postId);
+      
+      if (result.success) {
+        return reply.send({ success: true, message: result.message });
+      } else {
+        return reply.status(400).send({ success: false, message: result.message });
+      }
+    } catch (error) {
+      console.error('Ошибка при удалении поста из Telegram:', error);
       return reply.status(500).send({ success: false, message: 'Внутренняя ошибка сервера' });
     }
   });

@@ -264,6 +264,20 @@ let http = {
             });
     },
 
+    deletePostFromTelegram: function (postId, callback) {
+        instance
+            .delete(`/publish/${postId}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to delete post from Telegram";
+                callback({ success: false, message: errorMessage });
+            });
+    },
+
     getPublicationChannels: function (callback, errorCallback) {
         instance
             .get("/posted-channels")
