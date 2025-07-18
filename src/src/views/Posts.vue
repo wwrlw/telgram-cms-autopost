@@ -34,7 +34,6 @@
                 @delete="deletePost"
             />
 
-
             <PublishModal
                 v-model:show="showPublishModal"
                 :post="selectedPostForPublish"

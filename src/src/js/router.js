@@ -78,14 +78,24 @@ const router = createRouter({
 router.beforeEach(async (to) => {
     const publicPages = ["/login"];
     const authRequired = !publicPages.includes(to.path);
-    const auth = {
-        data: localStorage.getItem("token") ? true : false,
-    };
 
-    if (authRequired && !auth.data) {
-        auth.returnUrl = to.fullPath;
+    if (!authRequired) {
+        return;
+    }
+
+    let token = null;
+    try {
+        token = localStorage.getItem("token");
+    } catch (error) {
+        console.error("Error accessing localStorage:", error);
+        token = null;
+    }
+
+    if (!token) {
         return "/login";
     }
+
+    return;
 });
 
 export default router;

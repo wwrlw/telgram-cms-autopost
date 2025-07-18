@@ -57,11 +57,9 @@
 import { ref, onMounted, inject, watch } from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
-// import CategoryFilters from "@/components/Category/Filters.vue";
 import Search from "@/components/Shared/Search.vue";
 import CategoriesTable from "@/components/Category/Table.vue";
 import Actions from "@/components/Shared/Actions.vue";
-// import CategoryActions from "@/components/Category/Actions.vue";
 import CreateCategoryModal from "@/components/Modal/CreateCategoryModal.vue";
 import PostTableSkeleton from "@/components/PostTableSkeleton.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";

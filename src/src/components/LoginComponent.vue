@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 import http from "@/js/http";
 
@@ -128,10 +128,8 @@ const LoginService = async () => {
     try {
         await http.login(loginForm.value, (res) => {
             loading.value = false;
-            console.log("Login response:", res);
 
             if (res && res.success) {
-                console.log("Token:", res.data.token);
                 localStorage.setItem("token", res.data.token);
                 localStorage.setItem("user", JSON.stringify(res.data.user));
                 router.push("/");

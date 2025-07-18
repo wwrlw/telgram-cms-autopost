@@ -8,11 +8,17 @@
         leave-to-class="opacity-0 transform translate-y-4 sm:translate-y-0 sm:scale-95"
     >
         <div
-            v-if="(selectedPosts?.length > 0) || (selectedCategories?.length > 0) || (selectedChannels?.length > 0)"
+            v-if="
+                selectedPosts?.length > 0 ||
+                selectedCategories?.length > 0 ||
+                selectedChannels?.length > 0
+            "
             class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 px-6 py-4 z-10"
         >
             <div class="flex items-center space-x-4">
-                <span v-if="route.name === 'categories'" class="text-sm text-gray-600"
+                <span
+                    v-if="route.name === 'categories'"
+                    class="text-sm text-gray-600"
                     >{{ selectedCategories.length }} выбрано</span
                 >
                 <span v-else class="text-sm text-gray-600"

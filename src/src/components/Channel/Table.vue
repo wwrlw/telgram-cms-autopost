@@ -258,7 +258,6 @@ const changeItemsPerPage = (limit) => {
     emit("items-per-page-change", limit);
 };
 
-
 const toggleSelectAll = () => {
     if (selectAll.value) {
         selectedChannels.value = props.channels.map((channel) => channel.id);

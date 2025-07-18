@@ -8,7 +8,7 @@
                 type="channels"
             />
 
-            <ChannelFilters
+            <Search
                 :loading="loading"
                 :channels="channels"
                 @update:searchQuery="handleSearchChange"
@@ -60,9 +60,9 @@
 import { ref, onMounted, inject, watch } from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
-import ChannelFilters from "@/components/Channel/Filters.vue";
 import ChannelsTable from "@/components/Channel/Table.vue";
 import Actions from "@/components/Shared/Actions.vue";
+import Search from "@/components/Shared/Search.vue";
 import CreateChannelModal from "@/components/Modal/CreateChannelModal.vue";
 import PostTableSkeleton from "@/components/PostTableSkeleton.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";

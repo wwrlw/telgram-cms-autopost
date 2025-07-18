@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import Header from "@/components/HeaderComponent.vue";
+import Header from "@/components/Header/HeaderComponent.vue";
 import Sidebar from "@/components/Sidebar.vue";
 import Toast from "@/components/Shared/Toast.vue";
 import { ref, provide } from "vue";
