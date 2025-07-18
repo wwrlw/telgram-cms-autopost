@@ -47,7 +47,7 @@ export class PostedChannelRepository implements IPostedChannelRepository {
     const newChannel: Omit<PostedChannel, '_id'> = {
       name: data.name || '',
       channel_id: data.channel_id || '',
-      channel_type: data.channel_type || 'public',
+      is_private: data.is_private ?? false,
       is_active: data.is_active ?? true,
       signature: data.signature || ''
     };

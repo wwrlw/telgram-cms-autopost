@@ -14,8 +14,8 @@ export class CreatePublicationChannelUseCase {
       throw new ValidationError('Channel ID is required');
     }
 
-    if (!['public', 'private'].includes(channelData.channel_type)) {
-      throw new ValidationError('Channel type must be either "public" or "private"');
+    if (typeof channelData.is_private !== 'boolean') {
+      throw new ValidationError('is_private must be a boolean value');
     }
 
     return await this.publicationChannelService.createPublicationChannel(channelData);

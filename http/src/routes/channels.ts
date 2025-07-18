@@ -49,7 +49,8 @@ export async function channelsRoutes(fastify: FastifyInstance) {
           required: ['username', 'channel_id'],
           properties: {
             username: { type: 'string' },
-            channel_id: { type: 'number' }
+            channel_id: { type: 'number' },
+            is_private: { type: 'boolean' }
           }
         }
       }

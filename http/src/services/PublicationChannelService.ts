@@ -50,7 +50,7 @@ export class PublicationChannelService implements IPublicationChannelService {
       id: channel._id!.toString(),
       name: channel.name,
       channel_id: channel.channel_id,
-      channel_type: channel.channel_type,
+      is_private: channel.is_private,
       is_active: channel.is_active,
       bot_token: channel.bot_token,
       signature: channel.signature,

@@ -12,19 +12,24 @@ export class ChannelService implements IChannelService {
   constructor(private channelRepository: IChannelRepository) {}
 
   async createChannel(channelData: CreateChannelDto): Promise<ChannelResponse> {
-    const channel = await this.channelRepository.create(channelData);
+    const channel = await this.channelRepository.create({
+      ...channelData,
+      is_private: channelData.is_private ?? false
+    });
 
     return {
       id: channel._id?.toString() || '',
       username: channel.username,
       channel_id: channel.channel_id,
       category_id: channel.category_id?.toString(),
+      is_private: channel.is_private,
       created_at: channel.created_at
     };
   }
 
   async getChannelById(id: string): Promise<ChannelResponse> {
     const channel = await this.channelRepository.findById(id);
+    
     if (!channel) {
       throw new NotFoundError('Channel not found');
     }
@@ -34,6 +39,7 @@ export class ChannelService implements IChannelService {
       username: channel.username,
       channel_id: channel.channel_id,
       category_id: channel.category_id?.toString(),
+      is_private: channel.is_private,
       created_at: channel.created_at
     };
   }
@@ -46,12 +52,14 @@ export class ChannelService implements IChannelService {
       username: channel.username,
       channel_id: channel.channel_id,
       category_id: channel.category_id?.toString(),
+      is_private: channel.is_private,
       created_at: channel.created_at
     }));
   }
 
   async updateChannel(id: string, channelData: Partial<Channel>): Promise<ChannelResponse> {
     const updatedChannel = await this.channelRepository.update(id, channelData);
+    
     if (!updatedChannel) {
       throw new NotFoundError('Channel not found');
     }
@@ -61,6 +69,7 @@ export class ChannelService implements IChannelService {
       username: updatedChannel.username,
       channel_id: updatedChannel.channel_id,
       category_id: updatedChannel.category_id?.toString(),
+      is_private: updatedChannel.is_private,
       created_at: updatedChannel.created_at
     };
   }
@@ -86,6 +95,7 @@ export class ChannelService implements IChannelService {
       username: channel.username,
       channel_id: channel.channel_id,
       category_id: channel.category_id?.toString(),
+      is_private: channel.is_private,
       created_at: channel.created_at
     }));
   }
@@ -104,6 +114,7 @@ export class ChannelService implements IChannelService {
       username: updatedChannel.username,
       channel_id: updatedChannel.channel_id,
       category_id: updatedChannel.category_id?.toString(),
+      is_private: updatedChannel.is_private,
       created_at: updatedChannel.created_at
     };
   }

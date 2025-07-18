@@ -102,15 +102,13 @@
                                         <span
                                             :class="[
                                                 'ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
-                                                channel.channel_type ===
-                                                'public'
+                                                !channel.is_private
                                                     ? 'bg-blue-100 text-blue-800'
                                                     : 'bg-purple-100 text-purple-800',
                                             ]"
                                         >
                                             {{
-                                                channel.channel_type ===
-                                                "public"
+                                                !channel.is_private
                                                     ? "Публичный"
                                                     : "Приватный"
                                             }}
@@ -212,18 +210,18 @@
 
                             <div>
                                 <label
-                                    for="channel_type"
+                                    for="is_private"
                                     class="block text-sm font-medium text-gray-700"
                                     >Тип канала</label
                                 >
                                 <select
-                                    id="channel_type"
-                                    v-model="formData.channel_type"
+                                    id="is_private"
+                                    v-model="formData.is_private"
                                     required
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 >
-                                    <option value="public">Публичный</option>
-                                    <option value="private">Приватный</option>
+                                    <option :value="false">Публичный</option>
+                                    <option :value="true">Приватный</option>
                                 </select>
                             </div>
 
@@ -327,7 +325,7 @@ function onCancelConfirm() {
 const formData = reactive({
     name: "",
     channel_id: "",
-    channel_type: "public",
+    is_private: false,
     is_active: true,
     signature: "",
 });
@@ -353,7 +351,7 @@ const openCreateModal = () => {
     Object.assign(formData, {
         name: "",
         channel_id: "",
-        channel_type: "public",
+        is_private: false,
         is_active: true,
         signature: "",
     });
@@ -365,7 +363,7 @@ const openEditModal = (channel) => {
     Object.assign(formData, {
         name: channel.name,
         channel_id: channel.channel_id,
-        channel_type: channel.channel_type,
+        is_private: channel.is_private,
         is_active: channel.is_active,
         signature: channel.signature,
     });

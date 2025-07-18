@@ -4,7 +4,7 @@ export interface PublicationChannel {
   _id?: ObjectId;
   name: string;
   channel_id: string;
-  channel_type: 'public' | 'private';
+  is_private: boolean;
   is_active: boolean;
   bot_token?: string;
   signature?: string;
@@ -15,7 +15,7 @@ export interface PublicationChannel {
 export interface CreatePublicationChannelDto {
   name: string;
   channel_id: string;
-  channel_type: 'public' | 'private';
+  is_private: boolean;
   is_active?: boolean;
   bot_token?: string;
   signature?: string;
@@ -24,7 +24,7 @@ export interface CreatePublicationChannelDto {
 export interface UpdatePublicationChannelDto {
   name?: string;
   channel_id?: string;
-  channel_type?: 'public' | 'private';
+  is_private?: boolean;
   is_active?: boolean;
   bot_token?: string;
   signature?: string;
@@ -34,7 +34,7 @@ export interface PublicationChannelResponse {
   id: string;
   name: string;
   channel_id: string;
-  channel_type: 'public' | 'private';
+  is_private: boolean;
   is_active: boolean;
   bot_token?: string;
   signature?: string;

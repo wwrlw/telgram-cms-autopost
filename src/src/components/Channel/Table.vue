@@ -125,10 +125,10 @@
                                         <div
                                             class="text-sm font-medium text-gray-900"
                                         >
-                                            {{ channel.username }}
+                                            {{ getChannelDisplayName(channel) }}
                                         </div>
                                         <div class="text-sm text-gray-500">
-                                            ID: {{ channel.id }}
+                                            {{ getChannelTypeLabel(channel) }}
                                         </div>
                                     </div>
                                 </div>
@@ -271,4 +271,18 @@ watch(selectedChannels, () => {
         selectedChannels.value.length === props.channels.length &&
         props.channels.length > 0;
 });
+
+const getChannelDisplayName = (channel) => {
+    if (channel.is_private) {
+        return `ID: ${channel.channel_id}`;
+    }
+    return channel.username;
+};
+
+const getChannelTypeLabel = (channel) => {
+    if (channel.is_private) {
+        return "Приватный канал";
+    }
+    return "Публичный канал";
+};
 </script>

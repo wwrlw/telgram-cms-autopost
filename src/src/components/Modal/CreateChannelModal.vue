@@ -130,6 +130,34 @@
 
                                     <div>
                                         <label
+                                            for="is_private"
+                                            class="block text-sm font-medium text-gray-700"
+                                        >
+                                            Тип канала
+                                        </label>
+                                        <div class="mt-1">
+                                            <select
+                                                v-model="formData.is_private"
+                                                name="is_private"
+                                                id="is_private"
+                                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
+                                            >
+                                                <option :value="false">
+                                                    Публичный
+                                                </option>
+                                                <option :value="true">
+                                                    Приватный
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <p class="mt-1 text-sm text-gray-500">
+                                            Публичные каналы имеют username,
+                                            приватные - только ID
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label
                                             for="category_id"
                                             class="block text-sm font-medium text-gray-700"
                                         >
@@ -244,6 +272,7 @@ const formData = ref({
     username: "",
     channel_id: null,
     category_id: "",
+    is_private: false,
 });
 
 const errors = ref({});
@@ -309,6 +338,7 @@ const resetForm = () => {
         username: "",
         channel_id: null,
         category_id: "",
+        is_private: false,
     };
     errors.value = {};
     isSubmitting.value = false;
@@ -323,6 +353,7 @@ watch(
                 username: props.channel.username,
                 channel_id: props.channel.channel_id,
                 category_id: props.channel.category_id || "",
+                is_private: props.channel.is_private || false,
             };
         } else if (newValue) {
             // Create mode

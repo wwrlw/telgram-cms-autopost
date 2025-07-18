@@ -67,6 +67,7 @@ export class ChannelRepository implements IChannelRepository {
 
     const channel: Channel = {
       ...channelData,
+      is_private: channelData.is_private ?? false,
       created_at: new Date()
     };
 

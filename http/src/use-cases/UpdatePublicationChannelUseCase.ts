@@ -17,8 +17,8 @@ export class UpdatePublicationChannelUseCase {
       throw new ValidationError('Channel ID cannot be empty');
     }
 
-    if (channelData.channel_type !== undefined && !['public', 'private'].includes(channelData.channel_type)) {
-      throw new ValidationError('Channel type must be either "public" or "private"');
+    if (channelData.is_private !== undefined && typeof channelData.is_private !== 'boolean') {
+      throw new ValidationError('is_private must be a boolean value');
     }
 
     return await this.publicationChannelService.updatePublicationChannel(id, channelData);

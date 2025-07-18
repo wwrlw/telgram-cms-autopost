@@ -166,14 +166,17 @@ export class TelegramService {
           let entity;
           
           try {
-            if (!channelIdentifier.startsWith('channel_')) {
+            // Try to get entity by username first (for public channels)
+            if (!/^\d+$/.test(channelIdentifier)) {
               entity = await this.client.getEntity(channelIdentifier);
             } else {
-              const channelId = parseInt(channelIdentifier.replace('channel_', ''));
+              // For private channels with numeric IDs
+              const channelId = parseInt(channelIdentifier);
               let telegramChannelId = Math.abs(channelId);
               
-              if (telegramChannelId > 1_000_000_000_000) {
-                telegramChannelId -= 1_000_000_000_000;
+              // Handle supergroup/channel ID conversion
+              if (telegramChannelId < 1_000_000_000_000) {
+                telegramChannelId = 1_000_000_000_000 + telegramChannelId;
               }
               
               entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
@@ -203,6 +206,7 @@ export class TelegramService {
             skippedCount++;
           }
           
+          // Add delay between requests to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 1000));
           
         } catch (error) {
@@ -265,41 +269,89 @@ export class TelegramService {
       console.log(`📊 Извлекаем статистику из сообщения ${message.id}`);
       
       const stats: PostStats = {};
+      let hasStats = false;
 
-      if (message.views !== undefined) {
-        stats.views = message.views;
+      // Views - most common statistic
+      if (message.views !== undefined && message.views !== null) {
+        stats.views = Number(message.views);
+        hasStats = true;
         console.log(`👁️ Просмотры: ${stats.views}`);
       }
 
-      if (message.forwards !== undefined) {
-        stats.forwards = message.forwards;
+      // Forwards
+      if (message.forwards !== undefined && message.forwards !== null) {
+        stats.forwards = Number(message.forwards);
+        hasStats = true;
         console.log(`🔄 Пересылки: ${stats.forwards}`);
       }
 
-      if (message.replies && message.replies.replies !== undefined) {
-        stats.comments = message.replies.replies;
+      // Comments/Replies
+      if (message.replies && message.replies.replies !== undefined && message.replies.replies !== null) {
+        stats.comments = Number(message.replies.replies);
+        hasStats = true;
         console.log(`💬 Комментарии: ${stats.comments}`);
       }
 
-      if (message.reactions && message.reactions.results) {
-        stats.reactions = message.reactions.results.reduce((total: number, reaction: any) => total + (reaction.count || 0), 0);
-        stats.reactions_detail = {};
+      // Reactions
+      if (message.reactions && message.reactions.results && Array.isArray(message.reactions.results)) {
+        const totalReactions = message.reactions.results.reduce((total: number, reaction: any) => {
+          return total + (Number(reaction.count) || 0);
+        }, 0);
         
-        for (const reaction of message.reactions.results) {
-          if (reaction.reaction && 'emoticon' in reaction.reaction) {
-            const emoji = reaction.reaction.emoticon;
-            stats.reactions_detail[emoji] = reaction.count || 0;
+        if (totalReactions > 0) {
+          stats.reactions = totalReactions;
+          stats.reactions_detail = {};
+          
+          for (const reaction of message.reactions.results) {
+            if (reaction.reaction && 'emoticon' in reaction.reaction) {
+              const emoji = reaction.reaction.emoticon;
+              const count = Number(reaction.count) || 0;
+              if (count > 0) {
+                stats.reactions_detail[emoji] = count;
+              }
+            }
           }
+          
+          hasStats = true;
+          console.log(`😍 Реакции: ${stats.reactions}`, stats.reactions_detail);
         }
-        
-        console.log(`😍 Реакции: ${stats.reactions}`, stats.reactions_detail);
       }
 
-      return Object.keys(stats).length > 0 ? stats : undefined;
+      // Return stats only if we have at least one meaningful statistic
+      if (hasStats) {
+        // Ensure we have at least views and forwards with default values
+        if (stats.views === undefined) stats.views = 0;
+        if (stats.forwards === undefined) stats.forwards = 0;
+        
+        return stats;
+      }
+      
+      console.log(`⚠️ Нет статистики для сообщения ${message.id}`);
+      return undefined;
       
     } catch (error) {
       console.error('❌ Ошибка извлечения статистики из сообщения:', error);
       return undefined;
+    }
+  }
+
+  private async getChannelIdentifier(peer: any): Promise<string> {
+    try {
+      const entity = await this.client.getEntity(peer);
+      
+      // For public channels, use username without @
+      if ((entity as any).username) {
+        return (entity as any).username;
+      }
+      
+      // For private channels, use the actual channel ID without prefix
+      const channelId = peer.channelId || peer.userId || peer.chatId;
+      return channelId.toString();
+    } catch (error) {
+      console.error('❌ Ошибка получения идентификатора канала:', error);
+      // Fallback to raw ID
+      const channelId = peer.channelId || peer.userId || peer.chatId;
+      return channelId.toString();
     }
   }
 
@@ -375,14 +427,13 @@ export class TelegramService {
           if (m.message && !text) text = m.message;
         }
         
-        const entity = await this.client.getEntity(peer);
-        const username = (entity as any).username || `channel_${peer.channelId || peer.userId || peer.chatId}`;
-        const postUrl = `https://t.me/${username}/${albumMsgs[0].id}`;
+        const sourceChannel = await this.getChannelIdentifier(peer);
+        const postUrl = `https://t.me/${sourceChannel}/${albumMsgs[0].id}`;
         
         const stats = this.getPostStatsFromMessage(albumMsgs[0]);
         
         const postData: CreatePostDto = {
-          source_channel: username,
+          source_channel: sourceChannel,
           text,
           url: postUrl,
           media: allMedia,
@@ -400,18 +451,17 @@ export class TelegramService {
           console.error('❌ Ошибка автоматической публикации альбома:', publishError);
         }
 
-        console.log(`📤 Сохранён альбом-пост из ${username}:`, postData);
+        console.log(`📤 Сохранён альбом-пост из ${sourceChannel}:`, postData);
       }, 1500);
       return;
     }
 
     try {
-      const entity = await this.client.getEntity(peer);
-      const username = (entity as any).username || `channel_${peer.channelId || peer.userId || peer.chatId}`;
+      const sourceChannel = await this.getChannelIdentifier(peer);
 
-      console.log(`📨 Сообщение из целевого канала: ${username} (ID: ${channelId})`);
+      console.log(`📨 Сообщение из целевого канала: ${sourceChannel} (ID: ${channelId})`);
 
-      const postUrl = `https://t.me/${username}/${msg.id}`;
+      const postUrl = `https://t.me/${sourceChannel}/${msg.id}`;
 
       const exists = await this.mongoService.checkPostExists(postUrl);
       if (exists) {
@@ -432,7 +482,7 @@ export class TelegramService {
       const stats = this.getPostStatsFromMessage(msg);
 
       const postData: CreatePostDto = {
-        source_channel: username,
+        source_channel: sourceChannel,
         text: (msg as any).message || '',
         url: postUrl,
         media: media,
