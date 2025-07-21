@@ -127,6 +127,8 @@ export class MediaService {
             }
           }
         }
+      }
+
       return {
         type: mediaType === 'photos' ? 'photo' : 
               mediaType === 'videos' ? 'video' : 
