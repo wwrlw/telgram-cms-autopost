@@ -2,7 +2,7 @@ import { TelegramClient } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
 import { Api } from 'telegram';
 import input from 'input';
-import { CreatePostDto, PostStats } from '../types/index.js';
+import { CreatePostDto, PostStats, ChannelConfig } from '../types/index.js';
 import { MongoService } from './mongoService.js';
 import { MediaService } from './mediaService.js';
 import { PublishService } from './publishService.js';
@@ -21,7 +21,7 @@ export class TelegramService {
       apiId: number;
       apiHash: string;
       sessionString: string;
-      targetChannelIds: number[];
+      targetChannels: ChannelConfig[];
       mongoUri: string;
       MONGO_DB: string;
       mediaPath: string;
@@ -42,16 +42,16 @@ export class TelegramService {
     this.publishService = new PublishService();
   }
 
-  async updateTargetChannels(newChannelIds: number[]): Promise<void> {
+  async updateTargetChannels(newChannels: ChannelConfig[]): Promise<void> {
     console.log('🔄 Обновляем целевые каналы...');
-    console.log('📋 Старые каналы:', this.config.targetChannelIds);
-    console.log('📋 Новые каналы:', newChannelIds);
+    console.log('📋 Старые каналы:', this.config.targetChannels.map(c => c.id));
+    console.log('📋 Новые каналы:', newChannels.map(c => c.id));
     
-    this.config.targetChannelIds = newChannelIds;
+    this.config.targetChannels = newChannels;
     
-    if (newChannelIds.length > 0) {
+    if (newChannels.length > 0) {
       await this.checkChannelsAccess();
-      console.log(`✅ Обновлено ${newChannelIds.length} целевых каналов`);
+      console.log(`✅ Обновлено ${newChannels.length} целевых каналов`);
     } else {
       console.log('⚠️ Список целевых каналов пуст');
     }
@@ -122,7 +122,7 @@ export class TelegramService {
       this.client.addEventHandler(this.handleMessage.bind(this));
       this.client.addEventHandler(this.handleAllUpdates.bind(this));
 
-      console.log(`👂 Слушаем посты из ${this.config.targetChannelIds.length} целевых каналов:`, this.config.targetChannelIds);
+      console.log(`👂 Слушаем посты из ${this.config.targetChannels.length} целевых каналов:`, this.config.targetChannels.map(c => c.id));
       
     } catch (error) {
       console.error('❌ Ошибка запуска сервиса:', error);
@@ -166,23 +166,68 @@ export class TelegramService {
           let entity;
           
           try {
-            // Try to get entity by username first (for public channels)
-            if (!/^\d+$/.test(channelIdentifier)) {
-              entity = await this.client.getEntity(channelIdentifier);
-            } else {
-              // For private channels with numeric IDs
-              const channelId = parseInt(channelIdentifier);
-              let telegramChannelId = Math.abs(channelId);
-              
-              // Handle supergroup/channel ID conversion
-              if (telegramChannelId < 1_000_000_000_000) {
-                telegramChannelId = 1_000_000_000_000 + telegramChannelId;
+            // Try to find channel config by matching the source channel
+            const channelConfig = this.config.targetChannels.find(c => {
+              if (c.username && c.username.replace('@', '') === channelIdentifier) {
+                return true;
               }
-              
-              entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
+              return false;
+            });
+            
+            if (channelConfig) {
+              // Use channel configuration to determine how to get entity
+              if (channelConfig.is_private) {
+                // For private channels, use channel ID
+                let telegramChannelId = Math.abs(channelConfig.id);
+                
+                if (telegramChannelId < 1_000_000_000_000) {
+                  telegramChannelId = 1_000_000_000_000 + telegramChannelId;
+                }
+                
+                // Try multiple approaches to get the entity
+                try {
+                  entity = await this.client.getEntity(telegramChannelId);
+                } catch (firstError) {
+                  try {
+                    entity = await this.client.getEntity(-telegramChannelId);
+                  } catch (secondError) {
+                    entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) }));
+                  }
+                }
+              } else {
+                // For public channels, use username
+                entity = await this.client.getEntity(channelIdentifier);
+              }
+            } else {
+              // Fallback to original logic
+              if (!/^\d+$/.test(channelIdentifier)) {
+                entity = await this.client.getEntity(channelIdentifier);
+              } else {
+                const channelId = parseInt(channelIdentifier);
+                let telegramChannelId = Math.abs(channelId);
+                
+                if (telegramChannelId < 1_000_000_000_000) {
+                  telegramChannelId = 1_000_000_000_000 + telegramChannelId;
+                }
+                
+                // Try multiple approaches to get the entity
+                try {
+                  entity = await this.client.getEntity(telegramChannelId);
+                } catch (firstError) {
+                  try {
+                    entity = await this.client.getEntity(-telegramChannelId);
+                  } catch (secondError) {
+                    entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) }));
+                  }
+                }
+              }
             }
-          } catch (entityError) {
-            console.log(`⚠️ Не удалось получить entity для ${channelIdentifier}, пропускаем: ${entityError}`);
+          } catch (entityError: any) {
+            if (entityError.errorMessage === 'CHANNEL_INVALID') {
+              console.log(`⚠️ Канал ${channelIdentifier} недоступен или был удален, пропускаем`);
+            } else {
+              console.log(`⚠️ Не удалось получить entity для ${channelIdentifier}: ${entityError.message || entityError}`);
+            }
             skippedCount++;
             continue;
           }
@@ -232,20 +277,41 @@ export class TelegramService {
   private async checkChannelsAccess(): Promise<void> {
     console.log('🔍 Проверяем доступ к каналам...');
     
-    for (const channelId of this.config.targetChannelIds) {
+    for (const channelConfig of this.config.targetChannels) {
       try {
-        let telegramChannelId = Math.abs(channelId);
+        let entity;
+        
+        if (channelConfig.is_private) {
+          // For private channels, use channel ID
+          let telegramChannelId = Math.abs(channelConfig.id);
 
-        if (telegramChannelId > 1_000_000_000_000) {
-          telegramChannelId -= 1_000_000_000_000;
+          if (telegramChannelId > 1_000_000_000_000) {
+            telegramChannelId -= 1_000_000_000_000;
+          }
+          
+          entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
+        } else {
+          // For public channels, use username
+          if (channelConfig.username) {
+            entity = await this.client.getEntity(channelConfig.username.replace('@', ''));
+          } else {
+            // Fallback to ID if username is not available
+            let telegramChannelId = Math.abs(channelConfig.id);
+
+            if (telegramChannelId > 1_000_000_000_000) {
+              telegramChannelId -= 1_000_000_000_000;
+            }
+            
+            entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
+          }
         }
         
-        const entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
-        const username = (entity as any).username || `channel_${telegramChannelId}`;
+        const username = (entity as any).username || `channel_${Math.abs(channelConfig.id)}`;
         const title = (entity as any).title || 'Unknown';
-        console.log(`✅ Канал ${channelId}: ${title} (@${username})`);
+        const privacyStatus = channelConfig.is_private ? '🔒 Private' : '🔓 Public';
+        console.log(`✅ Канал ${channelConfig.id}: ${title} (@${username}) [${privacyStatus}]`);
       } catch (error) {
-        console.error(`❌ Не удалось получить доступ к каналу ${channelId}:`, error);
+        console.error(`❌ Не удалось получить доступ к каналу ${channelConfig.id}:`, error);
       }
     }
   }
@@ -335,11 +401,28 @@ export class TelegramService {
     }
   }
 
-  private async getChannelIdentifier(peer: any): Promise<string> {
+  private async getChannelIdentifier(peer: any, channelConfig?: ChannelConfig): Promise<string> {
     try {
       const entity = await this.client.getEntity(peer);
       
-      // For public channels, use username without @
+      // Use channel configuration if available
+      if (channelConfig) {
+        if (channelConfig.is_private) {
+          // For private channels, use the channel ID
+          const channelId = peer.channelId || peer.userId || peer.chatId;
+          return channelId.toString();
+        } else {
+          // For public channels, use username if available
+          if (channelConfig.username) {
+            return channelConfig.username.replace('@', '');
+          }
+          if ((entity as any).username) {
+            return (entity as any).username;
+          }
+        }
+      }
+      
+      // Fallback to original logic
       if ((entity as any).username) {
         return (entity as any).username;
       }
@@ -384,12 +467,12 @@ export class TelegramService {
     };
 
     const normalizedIncomingId = normalizeId(channelId);
-    const isTargetChannel = this.config.targetChannelIds
-      .map(normalizeId)
+    const isTargetChannel = this.config.targetChannels
+      .map(c => normalizeId(c.id))
       .includes(normalizedIncomingId);
     
     if (!isTargetChannel) {
-      console.log(`⏭️ Сообщение из канала ${channelId} не в списке целевых каналов [${this.config.targetChannelIds.join(', ')}], пропускаем`);
+      console.log(`⏭️ Сообщение из канала ${channelId} не в списке целевых каналов [${this.config.targetChannels.map(c => c.id).join(', ')}], пропускаем`);
       return;
     }
 
@@ -427,7 +510,8 @@ export class TelegramService {
           if (m.message && !text) text = m.message;
         }
         
-        const sourceChannel = await this.getChannelIdentifier(peer);
+        const channelConfig = this.config.targetChannels.find(c => normalizeId(c.id) === normalizedIncomingId);
+        const sourceChannel = await this.getChannelIdentifier(peer, channelConfig);
         const postUrl = `https://t.me/${sourceChannel}/${albumMsgs[0].id}`;
         
         const stats = this.getPostStatsFromMessage(albumMsgs[0]);
@@ -457,7 +541,8 @@ export class TelegramService {
     }
 
     try {
-      const sourceChannel = await this.getChannelIdentifier(peer);
+      const channelConfig = this.config.targetChannels.find(c => normalizeId(c.id) === normalizedIncomingId);
+      const sourceChannel = await this.getChannelIdentifier(peer, channelConfig);
 
       console.log(`📨 Сообщение из целевого канала: ${sourceChannel} (ID: ${channelId})`);
 

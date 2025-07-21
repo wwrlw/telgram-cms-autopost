@@ -1,7 +1,10 @@
+import { ChannelConfig } from '../types/index.js';
+
 export interface Channel {
   id: string;
   username: string;
   channel_id: number;
+  is_private: boolean;
   created_at: string;
 }
 
@@ -158,6 +161,61 @@ export class ApiService {
       throw error;
     }
   }
+
+  async getChannelConfigs(): Promise<ChannelConfig[]> {
+    await this.ensureAuthenticated();
+
+    try {
+      const response = await fetch(`${this.baseUrl}/channels`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 401) {
+        // Token expired, try to login again
+        this.token = null;
+        await this.ensureAuthenticated();
+        
+        const retryResponse = await fetch(`${this.baseUrl}/channels`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!retryResponse.ok) {
+          throw new Error(`Failed to get channel configs: ${retryResponse.statusText}`);
+        }
+
+        const retryData = await retryResponse.json() as { success: boolean; data: Channel[] };
+        return this.mapChannelsToConfigs(retryData.data || []);
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to get channel configs: ${response.statusText}`);
+      }
+
+      const data = await response.json() as { success: boolean; data: Channel[] };
+      return this.mapChannelsToConfigs(data.data || []);
+    } catch (error) {
+      console.error('❌ Error fetching channel configs:', error);
+      throw error;
+    }
+  }
+
+  private mapChannelsToConfigs(channels: Channel[]): ChannelConfig[] {
+    return channels.map(channel => ({
+      id: channel.channel_id,
+      username: channel.username,
+      title: undefined, // Will be fetched from Telegram
+      is_private: channel.is_private
+    }));
+  }
+
   async getScheduledPosts(): Promise<ScheduledPost[]> {
     await this.ensureAuthenticated();
 

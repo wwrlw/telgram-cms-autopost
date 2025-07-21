@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { TelegramService } from './services/telegramService.js';
 import { ApiService } from './services/apiService.js';
 import { SchedulerService } from './services/SchedulerService.js';
+import { ChannelConfig } from './types/index.js';
 
 dotenv.config();
 
@@ -48,25 +49,25 @@ async function initializeParser() {
   try {
     console.log('🔍 Получаем каналы из API...');
     
-    const channelIds = await apiService.getChannelIds();
+    const channelConfigs = await apiService.getChannelConfigs();
     
-    if (channelIds.length === 0) {
+    if (channelConfigs.length === 0) {
       console.warn('⚠️ Не найдено каналов для парсинга. Добавьте каналы через веб-интерфейс.');
       setTimeout(initializeParser, 30000);
       return;
     }
     
-    console.log('🎯 Target channel IDs:', channelIds);
+    console.log('🎯 Target channels:', channelConfigs.map(c => `${c.id} (${c.is_private ? 'Private' : 'Public'})`));
     
-    const channels = await apiService.getAllChannels();
     console.log('📋 Channels info:');
-    channels.forEach(channel => {
-      console.log(`  - ${channel.username} (ID: ${channel.channel_id})`);
+    channelConfigs.forEach(channel => {
+      const privacyStatus = channel.is_private ? '🔒 Private' : '🔓 Public';
+      console.log(`  - ${channel.username} (ID: ${channel.id}) [${privacyStatus}]`);
     });
 
     telegramService = new TelegramService({
       ...config,
-      targetChannelIds: channelIds
+      targetChannels: channelConfigs
     });
 
     await telegramService.start();
@@ -83,13 +84,13 @@ async function initializeParser() {
 async function updateChannels() {
   try {
     console.log('🔄 Обновляем список каналов...');
-    const channelIds = await apiService.getChannelIds();
+    const channelConfigs = await apiService.getChannelConfigs();
     
     if (telegramService) {
-      await telegramService.updateTargetChannels(channelIds);
+      await telegramService.updateTargetChannels(channelConfigs);
     }
     
-    console.log('✅ Список каналов обновлен:', channelIds);
+    console.log('✅ Список каналов обновлен:', channelConfigs.map(c => `${c.id} (${c.is_private ? 'Private' : 'Public'})`));
   } catch (error) {
     console.error('❌ Ошибка обновления каналов:', error);
   }
@@ -141,7 +142,7 @@ process.on('SIGTERM', async () => {
     
     setInterval(updateChannels, 10 * 60 * 1000);
     
-    setInterval(updatePostsStats, 30 * 60 * 1000);
+    setInterval(updatePostsStats, 150 * 1000);
     
     setInterval(cleanupDuplicates, 60 * 60 * 1000);
     

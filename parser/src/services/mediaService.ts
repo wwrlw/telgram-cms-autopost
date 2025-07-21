@@ -82,6 +82,7 @@ export class MediaService {
     const fileName = `${channelId}_${messageId}_${index}`;
     const fileExtension = this.getFileExtension(media, mediaType);
     const fullFileName = `${fileName}.${fileExtension}`;
+    let thumbnailPath: string | undefined = undefined;
 
     try {
       // Скачиваем основной файл
@@ -98,11 +99,42 @@ export class MediaService {
         await this.processImage(filePath);
       }
 
+      if (mediaType === 'videos') {
+        const mediaContent = media instanceof Api.MessageMediaDocument ? media.document : media.video;
+        if (mediaContent && mediaContent  && mediaContent.thumbs.length > 0) {
+          const largestThumbnail  = mediaContent.thumbs.reduce((prev: any, current: any) => {
+            return (prev.bytes || 0) > (current.bytes || 0) ? prev : current;
+          });
+          if (largestThumbnail && largestThumbnail.location) {
+            const thumbExt = largestThumbnail.className === 'PhotoSize' || largestThumbnail.className === 'PhotoStrippedSize' ? 'jpg' : 'webp'; // Уточняем расширение для превью
+            const thumbFileName = `${fileName}_thumb.${thumbExt}`;
+            const fullThumbnailPath = path.join(this.mediaPath, 'thumbnails', thumbFileName);
+
+            try {
+              const downloadedThumb = await client.downloadMedia(largestThumbnail.location, {
+                  outputFile: fullThumbnailPath
+              });
+
+              if (downloadedThumb && typeof downloadedThumb === 'string') {
+                thumbnailPath = downloadedThumb;
+                console.log(`🖼️ Превью для ${mediaType} сохранено: ${thumbnailPath}`);
+
+              } else {
+                console.warn(`⚠️ Не удалось скачать превью для ${fileName} из-за ошибки в downloadMedia.`);
+              }
+            } catch (thumbError) {
+              console.warn(`⚠️ Ошибка при скачивании превью для ${fileName}:`, thumbError);
+            }
+          }
+        }
+      }
+
       return {
         type: mediaType === 'photos' ? 'photo' : 
               mediaType === 'videos' ? 'video' : 
               mediaType === 'documents' ? 'document' : 'document',
-        file_path: filePath
+        file_path: filePath,
+        thumbnail_path: thumbnailPath
       };
 
     } catch (error) {
