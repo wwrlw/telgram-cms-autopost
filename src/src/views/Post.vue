@@ -228,55 +228,6 @@
                 <button @click="cancel" class="px-4 py-2 rounded bg-gray-200">
                     Отмена
                 </button>
-                <button
-                    @click="savePost"
-                    class="px-4 py-2 rounded bg-green-600 text-white"
-                >
-                    Сохранить
-                </button>
-                <button
-                    v-if="schedule"
-                    @click="publishLater"
-                    class="px-4 py-2 rounded bg-indigo-600 text-white"
-                >
-                    Опубликовать позже
-                </button>
-                <button
-                    v-else
-                    @click="publishNow"
-                    class="px-4 py-2 rounded bg-indigo-600 text-white"
-                >
-                    Опубликовать сейчас
-                </button>
-
-                <!-- Кнопка переключения текста -->
-                <button
-                    v-if="
-                        postData && postData.is_unique && postData.unique_text
-                    "
-                    @click="toggleTextMode"
-                    class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                        />
-                    </svg>
-                    <span>{{
-                        showingUniqueText
-                            ? "Показать оригинал"
-                            : "Показать уникальный"
-                    }}</span>
-                </button>
-
                 <!-- Кнопка уникализации -->
                 <button
                     v-if="postData && !postData.is_unique"
@@ -314,6 +265,51 @@
                     </svg>
                     <span>{{
                         uniquizing ? "Уникализация..." : "Уникализировать с ИИ"
+                    }}</span>
+                </button>
+                <button
+                    @click="savePost"
+                    class="px-4 py-2 rounded bg-green-600 text-white"
+                >
+                    Сохранить
+                </button>
+                <button
+                    v-if="schedule"
+                    @click="publishLater"
+                    class="px-4 py-2 rounded bg-indigo-600 text-white"
+                >
+                    Опубликовать позже
+                </button>
+                <button
+                    v-else
+                    @click="publishNow"
+                    class="px-4 py-2 rounded bg-indigo-600 text-white"
+                >
+                    Опубликовать сейчас
+                </button>
+                <!-- Кнопка переключения текста -->
+                <button
+                    v-if="postData && postData.is_unique && postData.unique_text"
+                    @click="toggleTextMode"
+                    class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
+                >
+                    <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
+                    </svg>
+                    <span>{{
+                        showingUniqueText
+                            ? "Показать оригинал"
+                            : "Показать уникальный"
                     }}</span>
                 </button>
             </div>
