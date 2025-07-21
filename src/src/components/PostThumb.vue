@@ -166,7 +166,7 @@
                     </button>
 
                     <button
-                        @click.prevent.stop="$emit('delete', post._id)"
+                        @click.prevent.stop="$emit('delete', post)"
                         class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
                         title="Удалить"
                     >

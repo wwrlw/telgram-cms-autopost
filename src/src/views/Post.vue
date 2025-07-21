@@ -228,35 +228,6 @@
                 <button @click="cancel" class="px-4 py-2 rounded bg-gray-200">
                     Отмена
                 </button>
-
-                <!-- Кнопка переключения текста -->
-                <button
-                    v-if="
-                        postData && postData.is_unique && postData.unique_text
-                    "
-                    @click="toggleTextMode"
-                    class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                        />
-                    </svg>
-                    <span>{{
-                        showingUniqueText
-                            ? "Показать оригинал"
-                            : "Показать уникальный"
-                    }}</span>
-                </button>
-
                 <!-- Кнопка уникализации -->
                 <button
                     v-if="postData && !postData.is_unique"
@@ -296,18 +267,50 @@
                         uniquizing ? "Уникализация..." : "Уникализировать с ИИ"
                     }}</span>
                 </button>
-
                 <button
+                    @click="savePost"
+                    class="px-4 py-2 rounded bg-green-600 text-white"
+                >
+                    Сохранить
+                </button>
+                <button
+                    v-if="schedule"
                     @click="publishLater"
-                    class="px-4 py-2 rounded bg-blue-600 text-white"
+                    class="px-4 py-2 rounded bg-indigo-600 text-white"
                 >
                     Опубликовать позже
                 </button>
                 <button
+                    v-else
                     @click="publishNow"
                     class="px-4 py-2 rounded bg-indigo-600 text-white"
                 >
                     Опубликовать сейчас
+                </button>
+                <!-- Кнопка переключения текста -->
+                <button
+                    v-if="postData && postData.is_unique && postData.unique_text"
+                    @click="toggleTextMode"
+                    class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
+                >
+                    <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
+                    </svg>
+                    <span>{{
+                        showingUniqueText
+                            ? "Показать оригинал"
+                            : "Показать уникальный"
+                    }}</span>
                 </button>
             </div>
         </div>
@@ -394,78 +397,141 @@ function cancel() {
     router.back();
 }
 
-function send(publishLater) {
+function savePost() {
+    if (!postData.value) {
+        window?.$toast?.error("Данные поста не загружены");
+        return;
+    }
+
     const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
+    
     if (!markdown.trim() && files.value.length === 0) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
     }
+
+    const fd = new FormData();
+    fd.append("text", markdown);
+    files.value.forEach((f) => fd.append("file", f));
+    
+    if (selectedChannel.value) {
+        fd.append("channel_id", selectedChannel.value);
+    }
+
+    http.updatePost(postData.value._id, fd, (response) => {
+        if (response.success) {
+            window?.$toast?.success("Пост успешно сохранён");
+            loadPost(); // Перезагружаем данные поста
+        } else {
+            window?.$toast?.error("Ошибка сохранения: " + (response.message || ""));
+        }
+    });
+}
+
+
+
+function publishNow() {
+    if (!postData.value) {
+        window?.$toast?.error("Данные поста не загружены");
+        return;
+    }
+
     if (!selectedChannel.value) {
         window?.$toast?.error("Выберите канал для публикации");
         return;
     }
-    if (publishLater) {
-        if (!scheduledAt.value) {
-            window?.$toast?.error("Укажите дату");
-            return;
-        }
+
+    // Сначала сохраняем пост
+    const html = editor.value?.getHTML() || "";
+    const markdown = turndownService.turndown(html);
+    
+    if (!markdown.trim() && files.value.length === 0) {
+        window?.$toast?.error("Добавьте текст или медиа");
+        return;
     }
 
     const fd = new FormData();
-    // Отправляем тот текст, который отображается в редакторе
     fd.append("text", markdown);
     files.value.forEach((f) => fd.append("file", f));
-    fd.append("channel_id", selectedChannel.value);
-    if (publishLater) {
-        fd.append("scheduled_at", new Date(scheduledAt.value).toISOString());
+    
+    if (selectedChannel.value) {
+        fd.append("channel_id", selectedChannel.value);
     }
 
-    http.createPost(
-        fd,
-        (response) => {
-            if (response.success) {
-                if (publishLater) {
-                    window?.$toast?.success("Пост запланирован");
-                    router.push("/scheduled-posts");
-                } else {
-                    const postId = response.data._id;
-                    http.publishToChannel(
-                        postId,
-                        selectedChannel.value,
-                        (publishRes) => {
-                            if (publishRes.success) {
-                                window?.$toast?.success(
-                                    "Пост опубликован в Telegram!"
-                                );
-                                router.push("/");
-                            } else {
-                                window?.$toast?.error(
-                                    "Ошибка публикации: " +
-                                        (publishRes.message || "")
-                                );
-                            }
-                        }
-                    );
+    http.updatePost(postData.value._id, fd, (response) => {
+        if (response.success) {
+            // После сохранения публикуем
+            http.publishToChannel(
+                postData.value._id.toString(),
+                selectedChannel.value,
+                (publishRes) => {
+                    if (publishRes.success) {
+                        window?.$toast?.success("Пост успешно опубликован в Telegram!");
+                        loadPost(); // Перезагружаем данные поста
+                    } else {
+                        window?.$toast?.error("Ошибка публикации: " + (publishRes.message || ""));
+                    }
                 }
-            } else {
-                window?.$toast?.error(
-                    response.message || "Ошибка создания поста"
-                );
-            }
-        },
-        (error) => {
-            console.error("Error creating post:", error);
-            window?.$toast?.error("Ошибка создания поста");
+            );
+        } else {
+            window?.$toast?.error("Ошибка сохранения: " + (response.message || ""));
         }
-    );
+    });
 }
 
-function publishNow() {
-    send(false);
-}
 function publishLater() {
-    send(true);
+    if (!postData.value) {
+        window?.$toast?.error("Данные поста не загружены");
+        return;
+    }
+
+    if (!selectedChannel.value) {
+        window?.$toast?.error("Выберите канал для публикации");
+        return;
+    }
+
+    if (!scheduledAt.value) {
+        window?.$toast?.error("Укажите дату и время публикации");
+        return;
+    }
+
+    // Сначала сохраняем пост
+    const html = editor.value?.getHTML() || "";
+    const markdown = turndownService.turndown(html);
+    
+    if (!markdown.trim() && files.value.length === 0) {
+        window?.$toast?.error("Добавьте текст или медиа");
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append("text", markdown);
+    files.value.forEach((f) => fd.append("file", f));
+    
+    if (selectedChannel.value) {
+        fd.append("channel_id", selectedChannel.value);
+    }
+
+    http.updatePost(postData.value._id, fd, (response) => {
+        if (response.success) {
+            // После сохранения планируем публикацию
+            http.schedulePost({
+                postId: postData.value._id,
+                scheduledAt: new Date(scheduledAt.value).toISOString(),
+                channelId: selectedChannel.value
+            }, (scheduleRes) => {
+                if (scheduleRes.success) {
+                    window?.$toast?.success("Пост запланирован на публикацию!");
+                    router.push("/scheduled-posts");
+                } else {
+                    window?.$toast?.error("Ошибка планирования: " + (scheduleRes.message || ""));
+                }
+            });
+        } else {
+            window?.$toast?.error("Ошибка сохранения: " + (response.message || ""));
+        }
+    });
 }
 
 function loadPost() {
@@ -477,6 +543,11 @@ function loadPost() {
             // console.log(res.data);
             initializeEditorContent(res.data);
             await preloadMedia(res.data);
+            
+            // Устанавливаем выбранный канал, если он есть
+            if (res.data.channel_id) {
+                selectedChannel.value = res.data.channel_id;
+            }
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
         }
