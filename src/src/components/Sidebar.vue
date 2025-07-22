@@ -207,7 +207,7 @@
                             <span v-if="!isCollapsed">Категории</span>
                         </router-link>
                     </li>
-                    <li :class="isCollapsed ? 'flex justify-center' : ''">
+                    <li v-if="!isForbiddenRole(['editor'])" :class="isCollapsed ? 'flex justify-center' : ''">
                         <router-link
                             :to="{ name: 'channels' }"
                             :class="[
@@ -237,7 +237,7 @@
                             <span v-if="!isCollapsed">Каналы</span>
                         </router-link>
                     </li>
-                    <li :class="isCollapsed ? 'flex justify-center' : ''">
+                    <li v-if="!isForbiddenRole(['editor'])" :class="isCollapsed ? 'flex justify-center' : ''">
                         <router-link
                             :to="{ name: 'posted-channels' }"
                             :class="[
@@ -270,7 +270,7 @@
                             <span v-if="!isCollapsed">Каналы публикации</span>
                         </router-link>
                     </li>
-                    <li :class="isCollapsed ? 'flex justify-center' : ''">
+                    <li v-if="!isForbiddenRole(['editor'])" :class="isCollapsed ? 'flex justify-center' : ''">
                         <router-link
                             :to="{ name: 'analytics' }"
                             :class="[
@@ -300,12 +300,76 @@
                             <span v-if="!isCollapsed">Аналитика</span>
                         </router-link>
                     </li>
+                    
+                    <!-- Super Admin Only -->
+                    <li v-if="userRole === 'super_admin'" :class="isCollapsed ? 'flex justify-center' : ''">
+                        <router-link
+                            :to="{ name: 'users' }"
+                            :class="[
+                                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
+                                isCollapsed ? 'justify-center' : '',
+                                { 'bg-gray-700': $route.path === '/users' },
+                            ]"
+                            :title="isCollapsed ? 'Управление пользователями' : ''"
+                        >
+                            <svg
+                                :class="
+                                    isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
+                                "
+                                width="100%"
+                                height="100%"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                                />
+                            </svg>
+                            <span v-if="!isCollapsed">Пользователи</span>
+                        </router-link>
+                    </li>
+                    <li v-if="userRole === 'super_admin' || userRole === 'admin'" :class="isCollapsed ? 'flex justify-center' : ''">
+                        <router-link
+                            :to="{ name: 'logs' }"
+                            :class="[
+                                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
+                                isCollapsed ? 'justify-center' : '',
+                                { 'bg-gray-700': $route.path === '/logs' },
+                            ]"
+                            :title="isCollapsed ? 'Системные логи' : ''"
+                        >
+                            <svg
+                                :class="
+                                    isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
+                                "
+                                width="100%"
+                                height="100%"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                            </svg>
+                            <span v-if="!isCollapsed">Логи</span>
+                        </router-link>
+                    </li>
                 </ul>
             </nav>
             <div class="p-4 border-t border-gray-700">
                 <div v-if="!isCollapsed" class="text-xs text-gray-400">
                     Logged in as:
                     <span class="text-white font-medium">{{ username }}</span>
+                    <br>
+                    <span class="text-indigo-300 text-xs">{{ userRoleDisplay }}</span>
                 </div>
                 <div v-else class="text-center">
                     <div
@@ -325,12 +389,30 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 
 const username = ref("");
+const userRole = ref("");
 const route = useRoute();
 const isCollapsed = ref(false);
+
+const userRoleDisplay = computed(() => {
+    switch (userRole.value) {
+        case 'super_admin':
+            return 'Супер Администратор';
+        case 'admin':
+            return 'Администратор';
+        case 'editor':
+            return 'Редактор';
+        default:
+            return 'Пользователь';
+    }
+});
+
+const isForbiddenRole = (forbiddenRoles) => {
+    return forbiddenRoles.includes(userRole.value);
+};
 
 const toggleCollapse = () => {
     isCollapsed.value = !isCollapsed.value;
@@ -340,6 +422,12 @@ const toggleCollapse = () => {
 const loadUserData = () => {
     try {
         const userData = localStorage.getItem("user");
+        const roleFromStorage = localStorage.getItem("role");
+        
+        console.log('Loading user data:', { userData, roleFromStorage }); // Debug log
+        
+        userRole.value = roleFromStorage || "";
+        
         if (userData) {
             const user = JSON.parse(userData);
             username.value =
@@ -348,12 +436,20 @@ const loadUserData = () => {
                 user.email ||
                 user.displayName ||
                 "Пользователь";
+            
+            // Also check role from user object if not in separate storage
+            if (!userRole.value && user.role) {
+                userRole.value = user.role;
+            }
         } else {
             username.value = "Пользователь";
         }
+        
+        console.log('Final user role:', userRole.value); // Debug log
     } catch (error) {
         console.error("Error loading user data:", error);
         username.value = "Пользователь";
+        userRole.value = "";
     }
 };
 
@@ -366,7 +462,7 @@ onMounted(() => {
     }
     loadUserData();
     window.addEventListener("storage", (e) => {
-        if (e.key === "user") {
+        if (e.key === "user" || e.key === "role") {
             loadUserData();
         }
     });

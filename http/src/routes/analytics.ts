@@ -1,5 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { DependencyContainer } from '../container/DependencyContainer';
+import { requireAuth, requirePermission } from '../middleware/authRole';
+import { PERMISSIONS } from '../models/Category';
 
 export async function analyticsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
@@ -7,7 +9,7 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
   // Получить аналитику канала
   fastify.get(
     '/analytics',
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_ANALYTICS)] },
     async (request, reply) => {
       try {
         const { channelid } = request.query as any;

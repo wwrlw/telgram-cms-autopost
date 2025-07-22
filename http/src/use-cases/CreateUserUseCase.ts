@@ -1,6 +1,7 @@
 import { IUserService } from '../interfaces/services/IUserService';
 import { CreateUserDto, UserResponse } from '../models/User';
 import { ValidationError } from '../exceptions/ValidationError';
+import { ROLES } from '../models/Category';
 
 export class CreateUserUseCase {
   constructor(private userService: IUserService) {}
@@ -16,6 +17,11 @@ export class CreateUserUseCase {
 
     if (userData.password.length < 6) {
       throw new ValidationError('Password must be at least 6 characters long');
+    }
+
+    // Default role is editor if not specified
+    if (!userData.role) {
+      userData.role = ROLES.EDITOR;
     }
 
     try {

@@ -2,13 +2,14 @@ import Fastify from 'fastify';
 import dotenv from 'dotenv';
 import mongoConnector from './db/mongo';
 import authPlugin from './plugins/auth';
-import { authRoutes } from './routes/auth';
+import authRoutes from './routes/auth';
 import { postsRoutes } from './routes/posts';
 import { channelsRoutes } from './routes/channels';
 import { postedChannelsRoutes } from './routes/posted-channels';
 import { categoriesRoutes } from './routes/categories';
 import { analyticsRoutes } from './routes/analytics';
 import publishRoutes from './routes/publish';
+import logsRoutes from './routes/logs';
 import cors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
 import path from 'path';
@@ -41,13 +42,14 @@ async function start() {
         });
         
         await fastify.register(authPlugin);
-        await fastify.register(authRoutes);
+        await fastify.register(authRoutes, { prefix: '/auth' });
         await fastify.register(postsRoutes);
         await fastify.register(channelsRoutes);
         await fastify.register(postedChannelsRoutes);
         await fastify.register(categoriesRoutes);
         await fastify.register(analyticsRoutes);
         await fastify.register(publishRoutes);
+        await fastify.register(logsRoutes, { prefix: '/logs' });
         fastify.setErrorHandler(errorHandler);
         await fastify.ready();
         await fastify.listen({ port: Number(process.env.PORT) || 3001, host: '0.0.0.0' });

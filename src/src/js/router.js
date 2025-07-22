@@ -11,6 +11,14 @@ const CreatePost = () => import("@/views/CreatePost.vue");
 const page404 = () => import("@/views/Page404.vue");
 const ScheduledPosts = () => import("@/views/SheduledPosts.vue");
 const Analytics = () => import("@/views/Analytics.vue");
+const UserManagement = () => import("@/views/UserManagement.vue");
+const SystemLogs = () => import("@/views/SystemLogs.vue");
+
+const ROLES = {
+    SUPER_ADMIN: 'super_admin',
+    ADMIN: 'admin',
+    EDITOR: 'editor'
+};
 
 const routes = [
     {
@@ -22,11 +30,13 @@ const routes = [
         path: "/channels",
         name: "channels",
         component: Channels,
+        meta: { forbiddenRoles: [ROLES.EDITOR] }
     },
     {
         path: "/posted-channels",
         name: "posted-channels",
         component: PublicationChannels,
+        meta: { forbiddenRoles: [ROLES.EDITOR] }
     },
     {
         path: "/favorites",
@@ -37,11 +47,24 @@ const routes = [
         path: "/analytics",
         name: "analytics",
         component: Analytics,
+        meta: { forbiddenRoles: [ROLES.EDITOR] }
     },
     {
         path: "/categories",
         name: "categories",
         component: Categories,
+    },
+    {
+        path: "/users",
+        name: "users",
+        component: UserManagement,
+        meta: { requiredRole: ROLES.SUPER_ADMIN }
+    },
+    {
+        path: "/logs",
+        name: "logs",
+        component: SystemLogs,
+        meta: { allowedRoles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
     },
     {
         path: "/login",
@@ -84,15 +107,34 @@ router.beforeEach(async (to) => {
     }
 
     let token = null;
+    let userRole = null;
     try {
         token = localStorage.getItem("token");
+        userRole = localStorage.getItem("role");
     } catch (error) {
         console.error("Error accessing localStorage:", error);
         token = null;
+        userRole = null;
     }
 
     if (!token) {
         return "/login";
+    }
+
+    // Check role-based access
+    if (to.meta?.requiredRole && userRole !== to.meta.requiredRole) {
+        console.warn(`Access denied: required role ${to.meta.requiredRole}, user has ${userRole}`);
+        return "/";
+    }
+
+    if (to.meta?.allowedRoles && !to.meta.allowedRoles.includes(userRole)) {
+        console.warn(`Access denied: allowed roles ${to.meta.allowedRoles}, user has ${userRole}`);
+        return "/";
+    }
+
+    if (to.meta?.forbiddenRoles && to.meta.forbiddenRoles.includes(userRole)) {
+        console.warn(`Access denied: forbidden for role ${userRole}`);
+        return "/";
     }
 
     return;

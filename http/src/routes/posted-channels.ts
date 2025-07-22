@@ -1,5 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { DependencyContainer } from '../container/DependencyContainer';
+import { requireAuth, requirePermission } from '../middleware/authRole';
+import { logAction } from '../middleware/logging';
+import { PERMISSIONS } from '../models/Category';
 
 export async function postedChannelsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
@@ -7,7 +10,7 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
   // Получить все каналы публикации
   fastify.get(
     '/posted-channels',
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)] },
     async (request, reply) => {
       try {
         const getPublicationChannelsUseCase = container.getGetPublicationChannelsUseCase();
@@ -25,7 +28,7 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
   // Получить активные каналы публикации
   fastify.get(
     '/posted-channels/active',
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)] },
     async (request, reply) => {
       try {
         const getActivePublicationChannelsUseCase = container.getGetActivePublicationChannelsUseCase();

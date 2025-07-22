@@ -10,6 +10,9 @@ import { Post } from "../models/Post";
 import { pipeline } from 'node:stream/promises';
 import fs from 'fs';
 import path from 'path';
+import { requireAuth, requirePermission } from "../middleware/authRole";
+import { logAction } from "../middleware/logging";
+import { PERMISSIONS } from "../models/Category";
 
 export async function postsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
@@ -17,7 +20,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts/search",
     { 
-      preValidation: [fastify.authenticate],
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_POSTS)],
       schema: {
         querystring: postQuerySchema,
         response: {

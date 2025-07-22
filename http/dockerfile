@@ -2,11 +2,27 @@ FROM node:18
 
 WORKDIR /app
 
+# Install build tools for native dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files first
 COPY package*.json ./
 
+# Remove any existing node_modules and lock files
+RUN rm -rf node_modules package-lock.json
+
+# Install dependencies fresh
 RUN npm install
 
+# Copy source code
 COPY . .
+
+# Remove node_modules again and reinstall to ensure clean build
+RUN rm -rf node_modules && npm install
 
 RUN npm run build
 

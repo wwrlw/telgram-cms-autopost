@@ -1,123 +1,158 @@
-import { FastifyInstance } from "fastify";
-import { DependencyContainer } from "../container/DependencyContainer";
-import { CreateUserDto, LoginDto } from "../models/User";
-import { ObjectId } from "mongodb";
+import { FastifyInstance } from 'fastify';
+import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
+import { LoginUseCase } from '../use-cases/LoginUseCase';
+import { CreateUserDto, LoginDto } from '../models/User';
+import { requireAuth, requireRole } from '../middleware/authRole';
+import { logAction } from '../middleware/logging';
+import { ROLES, PERMISSIONS } from '../models/Category';
+import { DependencyContainer } from '../container/DependencyContainer';
 
-export async function authRoutes(fastify: FastifyInstance) {
+export default async function authRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
 
-  fastify.post("/auth/register", async (request, reply) => {
-    try {
-      const userData = request.body as CreateUserDto;
-      const createUserUseCase = container.getCreateUserUseCase();
-      const user = await createUserUseCase.execute(userData);
-      
-      return {
-        success: true,
-        data: {
-          user: user
-        }
-      };
-    } catch (error) {
-      throw error;
-    }
-  });
-
-  fastify.post("/auth/login", async (request, reply) => {
+  // Login endpoint (public)
+  fastify.post('/login', async (request, reply) => {
     try {
       const loginData = request.body as LoginDto;
-      console.log('Login request data:', loginData);
-      
       const loginUseCase = container.getLoginUseCase();
       const result = await loginUseCase.execute(loginData);
       
-      const response = {
-        success: true,
-        data: {
-          token: result.token,
-          user: {
-            id: result.userId,
-            username: loginData.username
-          }
-        }
-      };
-      console.log('Final response:', response);
-      return response;
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      reply.send({ 
+        success: true, 
+        data: result 
+      });
+    } catch (error: any) {
+      reply.status(400).send({ 
+        success: false, 
+        message: error.message 
+      });
     }
   });
 
-  fastify.post("/auth/favorites/add", async (request, reply) => {
+  // Create user endpoint (super_admin only)
+  fastify.post('/register', {
+    preHandler: [requireAuth, requireRole(ROLES.SUPER_ADMIN), logAction]
+  }, async (request, reply) => {
+    try {
+      const userData = request.body as CreateUserDto;
+      const createUserUseCase = container.getCreateUserUseCase();
+      const result = await createUserUseCase.execute(userData);
+      
+      reply.send({ 
+        success: true, 
+        data: result 
+      });
+    } catch (error: any) {
+      reply.status(400).send({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  });
+
+  // Get all users (super_admin only)
+  fastify.get('/users', {
+    preHandler: [requireAuth, requireRole(ROLES.SUPER_ADMIN)]
+  }, async (request, reply) => {
+    // DEBUG: print user
+    console.log('AUTH USERS ROUTE: request.user =', (request as any).user);
+    try {
+      const userService = container.getUserService();
+      const users = await userService.getAllUsers();
+      reply.send({
+        success: true,
+        data: users
+      });
+    } catch (error: any) {
+      reply.status(500).send({
+        success: false,
+        message: error.message
+      });
+    }
+  });
+
+  // Update user role (super_admin only)
+  fastify.put('/users/:id/role', {
+    preHandler: [requireAuth, requireRole(ROLES.SUPER_ADMIN), logAction]
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { role } = request.body as { role: string };
+      
+      const userService = container.getUserService();
+      const result = await userService.updateUserRole(id, role);
+      reply.send({
+        success: true,
+        data: result
+      });
+    } catch (error: any) {
+      reply.status(400).send({
+        success: false,
+        message: error.message
+      });
+    }
+  });
+
+  // Add favorite post
+  fastify.post('/favorites/add', {
+    preHandler: [requireAuth, logAction]
+  }, async (request, reply) => {
     try {
       const { userId, postId } = request.body as { userId: string; postId: string };
-      
-      if (!userId || !postId) {
-        return reply.code(400).send({
-          success: false,
-          message: "userId and postId are required"
-        });
-      }
-
       const userService = container.getUserService();
-      const user = await userService.addFavoritePost(userId, postId);
+      const result = await userService.addFavoritePost(userId, postId);
       
-      return {
-        success: true,
-        data: user
-      };
-    } catch (error) {
-      console.error('Add favorite error:', error);
-      throw error;
+      reply.send({ 
+        success: true, 
+        data: result 
+      });
+    } catch (error: any) {
+      reply.status(400).send({ 
+        success: false, 
+        message: error.message 
+      });
     }
   });
 
-  fastify.post("/auth/favorites/remove", async (request, reply) => {
+  // Remove favorite post
+  fastify.post('/favorites/remove', {
+    preHandler: [requireAuth, logAction]
+  }, async (request, reply) => {
     try {
       const { userId, postId } = request.body as { userId: string; postId: string };
-      
-      if (!userId || !postId) {
-        return reply.code(400).send({
-          success: false,
-          message: "userId and postId are required"
-        });
-      }
-
       const userService = container.getUserService();
-      const user = await userService.removeFavoritePost(userId, postId);
+      const result = await userService.removeFavoritePost(userId, postId);
       
-      return {
-        success: true,
-        data: user
-      };
-    } catch (error) {
-      console.error('Remove favorite error:', error);
-      throw error;
+      reply.send({ 
+        success: true, 
+        data: result 
+      });
+    } catch (error: any) {
+      reply.status(400).send({ 
+        success: false, 
+        message: error.message 
+      });
     }
   });
 
-  fastify.get("/auth/favorites/:userId", async (request, reply) => {
+  // Get favorite posts
+  fastify.get('/favorites/:userId', {
+    preHandler: [requireAuth]
+  }, async (request, reply) => {
     try {
       const { userId } = request.params as { userId: string };
-      
-      if (!userId) {
-        return reply.code(400).send({
-          success: false,
-          message: "userId is required"
-        });
-      }
-
       const userService = container.getUserService();
       const user = await userService.getUserById(userId);
       
-      return {
-        success: true,
-        data: user.favorite_posts || []
-      };
-    } catch (error) {
-      console.error('Get favorites error:', error);
-      throw error;
+      reply.send({ 
+        success: true, 
+        data: user.favorite_posts || [] 
+      });
+    } catch (error: any) {
+      reply.status(400).send({ 
+        success: false, 
+        message: error.message 
+      });
     }
   });
 }

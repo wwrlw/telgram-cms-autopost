@@ -1,12 +1,14 @@
 import { FastifyInstance } from "fastify";
 import { DependencyContainer } from "../container/DependencyContainer";
+import { requireAuth } from "../middleware/authRole";
+import { logAction } from "../middleware/logging";
 
 export async function channelsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
 
   fastify.get(
     "/channels",
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
       try {
         const getChannelsUseCase = container.getGetChannelsUseCase();
@@ -23,7 +25,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     "/channels/:id",
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
@@ -42,7 +44,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/channels",
     { 
-      preValidation: [fastify.authenticate],
+      preHandler: [requireAuth, logAction],
       schema: {
         body: {
           type: 'object',
@@ -72,7 +74,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
   fastify.delete(
     "/channels/:id",
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth, logAction] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
@@ -90,7 +92,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     "/channels/parser/ids",
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
       try {
         const getChannelIdsForParserUseCase = container.getGetChannelIdsForParserUseCase();
@@ -106,7 +108,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
   );
   fastify.put(
     "/channels/:id",
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth, logAction] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
