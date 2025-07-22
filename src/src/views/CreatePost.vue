@@ -179,6 +179,31 @@
                 >
                     Отмена
                 </button>
+                <!-- Кнопка переключения текста -->
+                <button
+                    v-if="uniqueText"
+                    @click="toggleTextMode"
+                    class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
+                >
+                    <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
+                    </svg>
+                    <span>{{
+                        showingUniqueText
+                            ? "Показать оригинал"
+                            : "Показать уникальный"
+                    }}</span>
+                </button>
                 <!-- Кнопка уникализации -->
                 <button
                     @click="uniquizePost"
@@ -279,6 +304,8 @@ const hasText = computed(() => {
     const text = html.replace(/<[^>]*>/g, "").trim();
     return text.length > 0;
 });
+const uniqueText = ref("");
+const showingUniqueText = ref(false);
 
 const editor = useEditor({
     extensions: [StarterKit, Link, Underline],
@@ -534,8 +561,10 @@ async function uniquizePost() {
     try {
         const response = await http.instance.post("/posts/uniquize", { text: markdown });
         if (response.data.success && response.data.data && response.data.data.unique_text) {
+            uniqueText.value = response.data.data.unique_text;
+            showingUniqueText.value = true;
             if (editor.value) {
-                editor.value.commands.setContent(response.data.data.unique_text);
+                editor.value.commands.setContent(uniqueText.value);
             }
             window?.$toast?.success("Текст уникализирован!");
         } else {
@@ -724,6 +753,18 @@ function confirmLink() {
 
 function cancelLink() {
     showLinkInput.value = false;
+}
+
+function toggleTextMode() {
+    showingUniqueText.value = !showingUniqueText.value;
+    if (showingUniqueText.value && uniqueText.value) {
+        editor.value?.commands.setContent(uniqueText.value);
+    } else {
+        // Показываем оригинал
+        if (postData.value && postData.value.text) {
+            editor.value?.commands.setContent(postData.value.text);
+        }
+    }
 }
 
 onMounted(() => {

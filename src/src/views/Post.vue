@@ -228,6 +228,31 @@
                 <button @click="cancel" class="px-4 py-2 rounded bg-gray-200">
                     Отмена
                 </button>
+                <!-- Кнопка переключения текста -->
+                <button
+                    v-if="postData && postData.is_unique && postData.unique_text"
+                    @click="toggleTextMode"
+                    class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
+                >
+                    <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
+                    </svg>
+                    <span>{{
+                        showingUniqueText
+                            ? "Показать оригинал"
+                            : "Показать уникальный"
+                    }}</span>
+                </button>
                 <!-- Кнопка уникализации -->
                 <button
                     v-if="postData && !postData.is_unique"
@@ -286,31 +311,6 @@
                     class="px-4 py-2 rounded bg-indigo-600 text-white"
                 >
                     Опубликовать сейчас
-                </button>
-                <!-- Кнопка переключения текста -->
-                <button
-                    v-if="postData && postData.is_unique && postData.unique_text"
-                    @click="toggleTextMode"
-                    class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                        />
-                    </svg>
-                    <span>{{
-                        showingUniqueText
-                            ? "Показать оригинал"
-                            : "Показать уникальный"
-                    }}</span>
                 </button>
             </div>
         </div>
@@ -411,18 +411,20 @@ function savePost() {
         return;
     }
 
-    const fd = new FormData();
-    fd.append("text", markdown);
-    files.value.forEach((f) => fd.append("file", f));
-    
+    const updateData = {
+        id: postData.value._id,
+        text: markdown,
+    };
     if (selectedChannel.value) {
-        fd.append("channel_id", selectedChannel.value);
+        updateData.channel_id = selectedChannel.value;
     }
+    // Если есть файлы, добавить их как media (если сервер поддерживает)
+    // updateData.media = ...
 
-    http.updatePost(postData.value._id, fd, (response) => {
+    http.updatePost(updateData, (response) => {
         if (response.success) {
             window?.$toast?.success("Пост успешно сохранён");
-            loadPost(); // Перезагружаем данные поста
+            router.push("/");
         } else {
             window?.$toast?.error("Ошибка сохранения: " + (response.message || ""));
         }
@@ -451,15 +453,14 @@ function publishNow() {
         return;
     }
 
-    const fd = new FormData();
-    fd.append("text", markdown);
-    files.value.forEach((f) => fd.append("file", f));
-    
-    if (selectedChannel.value) {
-        fd.append("channel_id", selectedChannel.value);
-    }
+    const updateData = {
+        id: postData.value._id,
+        text: markdown,
+        channel_id: selectedChannel.value,
+    };
+    // updateData.media = ...
 
-    http.updatePost(postData.value._id, fd, (response) => {
+    http.updatePost(updateData, (response) => {
         if (response.success) {
             // После сохранения публикуем
             http.publishToChannel(
@@ -468,7 +469,7 @@ function publishNow() {
                 (publishRes) => {
                     if (publishRes.success) {
                         window?.$toast?.success("Пост успешно опубликован в Telegram!");
-                        loadPost(); // Перезагружаем данные поста
+                        router.push("/");
                     } else {
                         window?.$toast?.error("Ошибка публикации: " + (publishRes.message || ""));
                     }
@@ -505,15 +506,14 @@ function publishLater() {
         return;
     }
 
-    const fd = new FormData();
-    fd.append("text", markdown);
-    files.value.forEach((f) => fd.append("file", f));
-    
-    if (selectedChannel.value) {
-        fd.append("channel_id", selectedChannel.value);
-    }
+    const updateData = {
+        id: postData.value._id,
+        text: markdown,
+        channel_id: selectedChannel.value,
+    };
+    // updateData.media = ...
 
-    http.updatePost(postData.value._id, fd, (response) => {
+    http.updatePost(updateData, (response) => {
         if (response.success) {
             // После сохранения планируем публикацию
             http.schedulePost({
@@ -523,7 +523,7 @@ function publishLater() {
             }, (scheduleRes) => {
                 if (scheduleRes.success) {
                     window?.$toast?.success("Пост запланирован на публикацию!");
-                    router.push("/scheduled-posts");
+                    router.push("/");
                 } else {
                     window?.$toast?.error("Ошибка планирования: " + (scheduleRes.message || ""));
                 }
