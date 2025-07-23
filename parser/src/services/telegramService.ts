@@ -191,7 +191,7 @@ export class TelegramService {
                   try {
                     entity = await this.client.getEntity(-telegramChannelId);
                   } catch (secondError) {
-                    entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) }));
+                    entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
                   }
                 }
               } else {
@@ -217,7 +217,7 @@ export class TelegramService {
                   try {
                     entity = await this.client.getEntity(-telegramChannelId);
                   } catch (secondError) {
-                    entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) }));
+                    entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
                   }
                 }
               }
@@ -438,6 +438,20 @@ export class TelegramService {
     }
   }
 
+  private getFullChannelId(peer: any): number {
+    const rawChannelId = Number(peer.channelId || peer.userId || peer.chatId || 0);
+    
+    // Если это канал (channelId существует), восстанавливаем полный ID с префиксом -100
+    if (peer.channelId) {
+      // Полный формат канала: -100 + channel_id
+      // Например: peer.channelId = 1316790563 -> -1001316790563
+      return -100 * 10000000000 - rawChannelId;
+    }
+    
+    // Для пользователей и чатов возвращаем как есть
+    return rawChannelId;
+  }
+
   private async handleMessage(update: any): Promise<void> {
     console.log('📨 Получено обновление:', update.className || 'unknown');
     
@@ -518,6 +532,7 @@ export class TelegramService {
         
         const postData: CreatePostDto = {
           source_channel: sourceChannel,
+          channel_id: this.getFullChannelId(peer),
           text,
           url: postUrl,
           media: allMedia,
@@ -568,6 +583,7 @@ export class TelegramService {
 
       const postData: CreatePostDto = {
         source_channel: sourceChannel,
+        channel_id: this.getFullChannelId(peer),
         text: (msg as any).message || '',
         url: postUrl,
         media: media,

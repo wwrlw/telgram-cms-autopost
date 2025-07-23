@@ -17,6 +17,7 @@ export interface PostStats {
 export interface Post {
   _id?: ObjectId;
   source_channel: string;
+  channel_id: number;
   text: string;
   unique_text?: string;
   timestamp: Date;
@@ -30,6 +31,7 @@ export interface Post {
 
 export interface CreatePostDto {
   source_channel: string;
+  channel_id: number;
   text: string;
   unique_text?: string;
   url: string;

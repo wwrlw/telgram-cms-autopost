@@ -19,6 +19,7 @@ export class MongoService {
       // Создаем индексы для существующей коллекции
       await this.postsCollection.createIndex({ url: 1 }, { unique: true });
       await this.postsCollection.createIndex({ source_channel: 1 });
+      await this.postsCollection.createIndex({ channel_id: 1 });
       await this.postsCollection.createIndex({ timestamp: -1 });
       await this.postsCollection.createIndex({ created_at: -1 });
       
