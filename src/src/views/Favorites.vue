@@ -34,18 +34,13 @@
                 </router-link>
             </div>
 
-            <div
-                v-else
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            >
-                <PostThumb
-                    v-for="post in favoritePosts"
-                    :key="post._id"
-                    :post="post"
+            <div v-else>
+                <Thumbs
+                    :posts="favoritePosts"
                     :categories="categories"
+                    :loading="loading"
+                    @publish="handlePublish"
                     @delete="deletePost"
-                    @quickview="quickviewPost"
-                    @remove-from-favorites="removeFromFavorites"
                 />
             </div>
         </main>
@@ -74,7 +69,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import http from "../js/http.js";
-import PostThumb from "../components/PostThumb.vue";
+import Thumbs from "../components/Thumbs.vue";
 import ConfirmModal from "../components/Modal/ConfirmModal.vue";
 import MediaViewer from "../components/MediaViewer.vue";
 import { useFavorites } from "@/composables/useFavorites.js";
@@ -94,7 +89,6 @@ const showMediaViewer = ref(false);
 const currentMedia = ref(null);
 const currentMediaIndex = ref(0);
 
-// Computed properties
 const canGoPrevious = computed(() => {
     if (
         !favoritePosts.value[currentMediaIndex.value]?.media?.length ||
@@ -121,14 +115,13 @@ const canGoNext = computed(() => {
     return currentIdx < mediaArr.length - 1;
 });
 
-// Methods
-const loadCategories = () => {
-    http.categories((response) => {
-        if (response.success) {
-            categories.value = response.data || [];
-        }
-    });
-};
+// const loadCategories = () => {
+//     http.categories((response) => {
+//         if (response.success && response.data) {
+//             categories.value = response.data || [];
+//         }
+//     });
+// };
 
 const loadFavoritePostsData = async () => {
     if (!favoritePostIds.value || favoritePostIds.value.length === 0) {
@@ -236,15 +229,6 @@ const deletePost = (post) => {
     );
 };
 
-const quickviewPost = (post) => {
-    if (!post.media || !post.media.length) return;
-    const idx = favoritePosts.value.findIndex((p) => p._id === post._id);
-    if (idx === -1) return;
-    currentMediaIndex.value = idx;
-    currentMedia.value = post.media[0];
-    showMediaViewer.value = true;
-};
-
 const closeMediaViewer = () => {
     showMediaViewer.value = false;
     currentMedia.value = null;
@@ -272,17 +256,9 @@ const nextMedia = () => {
     }
 };
 
-const removeFromFavorites = (postId) => {
-    // Удаляем пост из списка избранных
-    favoritePosts.value = favoritePosts.value.filter(
-        (post) => post._id !== postId
-    );
-};
-
-// Lifecycle
 onMounted(async () => {
     await initializeFavorites();
-    loadCategories();
+    // loadCategories();
     loadFavoritePostsData();
 });
 

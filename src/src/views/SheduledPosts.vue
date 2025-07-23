@@ -281,7 +281,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onActivated } from "vue";
+import { ref, onMounted } from "vue";
 import http from "../js/http.js";
 import SchedulePublishModal from "@/components/Modal/SchedulePublishModal.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
@@ -348,20 +348,6 @@ const loadPublishedPosts = () => {
     });
 };
 
-const loadChannels = () => {
-    http.getActivePublicationChannels((response) => {
-        if (response.success) {
-            channels.value = response.data;
-        }
-    });
-};
-
-const refreshData = () => {
-    loadScheduledPosts();
-    loadPublishedPosts();
-    loadChannels();
-};
-
 const getPreviewText = (text) => {
     if (!text) return "Текст отсутствует";
     return text.length > 80 ? text.substring(0, 80) + "..." : text;
@@ -386,8 +372,8 @@ const editSchedule = (post) => {
 const cancelSchedule = (post) => {
     showConfirm(
         `Вы действительно хотите отменить публикацию поста "${getPreviewText(post.text)}"?`,
-        (id) => {
-            http.cancelScheduledPost(id, (response) => {
+        (postId) => {
+            http.cancelScheduledPost({ id: postId }, (response) => {
                 if (response.success) {
                     window.$toast.success("Отложенная публикация отменена");
                     loadScheduledPosts();
@@ -430,10 +416,5 @@ const handleScheduleUpdated = (result) => {
 onMounted(() => {
     loadScheduledPosts();
     loadPublishedPosts();
-    loadChannels();
-});
-
-onActivated(() => {
-    refreshData();
 });
 </script>
