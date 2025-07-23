@@ -191,17 +191,17 @@
         <div class="p-4">
             <router-link
                 :to="{ name: 'post', params: { id: post._id } }"
-                class="font-medium text-gray-900 mb-2 line-clamp-2 cursor-pointer"
+                class="font-medium text-gray-900 mb-2 line-clamp-5 cursor-pointer"
             >
-                {{ extractTitle(displayText) }}
+                {{ displayText }}
             </router-link>
 
-            <router-link
+            <!-- <router-link
                 :to="{ name: 'post', params: { id: post._id } }"
                 class="text-sm text-gray-600 mb-3 line-clamp-3 cursor-pointer"
             >
                 {{ displayText }}
-            </router-link>
+            </router-link> -->
 
             <div v-if="post.is_unique && post.unique_text" class="mb-3">
                 <button
