@@ -38,6 +38,11 @@ function parseFilters(query: any): PostFilters | undefined {
     hasFilters = true;
   }
 
+  if (query.category_id) {
+    filters.category_id = query.category_id;
+    hasFilters = true;
+  }
+
   if (query.date_from) {
     const dateFrom = new Date(query.date_from);
     if (!isNaN(dateFrom.getTime())) {

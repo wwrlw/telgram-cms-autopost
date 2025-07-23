@@ -43,7 +43,6 @@ export class PostRepository implements IPostRepository {
           $sort: { created_at: -1 }
         },
         {
-          // Присоединяем канал по channel_id
           $lookup: {
             from: 'channels',
             localField: 'channel_id',
@@ -52,14 +51,12 @@ export class PostRepository implements IPostRepository {
           }
         },
         {
-          // Разворачиваем массив channel (должен быть один элемент)
           $unwind: {
             path: '$channel',
             preserveNullAndEmptyArrays: true
           }
         },
         {
-          // Присоединяем категорию по category_id из канала
           $lookup: {
             from: 'categories',
             localField: 'channel.category_id',
@@ -68,14 +65,12 @@ export class PostRepository implements IPostRepository {
           }
         },
         {
-          // Разворачиваем массив category (должен быть один элемент)
           $unwind: {
             path: '$category',
             preserveNullAndEmptyArrays: true
           }
         },
         {
-          // Добавляем удобные поля
           $addFields: {
             category_id: '$category._id',
             category_name: '$category.name',
@@ -128,13 +123,13 @@ export class PostRepository implements IPostRepository {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
     const { pagination, filters, sort } = query;
+    console.log('🔍 findWithQueryAndCategories called with filters:', filters);
+    
     const mongoSort = this.buildMongoSort(sort);
     const skip = (pagination.page - 1) * pagination.limit;
 
-    // Строим базовый пайплайн агрегации
     const pipeline: any[] = [
       {
-        // Присоединяем канал по channel_id
         $lookup: {
           from: 'channels',
           localField: 'channel_id',
@@ -143,14 +138,12 @@ export class PostRepository implements IPostRepository {
         }
       },
       {
-        // Разворачиваем массив channel (должен быть один элемент)
         $unwind: {
           path: '$channel',
           preserveNullAndEmptyArrays: true
         }
       },
       {
-        // Присоединяем категорию по category_id из канала
         $lookup: {
           from: 'categories',
           localField: 'channel.category_id',
@@ -159,7 +152,6 @@ export class PostRepository implements IPostRepository {
         }
       },
       {
-        // Разворачиваем массив category (должен быть один элемент)
         $unwind: {
           path: '$category',
           preserveNullAndEmptyArrays: true
@@ -167,13 +159,37 @@ export class PostRepository implements IPostRepository {
       }
     ];
 
-    // Добавляем фильтры
     const matchStage = this.buildAggregationFilters(filters);
+    
     if (Object.keys(matchStage).length > 0) {
       pipeline.push({ $match: matchStage });
     }
 
-    // Добавляем удобные поля
+
+    const countPipeline = [...pipeline, { $count: "total" }];
+    const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline).toArray();
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    if (total === 0 && pagination.page === 1) {
+        return {
+            data: [],
+            params: {
+                page: pagination.page,
+                limit: pagination.limit,
+                total: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrev: false,
+            },
+        };
+    }
+
+    pipeline.push(
+      { $sort: mongoSort },
+      { $skip: skip },
+      { $limit: pagination.limit }
+    );
+
     pipeline.push({
       $addFields: {
         category_id: '$category._id',
@@ -183,19 +199,8 @@ export class PostRepository implements IPostRepository {
       }
     });
 
-    // Подсчитываем общее количество
-    const countPipeline = [...pipeline, { $count: "total" }];
-    const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline).toArray();
-    const total = countResult.length > 0 ? countResult[0].total : 0;
-
-    // Добавляем сортировку, пропуск и лимит
-    pipeline.push(
-      { $sort: mongoSort },
-      { $skip: skip },
-      { $limit: pagination.limit }
-    );
-
     const posts = await this.mongo.db.collection("posts").aggregate(pipeline).toArray();
+
     const totalPages = Math.ceil(total / pagination.limit);
 
     return {
@@ -236,8 +241,8 @@ export class PostRepository implements IPostRepository {
 
     if (filters.category_id) {
       if (ObjectId.isValid(filters.category_id)) {
-        // Фильтруем по category_id из связанной категории
-        mongoFilters['category._id'] = new ObjectId(filters.category_id);
+        const objectId = new ObjectId(filters.category_id);
+        mongoFilters['category._id'] = objectId;
       }
     }
 
@@ -402,7 +407,7 @@ export class PostRepository implements IPostRepository {
         published_at: { $exists: true, $ne: null },
       })
       .sort({ published_at: -1 })
-      .limit(50) // Ограничиваем последними 50 опубликованными постами
+      .limit(50)
       .toArray();
 
     return posts as Post[];
@@ -419,7 +424,6 @@ export class PostRepository implements IPostRepository {
       .collection("posts")
       .aggregate([
         {
-          // Присоединяем канал по channel_id
           $lookup: {
             from: 'channels',
             localField: 'channel_id',
@@ -430,11 +434,10 @@ export class PostRepository implements IPostRepository {
         {
           $unwind: {
             path: '$channel',
-            preserveNullAndEmptyArrays: false // Исключаем посты без каналов
+            preserveNullAndEmptyArrays: false
           }
         },
         {
-          // Фильтруем по категории
           $match: {
             'channel.category_id': new ObjectId(categoryId)
           }
@@ -443,7 +446,6 @@ export class PostRepository implements IPostRepository {
           $sort: { created_at: -1 }
         },
         {
-          // Присоединяем категорию для получения названия
           $lookup: {
             from: 'categories',
             localField: 'channel.category_id',
@@ -482,13 +484,11 @@ export class PostRepository implements IPostRepository {
       .collection("posts")
       .aggregate([
         {
-          // Сначала фильтруем по каналу
           $match: {
             source_channel: channel
           }
         },
         {
-          // Присоединяем канал по channel_id
           $lookup: {
             from: 'channels',
             localField: 'channel_id',
@@ -503,7 +503,6 @@ export class PostRepository implements IPostRepository {
           }
         },
         {
-          // Фильтруем по категории
           $match: {
             'channel.category_id': new ObjectId(categoryId)
           }
@@ -512,7 +511,6 @@ export class PostRepository implements IPostRepository {
           $sort: { created_at: -1 }
         },
         {
-          // Присоединяем категорию для получения названия
           $lookup: {
             from: 'categories',
             localField: 'channel.category_id',

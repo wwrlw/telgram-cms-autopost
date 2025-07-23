@@ -196,13 +196,6 @@
                 {{ displayText }}
             </router-link>
 
-            <!-- <router-link
-                :to="{ name: 'post', params: { id: post._id } }"
-                class="text-sm text-gray-600 mb-3 line-clamp-3 cursor-pointer"
-            >
-                {{ displayText }}
-            </router-link> -->
-
             <div v-if="post.is_unique && post.unique_text" class="mb-3">
                 <button
                     @click.prevent="toggleTextMode"
@@ -420,12 +413,6 @@ const getFirstVideo = (post) => {
             media.type === "MessageMediaDocument" ||
             media.type === "document"
     );
-};
-
-const getFileSize = (size) => {
-    if (size < 1024) return size + " B";
-    if (size < 1024 * 1024) return (size / 1024).toFixed(1) + " KB";
-    return (size / (1024 * 1024)).toFixed(1) + " MB";
 };
 
 onMounted(() => {

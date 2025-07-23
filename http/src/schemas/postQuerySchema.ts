@@ -23,6 +23,11 @@ export const postQuerySchema = {
     is_unique: {
       type: 'boolean'
     },
+    category_id: {
+      type: 'string',
+      minLength: 24,
+      maxLength: 24
+    },
     date_from: {
       type: 'string',
       format: 'date-time'
