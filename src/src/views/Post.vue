@@ -230,7 +230,9 @@
                 </button>
                 <!-- Кнопка переключения текста -->
                 <button
-                    v-if="postData && postData.is_unique && postData.unique_text"
+                    v-if="
+                        postData && postData.is_unique && postData.unique_text
+                    "
                     @click="toggleTextMode"
                     class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
                 >
@@ -405,7 +407,7 @@ function savePost() {
 
     const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
-    
+
     if (!markdown.trim() && files.value.length === 0) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
@@ -426,12 +428,12 @@ function savePost() {
             window?.$toast?.success("Пост успешно сохранён");
             router.push("/");
         } else {
-            window?.$toast?.error("Ошибка сохранения: " + (response.message || ""));
+            window?.$toast?.error(
+                "Ошибка сохранения: " + (response.message || "")
+            );
         }
     });
 }
-
-
 
 function publishNow() {
     if (!postData.value) {
@@ -447,7 +449,7 @@ function publishNow() {
     // Сначала сохраняем пост
     const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
-    
+
     if (!markdown.trim() && files.value.length === 0) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
@@ -468,15 +470,21 @@ function publishNow() {
                 selectedChannel.value,
                 (publishRes) => {
                     if (publishRes.success) {
-                        window?.$toast?.success("Пост успешно опубликован в Telegram!");
+                        window?.$toast?.success(
+                            "Пост успешно опубликован в Telegram!"
+                        );
                         router.push("/");
                     } else {
-                        window?.$toast?.error("Ошибка публикации: " + (publishRes.message || ""));
+                        window?.$toast?.error(
+                            "Ошибка публикации: " + (publishRes.message || "")
+                        );
                     }
                 }
             );
         } else {
-            window?.$toast?.error("Ошибка сохранения: " + (response.message || ""));
+            window?.$toast?.error(
+                "Ошибка сохранения: " + (response.message || "")
+            );
         }
     });
 }
@@ -500,7 +508,7 @@ function publishLater() {
     // Сначала сохраняем пост
     const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
-    
+
     if (!markdown.trim() && files.value.length === 0) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
@@ -516,20 +524,30 @@ function publishLater() {
     http.updatePost(updateData, (response) => {
         if (response.success) {
             // После сохранения планируем публикацию
-            http.schedulePost({
-                postId: postData.value._id,
-                scheduledAt: new Date(scheduledAt.value).toISOString(),
-                channelId: selectedChannel.value
-            }, (scheduleRes) => {
-                if (scheduleRes.success) {
-                    window?.$toast?.success("Пост запланирован на публикацию!");
-                    router.push("/");
-                } else {
-                    window?.$toast?.error("Ошибка планирования: " + (scheduleRes.message || ""));
+            http.schedulePost(
+                {
+                    postId: postData.value._id,
+                    scheduledAt: new Date(scheduledAt.value).toISOString(),
+                    channelId: selectedChannel.value,
+                },
+                (scheduleRes) => {
+                    if (scheduleRes.success) {
+                        window?.$toast?.success(
+                            "Пост запланирован на публикацию!"
+                        );
+                        router.push("/");
+                    } else {
+                        window?.$toast?.error(
+                            "Ошибка планирования: " +
+                                (scheduleRes.message || "")
+                        );
+                    }
                 }
-            });
+            );
         } else {
-            window?.$toast?.error("Ошибка сохранения: " + (response.message || ""));
+            window?.$toast?.error(
+                "Ошибка сохранения: " + (response.message || "")
+            );
         }
     });
 }
@@ -543,7 +561,7 @@ function loadPost() {
             // console.log(res.data);
             initializeEditorContent(res.data);
             await preloadMedia(res.data);
-            
+
             // Устанавливаем выбранный канал, если он есть
             if (res.data.channel_id) {
                 selectedChannel.value = res.data.channel_id;

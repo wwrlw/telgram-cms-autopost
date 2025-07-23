@@ -559,8 +559,14 @@ async function uniquizePost() {
     }
     uniquizing.value = true;
     try {
-        const response = await http.instance.post("/posts/uniquize", { text: markdown });
-        if (response.data.success && response.data.data && response.data.data.unique_text) {
+        const response = await http.instance.post("/posts/uniquize", {
+            text: markdown,
+        });
+        if (
+            response.data.success &&
+            response.data.data &&
+            response.data.data.unique_text
+        ) {
             uniqueText.value = response.data.data.unique_text;
             showingUniqueText.value = true;
             if (editor.value) {
@@ -568,7 +574,9 @@ async function uniquizePost() {
             }
             window?.$toast?.success("Текст уникализирован!");
         } else {
-            window?.$toast?.error("Ошибка уникализации: " + (response.data.message || ""));
+            window?.$toast?.error(
+                "Ошибка уникализации: " + (response.data.message || "")
+            );
         }
     } catch (error) {
         let errorMessage = "Ошибка уникализации";

@@ -412,11 +412,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits([
-    "update:selectedPosts",
-    "publish",
-    "delete",
-]);
+const emit = defineEmits(["update:selectedPosts", "publish", "delete"]);
 
 const selectedPosts = computed({
     get: () => props.selectedPosts,

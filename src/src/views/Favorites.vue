@@ -174,13 +174,20 @@ const onCancelConfirm = () => {
 
 const deletePost = (post) => {
     showConfirm(
-        "Вы уверены, что хотите удалить этот пост?" + (post.is_published && post.telegram_message_id ? " (Пост также будет удалён из Telegram)" : ""),
+        "Вы уверены, что хотите удалить этот пост?" +
+            (post.is_published && post.telegram_message_id
+                ? " (Пост также будет удалён из Telegram)"
+                : ""),
         (postObj) => {
             if (postObj.is_published && postObj.telegram_message_id) {
                 http.deletePostFromTelegram(postObj._id.toString(), (tgRes) => {
                     if (!tgRes.success) {
                         if (window._notify) {
-                            window._notify("error", "Ошибка при удалении из Telegram: " + tgRes.message);
+                            window._notify(
+                                "error",
+                                "Ошибка при удалении из Telegram: " +
+                                    tgRes.message
+                            );
                         }
                     }
                     http.deletePost({ id: postObj._id }, (response) => {
@@ -189,11 +196,18 @@ const deletePost = (post) => {
                                 (post) => post._id !== postObj._id
                             );
                             if (window._notify) {
-                                window._notify("success", "Пост удалён (и из Telegram, если был опубликован)");
+                                window._notify(
+                                    "success",
+                                    "Пост удалён (и из Telegram, если был опубликован)"
+                                );
                             }
                         } else {
                             if (window._notify) {
-                                window._notify("error", "Ошибка при удалении поста: " + response.message);
+                                window._notify(
+                                    "error",
+                                    "Ошибка при удалении поста: " +
+                                        response.message
+                                );
                             }
                         }
                     });
@@ -209,7 +223,10 @@ const deletePost = (post) => {
                         }
                     } else {
                         if (window._notify) {
-                            window._notify("error", "Ошибка при удалении поста: " + response.message);
+                            window._notify(
+                                "error",
+                                "Ошибка при удалении поста: " + response.message
+                            );
                         }
                     }
                 });

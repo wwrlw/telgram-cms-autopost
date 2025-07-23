@@ -259,21 +259,30 @@ function onCancelConfirm() {
 
 const deletePost = (post) => {
     showConfirm(
-        "Вы уверены, что хотите удалить этот пост?" + (post.is_published && post.telegram_message_id ? " (Пост также будет удалён из Telegram)" : ""),
+        "Вы уверены, что хотите удалить этот пост?" +
+            (post.is_published && post.telegram_message_id
+                ? " (Пост также будет удалён из Telegram)"
+                : ""),
         (postObj) => {
             if (postObj.is_published && postObj.telegram_message_id) {
                 http.deletePostFromTelegram(postObj._id.toString(), (tgRes) => {
                     if (!tgRes.success) {
-                        window.$toast.error("Ошибка при удалении из Telegram: " + tgRes.message);
+                        window.$toast.error(
+                            "Ошибка при удалении из Telegram: " + tgRes.message
+                        );
                         // Можно прервать дальнейшее удаление, если нужно
                         // return;
                     }
                     http.deletePost({ id: postObj._id }, (response) => {
                         if (response.success) {
-                            window.$toast.success("Пост успешно удалён (и из Telegram, если был опубликован)");
+                            window.$toast.success(
+                                "Пост успешно удалён (и из Telegram, если был опубликован)"
+                            );
                             postsService();
                         } else {
-                            window.$toast.error("Ошибка при удалении поста: " + response.message);
+                            window.$toast.error(
+                                "Ошибка при удалении поста: " + response.message
+                            );
                         }
                     });
                 });
@@ -283,7 +292,9 @@ const deletePost = (post) => {
                         window.$toast.success("Пост успешно удалён");
                         postsService();
                     } else {
-                        window.$toast.error("Ошибка при удалении поста: " + response.message);
+                        window.$toast.error(
+                            "Ошибка при удалении поста: " + response.message
+                        );
                     }
                 });
             }

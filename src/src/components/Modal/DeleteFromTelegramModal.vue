@@ -26,7 +26,9 @@
                         @click.stop
                     >
                         <div class="mt-3">
-                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                            <div
+                                class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100"
+                            >
                                 <svg
                                     class="h-6 w-6 text-red-600"
                                     fill="none"
@@ -42,19 +44,24 @@
                                 </svg>
                             </div>
                             <div class="mt-3 text-center">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                                <h3
+                                    class="text-lg font-medium text-gray-900 mb-4"
+                                >
                                     Удалить из Telegram
                                 </h3>
                                 <div class="mt-2 px-7 py-3">
                                     <p class="text-sm text-gray-500 mb-4">
-                                        Вы уверены, что хотите удалить этот пост из Telegram? 
-                                        Это действие нельзя отменить.
+                                        Вы уверены, что хотите удалить этот пост
+                                        из Telegram? Это действие нельзя
+                                        отменить.
                                     </p>
                                     <div
                                         v-if="post"
                                         class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4"
                                     >
-                                        <h4 class="font-medium text-gray-900 mb-2">
+                                        <h4
+                                            class="font-medium text-gray-900 mb-2"
+                                        >
                                             Пост для удаления:
                                         </h4>
                                         <div class="text-sm text-gray-700">
@@ -88,7 +95,10 @@
                                     :disabled="deleting"
                                     class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <span v-if="deleting" class="flex items-center">
+                                    <span
+                                        v-if="deleting"
+                                        class="flex items-center"
+                                    >
                                         <svg
                                             class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                                             fill="none"
@@ -152,25 +162,22 @@ const handleDelete = () => {
 
     deleting.value = true;
 
-    http.deletePostFromTelegram(
-        props.post._id.toString(),
-        (response) => {
-            deleting.value = false;
-            if (response.success) {
-                emit("deleted", {
-                    success: true,
-                    message: response.message,
-                    postId: props.post._id
-                });
-                emit("update:show", false);
-            } else {
-                emit("deleted", {
-                    success: false,
-                    message: response.message
-                });
-            }
+    http.deletePostFromTelegram(props.post._id.toString(), (response) => {
+        deleting.value = false;
+        if (response.success) {
+            emit("deleted", {
+                success: true,
+                message: response.message,
+                postId: props.post._id,
+            });
+            emit("update:show", false);
+        } else {
+            emit("deleted", {
+                success: false,
+                message: response.message,
+            });
         }
-    );
+    });
 };
 
 watch(
@@ -181,4 +188,4 @@ watch(
         }
     }
 );
-</script> 
+</script>
