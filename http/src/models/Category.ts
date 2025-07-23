@@ -4,7 +4,7 @@ export interface Category {
   _id?: ObjectId;
   name: string;
   description?: string;
-  color?: string; // Цвет для UI (hex код)
+  color?: string;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;

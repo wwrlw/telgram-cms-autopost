@@ -405,14 +405,11 @@ export class TelegramService {
     try {
       const entity = await this.client.getEntity(peer);
       
-      // Use channel configuration if available
       if (channelConfig) {
         if (channelConfig.is_private) {
-          // For private channels, use the channel ID
           const channelId = peer.channelId || peer.userId || peer.chatId;
           return channelId.toString();
         } else {
-          // For public channels, use username if available
           if (channelConfig.username) {
             return channelConfig.username.replace('@', '');
           }
@@ -422,17 +419,14 @@ export class TelegramService {
         }
       }
       
-      // Fallback to original logic
       if ((entity as any).username) {
         return (entity as any).username;
       }
       
-      // For private channels, use the actual channel ID without prefix
       const channelId = peer.channelId || peer.userId || peer.chatId;
       return channelId.toString();
     } catch (error) {
       console.error('❌ Ошибка получения идентификатора канала:', error);
-      // Fallback to raw ID
       const channelId = peer.channelId || peer.userId || peer.chatId;
       return channelId.toString();
     }
@@ -443,12 +437,9 @@ export class TelegramService {
     
     // Если это канал (channelId существует), восстанавливаем полный ID с префиксом -100
     if (peer.channelId) {
-      // Полный формат канала: -100 + channel_id
-      // Например: peer.channelId = 1316790563 -> -1001316790563
       return -100 * 10000000000 - rawChannelId;
     }
     
-    // Для пользователей и чатов возвращаем как есть
     return rawChannelId;
   }
 

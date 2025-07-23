@@ -5,6 +5,8 @@ export class MongoService {
   private client: MongoClient;
   private db: Db | null = null;
   private postsCollection: Collection<Post> | null = null;
+  private channelsCollection: Collection | null = null;
+  private categoriesCollection: Collection | null = null;
 
   constructor(private mongoUri: string, private dbName: string) {
     this.client = new MongoClient(mongoUri);
@@ -15,6 +17,8 @@ export class MongoService {
       await this.client.connect();
       this.db = this.client.db(this.dbName);
       this.postsCollection = this.db.collection<Post>('posts');
+      this.channelsCollection = this.db.collection('channels');
+      this.categoriesCollection = this.db.collection('categories');
       
       // Создаем индексы для существующей коллекции
       await this.postsCollection.createIndex({ url: 1 }, { unique: true });
@@ -26,6 +30,10 @@ export class MongoService {
       // Индексы для проверки дубликатов
       await this.postsCollection.createIndex({ text: 1 });
       await this.postsCollection.createIndex({ "media.file_path": 1 });
+      
+      // Индексы для каналов и категорий
+      await this.channelsCollection.createIndex({ channel_id: 1 });
+      await this.channelsCollection.createIndex({ category_id: 1 });
       
       console.log('✅ Подключение к MongoDB установлено');
     } catch (error) {
@@ -226,6 +234,204 @@ export class MongoService {
       console.log(`✅ Очистка завершена. Удалено ${removedCount} дубликатов`);
     } catch (error) {
       console.error('❌ Ошибка при очистке дубликатов:', error);
+    }
+  }
+
+  async getPostsWithCategories(limit: number = 50, skip: number = 0): Promise<any[]> {
+    if (!this.postsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    try {
+      const postsWithCategories = await this.postsCollection.aggregate([
+        {
+          $sort: { created_at: -1 }
+        },
+        {
+          $skip: skip
+        },
+        {
+          $limit: limit
+        },
+        {
+          // Присоединяем канал по channel_id
+          $lookup: {
+            from: 'channels',
+            localField: 'channel_id',
+            foreignField: 'channel_id',
+            as: 'channel'
+          }
+        },
+        {
+          // Разворачиваем массив channel (должен быть один элемент)
+          $unwind: {
+            path: '$channel',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          // Присоединяем категорию по category_id из канала
+          $lookup: {
+            from: 'categories',
+            localField: 'channel.category_id',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        {
+          // Разворачиваем массив category (должен быть один элемент)
+          $unwind: {
+            path: '$category',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          // Добавляем удобные поля
+          $addFields: {
+            category_name: '$category.name',
+            category_color: '$category.color',
+            channel_username: '$channel.username'
+          }
+        }
+      ]).toArray();
+
+      return postsWithCategories;
+    } catch (error) {
+      console.error('❌ Ошибка получения постов с категориями:', error);
+      throw error;
+    }
+  }
+
+  async getPostsByCategory(categoryId: string, limit: number = 50, skip: number = 0): Promise<any[]> {
+    if (!this.postsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    try {
+      const { ObjectId } = await import('mongodb');
+      
+      const postsWithCategories = await this.postsCollection.aggregate([
+        {
+          // Присоединяем канал по channel_id
+          $lookup: {
+            from: 'channels',
+            localField: 'channel_id',
+            foreignField: 'channel_id',
+            as: 'channel'
+          }
+        },
+        {
+          $unwind: {
+            path: '$channel',
+            preserveNullAndEmptyArrays: false // Исключаем посты без каналов
+          }
+        },
+        {
+          // Фильтруем по категории
+          $match: {
+            'channel.category_id': new ObjectId(categoryId)
+          }
+        },
+        {
+          $sort: { created_at: -1 }
+        },
+        {
+          $skip: skip
+        },
+        {
+          $limit: limit
+        },
+        {
+          // Присоединяем категорию для получения названия
+          $lookup: {
+            from: 'categories',
+            localField: 'channel.category_id',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        {
+          $unwind: {
+            path: '$category',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $addFields: {
+            category_name: '$category.name',
+            category_color: '$category.color',
+            channel_username: '$channel.username'
+          }
+        }
+      ]).toArray();
+
+      return postsWithCategories;
+    } catch (error) {
+      console.error('❌ Ошибка получения постов по категории:', error);
+      throw error;
+    }
+  }
+
+  async getCategoriesWithPostCounts(): Promise<any[]> {
+    if (!this.categoriesCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    try {
+      const categoriesWithCounts = await this.categoriesCollection.aggregate([
+        {
+          // Присоединяем каналы этой категории
+          $lookup: {
+            from: 'channels',
+            localField: '_id',
+            foreignField: 'category_id',
+            as: 'channels'
+          }
+        },
+        {
+          // Получаем channel_id для каждого канала
+          $addFields: {
+            channel_ids: '$channels.channel_id'
+          }
+        },
+        {
+          // Присоединяем посты по channel_id
+          $lookup: {
+            from: 'posts',
+            localField: 'channel_ids',
+            foreignField: 'channel_id',
+            as: 'posts'
+          }
+        },
+        {
+          // Добавляем счетчик постов
+          $addFields: {
+            posts_count: { $size: '$posts' },
+            channels_count: { $size: '$channels' }
+          }
+        },
+        {
+          // Убираем массивы для экономии места
+          $project: {
+            name: 1,
+            description: 1,
+            color: 1,
+            is_active: 1,
+            posts_count: 1,
+            channels_count: 1,
+            created_at: 1,
+            updated_at: 1
+          }
+        },
+        {
+          $sort: { posts_count: -1 }
+        }
+      ]).toArray();
+
+      return categoriesWithCounts;
+    } catch (error) {
+      console.error('❌ Ошибка получения категорий с количеством постов:', error);
+      throw error;
     }
   }
 } 

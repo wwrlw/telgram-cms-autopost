@@ -229,7 +229,7 @@
 
             <div class="mb-3">
                 <span
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full cursor-pointer bg-indigo-500 text-white text-xs font-medium"
                     :class="getCategoryStyle(post.category_id)"
                 >
                     {{ getCategoryName(post.category_id) }}

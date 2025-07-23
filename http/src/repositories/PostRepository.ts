@@ -33,6 +33,62 @@ export class PostRepository implements IPostRepository {
     return posts as Post[];
   }
 
+  async findAllWithCategories(): Promise<Post[]> {
+    if (!this.mongo.db) throw new Error("MongoDB is not connected");
+
+    const posts = await this.mongo.db
+      .collection("posts")
+      .aggregate([
+        {
+          $sort: { created_at: -1 }
+        },
+        {
+          // Присоединяем канал по channel_id
+          $lookup: {
+            from: 'channels',
+            localField: 'channel_id',
+            foreignField: 'channel_id',
+            as: 'channel'
+          }
+        },
+        {
+          // Разворачиваем массив channel (должен быть один элемент)
+          $unwind: {
+            path: '$channel',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          // Присоединяем категорию по category_id из канала
+          $lookup: {
+            from: 'categories',
+            localField: 'channel.category_id',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        {
+          // Разворачиваем массив category (должен быть один элемент)
+          $unwind: {
+            path: '$category',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          // Добавляем удобные поля
+          $addFields: {
+            category_id: '$category._id',
+            category_name: '$category.name',
+            category_color: '$category.color',
+            channel_username: '$channel.username'
+          }
+        }
+      ])
+      .toArray();
+
+    return posts as Post[];
+  }
+
   async findWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>> {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
@@ -66,6 +122,136 @@ export class PostRepository implements IPostRepository {
         hasPrev: pagination.page > 1,
       },
     };
+  }
+
+  async findWithQueryAndCategories(query: PostQuery): Promise<PaginatedResponse<Post>> {
+    if (!this.mongo.db) throw new Error("MongoDB is not connected");
+
+    const { pagination, filters, sort } = query;
+    const mongoSort = this.buildMongoSort(sort);
+    const skip = (pagination.page - 1) * pagination.limit;
+
+    // Строим базовый пайплайн агрегации
+    const pipeline: any[] = [
+      {
+        // Присоединяем канал по channel_id
+        $lookup: {
+          from: 'channels',
+          localField: 'channel_id',
+          foreignField: 'channel_id',
+          as: 'channel'
+        }
+      },
+      {
+        // Разворачиваем массив channel (должен быть один элемент)
+        $unwind: {
+          path: '$channel',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        // Присоединяем категорию по category_id из канала
+        $lookup: {
+          from: 'categories',
+          localField: 'channel.category_id',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      {
+        // Разворачиваем массив category (должен быть один элемент)
+        $unwind: {
+          path: '$category',
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    ];
+
+    // Добавляем фильтры
+    const matchStage = this.buildAggregationFilters(filters);
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    // Добавляем удобные поля
+    pipeline.push({
+      $addFields: {
+        category_id: '$category._id',
+        category_name: '$category.name',
+        category_color: '$category.color',
+        channel_username: '$channel.username'
+      }
+    });
+
+    // Подсчитываем общее количество
+    const countPipeline = [...pipeline, { $count: "total" }];
+    const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline).toArray();
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Добавляем сортировку, пропуск и лимит
+    pipeline.push(
+      { $sort: mongoSort },
+      { $skip: skip },
+      { $limit: pagination.limit }
+    );
+
+    const posts = await this.mongo.db.collection("posts").aggregate(pipeline).toArray();
+    const totalPages = Math.ceil(total / pagination.limit);
+
+    return {
+      data: posts as Post[],
+      params: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total,
+        totalPages,
+        hasNext: pagination.page < totalPages,
+        hasPrev: pagination.page > 1,
+      },
+    };
+  }
+
+  private buildAggregationFilters(filters?: PostFilters): any {
+    if (!filters) return {};
+
+    const mongoFilters: any = {};
+
+    if (filters.source_channel) {
+      mongoFilters.source_channel = {
+        $regex: filters.source_channel,
+        $options: "i",
+      };
+    }
+
+    if (filters.text) {
+      mongoFilters.text = {
+        $regex: filters.text,
+        $options: "i",
+      };
+    }
+
+    if (filters.is_unique !== undefined) {
+      mongoFilters.is_unique = filters.is_unique;
+    }
+
+    if (filters.category_id) {
+      if (ObjectId.isValid(filters.category_id)) {
+        // Фильтруем по category_id из связанной категории
+        mongoFilters['category._id'] = new ObjectId(filters.category_id);
+      }
+    }
+
+    if (filters.date_from || filters.date_to) {
+      mongoFilters.created_at = {};
+      if (filters.date_from) {
+        mongoFilters.created_at.$gte = filters.date_from;
+      }
+      if (filters.date_to) {
+        mongoFilters.created_at.$lte = filters.date_to;
+      }
+    }
+
+    return mongoFilters;
   }
 
   async count(filters: any = {}): Promise<number> {
@@ -231,8 +417,55 @@ export class PostRepository implements IPostRepository {
 
     const posts = await this.mongo.db
       .collection("posts")
-      .find({ category_id: new ObjectId(categoryId) })
-      .sort({ created_at: -1 })
+      .aggregate([
+        {
+          // Присоединяем канал по channel_id
+          $lookup: {
+            from: 'channels',
+            localField: 'channel_id',
+            foreignField: 'channel_id',
+            as: 'channel'
+          }
+        },
+        {
+          $unwind: {
+            path: '$channel',
+            preserveNullAndEmptyArrays: false // Исключаем посты без каналов
+          }
+        },
+        {
+          // Фильтруем по категории
+          $match: {
+            'channel.category_id': new ObjectId(categoryId)
+          }
+        },
+        {
+          $sort: { created_at: -1 }
+        },
+        {
+          // Присоединяем категорию для получения названия
+          $lookup: {
+            from: 'categories',
+            localField: 'channel.category_id',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        {
+          $unwind: {
+            path: '$category',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $addFields: {
+            category_id: '$category._id',
+            category_name: '$category.name',
+            category_color: '$category.color',
+            channel_username: '$channel.username'
+          }
+        }
+      ])
       .toArray();
 
     return posts as Post[];
@@ -247,11 +480,61 @@ export class PostRepository implements IPostRepository {
 
     const posts = await this.mongo.db
       .collection("posts")
-      .find({ 
-        category_id: new ObjectId(categoryId),
-        source_channel: channel 
-      })
-      .sort({ created_at: -1 })
+      .aggregate([
+        {
+          // Сначала фильтруем по каналу
+          $match: {
+            source_channel: channel
+          }
+        },
+        {
+          // Присоединяем канал по channel_id
+          $lookup: {
+            from: 'channels',
+            localField: 'channel_id',
+            foreignField: 'channel_id',
+            as: 'channel'
+          }
+        },
+        {
+          $unwind: {
+            path: '$channel',
+            preserveNullAndEmptyArrays: false
+          }
+        },
+        {
+          // Фильтруем по категории
+          $match: {
+            'channel.category_id': new ObjectId(categoryId)
+          }
+        },
+        {
+          $sort: { created_at: -1 }
+        },
+        {
+          // Присоединяем категорию для получения названия
+          $lookup: {
+            from: 'categories',
+            localField: 'channel.category_id',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        {
+          $unwind: {
+            path: '$category',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $addFields: {
+            category_id: '$category._id',
+            category_name: '$category.name',
+            category_color: '$category.color',
+            channel_username: '$channel.username'
+          }
+        }
+      ])
       .toArray();
 
     return posts as Post[];

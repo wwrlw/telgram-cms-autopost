@@ -63,7 +63,6 @@ export class CategoryRepository implements ICategoryRepository {
       const category: Category = {
         name: categoryData.name,
         description: categoryData.description,
-        color: categoryData.color,
         is_active: categoryData.is_active ?? true,
         created_at: now,
         updated_at: now

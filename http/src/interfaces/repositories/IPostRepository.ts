@@ -4,7 +4,9 @@ import { PostQuery, PaginatedResponse } from '../../types/PostQuery';
 export interface IPostRepository {
   findById(id: string): Promise<Post | null>;
   findAll(): Promise<Post[]>;
+  findAllWithCategories(): Promise<Post[]>;
   findWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>>;
+  findWithQueryAndCategories(query: PostQuery): Promise<PaginatedResponse<Post>>;
   create(post: CreatePostDto): Promise<Post>;
   findByChannel(channel: string): Promise<Post[]>;
   findByCategory(categoryId: string): Promise<Post[]>;

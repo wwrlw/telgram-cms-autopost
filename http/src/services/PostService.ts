@@ -21,11 +21,11 @@ export class PostService implements IPostService {
   }
 
   async getPosts(): Promise<Post[]> {
-    return await this.postRepository.findAll();
+    return await this.postRepository.findAllWithCategories();
   }
 
   async getPostsWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>> {
-    return await this.postRepository.findWithQuery(query);
+    return await this.postRepository.findWithQueryAndCategories(query);
   }
 
   async createPost(postData: CreatePostDto): Promise<Post> {
