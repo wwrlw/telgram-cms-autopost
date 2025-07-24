@@ -7,10 +7,17 @@ export class AuthService implements IAuthService {
   constructor(private jwtSecret: string) {}
 
   generateToken(user: User): string {
+    console.log('AuthService.generateToken called with user:', { 
+      id: user._id, 
+      username: user.username, 
+      role: user.role 
+    }); // Debug log
+    
     return jwt.sign(
       { 
-        id: user._id?.toString(), 
-        username: user.username 
+        userId: user._id?.toString(), 
+        username: user.username,
+        role: user.role
       },
       this.jwtSecret,
       { expiresIn: '24h' }

@@ -31,7 +31,8 @@ export class UserService implements IUserService {
 
     return {
       id: user._id?.toString() || '',
-      username: user.username
+      username: user.username,
+      role: user.role
     };
   }
 
@@ -40,6 +41,8 @@ export class UserService implements IUserService {
     if (!user) {
       throw new AuthenticationError('Invalid username or password');
     }
+
+    console.log('Found user:', { id: user._id, username: user.username, role: user.role }); // Debug log
 
     const isValidPassword = await this.authService.comparePassword(
       loginData.password, 
@@ -51,10 +54,15 @@ export class UserService implements IUserService {
     }
 
     const token = this.authService.generateToken(user);
-    return { 
+    const response = { 
       token,
-      userId: user._id?.toString() || ''
+      userId: user._id?.toString() || '',
+      role: user.role
     };
+    
+    console.log('Login response:', response); // Debug log
+    
+    return response;
   }
 
   async getUserById(id: string): Promise<UserResponse> {
@@ -66,6 +74,33 @@ export class UserService implements IUserService {
     return {
       id: user._id?.toString() || '',
       username: user.username,
+      role: user.role,
+      favorite_posts: user.favorite_posts?.map(postId => postId.toString()) || []
+    };
+  }
+
+  async getAllUsers(): Promise<UserResponse[]> {
+    const users = await this.userRepository.findAll();
+    return users.map(user => ({
+      id: user._id?.toString() || '',
+      username: user.username,
+      role: user.role,
+      favorite_posts: user.favorite_posts?.map(postId => postId.toString()) || []
+    }));
+  }
+
+  async updateUserRole(userId: string, role: string): Promise<UserResponse> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    await this.userRepository.update(userId, { role });
+    
+    return {
+      id: user._id?.toString() || '',
+      username: user.username,
+      role: role,
       favorite_posts: user.favorite_posts?.map(postId => postId.toString()) || []
     };
   }
@@ -91,6 +126,7 @@ export class UserService implements IUserService {
     return {
       id: user._id?.toString() || '',
       username: user.username,
+      role: user.role,
       favorite_posts: user.favorite_posts.map(postId => postId.toString())
     };
   }
@@ -112,6 +148,7 @@ export class UserService implements IUserService {
     return {
       id: user._id?.toString() || '',
       username: user.username,
+      role: user.role,
       favorite_posts: user.favorite_posts?.map(postId => postId.toString()) || []
     };
   }

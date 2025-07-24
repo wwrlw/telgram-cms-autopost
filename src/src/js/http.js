@@ -515,6 +515,74 @@ let http = {
                 callback({ success: false, message: errorMessage });
             });
     },
+
+    // User management endpoints (super_admin only)
+    getAllUsers: function (callback, errorCallback) {
+        instance
+            .get("/auth/users")
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load users",
+                    });
+            });
+    },
+
+    updateUserRole: function (userId, role, callback) {
+        instance
+            .put(`/auth/users/${userId}/role`, { role })
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Failed to update user role";
+                callback({ success: false, message: errorMessage });
+            });
+    },
+
+    // Logs endpoints (super_admin only)
+    getLogs: function (page = 1, limit = 50, callback, errorCallback) {
+        instance
+            .get(`/logs?page=${page}&limit=${limit}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load logs",
+                    });
+            });
+    },
+
+    getUserLogs: function (userId, page = 1, limit = 50, callback, errorCallback) {
+        instance
+            .get(`/logs/user/${userId}?page=${page}&limit=${limit}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load user logs",
+                    });
+            });
+    },
 };
+
+export function getToken() {
+  return localStorage.getItem('token') || sessionStorage.getItem('token');
+}
 
 export default http;

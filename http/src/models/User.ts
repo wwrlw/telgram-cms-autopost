@@ -4,6 +4,7 @@ export interface User {
   _id?: ObjectId;
   username: string;
   password: string;
+  role: string;
   created_at?: Date;
   favorite_posts?: ObjectId[];
 }
@@ -11,6 +12,7 @@ export interface User {
 export interface CreateUserDto {
   username: string;
   password: string;
+  role?: string;
 }
 
 export interface LoginDto {
@@ -21,10 +23,12 @@ export interface LoginDto {
 export interface UserResponse {
   id: string;
   username: string;
+  role: string;
   favorite_posts?: string[];
 }
 
 export interface AuthResponse {
   token: string;
   userId: string;
+  role: string;
 } 

@@ -10,6 +10,9 @@ import { Post } from "../models/Post";
 import { pipeline } from 'node:stream/promises';
 import fs from 'fs';
 import path from 'path';
+import { requireAuth, requirePermission } from "../middleware/authRole";
+import { logAction } from "../middleware/logging";
+import { PERMISSIONS } from "../models/Category";
 
 export async function postsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
@@ -17,7 +20,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts/search",
     { 
-      preValidation: [fastify.authenticate],
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_POSTS)],
       schema: {
         querystring: postQuerySchema,
         response: {
@@ -100,6 +103,8 @@ export async function postsRoutes(fastify: FastifyInstance) {
         const id = (request.params as any).id;
         const deletePostUseCase = container.getDeletePostUseCase();
         const result = await deletePostUseCase.execute(id);
+        // Логируем удаление поста
+        await logAction(request, reply);
         return {
           success: true,
           message: result.message
@@ -120,6 +125,8 @@ export async function postsRoutes(fastify: FastifyInstance) {
         
         const postService = container.getPostService();
         const result = await postService.schedulePost(id, new Date(scheduled_at), channel_id);
+        // Логируем добавление отложенного поста
+        await logAction(request, reply);
         
         return {
           success: true,
@@ -246,6 +253,11 @@ export async function postsRoutes(fastify: FastifyInstance) {
       if (fields.scheduled_at && fields.channel_id) {
         const postService = container.getPostService();
         await postService.schedulePost(post._id!.toString(), new Date(fields.scheduled_at), fields.channel_id);
+        // Логируем добавление отложенного поста
+        await logAction(request, reply);
+      } else {
+        // Логируем сохранение поста
+        await logAction(request, reply);
       }
 
       return { success: true, data: post };
