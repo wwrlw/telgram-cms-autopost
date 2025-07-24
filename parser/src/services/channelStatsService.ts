@@ -40,13 +40,57 @@ export class ChannelStatsService {
         }
       }
 
-      const participantsCount = (entity as any).participantsCount;
+      let participantsCount = null;
       
-      if (participantsCount !== undefined) {
+      if ((entity as any).participantsCount !== undefined && (entity as any).participantsCount !== null) {
+        participantsCount = (entity as any).participantsCount;
+        console.log(`👥 Способ 1 - participantsCount: ${participantsCount}`);
+      }
+        
+      else if ((entity as any).membersCount !== undefined && (entity as any).membersCount !== null) {
+        participantsCount = (entity as any).membersCount;
+        console.log(`👥 Способ 2 - membersCount: ${participantsCount}`);
+      }
+      
+      if (participantsCount === null) {
+        try {
+          const fullChannel = await this.client.invoke(new Api.channels.GetFullChannel({
+            channel: entity
+          }));
+          
+          if (fullChannel.fullChat && (fullChannel.fullChat as any).participantsCount !== undefined) {
+            participantsCount = (fullChannel.fullChat as any).participantsCount;
+            console.log(`👥 Способ 3 - GetFullChannel: ${participantsCount}`);
+          }
+        } catch (fullChannelError: any) {
+          console.log(`⚠️ Не удалось получить полную информацию о канале: ${fullChannelError?.message || fullChannelError}`);
+        }
+      }
+      
+      if (participantsCount === null && !channelConfig.is_private && channelConfig.username) {
+        try {
+          const searchResult = await this.client.invoke(new Api.contacts.Search({
+            q: channelConfig.username.replace('@', ''),
+            limit: 1
+          }));
+          
+          if (searchResult.chats && searchResult.chats.length > 0) {
+            const foundChat = searchResult.chats[0];
+            if ((foundChat as any).participantsCount !== undefined) {
+              participantsCount = (foundChat as any).participantsCount;
+              console.log(`👥 Способ 4 - Search: ${participantsCount}`);
+            }
+          }
+        } catch (searchError: any) {
+          console.log(`⚠️ Поиск канала не дал результатов: ${searchError?.message || searchError}`);
+        }
+      }
+      
+      if (participantsCount !== null && participantsCount !== undefined && participantsCount > 0) {
         console.log(`👥 Канал ${channelConfig.id}: ${participantsCount} подписчиков`);
         return Number(participantsCount);
       } else {
-        console.log(`⚠️ Не удалось получить количество подписчиков для канала ${channelConfig.id}`);
+        console.log(`⚠️ Не удалось получить количество подписчиков для канала ${channelConfig.id}. Entity type: ${entity.className}, Properties:`, Object.keys(entity));
         return null;
       }
       
@@ -107,7 +151,7 @@ export class ChannelStatsService {
     try {
       const channelStats = await this.mongoService.getChannelStats(channelId);
       
-      if (channelStats && channelStats.subscribers_count > 0) {
+      if (channelStats && channelStats.subscribers_count !== null && channelStats.subscribers_count !== undefined) {
         console.log(`📊 Подписчики канала ${channelId} из БД: ${channelStats.subscribers_count}`);
         return channelStats.subscribers_count;
       } else {

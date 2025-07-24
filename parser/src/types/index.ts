@@ -27,7 +27,7 @@ export interface ConversionMetrics {
 export interface ChannelStats {
   channel_id: number;
   source_channel: string;
-  subscribers_count: number;
+  subscribers_count: number | null;
   last_updated: Date;
 }
 

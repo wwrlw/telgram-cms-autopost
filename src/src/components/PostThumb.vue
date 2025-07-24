@@ -229,27 +229,8 @@
                 </span>
             </div>
 
-            <div
-                v-if="post.conversion_metrics"
-                class="p-4 border-t border-gray-100 space-y-2"
-            >
-                <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center space-x-4">
-                        <span
-                            v-if="post.conversion_metrics.er !== undefined"
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                        >
-                            📈 ER: {{ post.conversion_metrics.er }}%
-                        </span>
-                        <span
-                            v-if="post.conversion_metrics.err !== undefined"
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                            👀 ERR: {{ post.conversion_metrics.err }}%
-                        </span>
-                    </div>
-                </div>
-
+            <div v-if="post.conversion_metrics" class="space-y-2">
+                <!-- Базовые метрики -->
                 <div class="flex items-center space-x-3 text-xs text-gray-600">
                     <span
                         v-if="post.conversion_metrics.views !== undefined"
@@ -318,25 +299,35 @@
                         }}</span>
                     </span>
                 </div>
-                <div
-                    class="flex items-center justify-between text-xs text-gray-500"
-                >
-                    <div :datetime="post.timestamp">
+                <!-- Метрики конверсии -->
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center space-x-2">
+                        <span
+                            v-if="post.conversion_metrics.er !== undefined"
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                        >
+                            ER: {{ post.conversion_metrics.er }}%
+                        </span>
+                        <span
+                            v-if="post.conversion_metrics.err !== undefined"
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                            ERR: {{ post.conversion_metrics.err }}%
+                        </span>
+                    </div>
+                    <div class="text-xs text-gray-500">
                         {{ formatDate(post.timestamp) }}
                     </div>
                 </div>
             </div>
 
-            <div v-else class="p-4 border-t border-gray-100 bg-gray-50">
-                <div class="text-xs text-gray-400 text-center">
-                    Конверсия не рассчитана
-                </div>
-                <div
-                    class="flex items-center justify-between text-xs text-gray-500 mt-2"
-                >
-                    <div :datetime="post.timestamp">
-                        {{ formatDate(post.timestamp) }}
-                    </div>
+            <div
+                v-else
+                class="flex items-center justify-between text-xs text-gray-500"
+            >
+                <div class="text-gray-400">Конверсия не рассчитана</div>
+                <div>
+                    {{ formatDate(post.timestamp) }}
                 </div>
             </div>
         </div>
