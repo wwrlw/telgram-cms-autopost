@@ -230,12 +230,29 @@
             </div>
 
             <div
-                v-if="post.stats"
-                class="flex items-center justify-between text-xs text-gray-500 mb-3"
+                v-if="post.conversion_metrics"
+                class="p-4 border-t border-gray-100 space-y-2"
             >
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center space-x-4">
+                        <span
+                            v-if="post.conversion_metrics.er !== undefined"
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                        >
+                            📈 ER: {{ post.conversion_metrics.er }}%
+                        </span>
+                        <span
+                            v-if="post.conversion_metrics.err !== undefined"
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                            👀 ERR: {{ post.conversion_metrics.err }}%
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3 text-xs text-gray-600">
                     <span
-                        v-if="post.stats.views !== undefined"
+                        v-if="post.conversion_metrics.views !== undefined"
                         class="flex items-center space-x-1"
                     >
                         <svg
@@ -257,17 +274,21 @@
                                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                             />
                         </svg>
-                        <span>{{ formatNumber(post.stats.views) }}</span>
+                        <span>{{
+                            formatNumber(post.conversion_metrics.views)
+                        }}</span>
                     </span>
                     <span
-                        v-if="post.stats.reactions !== undefined"
+                        v-if="post.conversion_metrics.reactions !== undefined"
                         class="flex items-center space-x-1"
                     >
                         <span>😍</span>
-                        <span>{{ formatNumber(post.stats.reactions) }}</span>
+                        <span>{{
+                            formatNumber(post.conversion_metrics.reactions)
+                        }}</span>
                     </span>
                     <span
-                        v-if="post.stats.comments !== undefined"
+                        v-if="post.conversion_metrics.comments !== undefined"
                         class="flex items-center space-x-1"
                     >
                         <svg
@@ -283,11 +304,35 @@
                                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                             />
                         </svg>
-                        <span>{{ formatNumber(post.stats.comments) }}</span>
+                        <span>{{
+                            formatNumber(post.conversion_metrics.comments)
+                        }}</span>
+                    </span>
+                    <span
+                        v-if="post.conversion_metrics.forwards !== undefined"
+                        class="flex items-center space-x-1"
+                    >
+                        <span>🔄</span>
+                        <span>{{
+                            formatNumber(post.conversion_metrics.forwards)
+                        }}</span>
                     </span>
                 </div>
                 <div
                     class="flex items-center justify-between text-xs text-gray-500"
+                >
+                    <div :datetime="post.timestamp">
+                        {{ formatDate(post.timestamp) }}
+                    </div>
+                </div>
+            </div>
+
+            <div v-else class="p-4 border-t border-gray-100 bg-gray-50">
+                <div class="text-xs text-gray-400 text-center">
+                    Конверсия не рассчитана
+                </div>
+                <div
+                    class="flex items-center justify-between text-xs text-gray-500 mt-2"
                 >
                     <div :datetime="post.timestamp">
                         {{ formatDate(post.timestamp) }}
