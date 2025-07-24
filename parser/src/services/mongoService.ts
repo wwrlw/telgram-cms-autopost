@@ -1,5 +1,5 @@
 import { MongoClient, Db, Collection } from 'mongodb';
-import { Post, CreatePostDto, PostStats } from '../types/index.js';
+import { Post, CreatePostDto, ConversionMetrics, ChannelStats } from '../types/index.js';
 
 export class MongoService {
   private client: MongoClient;
@@ -7,6 +7,7 @@ export class MongoService {
   private postsCollection: Collection<Post> | null = null;
   private channelsCollection: Collection | null = null;
   private categoriesCollection: Collection | null = null;
+  private channelStatsCollection: Collection<ChannelStats> | null = null;
 
   constructor(private mongoUri: string, private dbName: string) {
     this.client = new MongoClient(mongoUri);
@@ -19,6 +20,7 @@ export class MongoService {
       this.postsCollection = this.db.collection<Post>('posts');
       this.channelsCollection = this.db.collection('channels');
       this.categoriesCollection = this.db.collection('categories');
+      this.channelStatsCollection = this.db.collection<ChannelStats>('channel_stats');
       
       // Создаем индексы для существующей коллекции
       await this.postsCollection.createIndex({ url: 1 }, { unique: true });
@@ -34,6 +36,11 @@ export class MongoService {
       // Индексы для каналов и категорий
       await this.channelsCollection.createIndex({ channel_id: 1 });
       await this.channelsCollection.createIndex({ category_id: 1 });
+
+      // Индексы для статистики каналов
+      await this.channelStatsCollection.createIndex({ channel_id: 1 }, { unique: true });
+      await this.channelStatsCollection.createIndex({ source_channel: 1 });
+      await this.channelStatsCollection.createIndex({ last_updated: -1 });
       
       console.log('✅ Подключение к MongoDB установлено');
     } catch (error) {
@@ -167,7 +174,7 @@ export class MongoService {
       .toArray();
   }
 
-  async updatePostStats(url: string, stats: PostStats): Promise<void> {
+  async updatePostStats(url: string, conversionMetrics: ConversionMetrics): Promise<void> {
     if (!this.postsCollection) {
       throw new Error('MongoDB не подключена');
     }
@@ -176,13 +183,13 @@ export class MongoService {
       { url },
       { 
         $set: { 
-          stats,
+          conversion_metrics: conversionMetrics,
           updated_at: new Date()
         }
       }
     );
 
-    console.log(`📊 Статистика обновлена для поста: ${url}`);
+    console.log(`📊 Конверсия обновлена для поста: ${url}`);
   }
 
   async cleanupDuplicates(): Promise<void> {
@@ -432,6 +439,72 @@ export class MongoService {
     } catch (error) {
       console.error('❌ Ошибка получения категорий с количеством постов:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Сохраняет статистику канала
+   */
+  async saveChannelStats(channelStats: ChannelStats): Promise<void> {
+    if (!this.channelStatsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    try {
+      await this.channelStatsCollection.updateOne(
+        { channel_id: channelStats.channel_id },
+        { 
+          $set: {
+            source_channel: channelStats.source_channel,
+            subscribers_count: channelStats.subscribers_count,
+            last_updated: channelStats.last_updated
+          }
+        },
+        { upsert: true }
+      );
+
+      console.log(`💾 Статистика канала ${channelStats.channel_id} сохранена в БД`);
+    } catch (error) {
+      console.error('❌ Ошибка сохранения статистики канала:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получает статистику канала по ID
+   */
+  async getChannelStats(channelId: number): Promise<ChannelStats | null> {
+    if (!this.channelStatsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    try {
+      const channelStats = await this.channelStatsCollection.findOne({ channel_id: channelId });
+      return channelStats;
+    } catch (error) {
+      console.error(`❌ Ошибка получения статистики канала ${channelId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Получает статистику всех каналов
+   */
+  async getAllChannelStats(): Promise<ChannelStats[]> {
+    if (!this.channelStatsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    try {
+      const channelStats = await this.channelStatsCollection
+        .find({})
+        .sort({ last_updated: -1 })
+        .toArray();
+      
+      return channelStats;
+    } catch (error) {
+      console.error('❌ Ошибка получения статистики каналов:', error);
+      return [];
     }
   }
 } 

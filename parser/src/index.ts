@@ -73,6 +73,12 @@ async function initializeParser() {
     await telegramService.start();
     schedulerService.start();
 
+    // Обновляем статистику каналов при запуске для корректного расчета конверсии
+    console.log('📊 Обновляем статистику каналов при запуске...');
+    await updateChannelsStats();
+    
+    console.log('✅ Система конверсии активна - будет рассчитывать ER и ERR для всех постов');
+
     
   } catch (error) {
     console.error('❌ Ошибка инициализации парсера:', error);
@@ -104,6 +110,17 @@ async function updatePostsStats() {
     }
   } catch (error) {
     console.error('❌ Ошибка обновления статистики постов:', error);
+  }
+}
+
+async function updateChannelsStats() {
+  try {
+    if (telegramService) {
+      console.log('📊 Запускаем обновление статистики каналов (подписчики)...');
+      await telegramService.updateChannelsStats();
+    }
+  } catch (error) {
+    console.error('❌ Ошибка обновления статистики каналов:', error);
   }
 }
 
@@ -140,11 +157,14 @@ process.on('SIGTERM', async () => {
   try {
     await initializeParser();
     
-    setInterval(updateChannels, 10 * 60 * 1000);
+    // Периодические задачи
+    setInterval(updateChannels, 10 * 60 * 1000); // Обновление списка каналов каждые 10 минут
     
-    setInterval(updatePostsStats, 150 * 1000);
+    setInterval(updatePostsStats, 5 * 60 * 1000); // Обновление статистики постов каждые 5 минут (включает расчет конверсии)
     
-    setInterval(cleanupDuplicates, 60 * 60 * 1000);
+    setInterval(updateChannelsStats, 30 * 60 * 1000); // Обновление статистики каналов каждые 30 минут
+    
+    setInterval(cleanupDuplicates, 60 * 60 * 1000); // Очистка дубликатов каждый час
     
   } catch (error) {
     console.error('❌ Критическая ошибка:', error);

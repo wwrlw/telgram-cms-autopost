@@ -14,6 +14,23 @@ export interface PostStats {
   reactions_detail?: { [emoji: string]: number };
 }
 
+export interface ConversionMetrics {
+  er?: number;
+  err?: number;
+  views?: number;
+  reactions?: number;
+  reactions_detail?: { [emoji: string]: number };
+  comments?: number;
+  forwards?: number;
+}
+
+export interface ChannelStats {
+  channel_id: number;
+  source_channel: string;
+  subscribers_count: number;
+  last_updated: Date;
+}
+
 export interface Post {
   _id?: ObjectId;
   source_channel: string;
@@ -24,7 +41,7 @@ export interface Post {
   url: string;
   media: Media[];
   is_unique: boolean;
-  stats?: PostStats;
+  conversion_metrics?: ConversionMetrics; // Только метрики конверсии
   created_at: Date;
   updated_at?: Date;
 }
@@ -37,7 +54,7 @@ export interface CreatePostDto {
   url: string;
   media?: Media[];
   is_unique?: boolean;
-  stats?: PostStats;
+  conversion_metrics?: ConversionMetrics; // Только метрики конверсии
 }
 
 export interface ChannelConfig {

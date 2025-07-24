@@ -143,9 +143,9 @@ const dateToFilter = ref("");
 const sortField = ref("created_at");
 const sortOrder = ref("desc");
 
-const updateSearch = () => {
-    emit("update:searchQuery", searchQuery.value);
-};
+// const updateSearch = () => {
+//     emit("update:searchQuery", searchQuery.value);
+// };
 
 const updateStatusFilter = () => {
     emit("update:statusFilter", statusFilter.value);

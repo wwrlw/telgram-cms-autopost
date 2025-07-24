@@ -98,4 +98,8 @@ router.beforeEach(async (to) => {
     return;
 });
 
+router.afterEach(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
 export default router;

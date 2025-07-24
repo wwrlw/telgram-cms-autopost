@@ -61,7 +61,7 @@
                 </div>
                 <EditorContent
                     :editor="editor"
-                    class="p-3 h-64 custom-editor-content overflow-y-auto"
+                    class="p-3 h-66 custom-editor-content overflow-y-auto"
                 />
             </div>
 

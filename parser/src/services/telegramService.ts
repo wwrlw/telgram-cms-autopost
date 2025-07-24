@@ -2,16 +2,20 @@ import { TelegramClient } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
 import { Api } from 'telegram';
 import input from 'input';
-import { CreatePostDto, PostStats, ChannelConfig } from '../types/index.js';
+import { CreatePostDto, PostStats, ChannelConfig, ConversionMetrics } from '../types/index.js';
 import { MongoService } from './mongoService.js';
 import { MediaService } from './mediaService.js';
 import { PublishService } from './publishService.js';
+import { ConversionService } from './conversionService.js';
+import { ChannelStatsService } from './channelStatsService.js';
 
 export class TelegramService {
   private client: TelegramClient;
   private mongoService: MongoService;
   private mediaService: MediaService;
   private publishService: PublishService;
+  private conversionService: ConversionService;
+  private channelStatsService: ChannelStatsService;
 
   private albumBuffer: { [groupedId: string]: any[] } = {};
   private albumTimers: { [groupedId: string]: NodeJS.Timeout } = {};
@@ -40,6 +44,8 @@ export class TelegramService {
     this.mongoService = new MongoService(config.mongoUri, config.MONGO_DB);
     this.mediaService = new MediaService(config.mediaPath);
     this.publishService = new PublishService();
+    this.conversionService = new ConversionService();
+    this.channelStatsService = new ChannelStatsService(this.client, this.mongoService);
   }
 
   async updateTargetChannels(newChannels: ChannelConfig[]): Promise<void> {
@@ -142,7 +148,7 @@ export class TelegramService {
 
   async updatePostsStats(): Promise<void> {
     try {
-      console.log('🔄 Начинаем обновление статистики постов...');
+      console.log('🔄 Начинаем обновление статистики постов с конверсией...');
       
       const statsLimit = Number(process.env.STATS_UPDATE_LIMIT) || 50;
       const recentPosts = await this.mongoService.getRecentPostsForStats(statsLimit);
@@ -239,9 +245,25 @@ export class TelegramService {
             const updatedStats = this.getPostStatsFromMessage(message);
             
             if (updatedStats) {
-              await this.mongoService.updatePostStats(post.url, updatedStats);
-              console.log(`✅ Обновлена статистика для ${post.url}:`, updatedStats);
-              updatedCount++;
+              // Получаем количество подписчиков канала для расчета конверсии
+              const subscribersCount = await this.channelStatsService.getChannelSubscribersFromDB(post.channel_id);
+              
+              // Рассчитываем метрики конверсии
+              const conversionMetrics = this.conversionService.calculateConversionMetrics(updatedStats, subscribersCount);
+              
+              // Обновляем конверсию в БД
+              if (conversionMetrics) {
+                await this.mongoService.updatePostStats(post.url, conversionMetrics);
+                
+                // Логируем конверсию
+                this.conversionService.logConversionMetrics(conversionMetrics, post.url);
+                
+                console.log(`✅ Обновлена конверсия для ${post.url}:`, conversionMetrics);
+                updatedCount++;
+              } else {
+                console.log(`⚠️ Не удалось рассчитать конверсию для ${post.url}`);
+                skippedCount++;
+              }
             } else {
               console.log(`⚠️ Нет статистики для ${post.url}`);
               skippedCount++;
@@ -266,6 +288,19 @@ export class TelegramService {
     }
   }
 
+  /**
+   * Обновляет статистику каналов (количество подписчиков)
+   */
+  async updateChannelsStats(): Promise<void> {
+    try {
+      console.log('🔄 Начинаем обновление статистики каналов...');
+      await this.channelStatsService.updateChannelsStats(this.config.targetChannels);
+      console.log('✅ Обновление статистики каналов завершено');
+    } catch (error) {
+      console.error('❌ Ошибка при обновлении статистики каналов:', error);
+    }
+  }
+
   async cleanupDuplicates(): Promise<void> {
     try {
       await this.mongoService.cleanupDuplicates();
@@ -282,7 +317,6 @@ export class TelegramService {
         let entity;
         
         if (channelConfig.is_private) {
-          // For private channels, use channel ID
           let telegramChannelId = Math.abs(channelConfig.id);
 
           if (telegramChannelId > 1_000_000_000_000) {
@@ -291,11 +325,9 @@ export class TelegramService {
           
           entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
         } else {
-          // For public channels, use username
           if (channelConfig.username) {
             entity = await this.client.getEntity(channelConfig.username.replace('@', ''));
           } else {
-            // Fallback to ID if username is not available
             let telegramChannelId = Math.abs(channelConfig.id);
 
             if (telegramChannelId > 1_000_000_000_000) {
@@ -521,6 +553,10 @@ export class TelegramService {
         
         const stats = this.getPostStatsFromMessage(albumMsgs[0]);
         
+        // Получаем количество подписчиков для расчета конверсии
+        const subscribersCount = await this.channelStatsService.getChannelSubscribersFromDB(this.getFullChannelId(peer));
+        const conversionMetrics = this.conversionService.calculateConversionMetrics(stats, subscribersCount);
+        
         const postData: CreatePostDto = {
           source_channel: sourceChannel,
           channel_id: this.getFullChannelId(peer),
@@ -528,7 +564,7 @@ export class TelegramService {
           url: postUrl,
           media: allMedia,
           is_unique: false,
-          stats
+          conversion_metrics: conversionMetrics
         };
         
         await this.mongoService.savePost(postData);
@@ -541,6 +577,8 @@ export class TelegramService {
           console.error('❌ Ошибка автоматической публикации альбома:', publishError);
         }
 
+        // Логируем конверсию
+        this.conversionService.logConversionMetrics(conversionMetrics, postUrl);
         console.log(`📤 Сохранён альбом-пост из ${sourceChannel}:`, postData);
       }, 1500);
       return;
@@ -571,6 +609,10 @@ export class TelegramService {
       );
 
       const stats = this.getPostStatsFromMessage(msg);
+      
+      // Получаем количество подписчиков для расчета конверсии
+      const subscribersCount = await this.channelStatsService.getChannelSubscribersFromDB(this.getFullChannelId(peer));
+      const conversionMetrics = this.conversionService.calculateConversionMetrics(stats, subscribersCount);
 
       const postData: CreatePostDto = {
         source_channel: sourceChannel,
@@ -579,11 +621,14 @@ export class TelegramService {
         url: postUrl,
         media: media,
         is_unique: false,
-        stats
+        conversion_metrics: conversionMetrics
       };
 
       await this.mongoService.savePost(postData);
 
+      // Логируем конверсию
+      this.conversionService.logConversionMetrics(conversionMetrics, postUrl);
+      
       console.log(`✅ Пост успешно сохранен: ${postUrl}`);
       console.log(`📊 Статистика: ${stats ? JSON.stringify(stats) : 'Нет данных'}`);
 
