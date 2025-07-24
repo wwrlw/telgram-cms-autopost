@@ -28,7 +28,7 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
   // Получить активные каналы публикации
   fastify.get(
     '/posted-channels/active',
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)] },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
       try {
         const getActivePublicationChannelsUseCase = container.getGetActivePublicationChannelsUseCase();

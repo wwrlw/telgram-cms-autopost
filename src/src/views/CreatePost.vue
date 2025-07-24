@@ -392,16 +392,27 @@ const send = async (publishLater) => {
             postData.scheduled_at = new Date(scheduledAt.value).toISOString();
         }
 
+        // Всегда используем FormData, как было до изменений
+        const form = new FormData();
+        Object.entries(postData).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                value.forEach((v, i) => form.append(`${key}[${i}]`, typeof v === 'object' ? JSON.stringify(v) : v));
+            } else {
+                form.append(key, value);
+            }
+        });
+
         http.createPost(
-            postData,
+            form,
             (response) => {
                 isSubmitting.value = false;
                 if (response.success) {
+                    console.log('Create post response:', response.data); // debug
                     if (publishLater) {
                         window?.$toast?.success("Пост запланирован");
                         router.push("/scheduled-posts");
                     } else {
-                        const postId = response.data._id;
+                        const postId = response.data._id || response.data.id;
                         http.publishToChannel(
                             postId,
                             selectedChannel.value,

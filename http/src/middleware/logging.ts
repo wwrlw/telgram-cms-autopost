@@ -4,7 +4,11 @@ import { Log } from '../models/Log';
 
 export const logAction = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = (request as any).user;
-  if (!user) return; // Only log authenticated actions
+  if (!user) {
+    console.log('logAction: NO USER');
+    return;
+  }
+  console.log('logAction:', { userId: user._id || user.userId, username: user.username });
 
   try {
     const client = new MongoClient(process.env.MONGODB_URI!);
@@ -13,15 +17,14 @@ export const logAction = async (request: FastifyRequest, reply: FastifyReply) =>
     const logsCollection = db.collection<Log>('logs');
 
     const log: Log = {
-      userId: user.userId,
-      username: user.username || 'Unknown',
-      action: `${request.method} ${request.url}`,
-      method: request.method,
-      url: request.url,
-      body: request.method !== 'GET' ? request.body : undefined,
-      ip: request.ip,
-      userAgent: request.headers['user-agent'],
-      timestamp: new Date()
+      userId: user?._id || user?.userId || '',
+      username: user?.username || '',
+      action: (request.method || '') + ' ' + (request.url || ''),
+      method: request.method || '',
+      url: request.url || '',
+      body: request.body,
+      userAgent: request.headers['user-agent'] || '',
+      timestamp: new Date(),
     };
 
     await logsCollection.insertOne(log);

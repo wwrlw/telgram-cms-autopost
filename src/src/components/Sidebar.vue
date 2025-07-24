@@ -389,7 +389,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 
 const username = ref("");
@@ -466,5 +466,17 @@ onMounted(() => {
             loadUserData();
         }
     });
+    // Добавляю обработчик resize
+    window.addEventListener("resize", handleResize);
+});
+
+const handleResize = () => {
+    if (window.innerWidth <= 640) {
+        isCollapsed.value = true;
+    }
+};
+
+onUnmounted(() => {
+    window.removeEventListener("resize", handleResize);
 });
 </script>

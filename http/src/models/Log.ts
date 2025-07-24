@@ -8,7 +8,6 @@ export interface Log {
   method: string;
   url: string;
   body?: any;
-  ip?: string;
   userAgent?: string;
   timestamp: Date;
 } 

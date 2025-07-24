@@ -41,15 +41,12 @@
                                     Действие
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    IP
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Детали
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="log in logs" :key="log._id">
+                            <tr v-for="log in sortedLogs" :key="log._id">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ formatDate(log.timestamp) }}
                                 </td>
@@ -63,12 +60,8 @@
                                     </span>
                                     <div class="text-sm text-gray-500 mt-1">{{ log.url }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ log.ip || 'N/A' }}
-                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <button
-                                        v-if="log.body"
                                         @click="showLogDetails(log)"
                                         class="text-indigo-600 hover:text-indigo-900"
                                     >
@@ -134,7 +127,7 @@
     </div>
 
     <!-- Log Details Modal -->
-    <div v-if="showDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div v-if="showDetailsModal" class="fixed inset-0 bg-white/30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
         <div class="relative top-20 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
             <div class="mt-3">
                 <div class="flex items-center justify-between mb-4">
@@ -172,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import Sidebar from '@/components/Sidebar.vue';
 import http from '@/js/http';
@@ -259,6 +252,17 @@ const showLogDetails = (log) => {
     selectedLog.value = log;
     showDetailsModal.value = true;
 };
+
+const sortedLogs = computed(() => {
+    if (selectedUserId.value) return logs.value;
+    // Сортируем по username по алфавиту, если выбраны все пользователи
+    return [...logs.value].sort((a, b) => {
+        if (a.username && b.username) {
+            return a.username.localeCompare(b.username);
+        }
+        return 0;
+    });
+});
 
 onMounted(() => {
     // Check if specific user ID is provided in query

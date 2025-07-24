@@ -13,6 +13,7 @@ const ScheduledPosts = () => import("@/views/SheduledPosts.vue");
 const Analytics = () => import("@/views/Analytics.vue");
 const UserManagement = () => import("@/views/UserManagement.vue");
 const SystemLogs = () => import("@/views/SystemLogs.vue");
+import { getToken } from "@/js/http";
 
 const ROLES = {
     SUPER_ADMIN: 'super_admin',
@@ -109,8 +110,8 @@ router.beforeEach(async (to) => {
     let token = null;
     let userRole = null;
     try {
-        token = localStorage.getItem("token");
-        userRole = localStorage.getItem("role");
+        token = getToken();
+        userRole = localStorage.getItem("role") || sessionStorage.getItem("role");
     } catch (error) {
         console.error("Error accessing localStorage:", error);
         token = null;

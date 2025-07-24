@@ -40,11 +40,8 @@
                             </svg>
                         </div>
                         <h2 class="text-2xl font-bold text-gray-800 mb-2">
-                            Sign In to Your Account
+                            Авторизация в TG Admin Panel
                         </h2>
-                        <p class="text-gray-600 text-sm">
-                            Access your account to continue
-                        </p>
                     </div>
 
                     <form
@@ -56,12 +53,13 @@
                             <label
                                 for="login-email"
                                 class="block text-sm font-semibold text-gray-700 mb-2"
-                                >Username</label
+                                >Логин</label
                             >
                             <input
-                                type="username"
+                                type="text"
                                 id="login-email"
                                 v-model="loginForm.username"
+                                autocomplete="username"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
                                 placeholder="your username"
                             />
@@ -71,12 +69,13 @@
                             <label
                                 for="login-password"
                                 class="block text-sm font-semibold text-gray-700 mb-2"
-                                >Password</label
+                                >Пароль</label
                             >
                             <input
                                 type="password"
                                 id="login-password"
                                 v-model="loginForm.password"
+                                autocomplete="current-password"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
                                 placeholder="••••••••"
                             />
@@ -87,9 +86,10 @@
                                 <input
                                     type="checkbox"
                                     class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    v-model="loginForm.rememberMe"
                                 />
                                 <span class="ml-2 text-sm text-gray-600"
-                                    >Remember me</span
+                                    >Запомнить меня</span
                                 >
                             </label>
                         </div>
@@ -98,7 +98,7 @@
                             type="submit"
                             class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
-                            Sign In
+                            Войти
                         </button>
                     </form>
                 </div>
@@ -119,7 +119,10 @@ const loading = ref(false);
 const loginForm = ref({
     username: "",
     password: "",
+    rememberMe: false, // добавлено
 });
+
+// Удаляю все, что связано с кастомной маской пароля (passwordInput, isFocused, maskPassword, handlePasswordInput, handlePasswordFocus, handlePasswordBlur) из <script setup>.
 
 const LoginService = async () => {
     errorMessage.value = "";

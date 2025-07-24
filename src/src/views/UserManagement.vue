@@ -75,7 +75,7 @@
     </div>
 
     <!-- Create User Modal -->
-    <div v-if="showCreateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div v-if="showCreateModal" class="fixed inset-0 bg-white/30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div class="mt-3">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Создать пользователя</h3>
@@ -93,7 +93,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Пароль</label>
                         <input
                             v-model="newUser.password"
-                            type="password"
+                            type="text"
                             required
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
@@ -106,7 +106,6 @@
                         >
                             <option value="editor">Редактор</option>
                             <option value="admin">Администратор</option>
-                            <option value="super_admin">Супер Администратор</option>
                         </select>
                     </div>
                     <div class="flex justify-end space-x-3">
@@ -131,7 +130,7 @@
     </div>
 
     <!-- Role Change Modal -->
-    <div v-if="showRoleModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div v-if="showRoleModal" class="fixed inset-0 bg-white/30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div class="mt-3">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Изменить роль пользователя</h3>
@@ -145,7 +144,6 @@
                         >
                             <option value="editor">Редактор</option>
                             <option value="admin">Администратор</option>
-                            <option value="super_admin">Супер Администратор</option>
                         </select>
                     </div>
                     <div class="flex justify-end space-x-3">
