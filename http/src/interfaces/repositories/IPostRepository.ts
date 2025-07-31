@@ -1,5 +1,5 @@
 import { Post, CreatePostDto } from '../../models/Post';
-import { PostQuery, PaginatedResponse } from '../../types/PostQuery';
+import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse } from '../../types/PostQuery';
 
 export interface IPostRepository {
   findById(id: string): Promise<Post | null>;
@@ -7,6 +7,7 @@ export interface IPostRepository {
   findAllWithCategories(): Promise<Post[]>;
   findWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>>;
   findWithQueryAndCategories(query: PostQuery): Promise<PaginatedResponse<Post>>;
+  findWithInfiniteScroll(query: InfiniteScrollQuery): Promise<InfiniteScrollResponse<Post>>;
   create(post: CreatePostDto): Promise<Post>;
   findByChannel(channel: string): Promise<Post[]>;
   findByCategory(categoryId: string): Promise<Post[]>;

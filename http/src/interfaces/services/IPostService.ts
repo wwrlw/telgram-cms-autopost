@@ -1,10 +1,11 @@
 import { Post, CreatePostDto } from '../../models/Post';
-import { PostQuery, PaginatedResponse } from '../../types/PostQuery';
+import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse } from '../../types/PostQuery';
 
 export interface IPostService {
   getPost(id: string): Promise<Post>;
   getPosts(): Promise<Post[]>;
   getPostsWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>>;
+  getPostsInfiniteScroll(query: InfiniteScrollQuery): Promise<InfiniteScrollResponse<Post>>;
   createPost(post: CreatePostDto): Promise<Post>;
   getPostsByChannel(channel: string): Promise<Post[]>;
   getPostsByCategory(categoryId: string): Promise<Post[]>;

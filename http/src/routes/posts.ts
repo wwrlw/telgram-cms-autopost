@@ -3,9 +3,12 @@ import { DependencyContainer } from "../container/DependencyContainer";
 import { GetPostUseCase } from "../use-cases/GetPostUseCase";
 import { GetPostsUseCase } from "../use-cases/GetPostsUseCase";
 import { GetPostsWithQueryUseCase } from "../use-cases/GetPostsWithQueryUseCase";
+import { GetPostsInfiniteScrollUseCase } from "../use-cases/GetPostsInfiniteScrollUseCase";
 import { DeletePostUseCase } from "../use-cases/DeletePostUseCase";
 import { parsePostQuery } from "../utils/queryParser";
+import { parseInfiniteScrollQuery } from "../utils/infiniteScrollQueryParser";
 import { postQuerySchema, postSearchResponseSchema } from "../schemas/postQuerySchema";
+import { infiniteScrollQuerySchema, infiniteScrollResponseSchema } from "../schemas/infiniteScrollSchema";
 import { Post } from "../models/Post";
 import { pipeline } from 'node:stream/promises';
 import fs from 'fs';
@@ -70,6 +73,34 @@ export async function postsRoutes(fastify: FastifyInstance) {
         return {
           success: true,
           data: posts
+        };
+      } catch (error) {
+        throw error;
+      }
+    }
+  );
+
+  // Новый endpoint для infinite scroll
+  fastify.get(
+    "/posts/infinite-scroll",
+    { 
+      preValidation: [fastify.authenticate],
+      schema: {
+        querystring: infiniteScrollQuerySchema,
+        response: {
+          200: infiniteScrollResponseSchema
+        }
+      }
+    },
+    async (request, reply) => {
+      try {
+        const queryParams = request.query as any;
+        const query = parseInfiniteScrollQuery(queryParams);
+        const getPostsInfiniteScrollUseCase = container.getGetPostsInfiniteScrollUseCase();
+        const result = await getPostsInfiniteScrollUseCase.execute(query);
+        return {
+          success: true,
+          ...result
         };
       } catch (error) {
         throw error;

@@ -66,6 +66,32 @@ let http = {
                 if (errorCallback) errorCallback(err);
             });
     },
+    postsInfiniteScroll: function (params = {}, callback, errorCallback) {
+        const queryParams = new URLSearchParams();
+
+        for (const key in params) {
+            if (params[key] !== undefined) {
+                queryParams.append(key, params[key]);
+            }
+        }
+
+        const url = queryParams.toString()
+            ? `/posts/infinite-scroll?${queryParams.toString()}`
+            : "/posts/infinite-scroll";
+
+        console.log('Making infinite scroll request to:', url);
+
+        instance
+            .get(url)
+            .then((res) => {
+                console.log('Infinite scroll response:', res.data);
+                callback(res.data);
+            })
+            .catch((err) => {
+                console.error('Infinite scroll error:', err);
+                if (errorCallback) errorCallback(err);
+            });
+    },
     post: function (params, callback) {
         instance
             .get(`/post/${params.id}`)
@@ -548,9 +574,9 @@ let http = {
     },
 
     // Logs endpoints (super_admin only)
-    getLogs: function (page = 1, limit = 50, callback, errorCallback) {
+    getLogs: function (page = 1, limit = 50, sort = 'desc', callback, errorCallback) {
         instance
-            .get(`/logs?page=${page}&limit=${limit}`)
+            .get(`/logs?page=${page}&limit=${limit}&sort=${sort}`)
             .then((res) => {
                 callback(res.data);
             })
@@ -564,9 +590,9 @@ let http = {
             });
     },
 
-    getUserLogs: function (userId, page = 1, limit = 50, callback, errorCallback) {
+    getUserLogs: function (userId, page = 1, limit = 50, sort = 'desc', callback, errorCallback) {
         instance
-            .get(`/logs/user/${userId}?page=${page}&limit=${limit}`)
+            .get(`/logs/user/${userId}?page=${page}&limit=${limit}&sort=${sort}`)
             .then((res) => {
                 callback(res.data);
             })

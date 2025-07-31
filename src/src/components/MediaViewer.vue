@@ -1,13 +1,14 @@
 <template>
     <div
         v-if="show"
-        class="fixed inset-0 z-50 flex w-full h-full items-center justify-center bg-black bg-opacity-90"
+        class="fixed inset-0 z-50 flex w-full h-full items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm cursor-pointer"
         @click="$emit('close')"
     >
-        <div class="relative max-w-5xl max-h-[90vh] w-full mx-4" @click.stop>
+        <div class="relative w-full h-full">
             <button
                 @click="$emit('close')"
                 class="absolute top-4 right-4 z-10 bg-black bg-opacity-70 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-90 transition-all"
+                title="Закрыть (или кликните в любом месте)"
             >
                 <svg
                     class="w-5 h-5"
@@ -63,17 +64,18 @@
                 </svg>
             </button>
 
-            <div class="flex items-center justify-center h-full">
+            <div class="media-viewer-container shadow-2xl cursor-default" @click.stop>
                 <img
                     v-if="media && isImage(media)"
                     :src="getMediaUrl(media.file_path)"
-                    class="max-w-full max-h-full object-cover rounded-lg shadow-2xl"
+                    :class="getSquareMediaClasses('viewer')"
                     :alt="media.filename || 'Image'"
+                    loading="eager"
                 />
                 <video
                     v-else-if="media && isVideo(media)"
                     :src="getMediaUrl(media.file_path)"
-                    class="max-w-full max-h-full object-cover rounded-lg shadow-2xl"
+                    :class="getSquareMediaClasses('viewer')"
                     controls
                     autoplay
                     :key="media.file_path"
@@ -102,7 +104,8 @@
 </template>
 
 <script setup>
-import { getMediaUrl } from "@/js/utils";
+import { getMediaUrl, getSquareMediaClasses } from "@/js/utils";
+import { onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
     show: {
@@ -131,7 +134,23 @@ const props = defineProps({
     },
 });
 
-defineEmits(["close", "previous", "next"]);
+const emit = defineEmits(["close", "previous", "next"]);
+
+// Обработчик клавиши Escape
+const handleKeydown = (event) => {
+    if (event.key === 'Escape') {
+        emit('close');
+    }
+};
+
+// Добавляем и удаляем обработчик клавиш
+onMounted(() => {
+    document.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('keydown', handleKeydown);
+});
 
 function isImage(media) {
     return media.type === "photo" || media.type === "MessageMediaPhoto";
@@ -148,7 +167,13 @@ function isVideo(media) {
 
 <style scoped>
 .fixed {
-    animation: fadeIn 0.2s ease-out;
+    animation: fadeIn 0.3s ease-out;
+    /* Fallback для браузеров без поддержки backdrop-blur */
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.media-viewer-container {
+    animation: scaleIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
@@ -157,6 +182,17 @@ function isVideo(media) {
     }
     to {
         opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 </style>

@@ -10,6 +10,7 @@ import Favorites from "@/views/Favorites.vue";
 const CreatePost = () => import("@/views/CreatePost.vue");
 const page404 = () => import("@/views/Page404.vue");
 const ScheduledPosts = () => import("@/views/SheduledPosts.vue");
+const EditScheduledPost = () => import("@/views/EditScheduledPost.vue");
 const Analytics = () => import("@/views/Analytics.vue");
 const UserManagement = () => import("@/views/UserManagement.vue");
 const SystemLogs = () => import("@/views/SystemLogs.vue");
@@ -91,6 +92,11 @@ const routes = [
         path: "/scheduled-posts",
         name: "scheduled-posts",
         component: ScheduledPosts,
+    },
+    {
+        path: "/edit-scheduled-post/:id",
+        name: "edit-scheduled-post",
+        component: EditScheduledPost,
     },
 ];
 

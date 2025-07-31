@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb';
 import { IPostService } from '../interfaces/services/IPostService';
 import { IPostRepository } from '../interfaces/repositories/IPostRepository';
 import { Post, CreatePostDto } from '../models/Post';
-import { PostQuery, PaginatedResponse } from '../types/PostQuery';
+import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse } from '../types/PostQuery';
 import { NotFoundError } from '../exceptions/NotFoundError';
 import { YandexGPTService } from './YandexGPTService';
 
@@ -26,6 +26,10 @@ export class PostService implements IPostService {
 
   async getPostsWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>> {
     return await this.postRepository.findWithQueryAndCategories(query);
+  }
+
+  async getPostsInfiniteScroll(query: InfiniteScrollQuery): Promise<InfiniteScrollResponse<Post>> {
+    return await this.postRepository.findWithInfiniteScroll(query);
   }
 
   async createPost(postData: CreatePostDto): Promise<Post> {
