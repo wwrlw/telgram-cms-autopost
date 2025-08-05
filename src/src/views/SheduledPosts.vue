@@ -42,120 +42,15 @@
                 </nav>
             </div>
 
-            <div
-                v-show="activeTab === 'scheduled'"
-                class="bg-white shadow overflow-hidden sm:rounded-md"
-            >
-                <div v-if="loading" class="p-8 text-center">
-                    <div
-                        class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"
-                    ></div>
-                    <p class="mt-2 text-sm text-gray-500">
-                        Загружаем отложенные публикации...
-                    </p>
-                </div>
-
-                <div
-                    v-else-if="scheduledPosts.length === 0"
-                    class="p-8 text-center text-gray-500"
-                >
-                    <svg
-                        class="mx-auto h-12 w-12 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">
-                        Нет отложенных публикаций
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Запланированные посты появятся здесь.
-                    </p>
-                </div>
-
-                <ul v-else class="divide-y divide-gray-200">
-                    <li
-                        v-for="post in scheduledPosts"
-                        :key="post._id"
-                        class="px-6 py-4"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0">
-                                        <span
-                                            :class="[
-                                                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                                                isOverdue(post.scheduled_at)
-                                                    ? 'bg-red-100 text-red-800'
-                                                    : 'bg-yellow-100 text-yellow-800',
-                                            ]"
-                                        >
-                                            {{
-                                                isOverdue(post.scheduled_at)
-                                                    ? "Просрочено"
-                                                    : "Запланировано"
-                                            }}
-                                        </span>
-                                    </div>
-                                    <div class="ml-4 flex-1 min-w-0">
-                                        <p
-                                            class="text-sm font-medium text-gray-900 truncate"
-                                        >
-                                            {{ getPreviewText(post.text) }}
-                                        </p>
-                                        <div class="mt-1 text-sm text-gray-500">
-                                            <p>
-                                                📅 Время публикации:
-                                                {{
-                                                    formatDate(
-                                                        post.scheduled_at
-                                                    )
-                                                }}
-                                            </p>
-                                            <p>
-                                                📺 Канал:
-                                                {{
-                                                    getChannelName(
-                                                        post.scheduled_channel_id
-                                                    )
-                                                }}
-                                            </p>
-                                            <p v-if="post.url">
-                                                🔗 Ссылка: {{ post.url }}
-                                            </p>
-                                            <p v-if="post.media?.length">
-                                                📎 Медиафайлов:
-                                                {{ post.media.length }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2 ml-4">
-                                <button
-                                    @click="editSchedule(post)"
-                                    class="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-                                >
-                                    Изменить
-                                </button>
-                                <button
-                                    @click="cancelSchedule(post)"
-                                    class="text-red-600 hover:text-red-900 text-sm font-medium"
-                                >
-                                    Отменить
-                                </button>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
+            <div v-show="activeTab === 'scheduled'">
+                <ScheduledPostsGrid
+                    :posts="scheduledPosts"
+                    :categories="categories"
+                    :channels="channels"
+                    :loading="loading"
+                    @edit="editSchedule"
+                    @cancel="cancelSchedule"
+                />
             </div>
 
             <div
@@ -265,12 +160,6 @@
             </div>
         </div>
 
-        <SchedulePublishModal
-            :show="showEditModal"
-            :post="editingPost"
-            @update:show="showEditModal = $event"
-            @scheduled="handleScheduleUpdated"
-        />
         <ConfirmModal
             :show="showConfirmModal"
             :message="confirmMessage"
@@ -282,18 +171,19 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import http from "../js/http.js";
-import SchedulePublishModal from "@/components/Modal/SchedulePublishModal.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
+import ScheduledPostsGrid from "@/components/ScheduledPostsGrid.vue";
 import { formatDate } from "@/js/utils.js";
 
+const router = useRouter();
 const scheduledPosts = ref([]);
 const publishedPosts = ref([]);
 const loading = ref(true);
 const loadingPublished = ref(true);
-const showEditModal = ref(false);
-const editingPost = ref(null);
 const channels = ref([]);
+const categories = ref([]);
 const activeTab = ref("scheduled");
 
 const showConfirmModal = ref(false);
@@ -348,6 +238,26 @@ const loadPublishedPosts = () => {
     });
 };
 
+const loadCategories = () => {
+    http.categories((response) => {
+        if (response.success) {
+            categories.value = response.data || [];
+        } else {
+            console.error("Ошибка загрузки категорий:", response.message);
+        }
+    });
+};
+
+const loadChannels = () => {
+    http.channels({}, (response) => {
+        if (response.success) {
+            channels.value = response.data || [];
+        } else {
+            console.error("Ошибка загрузки каналов:", response.message);
+        }
+    });
+};
+
 const getPreviewText = (text) => {
     if (!text) return "Текст отсутствует";
     return text.length > 80 ? text.substring(0, 80) + "..." : text;
@@ -365,8 +275,19 @@ const getChannelName = (channelId) => {
 };
 
 const editSchedule = (post) => {
-    editingPost.value = post;
-    showEditModal.value = true;
+    // Переходим на страницу редактирования отложенной публикации
+    // Передаем данные о канале и времени через query параметры
+    console.log('Post data for editing:', post);
+    const query = {
+        channelId: post.scheduled_channel_id,
+        scheduledAt: post.scheduled_at
+    };
+    console.log('Query parameters:', query);
+    router.push({
+        name: 'edit-scheduled-post',
+        params: { id: post._id },
+        query: query
+    });
 };
 
 const cancelSchedule = (post) => {
@@ -388,33 +309,12 @@ const cancelSchedule = (post) => {
     );
 };
 
-const handleScheduleUpdated = (result) => {
-    showEditModal.value = false;
-    const currentPost = editingPost.value;
-    editingPost.value = null;
 
-    if (result.success) {
-        if (result.data && currentPost) {
-            const index = scheduledPosts.value.findIndex(
-                (p) => p._id === currentPost._id
-            );
-            if (index !== -1) {
-                scheduledPosts.value[index] = {
-                    ...scheduledPosts.value[index],
-                    ...result.data,
-                };
-            }
-        } else {
-            loadScheduledPosts();
-        }
-        window.$toast.success(result.message || "Расписание обновлено");
-    } else {
-        window.$toast.error(result.message || "Ошибка обновления расписания");
-    }
-};
 
 onMounted(() => {
     loadScheduledPosts();
     loadPublishedPosts();
+    loadCategories();
+    loadChannels();
 });
 </script>

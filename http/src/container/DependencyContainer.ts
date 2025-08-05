@@ -14,6 +14,7 @@ import { YandexGPTService } from '../services/YandexGPTService';
 import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
 import { GetPostsWithQueryUseCase } from '../use-cases/GetPostsWithQueryUseCase';
+import { GetPostsInfiniteScrollUseCase } from '../use-cases/GetPostsInfiniteScrollUseCase';
 import { DeletePostUseCase } from '../use-cases/DeletePostUseCase';
 import { UniquizePostUseCase } from '../use-cases/UniquizePostUseCase';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
@@ -127,6 +128,10 @@ export class DependencyContainer {
 
   getGetPostsWithQueryUseCase(): GetPostsWithQueryUseCase {
     return new GetPostsWithQueryUseCase(this.getPostService());
+  }
+
+  getGetPostsInfiniteScrollUseCase(): GetPostsInfiniteScrollUseCase {
+    return new GetPostsInfiniteScrollUseCase(this.getPostService());
   }
 
   getDeletePostUseCase(): DeletePostUseCase {

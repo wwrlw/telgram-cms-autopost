@@ -1,57 +1,47 @@
 <template>
     <div
-        class="group bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
+        :class="[
+            'group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-[1.02] post-thumb-component',
+            'post-card-with-media'
+        ]"
     >
+        <!-- Медиа область - всегда показываем -->
         <div
-            class="relative aspect-video bg-gray-100 cursor-pointer"
+            class="relative aspect-square bg-gray-50 cursor-pointer media-area"
             @click="navigateToPost"
         >
+            <!-- Показываем картинку если есть фото и нет ошибки -->
             <img
-                v-if="hasPhoto(post)"
-                v-lazy="getMediaPath(getFirstPhoto(post).file_path)"
+                v-if="hasPhoto(post) && getMediaPath(getFirstPhoto(post).file_path) && !imageError"
+                :src="getCoverImageUrl(getFirstPhoto(post).file_path)"
                 :alt="extractTitle(post.text)"
-                class="w-full h-full object-cover cursor-pointer"
-                @click="navigateToPost"
+                :class="getSquareMediaClasses('preview')"
+                @load="handleImageLoad"
+                @error="handleImageError"
             />
-
+            
+            <!-- Показываем видео если есть видео и нет ошибки -->
             <div
-                v-else-if="hasVideo(post)"
+                v-else-if="hasVideo(post) && getFirstVideo(post) && getMediaPath(getFirstVideo(post).file_path) && !videoError"
                 class="w-full h-full bg-gray-200 flex items-center justify-center relative"
             >
                 <video
-                    v-if="getFirstVideo(post)"
-                    :src="getMediaPath(getFirstVideo(post).file_path)"
-                    class="w-full h-full object-cover"
+                    v-lazy="getMediaPath(getFirstVideo(post).file_path)"
+                    :class="getSquareMediaClasses('preview')"
                     muted
-                    preload="metadata"
-                    poster=""
+                    preload="none"
+                    loading="lazy"
+                    @loadedmetadata="handleVideoMetadata"
+                    @error="handleVideoError"
                 />
                 <div
-                    v-else
-                    class="w-full h-full bg-gray-200 flex items-center justify-center"
-                >
-                    <svg
-                        class="w-12 h-12 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                    </svg>
-                </div>
-                <div
-                    class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 group-hover:bg-opacity-40 transition-all duration-200"
+                    class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-200"
                 >
                     <div
-                        class="w-16 h-16 bg-black bg-opacity-70 rounded-full flex items-center justify-center shadow-lg"
+                        class="w-12 h-12 bg-black bg-opacity-60 rounded-full flex items-center justify-center shadow-lg"
                     >
                         <svg
-                            class="w-8 h-8 text-white ml-1"
+                            class="w-6 h-6 text-white ml-0.5"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                         >
@@ -61,12 +51,25 @@
                 </div>
             </div>
 
+            <!-- Показываем ошибку для картинки -->
+            <MediaErrorFallback
+                v-else-if="imageError"
+                message="Изображение недоступно"
+            />
+
+            <!-- Показываем ошибку для видео -->
+            <MediaErrorFallback
+                v-else-if="videoError"
+                message="Видео недоступно"
+            />
+
+            <!-- Показываем дефолтную иконку если нет медиа -->
             <div
                 v-else
-                class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center"
+                class="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center"
             >
                 <svg
-                    class="w-12 h-12 text-gray-400"
+                    class="w-10 h-10 text-gray-300"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -80,39 +83,41 @@
                 </svg>
             </div>
 
-            <div class="absolute top-3 left-3 flex flex-col gap-2">
+            <!-- Статусные бейджи -->
+            <div class="absolute top-2 left-2 flex flex-col gap-1">
                 <span
                     v-if="post.is_published"
-                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500 text-white shadow-sm status-badge"
                 >
-                    ✅ Опубликован
+                    ✅
                 </span>
                 <span
                     v-else-if="post.scheduled_at"
-                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500 text-white shadow-sm status-badge"
                 >
-                    📅 Запланирован
+                    📅
                 </span>
                 <span
                     v-if="post.is_unique"
-                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500 text-white shadow-sm status-badge"
                 >
-                    Уникальный
+                    ✨
                 </span>
             </div>
 
+            <!-- Действия -->
             <div
-                class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-1">
                     <button
                         v-if="hasMedia(post)"
                         @click.prevent.stop="$emit('quickview', post)"
-                        class="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                        class="p-1.5 bg-black bg-opacity-60 text-white rounded-full hover:bg-opacity-80 transition-colors backdrop-blur-sm action-button"
                         title="Быстрый просмотр медиа"
                     >
                         <svg
-                            class="w-4 h-4"
+                            class="w-3.5 h-3.5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -135,10 +140,10 @@
                     <button
                         @click.prevent.stop="toggleFavorite(post._id)"
                         :class="[
-                            'p-2 rounded-full transition-colors',
+                            'p-1.5 rounded-full transition-colors backdrop-blur-sm action-button',
                             isFavorite(post._id)
-                                ? 'bg-red-600 text-white hover:bg-red-700'
-                                : 'bg-gray-200 text-gray-400 hover:bg-red-100 hover:text-red-500',
+                                ? 'bg-red-500 text-white hover:bg-red-600'
+                                : 'bg-black bg-opacity-60 text-white hover:bg-opacity-80',
                         ]"
                         :title="
                             isFavorite(post._id)
@@ -147,7 +152,7 @@
                         "
                     >
                         <svg
-                            class="w-4 h-4"
+                            class="w-3.5 h-3.5"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                         >
@@ -167,11 +172,11 @@
 
                     <button
                         @click.prevent.stop="$emit('delete', post)"
-                        class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                        class="p-1.5 bg-black bg-opacity-60 text-white rounded-full hover:bg-red-600 transition-colors backdrop-blur-sm action-button"
                         title="Удалить"
                     >
                         <svg
-                            class="w-4 h-4"
+                            class="w-3.5 h-3.5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -188,18 +193,21 @@
             </div>
         </div>
 
-        <div class="p-4">
+        <!-- Контент -->
+        <div class="content-area p-3">
+            <!-- Текст поста -->
             <router-link
                 :to="{ name: 'post', params: { id: post._id } }"
-                class="font-medium text-gray-900 mb-2 line-clamp-5 cursor-pointer"
+                class="font-medium text-gray-900 mb-2 line-clamp-3 cursor-pointer hover:text-blue-600 transition-colors"
             >
                 {{ displayText }}
             </router-link>
 
-            <div v-if="post.is_unique && post.unique_text" class="mb-3">
+            <!-- Переключатель уникального текста -->
+            <div v-if="post.is_unique && post.unique_text" class="mb-2">
                 <button
                     @click.prevent="toggleTextMode"
-                    class="text-xs bg-orange-100 text-orange-800 hover:bg-orange-200 px-2 py-1 rounded flex items-center gap-1"
+                    class="text-xs bg-orange-50 text-orange-700 hover:bg-orange-100 px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors"
                 >
                     <svg
                         class="w-3 h-3"
@@ -220,20 +228,21 @@
                 </button>
             </div>
 
-            <div class="mb-3">
+            <!-- Категория -->
+            <div class="mb-2">
                 <span
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full cursor-pointer bg-indigo-500 text-white text-xs font-medium"
+                    class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
                     :class="getCategoryStyle(post.category_id)"
                 >
                     {{ getCategoryName(post.category_id) }}
                 </span>
             </div>
 
-            <div v-if="post.conversion_metrics" class="space-y-2">
-                <!-- Базовые метрики -->
-                <div class="flex items-center space-x-3 text-xs text-gray-600">
+            <!-- Метрики и дата -->
+            <div class="flex items-center justify-between text-xs text-gray-500">
+                <div class="flex items-center space-x-3">
                     <span
-                        v-if="post.conversion_metrics.views !== undefined"
+                        v-if="post.conversion_metrics?.views !== undefined"
                         class="flex items-center space-x-1"
                     >
                         <svg
@@ -255,21 +264,10 @@
                                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                             />
                         </svg>
-                        <span>{{
-                            formatNumber(post.conversion_metrics.views)
-                        }}</span>
+                        <span>{{ formatNumber(post.conversion_metrics.views) }}</span>
                     </span>
                     <span
-                        v-if="post.conversion_metrics.reactions !== undefined"
-                        class="flex items-center space-x-1"
-                    >
-                        <span>😍</span>
-                        <span>{{
-                            formatNumber(post.conversion_metrics.reactions)
-                        }}</span>
-                    </span>
-                    <span
-                        v-if="post.conversion_metrics.comments !== undefined"
+                        v-if="post.conversion_metrics?.comments !== undefined"
                         class="flex items-center space-x-1"
                     >
                         <svg
@@ -285,49 +283,36 @@
                                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                             />
                         </svg>
-                        <span>{{
-                            formatNumber(post.conversion_metrics.comments)
-                        }}</span>
+                        <span>{{ formatNumber(post.conversion_metrics.comments) }}</span>
                     </span>
                     <span
-                        v-if="post.conversion_metrics.forwards !== undefined"
+                        v-if="post.conversion_metrics?.forwards !== undefined"
                         class="flex items-center space-x-1"
                     >
                         <span>🔄</span>
-                        <span>{{
-                            formatNumber(post.conversion_metrics.forwards)
-                        }}</span>
+                        <span>{{ formatNumber(post.conversion_metrics.forwards) }}</span>
                     </span>
                 </div>
-                <!-- Метрики конверсии -->
-                <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center space-x-2">
-                        <span
-                            v-if="post.conversion_metrics.er !== undefined"
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                        >
-                            ER: {{ post.conversion_metrics.er }}%
-                        </span>
-                        <span
-                            v-if="post.conversion_metrics.err !== undefined"
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                            ERR: {{ post.conversion_metrics.err }}%
-                        </span>
-                    </div>
-                    <div class="text-xs text-gray-500">
-                        {{ formatDate(post.timestamp) }}
-                    </div>
+                <div class="text-xs text-gray-400">
+                    {{ formatDate(post.timestamp) }}
                 </div>
             </div>
 
-            <div
-                v-else
-                class="flex items-center justify-between text-xs text-gray-500"
-            >
-                <div class="text-gray-400">Конверсия не рассчитана</div>
-                <div>
-                    {{ formatDate(post.timestamp) }}
+            <!-- Метрики конверсии -->
+            <div v-if="post.conversion_metrics" class="mt-2 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span
+                        v-if="post.conversion_metrics.er !== undefined"
+                        class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-700"
+                    >
+                        ER: {{ post.conversion_metrics.er }}%
+                    </span>
+                    <span
+                        v-if="post.conversion_metrics.err !== undefined"
+                        class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700"
+                    >
+                        ERR: {{ post.conversion_metrics.err }}%
+                    </span>
                 </div>
             </div>
         </div>
@@ -335,15 +320,11 @@
 </template>
 
 <script setup>
-import {
-    getMediaUrl,
-    formatNumber,
-    extractTitle,
-    formatDate,
-} from "@/js/utils";
+import { getMediaUrl, getCoverImageUrl, formatNumber, extractTitle, formatDate, hasPhoto, hasVideo, getFirstPhoto, getFirstVideo, getSquareMediaClasses } from "@/js/utils";
 import { useRouter } from "vue-router";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { useFavorites } from "@/composables/useFavorites";
+import MediaErrorFallback from "./MediaErrorFallback.vue";
 
 const router = useRouter();
 const { isFavorite, toggleFavorite, initializeFavorites } = useFavorites();
@@ -391,7 +372,7 @@ const getCategoryName = (categoryId) => {
 
 const getCategoryStyle = (categoryId) => {
     if (!categoryId) {
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-700 border border-gray-200";
     }
     const category = props.categories.find((cat) => cat.id === categoryId);
     if (category && category.color) {
@@ -401,54 +382,46 @@ const getCategoryStyle = (categoryId) => {
         const b = parseInt(color.substr(4, 2), 16);
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
         const textColor = brightness > 155 ? "text-gray-900" : "text-white";
-        return `bg-[${category.color}] ${textColor}`;
+        return `bg-[${category.color}] ${textColor} border border-[${category.color}]`;
     }
-    return "bg-gray-100 text-gray-800";
+    return "bg-gray-100 text-gray-700 border border-gray-200";
 };
 
 const navigateToPost = () => {
     router.push({ name: "post", params: { id: props.post._id } });
 };
 
-const hasPhoto = (post) => {
-    return (
-        post.media &&
-        post.media.some(
-            (media) =>
-                media.type === "photo" || media.type === "MessageMediaPhoto"
-        )
-    );
+const imageError = ref(false);
+const videoError = ref(false);
+
+const handleImageLoad = () => {
+    console.log('Image loaded successfully');
+    imageError.value = false;
 };
 
-const hasVideo = (post) => {
-    return (
-        post.media &&
-        post.media.some(
-            (media) =>
-                media.type === "video" ||
-                media.type === "MessageMediaDocument" ||
-                media.type === "document"
-        )
-    );
+const handleVideoMetadata = () => {
+    console.log('Video metadata loaded');
+    videoError.value = false;
 };
+
+const handleImageError = () => {
+    imageError.value = true;
+    console.warn('Failed to load image:', getCoverImageUrl(getFirstPhoto(props.post).file_path));
+};
+
+const handleVideoError = (event) => {
+    console.warn('Failed to load video:', event.target.src);
+    videoError.value = true;
+};
+
+// Следим за изменением поста и сбрасываем ошибки
+watch(() => props.post._id, () => {
+    imageError.value = false;
+    videoError.value = false;
+});
 
 const hasMedia = (post) => {
     return post.media && post.media.length > 0;
-};
-
-const getFirstPhoto = (post) => {
-    return post.media.find(
-        (media) => media.type === "photo" || media.type === "MessageMediaPhoto"
-    );
-};
-
-const getFirstVideo = (post) => {
-    return post.media.find(
-        (media) =>
-            media.type === "video" ||
-            media.type === "MessageMediaDocument" ||
-            media.type === "document"
-    );
 };
 
 onMounted(() => {

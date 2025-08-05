@@ -105,18 +105,21 @@
                     <div
                         v-for="(item, idx) in previews"
                         :key="idx"
-                        class="relative group border rounded overflow-hidden"
+                        class="relative group border rounded overflow-hidden aspect-square"
+                        style="aspect-ratio: 1/1 !important; overflow: hidden !important;"
                     >
                         <img
                             v-if="item.isImage"
                             :src="item.url"
-                            class="w-full h-32 object-cover"
+                            class="w-full h-full object-cover"
+                            style="width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center !important;"
                         />
                         <video
                             v-else
                             muted
                             :src="item.url"
-                            class="w-full h-32 object-cover"
+                            class="w-full h-full object-cover"
+                            style="width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center !important;"
                         ></video>
                         <button
                             @click="removeFile(idx)"
@@ -157,17 +160,7 @@
                     v-if="schedule"
                     class="space-y-3 pl-6 border-l-2 border-gray-200"
                 >
-                    <div>
-                        <label
-                            class="block text-sm font-medium text-gray-700 mb-1"
-                            >Дата и время публикации</label
-                        >
-                        <input
-                            v-model="scheduledAt"
-                            type="datetime-local"
-                            class="border rounded p-2 text-sm w-full"
-                        />
-                    </div>
+                    <DateTimePicker v-model="scheduledAt" />
                 </div>
             </div>
 
@@ -283,6 +276,7 @@ import http from "@/js/http";
 import TurndownService from "turndown";
 import { getMediaUrl } from "@/js/utils";
 import "emoji-picker-element";
+import DateTimePicker from "@/components/DateTimePicker.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -839,5 +833,20 @@ button:disabled {
 }
 .file-btn:hover {
     background: #c7d2fe;
+}
+
+/* Принудительные стили для превью изображений */
+.grid img,
+.grid video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
+/* Стили для контейнеров превью */
+.grid > div {
+    aspect-ratio: 1/1 !important;
+    overflow: hidden !important;
 }
 </style>

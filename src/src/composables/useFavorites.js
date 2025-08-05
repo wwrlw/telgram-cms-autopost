@@ -120,6 +120,38 @@ const initializeFavorites = async () => {
     }
 };
 
+// Функция для автоматического удаления опубликованных постов из избранного
+const removePublishedFromFavorites = async (posts) => {
+    if (!userId.value || !posts || !Array.isArray(posts)) return;
+
+    const publishedPostIds = posts
+        .filter(post => post.is_published && post.telegram_message_id)
+        .map(post => post._id);
+
+    if (publishedPostIds.length === 0) return;
+
+    console.log('Автоматическое удаление опубликованных постов из избранного:', publishedPostIds);
+
+    // Удаляем каждый опубликованный пост из избранного
+    for (const postId of publishedPostIds) {
+        if (isFavorite(postId)) {
+            await removeFromFavorites(postId);
+        }
+    }
+
+    // Уведомляем пользователя
+    if (publishedPostIds.length > 0) {
+        const count = publishedPostIds.length;
+        const message = count === 1 
+            ? '1 опубликованный пост автоматически удален из избранного'
+            : `${count} опубликованных постов автоматически удалены из избранного`;
+        
+        if (window._notify) {
+            window._notify('info', message);
+        }
+    }
+};
+
 export function useFavorites() {
     return {
         favoritePosts: computed(() => favoritePosts.value),
@@ -134,5 +166,6 @@ export function useFavorites() {
         removeFromFavorites,
         toggleFavorite,
         initializeFavorites,
+        removePublishedFromFavorites,
     };
 }

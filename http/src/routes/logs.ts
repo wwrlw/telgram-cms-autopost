@@ -18,14 +18,21 @@ export default async function logsRoutes(fastify: FastifyInstance) {
         const n = Number(val);
         return Number.isInteger(n) && n > 0 ? n : def;
       }
-      const query = request.query as { page?: any; limit?: any };
+      const query = request.query as { page?: any; limit?: any; sort?: any };
       const pageNum = parsePositiveInt(query.page, 1);
       const limitNum = parsePositiveInt(query.limit, 50);
+      let sort = query.sort;
+      if (sort !== 'asc' && sort !== 'desc') {
+        sort = 'desc'; // значение по умолчанию
+      }
+      const sortOrder = sort === 'asc' ? 1 : -1; // 1 для возрастания, -1 для убывания
       const skip = (pageNum - 1) * limitNum;
       console.log('DEBUG page:', query.page, typeof query.page);
       console.log('DEBUG limit:', query.limit, typeof query.limit);
+      console.log('DEBUG sort:', query.sort, typeof query.sort);
       console.log('DEBUG pageNum:', pageNum, typeof pageNum);
       console.log('DEBUG limitNum:', limitNum, typeof limitNum);
+      console.log('DEBUG sortOrder:', sortOrder, typeof sortOrder);
       
       console.log('Шаг 2: Получение коллекции');
       const db = fastify.mongo.client.db('parse-news');
@@ -34,7 +41,7 @@ export default async function logsRoutes(fastify: FastifyInstance) {
       console.log('Шаг 3: Получение логов');
       const logs = await collection
         .find({})
-        .sort({ timestamp: -1 })
+        .sort({ timestamp: sortOrder })
         .skip(skip)
         .limit(limitNum)
         .toArray();
@@ -70,16 +77,46 @@ export default async function logsRoutes(fastify: FastifyInstance) {
       if (!fastify.mongo.db) throw new Error('MongoDB is not connected');
       
       const { userId } = request.params as { userId: string };
+      
+      // Проверяем, что userId не пустой и не undefined
+      if (!userId || userId === 'undefined' || userId === 'null') {
+        reply.status(400).send({
+          success: false,
+          message: 'Invalid user ID provided'
+        });
+        return;
+      }
+      
       const { page = 1, limit = 50 } = request.query as { page?: number; limit?: number };
+      let sort = (request.query as any).sort;
+      if (sort !== 'asc' && sort !== 'desc') {
+        sort = 'desc'; // значение по умолчанию
+      }
       const pageNum = Number(page) || 1;
       const limitNum = Number(limit) || 50;
+      const sortOrder = sort === 'asc' ? 1 : -1; // 1 для возрастания, -1 для убывания
       const skip = (pageNum - 1) * limitNum;
       
+      console.log('DEBUG user logs - userId:', userId);
+      console.log('DEBUG user logs - page:', page, 'limit:', limit, 'sort:', sort);
+      console.log('DEBUG user logs - pageNum:', pageNum, 'limitNum:', limitNum, 'sortOrder:', sortOrder);
+      console.log('DEBUG user logs - final sort:', sort);
+      
       const { ObjectId } = await import('mongodb');
+      
+      // Проверяем, что userId является валидным ObjectId
+      if (!ObjectId.isValid(userId)) {
+        reply.status(400).send({
+          success: false,
+          message: 'Invalid ObjectId format for user ID'
+        });
+        return;
+      }
+      
       const db = fastify.mongo.client.db('parse-news');
       const logs = await db.collection<Log>('logs')
         .find({ userId: new ObjectId(userId) })
-        .sort({ timestamp: -1 })
+        .sort({ timestamp: sortOrder })
         .skip(skip)
         .limit(limitNum)
         .toArray();
@@ -98,6 +135,7 @@ export default async function logsRoutes(fastify: FastifyInstance) {
         }
       });
     } catch (error: any) {
+      console.error('Error in /logs/user/:userId:', error);
       reply.status(500).send({
         success: false,
         message: error.message

@@ -3,6 +3,12 @@ export interface PaginationParams {
   limit: number;
 }
 
+export interface InfiniteScrollParams {
+  page: number;
+  limit: number;
+  lastId?: string; // ID последнего поста для курсорной пагинации
+}
+
 export interface PostFilters {
   source_channel?: string;
   text?: string;
@@ -23,6 +29,12 @@ export interface PostQuery {
   sort?: SortParams;
 }
 
+export interface InfiniteScrollQuery {
+  pagination: InfiniteScrollParams;
+  filters?: PostFilters;
+  sort?: SortParams;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   params: {
@@ -32,5 +44,16 @@ export interface PaginatedResponse<T> {
     totalPages: number;
     hasNext: boolean;
     hasPrev: boolean;
+  };
+}
+
+export interface InfiniteScrollResponse<T> {
+  data: T[];
+  params: {
+    page: number;
+    limit: number;
+    total?: number;
+    hasMore: boolean;
+    lastId?: string;
   };
 } 

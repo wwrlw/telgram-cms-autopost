@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import { FastifyMongoObject } from "@fastify/mongodb";
 import { IPostRepository } from "../interfaces/repositories/IPostRepository";
 import { Post, CreatePostDto } from "../models/Post";
-import { PostQuery, PaginatedResponse, PostFilters } from "../types/PostQuery";
+import { PostQuery, PaginatedResponse, PostFilters, InfiniteScrollQuery, InfiniteScrollResponse } from "../types/PostQuery";
 
 export class PostRepository implements IPostRepository {
   constructor(private mongo: FastifyMongoObject) {}
@@ -536,5 +536,103 @@ export class PostRepository implements IPostRepository {
       .toArray();
 
     return posts as Post[];
+  }
+
+  async findWithInfiniteScroll(query: InfiniteScrollQuery): Promise<InfiniteScrollResponse<Post>> {
+    if (!this.mongo.db) throw new Error("MongoDB is not connected");
+
+    console.log('findWithInfiniteScroll called with query:', query);
+
+    const { pagination, filters, sort } = query;
+    const mongoSort = this.buildMongoSort(sort);
+    
+    const pipeline: any[] = [
+      {
+        $lookup: {
+          from: 'channels',
+          localField: 'channel_id',
+          foreignField: 'channel_id',
+          as: 'channel'
+        }
+      },
+      {
+        $unwind: {
+          path: '$channel',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'channel.category_id',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      {
+        $unwind: {
+          path: '$category',
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    ];
+
+    const matchStage = this.buildAggregationFilters(filters);
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    // Add cursor-based pagination
+    if (pagination.lastId) {
+      const lastObjectId = new ObjectId(pagination.lastId);
+      console.log('Adding cursor filter with lastId:', pagination.lastId);
+      pipeline.push({
+        $match: {
+          _id: { $lt: lastObjectId }
+        }
+      });
+    }
+
+    // Get total count for the first page
+    let total = 0;
+    if (pagination.page === 1) {
+      const countPipeline = [...pipeline, { $count: "total" }];
+      const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline).toArray();
+      total = countResult.length > 0 ? countResult[0].total : 0;
+    }
+
+    pipeline.push(
+      { $sort: mongoSort },
+      { $limit: pagination.limit + 1 } // Fetch one extra to check if there are more
+    );
+
+    pipeline.push({
+      $addFields: {
+        category_id: '$category._id',
+        category_name: '$category.name',
+        category_color: '$category.color',
+        channel_username: '$channel.username'
+      }
+    });
+
+    const posts = await this.mongo.db.collection("posts").aggregate(pipeline).toArray();
+    
+    const hasMore = posts.length > pagination.limit;
+    const data = hasMore ? posts.slice(0, -1) : posts;
+    const lastId = data.length > 0 ? data[data.length - 1]._id.toString() : undefined;
+
+    const result = {
+      data: data as Post[],
+      params: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total: pagination.page === 1 ? total : undefined,
+        hasMore,
+        lastId
+      },
+    };
+
+    console.log('findWithInfiniteScroll result:', result);
+    return result;
   }
 }

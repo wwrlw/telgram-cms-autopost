@@ -2,7 +2,17 @@
     <div class="flex-1 p-6 bg-gray-50 overflow-auto">
         <div class="max-w-7xl mx-auto">
             <div class="flex items-center justify-between mb-6">
-                <h1 class="text-2xl font-bold text-gray-900">Системные логи</h1>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Системные логи</h1>
+                    <div class="text-sm text-gray-600 mt-1">
+                        <p v-if="selectedUserId">
+                            Фильтр: {{ users.find(u => u._id === selectedUserId)?.username || 'Неизвестный пользователь' }}
+                        </p>
+                        <p>
+                            Сортировка: {{ sortOrder === 'desc' ? 'Сначала новые' : 'Сначала старые' }}
+                        </p>
+                    </div>
+                </div>
                 <div class="flex items-center space-x-4">
                     <select
                         v-model="selectedUserId"
@@ -10,10 +20,28 @@
                         class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="">Все пользователи</option>
-                        <option v-for="user in users" :key="user.id" :value="user.id">
+                        <option v-for="user in users" :key="user._id" :value="user._id">
                             {{ user.username }}
                         </option>
                     </select>
+                    <select
+                        v-model="sortOrder"
+                        @change="loadLogs"
+                        class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="desc">Сначала новые</option>
+                        <option value="asc">Сначала старые</option>
+                    </select>
+                    <button
+                        v-if="selectedUserId"
+                        @click="clearFilter"
+                        class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 flex items-center gap-2"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Сбросить фильтр
+                    </button>
                     <button
                         @click="loadLogs"
                         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
@@ -165,7 +193,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import Sidebar from '@/components/Sidebar.vue';
 import http from '@/js/http';
@@ -174,6 +202,7 @@ const route = useRoute();
 const logs = ref([]);
 const users = ref([]);
 const selectedUserId = ref('');
+const sortOrder = ref('desc'); // desc - новые сначала, asc - старые сначала
 const currentPage = ref(1);
 const pageSize = ref(50);
 const totalLogs = ref(0);
@@ -210,6 +239,7 @@ const getActionBadgeClass = (method) => {
 
 const loadUsers = () => {
     http.getAllUsers((response) => {
+        console.log('Users response:', response);
         if (response.success) {
             users.value = response.data;
         }
@@ -217,21 +247,50 @@ const loadUsers = () => {
 };
 
 const loadLogs = () => {
-    const loadFunction = selectedUserId.value 
-        ? (page, limit, callback) => http.getUserLogs(selectedUserId.value, page, limit, callback)
-        : (page, limit, callback) => http.getLogs(page, limit, callback);
+    // Сбрасываем страницу при изменении фильтра или сортировки
+    if (selectedUserId.value !== route.query.userId) {
+        currentPage.value = 1;
+    }
     
-    loadFunction(currentPage.value, pageSize.value, (response) => {
-        if (response.success) {
-            logs.value = response.data;
-            if (response.pagination) {
-                totalLogs.value = response.pagination.total;
-                totalPages.value = response.pagination.pages;
+    console.log('Loading logs with userId:', selectedUserId.value, 'page:', currentPage.value, 'sort:', sortOrder.value);
+    
+    // Проверяем, что selectedUserId не пустой и не undefined
+    if (selectedUserId.value && selectedUserId.value !== 'undefined') {
+        http.getUserLogs(selectedUserId.value, currentPage.value, pageSize.value, sortOrder.value, (response) => {
+            console.log('Logs response:', response);
+            if (response.success) {
+                logs.value = response.data;
+                if (response.pagination) {
+                    totalLogs.value = response.pagination.total;
+                    totalPages.value = response.pagination.pages;
+                }
+            } else {
+                window.$toast?.error('Ошибка загрузки логов: ' + response.message);
             }
-        } else {
-            window.$toast?.error('Ошибка загрузки логов: ' + response.message);
-        }
-    });
+        });
+    } else {
+        // Если не выбран пользователь, грузим все логи
+        http.getLogs(currentPage.value, pageSize.value, sortOrder.value, (response) => {
+            console.log('Logs response:', response);
+            if (response.success) {
+                logs.value = response.data;
+                if (response.pagination) {
+                    totalLogs.value = response.pagination.total;
+                    totalPages.value = response.pagination.pages;
+                }
+            } else {
+                window.$toast?.error('Ошибка загрузки логов: ' + response.message);
+            }
+        });
+    }
+};
+
+// Функция для сброса фильтра
+const clearFilter = () => {
+    selectedUserId.value = '';
+    sortOrder.value = 'desc'; // Сбрасываем к сортировке по умолчанию
+    currentPage.value = 1;
+    loadLogs();
 };
 
 const prevPage = () => {
@@ -254,23 +313,46 @@ const showLogDetails = (log) => {
 };
 
 const sortedLogs = computed(() => {
-    if (selectedUserId.value) return logs.value;
-    // Сортируем по username по алфавиту, если выбраны все пользователи
-    return [...logs.value].sort((a, b) => {
-        if (a.username && b.username) {
-            return a.username.localeCompare(b.username);
-        }
-        return 0;
-    });
+    // Всегда возвращаем логи в том порядке, в котором они пришли с сервера
+    // Сервер уже сортирует их по времени (timestamp: -1)
+    return logs.value;
+});
+
+// Watch for route query changes
+watch(() => route.query.userId, (newUserId) => {
+    console.log('Route query userId changed:', newUserId);
+    if (newUserId && newUserId !== 'undefined') {
+        selectedUserId.value = newUserId;
+        currentPage.value = 1; // Сбрасываем страницу при смене пользователя
+        loadLogs();
+    } else {
+        selectedUserId.value = '';
+        currentPage.value = 1;
+        loadLogs();
+    }
+});
+
+// Watch for sort order changes
+watch(sortOrder, () => {
+    currentPage.value = 1; // Сбрасываем страницу при изменении сортировки
+    loadLogs();
 });
 
 onMounted(() => {
+    console.log('SystemLogs mounted, route.query:', route.query);
     // Check if specific user ID is provided in query
-    if (route.query.userId) {
+    if (route.query.userId && route.query.userId !== 'undefined') {
         selectedUserId.value = route.query.userId;
+        console.log('Set selectedUserId from route:', route.query.userId);
+    } else {
+        selectedUserId.value = '';
+        console.log('No valid userId in route, setting empty string');
     }
     
     loadUsers();
-    loadLogs();
+    // Загружаем логи после небольшой задержки, чтобы убедиться, что selectedUserId установлен
+    setTimeout(() => {
+        loadLogs();
+    }, 100);
 });
 </script> 

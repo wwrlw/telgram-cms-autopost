@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-white flex flex-col">
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
             <div class="flex items-center gap-3 justify-start mb-4">
-                <h2 class="text-lg font-semibold">Редактировать пост</h2>
+                <h2 class="text-lg font-semibold">Редактировать отложенную публикацию</h2>
                 <div v-if="postData && postData.category_name" class="flex items-center gap-2">
                     <span class="text-sm text-gray-500">Категория:</span>
                     <span 
@@ -361,18 +361,10 @@
                 <button
                     v-if="schedule"
                     @click="publishLater"
-                    class="px-4 py-2 rounded bg-indigo-600 text-white"
+                    class="px-4 py-2 rounded bg-blue-600 text-white"
                     :disabled="isSubmitting"
                 >
-                    {{ isSubmitting ? 'Планирование...' : 'Опубликовать позже' }}
-                </button>
-                <button
-                    v-else
-                    @click="publishNow"
-                    class="px-4 py-2 rounded bg-indigo-600 text-white"
-                    :disabled="isSubmitting"
-                >
-                    {{ isSubmitting ? 'Публикация...' : 'Опубликовать сейчас' }}
+                    {{ isSubmitting ? 'Планирование...' : 'Запланировать' }}
                 </button>
             </div>
         </div>
@@ -380,7 +372,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
@@ -389,6 +381,7 @@ import Underline from "@tiptap/extension-underline";
 import http from "@/js/http";
 import TurndownService from "turndown";
 import { getMediaUrl, getSquareMediaClasses } from "@/js/utils";
+import { useFavorites } from "@/composables/useFavorites.js";
 import "emoji-picker-element";
 import MediaViewer from "@/components/MediaViewer.vue";
 import DateTimePicker from "@/components/DateTimePicker.vue";
@@ -399,7 +392,7 @@ const postId = route.params.id;
 
 const files = ref([]);
 const fileInputRef = ref(null);
-const schedule = ref(false);
+const schedule = ref(true); // По умолчанию включено для отложенных публикаций
 const scheduledAt = ref("");
 const selectedChannel = ref("");
 const channels = ref([]);
@@ -587,7 +580,7 @@ async function savePost() {
             isSubmitting.value = false;
             if (response.success) {
                 window?.$toast?.success("Пост успешно сохранён");
-                router.push("/");
+                router.push("/scheduled-posts");
             } else {
                 window?.$toast?.error(
                     "Ошибка сохранения: " + (response.message || "")
@@ -597,103 +590,6 @@ async function savePost() {
     } catch (error) {
         console.error("Error in savePost:", error);
         window?.$toast?.error("Ошибка сохранения поста");
-        isSubmitting.value = false;
-    }
-}
-
-async function publishNow() {
-    if (isSubmitting.value) return;
-    
-    if (!postData.value) {
-        window?.$toast?.error("Данные поста не загружены");
-        return;
-    }
-
-    if (!selectedChannel.value) {
-        window?.$toast?.error("Выберите канал для публикации");
-        return;
-    }
-
-    // Сначала сохраняем пост
-    const html = editor.value?.getHTML() || "";
-    const markdown = turndownService.turndown(html);
-
-    if (!markdown.trim() && files.value.length === 0 && (!postData.value.media || postData.value.media.length === 0)) {
-        window?.$toast?.error("Добавьте текст или медиа");
-        return;
-    }
-
-    isSubmitting.value = true;
-    try {
-        // Загружаем новые файлы, если они есть
-        const uploadedFiles = [];
-        if (files.value.length > 0) {
-            for (const file of files.value) {
-                const formData = new FormData();
-                formData.append("file", file);
-
-                try {
-                    const uploadResult = await new Promise(
-                        (resolve, reject) => {
-                            http.uploadMedia(formData, resolve, reject);
-                        }
-                    );
-
-                    if (uploadResult.success) {
-                        uploadedFiles.push(uploadResult.data);
-                    } else {
-                        window?.$toast?.error(
-                            `Ошибка загрузки файла ${file.name}: ${uploadResult.message}`
-                        );
-                        return;
-                    }
-                } catch (error) {
-                    window?.$toast?.error(`Ошибка загрузки файла ${file.name}`);
-                    return;
-                }
-            }
-        }
-
-        // Используем только новые загруженные файлы, заменяя существующие
-        const allMedia = uploadedFiles;
-
-        const updateData = {
-            id: postData.value._id,
-            text: markdown,
-            channel_id: selectedChannel.value,
-            media: allMedia,
-        };
-
-        http.updatePost(updateData, (response) => {
-            if (response.success) {
-                // После сохранения публикуем
-                http.publishToChannel(
-                    postData.value._id.toString(),
-                    selectedChannel.value,
-                    (publishRes) => {
-                        isSubmitting.value = false;
-                        if (publishRes.success) {
-                            window?.$toast?.success(
-                                "Пост успешно опубликован в Telegram!"
-                            );
-                            router.push("/");
-                        } else {
-                            window?.$toast?.error(
-                                "Ошибка публикации: " + (publishRes.message || "")
-                            );
-                        }
-                    }
-                );
-            } else {
-                isSubmitting.value = false;
-                window?.$toast?.error(
-                    "Ошибка сохранения: " + (response.message || "")
-                );
-            }
-        });
-    } catch (error) {
-        console.error("Error in publishNow:", error);
-        window?.$toast?.error("Ошибка публикации поста");
         isSubmitting.value = false;
     }
 }
@@ -782,7 +678,7 @@ async function publishLater() {
                             window?.$toast?.success(
                                 "Пост запланирован на публикацию!"
                             );
-                            router.push("/");
+                            router.push("/scheduled-posts");
                         } else {
                             window?.$toast?.error(
                                 "Ошибка планирования: " +
@@ -806,21 +702,38 @@ async function publishLater() {
 }
 
 function loadPost() {
+    const route = useRoute();
     loadingPost.value = true;
+    console.log('Loading post with ID:', postId);
     http.post({ id: postId }, async (res) => {
         loadingPost.value = false;
+        console.log('Post load response:', res);
         if (res && res.success) {
             postData.value = res.data;
-            // console.log(res.data);
+            console.log('Post data loaded:', res.data);
             initializeEditorContent(res.data);
             await preloadMedia(res.data);
 
-            // Устанавливаем выбранный канал, если он есть
-            if (res.data.channel_id) {
+            // Устанавливаем выбранный канал только если он не был установлен из query параметров
+            if (res.data.channel_id && !selectedChannel.value) {
                 selectedChannel.value = res.data.channel_id;
-            } else {
+                console.log('Set channel from post data:', res.data.channel_id);
+            } else if (!selectedChannel.value) {
                 // Пытаемся сделать автовыбор по категории
                 autoSelectChannelByCategory();
+            }
+
+            // Устанавливаем время публикации только если оно не было установлено из query параметров
+            if (res.data.scheduled_at && !route.query.scheduledAt) {
+                const scheduledDate = new Date(res.data.scheduled_at);
+                // Форматируем дату в формат, который ожидает DateTimePicker (YYYY-MM-DDTHH:mm)
+                const year = scheduledDate.getFullYear();
+                const month = String(scheduledDate.getMonth() + 1).padStart(2, '0');
+                const day = String(scheduledDate.getDate()).padStart(2, '0');
+                const hours = String(scheduledDate.getHours()).padStart(2, '0');
+                const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
+                scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                console.log('Set scheduledAt from post data:', scheduledAt.value);
             }
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
@@ -917,93 +830,61 @@ const toolbar = computed(() => {
         {
             label: "1. List",
             title: "Ordered List",
-            action: () =>
-                editor.value.chain().focus().toggleOrderedList().run(),
+            action: () => editor.value.chain().focus().toggleOrderedList().run(),
             isActive: () =>
                 editor.value.isActive && editor.value.isActive("orderedList"),
         },
         {
-            label: "😀",
-            title: "Emoji",
-            action: toggleEmojiPicker,
-            isActive: () => false,
-        },
-        {
             label: "🔗",
             title: "Link",
-            action: toggleLinkInput,
+            action: () => {
+                const url = window.prompt("URL");
+                if (url) {
+                    editor.value.chain().focus().setLink({ href: url }).run();
+                }
+            },
             isActive: () =>
                 editor.value.isActive && editor.value.isActive("link"),
         },
     ];
 });
 
-const showEmojiPicker = ref(false);
-const showLinkInput = ref(false);
-const linkUrl = ref("");
+const hasText = computed(() => {
+    const html = editor.value?.getHTML() || "";
+    const text = html.replace(/<[^>]*>/g, "").trim();
+    return text.length > 0;
+});
 
-function toggleEmojiPicker() {
-    showLinkInput.value = false;
-    showEmojiPicker.value = !showEmojiPicker.value;
-}
-
-function insertEmojiEvent(e) {
-    const emoji = e.detail.unicode;
-    if (emoji) editor.value.chain().focus().insertContent(emoji).run();
-}
-
-function toggleLinkInput() {
-    showLinkInput.value = !showLinkInput.value;
-    showEmojiPicker.value = false;
-    linkUrl.value = "";
-}
-
-function confirmLink() {
-    if (linkUrl.value.trim()) {
-        editor.value
-            .chain()
-            .focus()
-            .extendMarkRange("link")
-            .setLink({ href: linkUrl.value.trim() })
-            .run();
-    }
-    showLinkInput.value = false;
-}
-
-function cancelLink() {
-    showLinkInput.value = false;
-}
-
+// Media viewer functionality
 const showMediaViewer = ref(false);
-const currentMediaIndex = ref(0);
 const currentMedia = ref(null);
+const currentMediaIndex = ref(0);
 
-function openMediaViewer(media, index) {
-    currentMediaIndex.value = index;
+const openMediaViewer = (media, index) => {
     currentMedia.value = media;
+    currentMediaIndex.value = index;
     showMediaViewer.value = true;
-}
+};
 
-function closeMediaViewer() {
+const closeMediaViewer = () => {
     showMediaViewer.value = false;
     currentMedia.value = null;
-}
+    currentMediaIndex.value = 0;
+};
 
-function previousMedia() {
-    currentMediaIndex.value--;
-    if (currentMediaIndex.value < 0) {
-        currentMediaIndex.value = postData.value.media.length - 1;
+const previousMedia = () => {
+    if (currentMediaIndex.value > 0) {
+        currentMediaIndex.value--;
+        currentMedia.value = postData.value.media[currentMediaIndex.value];
     }
-    currentMedia.value = postData.value.media[currentMediaIndex.value];
-}
+};
 
-function nextMedia() {
-    currentMediaIndex.value++;
-    if (currentMediaIndex.value >= postData.value.media.length) {
-        currentMediaIndex.value = 0;
+const nextMedia = () => {
+    if (currentMediaIndex.value < postData.value.media.length - 1) {
+        currentMediaIndex.value++;
+        currentMedia.value = postData.value.media[currentMediaIndex.value];
     }
-    currentMedia.value = postData.value.media[currentMediaIndex.value];
-}
+};
 
 function isImageMedia(media) {
     return media.type === "photo" || media.type === "MessageMediaPhoto";
@@ -1064,16 +945,46 @@ async function uniquizePost() {
     }
 }
 
-const hasText = computed(() => {
-    const html = editor.value?.getHTML() || "";
-    const text = html.replace(/<[^>]*>/g, "").trim();
-    return text.length > 0;
-});
-
 onMounted(() => {
+    const route = useRoute();
     loadChannels();
-    const futureTime = new Date(Date.now() + 60 * 60 * 1000);
-    scheduledAt.value = futureTime.toISOString().slice(0, 16);
+    
+    // Получаем данные из query параметров
+    const channelId = route.query.channelId;
+    const scheduledAtParam = route.query.scheduledAt;
+    
+    console.log('Route query:', route.query);
+    console.log('Channel ID from query:', channelId);
+    console.log('Scheduled at from query:', scheduledAtParam);
+    
+    // Устанавливаем время публикации из параметров или по умолчанию
+    if (scheduledAtParam) {
+        const scheduledDate = new Date(scheduledAtParam);
+        // Форматируем дату в формат, который ожидает DateTimePicker (YYYY-MM-DDTHH:mm)
+        const year = scheduledDate.getFullYear();
+        const month = String(scheduledDate.getMonth() + 1).padStart(2, '0');
+        const day = String(scheduledDate.getDate()).padStart(2, '0');
+        const hours = String(scheduledDate.getHours()).padStart(2, '0');
+        const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
+        scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        console.log('Set scheduledAt to:', scheduledAt.value);
+    } else {
+        const futureTime = new Date(Date.now() + 60 * 60 * 1000);
+        const year = futureTime.getFullYear();
+        const month = String(futureTime.getMonth() + 1).padStart(2, '0');
+        const day = String(futureTime.getDate()).padStart(2, '0');
+        const hours = String(futureTime.getHours()).padStart(2, '0');
+        const minutes = String(futureTime.getMinutes()).padStart(2, '0');
+        scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        console.log('Set default scheduledAt to:', scheduledAt.value);
+    }
+    
+    // Устанавливаем выбранный канал из параметров
+    if (channelId) {
+        selectedChannel.value = channelId;
+        console.log('Set selectedChannel to:', selectedChannel.value);
+    }
+    
     if (postId) {
         loadPost();
     }
@@ -1100,43 +1011,30 @@ button:disabled {
 .custom-editor-content:focus {
     outline: none !important;
     box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
-}
-.custom-editor-content .ProseMirror:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
+    border-color: #3b82f6 !important;
 }
 
 .file-btn {
     display: inline-flex;
     align-items: center;
-    background: #eef2ff;
-    color: #3730a3;
-    border: none;
-    border-radius: 6px;
     padding: 0.5rem 1rem;
-    font-size: 0.95rem;
+    background-color: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
     font-weight: 500;
+    color: #374151;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
 }
-.file-btn:hover {
-    background: #c7d2fe;
-}
-</style>
 
-<style>
-:global(.custom-editor-content .ProseMirror),
-:global(.custom-editor-content .ProseMirror:focus) {
-    outline: none !important;
-    box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
+.file-btn:hover {
+    background-color: #e5e7eb;
+    border-color: #9ca3af;
 }
-:global(.ProseMirror),
-:global(.ProseMirror:focus) {
-    outline: none !important;
-    box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
+
+.file-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #6366f1;
 }
-</style>
+</style> 

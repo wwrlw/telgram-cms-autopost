@@ -261,7 +261,7 @@ const updateUserRole = () => {
 };
 
 const viewUserLogs = (user) => {
-    router.push(`/logs?userId=${user.id}`);
+    router.push(`/logs?userId=${user._id}`);
 };
 
 onMounted(() => {
