@@ -1,0 +1,22 @@
+# Игнорировать папку с зависимостями
+node_modules/
+
+# Игнорировать файлы логов
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Игнорировать результаты сборки и временные файлы
+dist/
+build/
+.next/
+.cache/
+.nuxt/
+tmp/
+media/
+
+# Игнорировать скрытые файлы и папки, которые не нужны
+.git
+.gitignore
+.env
+.DS_Store
