@@ -441,8 +441,42 @@ let http = {
 
     updatePost: function (params, callback) {
         const { id, ...updateData } = params;
+        
+        // Создаем FormData для отправки данных
+        const formData = new FormData();
+        
+        // Добавляем текстовые поля
+        if (updateData.text !== undefined) {
+            formData.append('text', updateData.text);
+        }
+        if (updateData.is_unique !== undefined) {
+            formData.append('is_unique', updateData.is_unique.toString());
+        }
+        if (updateData.url !== undefined) {
+            formData.append('url', updateData.url);
+        }
+        if (updateData.channel_id !== undefined) {
+            formData.append('channel_id', updateData.channel_id);
+        }
+        
+        // Добавляем медиафайлы
+        if (updateData.media && Array.isArray(updateData.media)) {
+            updateData.media.forEach((media, index) => {
+                formData.append(`media[${index}][type]`, media.type);
+                formData.append(`media[${index}][file_path]`, media.file_path);
+                if (media.original_name) {
+                    formData.append(`media[${index}][original_name]`, media.original_name);
+                }
+                if (media.mime_type) {
+                    formData.append(`media[${index}][mime_type]`, media.mime_type);
+                }
+            });
+        }
+        
         instance
-            .put(`/posts/${id}`, updateData)
+            .put(`/posts/${id}`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
             .then((res) => {
                 callback(res.data);
             })
@@ -475,7 +509,15 @@ let http = {
                 callback && callback(res.data);
             })
             .catch((err) => {
-                err && error(err);
+                console.error('Upload media error:', err);
+                const errorMessage = err.response?.data?.message || 
+                                   err.message || 
+                                   "Ошибка загрузки файла";
+                if (error) {
+                    error({ success: false, message: errorMessage });
+                } else {
+                    callback && callback({ success: false, message: errorMessage });
+                }
             });
     },
 

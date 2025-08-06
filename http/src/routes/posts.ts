@@ -229,14 +229,75 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Обновить пост
   fastify.put(
     '/posts/:id',
-    { preValidation: [fastify.authenticate] },
-    async (request, reply) => {
+    { 
+      preValidation: [fastify.authenticate],
+      config: {
+        // Разрешаем multipart/form-data для PUT запросов
+        bodyLimit: 10485760, // 10MB
+      }
+    },
+    async (request: any, reply) => {
       try {
         const { id } = request.params as { id: string };
-        const updateData = request.body as Partial<Post>;
+        const container = DependencyContainer.getInstance();
+        const parts = request.parts();
+        const fields: any = {};
+        const media: any[] = [];
+
+        fastify.log.info(`Updating post ${id}`);
+
+        // Обрабатываем только поля формы, файлы должны быть загружены заранее через /media/upload
+        for await (const part of parts) {
+          if (part.type === 'field') {
+            fields[part.fieldname] = part.value;
+            fastify.log.info(`Field: ${part.fieldname} = ${part.value}`);
+          }
+        }
+
+        // Обрабатываем медиафайлы, которые уже загружены через /media/upload
+        const mediaFields = Object.keys(fields).filter(key => key.startsWith('media['));
+        fastify.log.info(`Found ${mediaFields.length} media fields`);
+        
+        if (mediaFields.length > 0) {
+          const mediaMap = new Map();
+          mediaFields.forEach(key => {
+            const match = key.match(/media\[(\d+)\]\[(\w+)\]/);
+            if (match) {
+              const [, index, field] = match;
+              if (!mediaMap.has(index)) {
+                mediaMap.set(index, {});
+              }
+              mediaMap.get(index)[field] = fields[key];
+              fastify.log.info(`Media field: ${key} = ${fields[key]}`);
+            }
+          });
+          
+          // Добавляем уже загруженные медиафайлы
+          mediaMap.forEach((mediaItem) => {
+            const mediaObj = {
+              type: mediaItem.type || 'photo',
+              file_path: mediaItem.file_path,
+              original_name: mediaItem.original_name,
+              mime_type: mediaItem.mime_type
+            };
+            media.push(mediaObj);
+            fastify.log.info(`Added media: ${JSON.stringify(mediaObj)}`);
+          });
+        }
+
+        const updateData = {
+          text: fields.text || '',
+          media,
+          is_unique: fields.is_unique === 'true',
+          url: fields.url || (Date.now().toString(36) + Math.random().toString(36).slice(2))
+        } as Partial<Post>;
+        
+        fastify.log.info(`Update data: ${JSON.stringify(updateData)}`);
         
         const postService = container.getPostService();
         const updatedPost = await postService.updatePost(id, updateData);
+        
+        fastify.log.info(`Post updated successfully: ${updatedPost._id}`);
         
         return {
           success: true,
@@ -244,6 +305,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
           message: 'Пост успешно обновлен'
         };
       } catch (error) {
+        fastify.log.error(`Error updating post: ${error}`);
         throw error;
       }
     }
@@ -258,16 +320,37 @@ export async function postsRoutes(fastify: FastifyInstance) {
       const fields: any = {};
       const media: any[] = [];
 
+      // Обрабатываем только поля формы, файлы должны быть загружены заранее через /media/upload
       for await (const part of parts) {
-        if (part.type === 'file') {
-          const fileExt = path.extname(part.filename);
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2,8)}${fileExt}`;
-          const uploadPath = path.join(process.cwd(), 'media', fileName);
-          await pipeline(part.file, fs.createWriteStream(uploadPath));
-          media.push({ type: part.mimetype.startsWith('video') ? 'video' : part.mimetype.startsWith('audio') ? 'audio' : 'photo', file_path: `/media/${fileName}` });
-        } else if (part.type === 'field') {
+        if (part.type === 'field') {
           fields[part.fieldname] = part.value;
         }
+      }
+
+      // Обрабатываем медиафайлы, которые уже загружены через /media/upload
+      const mediaFields = Object.keys(fields).filter(key => key.startsWith('media['));
+      if (mediaFields.length > 0) {
+        const mediaMap = new Map();
+        mediaFields.forEach(key => {
+          const match = key.match(/media\[(\d+)\]\[(\w+)\]/);
+          if (match) {
+            const [, index, field] = match;
+            if (!mediaMap.has(index)) {
+              mediaMap.set(index, {});
+            }
+            mediaMap.get(index)[field] = fields[key];
+          }
+        });
+        
+        // Добавляем уже загруженные медиафайлы
+        mediaMap.forEach((mediaItem) => {
+          media.push({
+            type: mediaItem.type || 'photo',
+            file_path: mediaItem.file_path,
+            original_name: mediaItem.original_name,
+            mime_type: mediaItem.mime_type
+          });
+        });
       }
 
       const dto = {

@@ -70,7 +70,7 @@
                 </div>
                 <EditorContent
                     :editor="editor"
-                    class="p-3 h-66 custom-editor-content overflow-y-auto"
+                    class="p-3 min-h-64 custom-editor-content"
                 />
             </div>
 
@@ -314,7 +314,6 @@
                 </button>
                 <!-- Кнопка уникализации -->
                 <button
-                    v-if="postData && !postData.is_unique"
                     @click="uniquizePost"
                     :disabled="uniquizing || !hasText"
                     class="px-4 py-2 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -392,10 +391,13 @@ import { getMediaUrl, getSquareMediaClasses } from "@/js/utils";
 import "emoji-picker-element";
 import MediaViewer from "@/components/MediaViewer.vue";
 import DateTimePicker from "@/components/DateTimePicker.vue";
+import mediaPreloader from "@/utils/mediaPreloader";
+import { useEventBus, EVENTS } from "@/composables/useEventBus";
 
 const router = useRouter();
 const route = useRoute();
 const postId = route.params.id;
+const { emit: emitEvent } = useEventBus();
 
 const files = ref([]);
 const fileInputRef = ref(null);
@@ -444,11 +446,6 @@ const loadChannels = () => {
 
 const autoSelectChannelByCategory = () => {
     if (!postData.value || !postData.value.category_name || channels.value.length === 0) {
-        return;
-    }
-    
-    // Если канал уже выбран, не меняем его
-    if (selectedChannel.value) {
         return;
     }
     
@@ -676,6 +673,7 @@ async function publishNow() {
                             window?.$toast?.success(
                                 "Пост успешно опубликован в Telegram!"
                             );
+                            emitEvent(EVENTS.POST_PUBLISHED, response.data);
                             router.push("/");
                         } else {
                             window?.$toast?.error(
@@ -782,6 +780,7 @@ async function publishLater() {
                             window?.$toast?.success(
                                 "Пост запланирован на публикацию!"
                             );
+                            emitEvent(EVENTS.SCHEDULED_POST_CREATED, response.data);
                             router.push("/");
                         } else {
                             window?.$toast?.error(
@@ -807,6 +806,7 @@ async function publishLater() {
 
 function loadPost() {
     loadingPost.value = true;
+    
     http.post({ id: postId }, async (res) => {
         loadingPost.value = false;
         if (res && res.success) {
@@ -818,10 +818,11 @@ function loadPost() {
             // Устанавливаем выбранный канал, если он есть
             if (res.data.channel_id) {
                 selectedChannel.value = res.data.channel_id;
-            } else {
-                // Пытаемся сделать автовыбор по категории
-                autoSelectChannelByCategory();
             }
+            
+            // Всегда пытаемся сделать автовыбор по категории
+            // Это обеспечит выбор правильного канала даже если channel_id не установлен
+            autoSelectChannelByCategory();
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
         }
@@ -850,9 +851,20 @@ function toggleTextMode() {
 
 async function preloadMedia(post) {
     if (!post || !post.media || !post.media.length) return;
-    // Убираем загрузку существующих файлов в files.value
-    // Существующие файлы должны отображаться из postData.media
-    console.log("Preloading media for post:", post.media.length, "files");
+    
+    try {
+        const mediaUrls = post.media
+            .filter(media => media && media.file_path)
+            .map(media => media.file_path);
+            
+        if (mediaUrls.length > 0) {
+            console.log("Preloading media for post:", mediaUrls.length, "files");
+            // Используем mediaPreloader для предзагрузки
+            await mediaPreloader.preloadMedia(mediaUrls, 'low');
+        }
+    } catch (error) {
+        console.warn("Failed to preload media:", error);
+    }
 }
 
 const toolbar = computed(() => {
@@ -1090,12 +1102,14 @@ button:disabled {
     border: 1px solid #d1d5db;
     border-radius: 6px;
     outline: none;
-    min-height: 150px;
+    min-height: 200px;
     background: #fff;
     caret-color: #3b82f6;
     font-size: 1rem;
     font-family: inherit;
     cursor: text;
+    resize: vertical;
+    overflow-y: auto;
 }
 .custom-editor-content:focus {
     outline: none !important;
@@ -1106,6 +1120,36 @@ button:disabled {
     outline: none !important;
     box-shadow: none !important;
     border: 1px solid #d1d5db !important;
+}
+
+/* Убираем все синие рамки и фокусы */
+.custom-editor-content .ProseMirror {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    min-height: 180px;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-editor-content .ProseMirror:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.custom-editor-content .ProseMirror p {
+    margin: 0;
+    padding: 0;
+    min-height: 1.5em;
+}
+
+.custom-editor-content .ProseMirror p:first-child {
+    margin-top: 0;
+}
+
+.custom-editor-content .ProseMirror p:last-child {
+    margin-bottom: 0;
 }
 
 .file-btn {
@@ -1133,10 +1177,30 @@ button:disabled {
     box-shadow: none !important;
     border: 1px solid #d1d5db !important;
 }
-:global(.ProseMirror),
+:global(.ProseMirror) {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    min-height: 180px !important;
+}
+
 :global(.ProseMirror:focus) {
     outline: none !important;
     box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
+    border: none !important;
+}
+
+:global(.ProseMirror p) {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 1.5em !important;
+}
+
+:global(.ProseMirror p:first-child) {
+    margin-top: 0 !important;
+}
+
+:global(.ProseMirror p:last-child) {
+    margin-bottom: 0 !important;
 }
 </style>

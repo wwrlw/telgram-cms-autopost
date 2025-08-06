@@ -70,7 +70,7 @@
                 </div>
                 <EditorContent
                     :editor="editor"
-                    class="p-3 h-66 custom-editor-content overflow-y-auto"
+                    class="p-3 min-h-64 custom-editor-content"
                 />
             </div>
 
@@ -240,7 +240,7 @@
                         v-model="selectedChannel"
                         class="border rounded p-2 text-sm w-full"
                     >
-                        <option value="">Выберите канал</option>
+                        <option :value="null">Выберите канал</option>
                         <option
                             v-for="channel in channels"
                             :key="channel._id"
@@ -314,7 +314,6 @@
                 </button>
                 <!-- Кнопка уникализации -->
                 <button
-                    v-if="postData && !postData.is_unique"
                     @click="uniquizePost"
                     :disabled="uniquizing || !hasText"
                     class="px-4 py-2 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -385,6 +384,7 @@ import { useFavorites } from "@/composables/useFavorites.js";
 import "emoji-picker-element";
 import MediaViewer from "@/components/MediaViewer.vue";
 import DateTimePicker from "@/components/DateTimePicker.vue";
+import mediaPreloader from "@/utils/mediaPreloader";
 
 const router = useRouter();
 const route = useRoute();
@@ -394,7 +394,7 @@ const files = ref([]);
 const fileInputRef = ref(null);
 const schedule = ref(true); // По умолчанию включено для отложенных публикаций
 const scheduledAt = ref("");
-const selectedChannel = ref("");
+const selectedChannel = ref(null);
 const channels = ref([]);
 const loadingPost = ref(false);
 const postData = ref(null);
@@ -440,24 +440,27 @@ const autoSelectChannelByCategory = () => {
         return;
     }
     
-    // Если канал уже выбран, не меняем его
-    if (selectedChannel.value) {
-        return;
-    }
-    
     const matchingChannel = channels.value.find(
         channel => channel.name === postData.value.category_name
     );
     
     if (matchingChannel) {
-        selectedChannel.value = matchingChannel.channel_id;
-        console.log(`Автовыбор канала "${matchingChannel.name}" для категории "${postData.value.category_name}"`);
+        // Проверяем, соответствует ли текущий выбранный канал категории
+        const currentChannel = channels.value.find(
+            channel => channel.channel_id === selectedChannel.value
+        );
+        
+        // Если канал не выбран или выбранный канал не соответствует категории, выбираем подходящий
+        if (selectedChannel.value === null || !currentChannel || currentChannel.name !== postData.value.category_name) {
+            selectedChannel.value = matchingChannel.channel_id;
+            console.log(`Автовыбор канала "${matchingChannel.name}" для категории "${postData.value.category_name}"`);
+        }
     }
 };
 
 // Определяем, был ли канал выбран автоматически
 const isAutoSelectedChannel = computed(() => {
-    if (!postData.value || !postData.value.category_name || !selectedChannel.value) {
+    if (!postData.value || !postData.value.category_name || selectedChannel.value === null) {
         return false;
     }
     
@@ -572,7 +575,7 @@ async function savePost() {
             media: allMedia,
         };
         
-        if (selectedChannel.value) {
+        if (selectedChannel.value !== null) {
             updateData.channel_id = selectedChannel.value;
         }
 
@@ -602,10 +605,10 @@ async function publishLater() {
         return;
     }
 
-    if (!selectedChannel.value) {
-        window?.$toast?.error("Выберите канал для публикации");
-        return;
-    }
+            if (selectedChannel.value === null) {
+            window?.$toast?.error("Выберите канал для публикации");
+            return;
+        }
 
     if (!scheduledAt.value) {
         window?.$toast?.error("Укажите дату и время публикации");
@@ -715,13 +718,14 @@ function loadPost() {
             await preloadMedia(res.data);
 
             // Устанавливаем выбранный канал только если он не был установлен из query параметров
-            if (res.data.channel_id && !selectedChannel.value) {
+            if (res.data.channel_id && selectedChannel.value === null) {
                 selectedChannel.value = res.data.channel_id;
                 console.log('Set channel from post data:', res.data.channel_id);
-            } else if (!selectedChannel.value) {
-                // Пытаемся сделать автовыбор по категории
-                autoSelectChannelByCategory();
             }
+            
+            // Всегда пытаемся сделать автовыбор по категории
+            // Это обеспечит выбор правильного канала даже если channel_id не установлен
+            autoSelectChannelByCategory();
 
             // Устанавливаем время публикации только если оно не было установлено из query параметров
             if (res.data.scheduled_at && !route.query.scheduledAt) {
@@ -763,9 +767,20 @@ function toggleTextMode() {
 
 async function preloadMedia(post) {
     if (!post || !post.media || !post.media.length) return;
-    // Убираем загрузку существующих файлов в files.value
-    // Существующие файлы должны отображаться из postData.media
-    console.log("Preloading media for post:", post.media.length, "files");
+    
+    try {
+        const mediaUrls = post.media
+            .filter(media => media && media.file_path)
+            .map(media => media.file_path);
+            
+        if (mediaUrls.length > 0) {
+            console.log("Preloading media for post:", mediaUrls.length, "files");
+            // Используем mediaPreloader для предзагрузки
+            await mediaPreloader.preloadMedia(mediaUrls, 'low');
+        }
+    } catch (error) {
+        console.warn("Failed to preload media:", error);
+    }
 }
 
 const toolbar = computed(() => {
@@ -1001,17 +1016,49 @@ button:disabled {
     border: 1px solid #d1d5db;
     border-radius: 6px;
     outline: none;
-    min-height: 150px;
+    min-height: 200px;
     background: #fff;
     caret-color: #3b82f6;
     font-size: 1rem;
     font-family: inherit;
     cursor: text;
+    resize: vertical;
+    overflow-y: auto;
 }
 .custom-editor-content:focus {
     outline: none !important;
     box-shadow: none !important;
     border-color: #3b82f6 !important;
+}
+
+/* Убираем все синие рамки и фокусы */
+.custom-editor-content .ProseMirror {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    min-height: 180px;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-editor-content .ProseMirror:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.custom-editor-content .ProseMirror p {
+    margin: 0;
+    padding: 0;
+    min-height: 1.5em;
+}
+
+.custom-editor-content .ProseMirror p:first-child {
+    margin-top: 0;
+}
+
+.custom-editor-content .ProseMirror p:last-child {
+    margin-bottom: 0;
 }
 
 .file-btn {
@@ -1036,5 +1083,33 @@ button:disabled {
 .file-btn:focus {
     outline: none;
     box-shadow: 0 0 0 2px #6366f1;
+}
+
+/* Глобальные стили для удаления всех рамок в редакторе */
+:global(.ProseMirror) {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    min-height: 180px !important;
+}
+
+:global(.ProseMirror:focus) {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+:global(.ProseMirror p) {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 1.5em !important;
+}
+
+:global(.ProseMirror p:first-child) {
+    margin-top: 0 !important;
+}
+
+:global(.ProseMirror p:last-child) {
+    margin-bottom: 0 !important;
 }
 </style> 
