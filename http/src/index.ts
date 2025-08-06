@@ -10,6 +10,7 @@ import { categoriesRoutes } from './routes/categories';
 import { analyticsRoutes } from './routes/analytics';
 import publishRoutes from './routes/publish';
 import logsRoutes from './routes/logs';
+import { mediaRoutes } from './routes/media';
 import cors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
 import path from 'path';
@@ -50,6 +51,7 @@ async function start() {
         await fastify.register(analyticsRoutes);
         await fastify.register(publishRoutes);
         await fastify.register(logsRoutes, { prefix: '/logs' });
+        await fastify.register(mediaRoutes);
         fastify.setErrorHandler(errorHandler);
         await fastify.ready();
         await fastify.listen({ port: Number(process.env.PORT) || 3001, host: '0.0.0.0' });

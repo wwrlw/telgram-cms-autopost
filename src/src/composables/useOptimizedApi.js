@@ -50,22 +50,41 @@ export function useOptimizedApi() {
 
         // Создаем новый запрос
         const requestPromise = new Promise((resolve, reject) => {
-            apiFunction(params, (response) => {
-                if (response.success) {
-                    // Сохраняем в кэш
-                    if (useCache) {
-                        cache.set(cacheKey, {
-                            data: response,
-                            timestamp: Date.now()
-                        });
+            // Проверяем, ожидает ли функция callback
+            if (typeof apiFunction === 'function') {
+                try {
+                    // Создаем callback функции
+                    const successCallback = (response) => {
+                        if (response && response.success) {
+                            // Сохраняем в кэш
+                            if (useCache) {
+                                cache.set(cacheKey, {
+                                    data: response,
+                                    timestamp: Date.now()
+                                });
+                            }
+                            resolve(response);
+                        } else {
+                            reject(new Error(response?.message || 'Request failed'));
+                        }
+                    };
+                    
+                    const errorCallback = (error) => {
+                        reject(error);
+                    };
+                    
+                    // Вызываем функцию с правильными аргументами
+                    if (Object.keys(params).length > 0) {
+                        apiFunction(params, successCallback, errorCallback);
+                    } else {
+                        apiFunction(successCallback, errorCallback);
                     }
-                    resolve(response);
-                } else {
-                    reject(new Error(response.message || 'Request failed'));
+                } catch (error) {
+                    reject(error);
                 }
-            }, (error) => {
-                reject(error);
-            });
+            } else {
+                reject(new Error('apiFunction is not a function'));
+            }
         });
 
         // Сохраняем pending запрос

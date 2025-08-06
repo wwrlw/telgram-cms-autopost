@@ -64,7 +64,7 @@
                 </svg>
             </button>
 
-            <div class="media-viewer-container shadow-2xl cursor-default" @click.stop>
+            <div class="media-viewer-container shadow-2xl cursor-default">
                 <img
                     v-if="media && isImage(media)"
                     :src="getMediaUrl(media.file_path)"

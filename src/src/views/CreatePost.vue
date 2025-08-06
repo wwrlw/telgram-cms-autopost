@@ -61,7 +61,7 @@
                 </div>
                 <EditorContent
                     :editor="editor"
-                    class="p-3 h-66 custom-editor-content overflow-y-auto"
+                    class="p-3 min-h-64 custom-editor-content"
                 />
             </div>
 
@@ -277,10 +277,12 @@ import TurndownService from "turndown";
 import { getMediaUrl } from "@/js/utils";
 import "emoji-picker-element";
 import DateTimePicker from "@/components/DateTimePicker.vue";
+import { useEventBus, EVENTS } from "@/composables/useEventBus";
 
 const router = useRouter();
 const route = useRoute();
 const postId = route.params.id;
+const { emit: emitEvent } = useEventBus();
 
 const files = ref([]);
 const fileInputRef = ref(null);
@@ -429,8 +431,13 @@ const send = async (publishLater) => {
                 isSubmitting.value = false;
                 if (response.success) {
                     console.log('Create post response:', response.data); // debug
+                    
+                    // Отправляем событие о создании поста
+                    emitEvent(EVENTS.POST_CREATED, response.data);
+                    
                     if (publishLater) {
                         window?.$toast?.success("Пост запланирован");
+                        emitEvent(EVENTS.SCHEDULED_POST_CREATED, response.data);
                         router.push("/scheduled-posts");
                     } else {
                         const postId = response.data._id || response.data.id;
@@ -442,6 +449,7 @@ const send = async (publishLater) => {
                                     window?.$toast?.success(
                                         "Пост опубликован в Telegram!"
                                     );
+                                    emitEvent(EVENTS.POST_PUBLISHED, response.data);
                                     router.push("/");
                                 } else {
                                     window?.$toast?.error(
@@ -516,17 +524,29 @@ const savePostToDatabase = async () => {
             }
         }
 
-        const postData = {
-            text: markdown,
-            media: uploadedFiles,
-        };
+        // Создаем FormData для отправки поста
+        const formData = new FormData();
+        formData.append('text', markdown);
+        
+        // Добавляем медиафайлы в FormData
+        uploadedFiles.forEach((media, index) => {
+            formData.append(`media[${index}][type]`, media.type);
+            formData.append(`media[${index}][file_path]`, media.file_path);
+            if (media.original_name) {
+                formData.append(`media[${index}][original_name]`, media.original_name);
+            }
+            if (media.mime_type) {
+                formData.append(`media[${index}][mime_type]`, media.mime_type);
+            }
+        });
 
         http.createPost(
-            postData,
+            formData,
             (response) => {
                 isSubmitting.value = false;
                 if (response.success) {
                     window?.$toast?.success("Пост сохранен в базе данных!");
+                    emitEvent(EVENTS.POST_CREATED, response.data);
                     router.push("/");
                 } else {
                     window?.$toast?.error(
@@ -771,6 +791,7 @@ function cancelLink() {
 function toggleTextMode() {
     showingUniqueText.value = !showingUniqueText.value;
     if (showingUniqueText.value && uniqueText.value) {
+        // Показываем последний сгенерированный уникальный текст
         editor.value?.commands.setContent(uniqueText.value);
     } else {
         // Показываем оригинал
@@ -800,12 +821,14 @@ button:disabled {
     border: 1px solid #d1d5db;
     border-radius: 6px;
     outline: none;
-    min-height: 150px;
+    min-height: 200px;
     background: #fff;
     caret-color: #3b82f6;
     font-size: 1rem;
     font-family: inherit;
     cursor: text;
+    resize: vertical;
+    overflow-y: auto;
 }
 .custom-editor-content:focus {
     outline: none !important;
@@ -816,6 +839,36 @@ button:disabled {
     outline: none !important;
     box-shadow: none !important;
     border: 1px solid #d1d5db !important;
+}
+
+/* Убираем все синие рамки и фокусы */
+.custom-editor-content .ProseMirror {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    min-height: 180px;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-editor-content .ProseMirror:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.custom-editor-content .ProseMirror p {
+    margin: 0;
+    padding: 0;
+    min-height: 1.5em;
+}
+
+.custom-editor-content .ProseMirror p:first-child {
+    margin-top: 0;
+}
+
+.custom-editor-content .ProseMirror p:last-child {
+    margin-bottom: 0;
 }
 
 .file-btn {
@@ -848,5 +901,33 @@ button:disabled {
 .grid > div {
     aspect-ratio: 1/1 !important;
     overflow: hidden !important;
+}
+
+/* Глобальные стили для удаления всех рамок в редакторе */
+:global(.ProseMirror) {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    min-height: 180px !important;
+}
+
+:global(.ProseMirror:focus) {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+:global(.ProseMirror p) {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 1.5em !important;
+}
+
+:global(.ProseMirror p:first-child) {
+    margin-top: 0 !important;
+}
+
+:global(.ProseMirror p:last-child) {
+    margin-bottom: 0 !important;
 }
 </style>

@@ -176,8 +176,10 @@ import http from "../js/http.js";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 import ScheduledPostsGrid from "@/components/ScheduledPostsGrid.vue";
 import { formatDate } from "@/js/utils.js";
+import { useEventBus, EVENTS } from "@/composables/useEventBus";
 
 const router = useRouter();
+const { on: onEvent, emit: emitEvent } = useEventBus();
 const scheduledPosts = ref([]);
 const publishedPosts = ref([]);
 const loading = ref(true);
@@ -297,6 +299,7 @@ const cancelSchedule = (post) => {
             http.cancelScheduledPost({ id: postId }, (response) => {
                 if (response.success) {
                     window.$toast.success("Отложенная публикация отменена");
+                    emitEvent(EVENTS.SCHEDULED_POST_CANCELLED, { id: postId });
                     loadScheduledPosts();
                 } else {
                     window.$toast.error(
@@ -316,5 +319,37 @@ onMounted(() => {
     loadPublishedPosts();
     loadCategories();
     loadChannels();
+    
+    // Слушаем события для обновления данных
+    onEvent(EVENTS.SCHEDULED_POST_CREATED, () => {
+        console.log('Scheduled post created event received, refreshing scheduled posts');
+        loadScheduledPosts();
+    });
+    
+    onEvent(EVENTS.SCHEDULED_POST_UPDATED, () => {
+        console.log('Scheduled post updated event received, refreshing scheduled posts');
+        loadScheduledPosts();
+    });
+    
+    onEvent(EVENTS.SCHEDULED_POST_DELETED, () => {
+        console.log('Scheduled post deleted event received, refreshing scheduled posts');
+        loadScheduledPosts();
+    });
+    
+    onEvent(EVENTS.SCHEDULED_POST_CANCELLED, () => {
+        console.log('Scheduled post cancelled event received, refreshing scheduled posts');
+        loadScheduledPosts();
+    });
+    
+    onEvent(EVENTS.POST_PUBLISHED, () => {
+        console.log('Post published event received, refreshing published posts');
+        loadPublishedPosts();
+    });
+    
+    onEvent(EVENTS.REFRESH_SCHEDULED_POSTS, () => {
+        console.log('Refresh scheduled posts event received');
+        loadScheduledPosts();
+        loadPublishedPosts();
+    });
 });
 </script>

@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gray-50">
+    <div class="min-h-screen bg-gray-50" data-posts-component>
         <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             <StatsCards
                 v-if="!loading || posts.length > 0"
@@ -38,9 +38,8 @@
             <div
                 v-if="hasMore && !loading"
                 ref="infiniteScrollTrigger"
-                class="h-20 flex items-center justify-center bg-blue-50 border-2 border-dashed border-blue-200 rounded-lg my-4"
+                class="h-20 flex items-center justify-center"
             >
-                <div class="text-blue-600 font-medium">Прокрутите вниз для загрузки еще постов</div>
             </div>
 
             <!-- Loading indicator for infinite scroll -->
@@ -84,10 +83,13 @@ import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
 import { useOptimizedApi } from "@/composables/useOptimizedApi";
 import { useFavorites } from "@/composables/useFavorites.js";
 import mediaPreloader from "@/utils/mediaPreloader";
+import { useEventBus, EVENTS } from "@/composables/useEventBus";
 
 const refreshTrigger = inject("refreshTrigger");
+console.log('Posts.vue: refreshTrigger injected:', refreshTrigger.value);
 const setLoading = inject("setLoading");
 const { removePublishedFromFavorites, initializeFavorites } = useFavorites();
+const { on: onEvent, emit: emitEvent } = useEventBus();
 
 const posts = ref([]);
 const searchQuery = ref("");
@@ -156,6 +158,7 @@ const postsService = async (params = {}, isInfiniteScroll = false) => {
         console.log('Making API request with params:', requestParams);
         const response = await optimizedRequest(apiMethod, requestParams);
         console.log('API response:', response);
+        console.log('Response data length:', response.data?.length || 0);
         
         if (isInfiniteScroll) {
             // Добавляем новые посты к существующим
@@ -176,7 +179,9 @@ const postsService = async (params = {}, isInfiniteScroll = false) => {
             }
         } else {
             // Заменяем посты полностью
+            console.log('Replacing posts array, old length:', posts.value.length, 'new length:', response.data?.length || 0);
             posts.value = response.data || [];
+            console.log('Posts array updated, new length:', posts.value.length);
             currentPage.value = 1;
             
             // Предзагружаем медиа для всех постов в фоне
@@ -302,6 +307,7 @@ const handlePublish = (post) => {
 const handlePublished = async (result) => {
     if (result.success) {
         window.$toast.success("Пост успешно опубликован в Telegram канал!");
+        emitEvent(EVENTS.POST_PUBLISHED, selectedPostForPublish.value);
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
@@ -339,45 +345,56 @@ const deletePost = (post) => {
             (post.is_published && post.telegram_message_id
                 ? " (Пост также будет удалён из Telegram)"
                 : ""),
-        (postObj) => {
-            if (postObj.is_published && postObj.telegram_message_id) {
-                http.deletePostFromTelegram(postObj._id.toString(), (tgRes) => {
+        async (postObj) => {
+            try {
+                if (postObj.is_published && postObj.telegram_message_id) {
+                    const tgRes = await new Promise((resolve) => {
+                        http.deletePostFromTelegram(postObj._id.toString(), resolve);
+                    });
+                    
                     if (!tgRes.success) {
                         window.$toast.error(
                             "Ошибка при удалении из Telegram: " + tgRes.message
                         );
-                        // Можно прервать дальнейшее удаление, если нужно
-                        // return;
                     }
-                    http.deletePost({ id: postObj._id }, async (response) => {
-                        if (response.success) {
-                            window.$toast.success(
-                                "Пост успешно удалён (и из Telegram, если был опубликован)"
-                            );
-                            currentPage.value = 1;
-                            hasMore.value = true;
-                            await postsService({ page: 1 });
-                        } else {
-                            window.$toast.error(
-                                "Ошибка при удалении поста: " + response.message
-                            );
-                        }
-                    });
-                });
-                            } else {
-                    http.deletePost({ id: postObj._id }, async (response) => {
-                        if (response.success) {
-                            window.$toast.success("Пост успешно удалён");
-                            currentPage.value = 1;
-                            hasMore.value = true;
-                            await postsService({ page: 1 });
-                        } else {
-                            window.$toast.error(
-                                "Ошибка при удалении поста: " + response.message
-                            );
-                        }
-                    });
                 }
+                
+                const response = await new Promise((resolve) => {
+                    http.deletePost({ id: postObj._id }, resolve);
+                });
+                
+                if (response.success) {
+                    window.$toast.success(
+                        postObj.is_published && postObj.telegram_message_id
+                            ? "Пост успешно удалён (и из Telegram, если был опубликован)"
+                            : "Пост успешно удалён"
+                    );
+                    
+                    // Немедленно удаляем пост из локального состояния
+                    const index = posts.value.findIndex(p => p._id === postObj._id);
+                    if (index !== -1) {
+                        posts.value.splice(index, 1);
+                    }
+                    
+                    // Обновляем общее количество
+                    totalCount.value = Math.max(0, totalCount.value - 1);
+                    
+                    // Отправляем событие
+                    emitEvent(EVENTS.POST_DELETED, postObj);
+                    
+                    // Перезагружаем данные для обновления пагинации
+                    currentPage.value = 1;
+                    hasMore.value = true;
+                    await postsService({ page: 1 });
+                } else {
+                    window.$toast.error(
+                        "Ошибка при удалении поста: " + response.message
+                    );
+                }
+            } catch (error) {
+                console.error('Error deleting post:', error);
+                window.$toast.error("Произошла ошибка при удалении поста");
+            }
         },
         post
     );
@@ -407,16 +424,39 @@ const initializeInfiniteScroll = () => {
     }
 };
 
-watch(refreshTrigger, async () => {
+watch(refreshTrigger, async (newValue, oldValue) => {
+    console.log('Refresh trigger changed:', { newValue, oldValue });
     if (refreshTrigger && refreshTrigger.value > 0) {
+        console.log('Refreshing posts...');
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
         await loadCategories();
+        console.log('Posts refreshed successfully, posts count:', posts.value.length);
+        console.log('First few posts:', posts.value.slice(0, 3).map(p => ({ id: p._id, title: p.title })));
+    } else {
+        console.log('Refresh trigger condition not met:', { refreshTrigger: refreshTrigger.value });
     }
+}, { immediate: true });
+
+// Дополнительный обработчик для кнопки обновления
+const handleRefreshPosts = async () => {
+    console.log('Manual refresh triggered');
+    currentPage.value = 1;
+    hasMore.value = true;
+    await postsService({ page: 1 });
+    await loadCategories();
+    console.log('Manual refresh completed');
+};
+
+// Экспортируем функцию для использования в App.vue
+defineExpose({
+    refreshPosts: handleRefreshPosts
 });
 
 onMounted(async () => {
+    console.log('Posts component mounted');
+    console.log('Refresh trigger on mount:', refreshTrigger.value);
     await initializeFavorites(); // Инициализируем избранное
     await postsService({ page: 1 });
     await loadCategories();
@@ -424,6 +464,48 @@ onMounted(async () => {
     // Initialize infinite scroll after component is mounted
     await nextTick();
     initializeInfiniteScroll();
+    
+    // Слушаем событие обновления постов
+    window.addEventListener('refresh-posts', async () => {
+        console.log('Refresh posts event received from window');
+        await handleRefreshPosts();
+    });
+    
+    // Слушаем события для обновления данных
+    onEvent(EVENTS.POST_CREATED, async () => {
+        console.log('Post created event received, refreshing posts');
+        currentPage.value = 1;
+        hasMore.value = true;
+        await postsService({ page: 1 });
+    });
+    
+    onEvent(EVENTS.POST_UPDATED, async () => {
+        console.log('Post updated event received, refreshing posts');
+        currentPage.value = 1;
+        hasMore.value = true;
+        await postsService({ page: 1 });
+    });
+    
+    onEvent(EVENTS.POST_DELETED, async () => {
+        console.log('Post deleted event received, refreshing posts');
+        currentPage.value = 1;
+        hasMore.value = true;
+        await postsService({ page: 1 });
+    });
+    
+    onEvent(EVENTS.POST_PUBLISHED, async () => {
+        console.log('Post published event received, refreshing posts');
+        currentPage.value = 1;
+        hasMore.value = true;
+        await postsService({ page: 1 });
+    });
+    
+    onEvent(EVENTS.REFRESH_POSTS, async () => {
+        console.log('Refresh posts event received');
+        currentPage.value = 1;
+        hasMore.value = true;
+        await postsService({ page: 1 });
+    });
 });
 
 // Watch for changes in hasMore to reinitialize observer
