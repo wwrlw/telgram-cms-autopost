@@ -1,9 +1,6 @@
 <template>
     <div class="space-y-6">
-        <div
-            v-if="!loading || posts.length > 0"
-            class="posts-grid"
-        >
+        <div v-if="!loading || posts.length > 0" class="posts-grid">
             <PostThumb
                 v-for="post in posts"
                 :key="post._id"
@@ -29,14 +26,8 @@
             @next="nextQuickviewMedia"
         />
 
-        <div
-            v-if="loading && posts.length === 0"
-            class="posts-grid"
-        >
-            <PostSkeleton
-                v-for="i in 12"
-                :key="i"
-            />
+        <div v-if="loading && posts.length === 0" class="posts-grid">
+            <PostSkeleton v-for="i in 12" :key="i" />
         </div>
 
         <div v-if="!loading && posts.length === 0" class="text-center py-12">
@@ -71,9 +62,9 @@
 
 <script setup>
 import { ref } from "vue";
-import PostThumb from "./PostThumb.vue";
-import MediaViewer from "./MediaViewer.vue";
-import PostSkeleton from "./PostSkeleton.vue";
+import PostThumb from "@/components/Thumb/PostThumb.vue";
+import MediaViewer from "@/components/Media/MediaViewer.vue";
+import PostSkeleton from "@/components/PostSkeleton.vue";
 
 const props = defineProps({
     posts: {

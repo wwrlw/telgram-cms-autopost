@@ -2,7 +2,7 @@
     <div
         :class="[
             'group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-[1.02] post-thumb-component',
-            'post-card-with-media'
+            'post-card-with-media',
         ]"
     >
         <!-- Медиа область - всегда показываем -->
@@ -12,17 +12,26 @@
         >
             <!-- Показываем картинку если есть фото и нет ошибки -->
             <img
-                v-if="hasPhoto(post) && getMediaPath(getFirstPhoto(post).file_path) && !imageError"
+                v-if="
+                    hasPhoto(post) &&
+                    getMediaPath(getFirstPhoto(post).file_path) &&
+                    !imageError
+                "
                 :src="getCoverImageUrl(getFirstPhoto(post).file_path)"
                 :alt="extractTitle(post.text)"
                 :class="getSquareMediaClasses('preview')"
                 @load="handleImageLoad"
                 @error="handleImageError"
             />
-            
+
             <!-- Показываем видео если есть видео и нет ошибки -->
             <div
-                v-else-if="hasVideo(post) && getFirstVideo(post) && getMediaPath(getFirstVideo(post).file_path) && !videoError"
+                v-else-if="
+                    hasVideo(post) &&
+                    getFirstVideo(post) &&
+                    getMediaPath(getFirstVideo(post).file_path) &&
+                    !videoError
+                "
                 class="w-full h-full bg-gray-200 flex items-center justify-center relative"
             >
                 <video
@@ -239,7 +248,9 @@
             </div>
 
             <!-- Метрики и дата -->
-            <div class="flex items-center justify-between text-xs text-gray-500">
+            <div
+                class="flex items-center justify-between text-xs text-gray-500"
+            >
                 <div class="flex items-center space-x-3">
                     <span
                         v-if="post.conversion_metrics?.views !== undefined"
@@ -264,7 +275,9 @@
                                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                             />
                         </svg>
-                        <span>{{ formatNumber(post.conversion_metrics.views) }}</span>
+                        <span>{{
+                            formatNumber(post.conversion_metrics.views)
+                        }}</span>
                     </span>
                     <span
                         v-if="post.conversion_metrics?.comments !== undefined"
@@ -283,14 +296,18 @@
                                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                             />
                         </svg>
-                        <span>{{ formatNumber(post.conversion_metrics.comments) }}</span>
+                        <span>{{
+                            formatNumber(post.conversion_metrics.comments)
+                        }}</span>
                     </span>
                     <span
                         v-if="post.conversion_metrics?.forwards !== undefined"
                         class="flex items-center space-x-1"
                     >
                         <span>🔄</span>
-                        <span>{{ formatNumber(post.conversion_metrics.forwards) }}</span>
+                        <span>{{
+                            formatNumber(post.conversion_metrics.forwards)
+                        }}</span>
                     </span>
                 </div>
                 <div class="text-xs text-gray-400">
@@ -299,7 +316,10 @@
             </div>
 
             <!-- Метрики конверсии -->
-            <div v-if="post.conversion_metrics" class="mt-2 flex items-center justify-between">
+            <div
+                v-if="post.conversion_metrics"
+                class="mt-2 flex items-center justify-between"
+            >
                 <div class="flex items-center space-x-2">
                     <span
                         v-if="post.conversion_metrics.er !== undefined"
@@ -320,11 +340,22 @@
 </template>
 
 <script setup>
-import { getMediaUrl, getCoverImageUrl, formatNumber, extractTitle, formatDate, hasPhoto, hasVideo, getFirstPhoto, getFirstVideo, getSquareMediaClasses } from "@/js/utils";
+import {
+    getMediaUrl,
+    getCoverImageUrl,
+    formatNumber,
+    extractTitle,
+    formatDate,
+    hasPhoto,
+    hasVideo,
+    getFirstPhoto,
+    getFirstVideo,
+    getSquareMediaClasses,
+} from "@/js/utils";
 import { useRouter } from "vue-router";
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useFavorites } from "@/composables/useFavorites";
-import MediaErrorFallback from "./MediaErrorFallback.vue";
+import MediaErrorFallback from "@/components/Media/MediaErrorFallback.vue";
 
 const router = useRouter();
 const { isFavorite, toggleFavorite, initializeFavorites } = useFavorites();
@@ -395,30 +426,36 @@ const imageError = ref(false);
 const videoError = ref(false);
 
 const handleImageLoad = () => {
-    console.log('Image loaded successfully');
+    console.log("Image loaded successfully");
     imageError.value = false;
 };
 
 const handleVideoMetadata = () => {
-    console.log('Video metadata loaded');
+    console.log("Video metadata loaded");
     videoError.value = false;
 };
 
 const handleImageError = () => {
     imageError.value = true;
-    console.warn('Failed to load image:', getCoverImageUrl(getFirstPhoto(props.post).file_path));
+    console.warn(
+        "Failed to load image:",
+        getCoverImageUrl(getFirstPhoto(props.post).file_path)
+    );
 };
 
 const handleVideoError = (event) => {
-    console.warn('Failed to load video:', event.target.src);
+    console.warn("Failed to load video:", event.target.src);
     videoError.value = true;
 };
 
 // Следим за изменением поста и сбрасываем ошибки
-watch(() => props.post._id, () => {
-    imageError.value = false;
-    videoError.value = false;
-});
+watch(
+    () => props.post._id,
+    () => {
+        imageError.value = false;
+        videoError.value = false;
+    }
+);
 
 const hasMedia = (post) => {
     return post.media && post.media.length > 0;

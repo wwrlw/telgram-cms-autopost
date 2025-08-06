@@ -279,16 +279,16 @@ const getChannelName = (channelId) => {
 const editSchedule = (post) => {
     // Переходим на страницу редактирования отложенной публикации
     // Передаем данные о канале и времени через query параметры
-    console.log('Post data for editing:', post);
+    console.log("Post data for editing:", post);
     const query = {
         channelId: post.scheduled_channel_id,
-        scheduledAt: post.scheduled_at
+        scheduledAt: post.scheduled_at,
     };
-    console.log('Query parameters:', query);
+    console.log("Query parameters:", query);
     router.push({
-        name: 'edit-scheduled-post',
+        name: "edit-scheduled-post",
         params: { id: post._id },
-        query: query
+        query: query,
     });
 };
 
@@ -312,42 +312,50 @@ const cancelSchedule = (post) => {
     );
 };
 
-
-
 onMounted(() => {
     loadScheduledPosts();
     loadPublishedPosts();
     loadCategories();
     loadChannels();
-    
+
     // Слушаем события для обновления данных
     onEvent(EVENTS.SCHEDULED_POST_CREATED, () => {
-        console.log('Scheduled post created event received, refreshing scheduled posts');
+        console.log(
+            "Scheduled post created event received, refreshing scheduled posts"
+        );
         loadScheduledPosts();
     });
-    
+
     onEvent(EVENTS.SCHEDULED_POST_UPDATED, () => {
-        console.log('Scheduled post updated event received, refreshing scheduled posts');
+        console.log(
+            "Scheduled post updated event received, refreshing scheduled posts"
+        );
         loadScheduledPosts();
     });
-    
+
     onEvent(EVENTS.SCHEDULED_POST_DELETED, () => {
-        console.log('Scheduled post deleted event received, refreshing scheduled posts');
+        console.log(
+            "Scheduled post deleted event received, refreshing scheduled posts"
+        );
         loadScheduledPosts();
     });
-    
+
     onEvent(EVENTS.SCHEDULED_POST_CANCELLED, () => {
-        console.log('Scheduled post cancelled event received, refreshing scheduled posts');
+        console.log(
+            "Scheduled post cancelled event received, refreshing scheduled posts"
+        );
         loadScheduledPosts();
     });
-    
+
     onEvent(EVENTS.POST_PUBLISHED, () => {
-        console.log('Post published event received, refreshing published posts');
+        console.log(
+            "Post published event received, refreshing published posts"
+        );
         loadPublishedPosts();
     });
-    
+
     onEvent(EVENTS.REFRESH_SCHEDULED_POSTS, () => {
-        console.log('Refresh scheduled posts event received');
+        console.log("Refresh scheduled posts event received");
         loadScheduledPosts();
         loadPublishedPosts();
     });

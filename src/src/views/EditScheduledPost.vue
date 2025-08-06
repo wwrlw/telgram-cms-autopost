@@ -2,12 +2,20 @@
     <div class="min-h-screen bg-white flex flex-col">
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
             <div class="flex items-center gap-3 justify-start mb-4">
-                <h2 class="text-lg font-semibold">Редактировать отложенную публикацию</h2>
-                <div v-if="postData && postData.category_name" class="flex items-center gap-2">
+                <h2 class="text-lg font-semibold">
+                    Редактировать отложенную публикацию
+                </h2>
+                <div
+                    v-if="postData && postData.category_name"
+                    class="flex items-center gap-2"
+                >
                     <span class="text-sm text-gray-500">Категория:</span>
-                    <span 
+                    <span
                         class="px-2 py-1 text-xs rounded-full text-white"
-                        :style="{ backgroundColor: postData.category_color || '#6b7280' }"
+                        :style="{
+                            backgroundColor:
+                                postData.category_color || '#6b7280',
+                        }"
                     >
                         {{ postData.category_name }}
                     </span>
@@ -106,14 +114,27 @@
                         class="hidden"
                     />
                     <span class="text-xs text-gray-500">
-                        {{ (postData?.media?.length || 0) + files.length }}/10 файлов
+                        {{ (postData?.media?.length || 0) + files.length }}/10
+                        файлов
                     </span>
                 </div>
 
                 <!-- Медиафайлы -->
-                <div v-if="previews.length > 0 || (postData && postData.media && postData.media.length > 0)" class="mb-4">
+                <div
+                    v-if="
+                        previews.length > 0 ||
+                        (postData &&
+                            postData.media &&
+                            postData.media.length > 0)
+                    "
+                    class="mb-4"
+                >
                     <h4 class="text-sm font-medium text-gray-700 mb-3">
-                        {{ files.length > 0 ? 'Медиафайлы (существующие + новые):' : 'Медиафайлы:' }}
+                        {{
+                            files.length > 0
+                                ? "Медиафайлы (существующие + новые):"
+                                : "Медиафайлы:"
+                        }}
                     </h4>
                     <div
                         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
@@ -139,7 +160,9 @@
                                 >
                                     <video
                                         :src="getMediaUrl(media.file_path)"
-                                        :class="getSquareMediaClasses('thumbnail')"
+                                        :class="
+                                            getSquareMediaClasses('thumbnail')
+                                        "
                                         muted
                                         preload="metadata"
                                     />
@@ -249,13 +272,26 @@
                             {{ channel.name }}
                         </option>
                     </select>
-                    <div v-if="isAutoSelectedChannel" class="mt-1 text-xs text-green-600 flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    <div
+                        v-if="isAutoSelectedChannel"
+                        class="mt-1 text-xs text-green-600 flex items-center gap-1"
+                    >
+                        <svg
+                            class="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clip-rule="evenodd"
+                            />
                         </svg>
-                        Автоматически выбран по категории "{{ postData.category_name }}"
-                        <button 
-                            @click="selectedChannel = ''" 
+                        Автоматически выбран по категории "{{
+                            postData.category_name
+                        }}"
+                        <button
+                            @click="selectedChannel = ''"
                             class="ml-2 text-red-500 hover:text-red-700 underline"
                             title="Сбросить автовыбор"
                         >
@@ -278,8 +314,8 @@
             </div>
 
             <div class="flex justify-end gap-3 mt-4">
-                <button 
-                    @click="cancel" 
+                <button
+                    @click="cancel"
                     class="px-4 py-2 rounded bg-gray-500 text-white"
                     :disabled="isSubmitting"
                 >
@@ -355,7 +391,7 @@
                     class="px-4 py-2 rounded bg-green-600 text-white"
                     :disabled="isSubmitting"
                 >
-                    {{ isSubmitting ? 'Сохранение...' : 'Сохранить' }}
+                    {{ isSubmitting ? "Сохранение..." : "Сохранить" }}
                 </button>
                 <button
                     v-if="schedule"
@@ -363,7 +399,7 @@
                     class="px-4 py-2 rounded bg-blue-600 text-white"
                     :disabled="isSubmitting"
                 >
-                    {{ isSubmitting ? 'Планирование...' : 'Запланировать' }}
+                    {{ isSubmitting ? "Планирование..." : "Запланировать" }}
                 </button>
             </div>
         </div>
@@ -436,39 +472,56 @@ const loadChannels = () => {
 };
 
 const autoSelectChannelByCategory = () => {
-    if (!postData.value || !postData.value.category_name || channels.value.length === 0) {
+    if (
+        !postData.value ||
+        !postData.value.category_name ||
+        channels.value.length === 0
+    ) {
         return;
     }
-    
+
     const matchingChannel = channels.value.find(
-        channel => channel.name === postData.value.category_name
+        (channel) => channel.name === postData.value.category_name
     );
-    
+
     if (matchingChannel) {
         // Проверяем, соответствует ли текущий выбранный канал категории
         const currentChannel = channels.value.find(
-            channel => channel.channel_id === selectedChannel.value
+            (channel) => channel.channel_id === selectedChannel.value
         );
-        
+
         // Если канал не выбран или выбранный канал не соответствует категории, выбираем подходящий
-        if (selectedChannel.value === null || !currentChannel || currentChannel.name !== postData.value.category_name) {
+        if (
+            selectedChannel.value === null ||
+            !currentChannel ||
+            currentChannel.name !== postData.value.category_name
+        ) {
             selectedChannel.value = matchingChannel.channel_id;
-            console.log(`Автовыбор канала "${matchingChannel.name}" для категории "${postData.value.category_name}"`);
+            console.log(
+                `Автовыбор канала "${matchingChannel.name}" для категории "${postData.value.category_name}"`
+            );
         }
     }
 };
 
 // Определяем, был ли канал выбран автоматически
 const isAutoSelectedChannel = computed(() => {
-    if (!postData.value || !postData.value.category_name || selectedChannel.value === null) {
+    if (
+        !postData.value ||
+        !postData.value.category_name ||
+        selectedChannel.value === null
+    ) {
         return false;
     }
-    
+
     const selectedChannelData = channels.value.find(
-        channel => channel.channel_id === selectedChannel.value
+        (channel) => channel.channel_id === selectedChannel.value
     );
-    
-    return selectedChannelData && selectedChannelData.name === postData.value.category_name;
+
+    return (
+        selectedChannelData &&
+        selectedChannelData.name === postData.value.category_name
+    );
 });
 
 const addFiles = (newArr) => {
@@ -484,7 +537,9 @@ const addFiles = (newArr) => {
 const handleFiles = (e) => {
     const newFiles = Array.from(e.target.files);
     if (files.value.length + newFiles.length > 10) {
-        window?.$toast?.warning(`Максимум 10 файлов. У вас уже ${files.value.length} файлов.`);
+        window?.$toast?.warning(
+            `Максимум 10 файлов. У вас уже ${files.value.length} файлов.`
+        );
         e.target.value = "";
         return;
     }
@@ -510,7 +565,7 @@ const removeExistingMedia = (index) => {
 
 function cancel() {
     // Очищаем файлы и превью при отмене
-    files.value.forEach(file => {
+    files.value.forEach((file) => {
         if (file.url) URL.revokeObjectURL(file.url);
     });
     files.value = [];
@@ -520,7 +575,7 @@ function cancel() {
 
 async function savePost() {
     if (isSubmitting.value) return;
-    
+
     if (!postData.value) {
         window?.$toast?.error("Данные поста не загружены");
         return;
@@ -529,7 +584,11 @@ async function savePost() {
     const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
 
-    if (!markdown.trim() && files.value.length === 0 && (!postData.value.media || postData.value.media.length === 0)) {
+    if (
+        !markdown.trim() &&
+        files.value.length === 0 &&
+        (!postData.value.media || postData.value.media.length === 0)
+    ) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
     }
@@ -574,7 +633,7 @@ async function savePost() {
             text: markdown,
             media: allMedia,
         };
-        
+
         if (selectedChannel.value !== null) {
             updateData.channel_id = selectedChannel.value;
         }
@@ -599,16 +658,16 @@ async function savePost() {
 
 async function publishLater() {
     if (isSubmitting.value) return;
-    
+
     if (!postData.value) {
         window?.$toast?.error("Данные поста не загружены");
         return;
     }
 
-            if (selectedChannel.value === null) {
-            window?.$toast?.error("Выберите канал для публикации");
-            return;
-        }
+    if (selectedChannel.value === null) {
+        window?.$toast?.error("Выберите канал для публикации");
+        return;
+    }
 
     if (!scheduledAt.value) {
         window?.$toast?.error("Укажите дату и время публикации");
@@ -619,7 +678,11 @@ async function publishLater() {
     const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
 
-    if (!markdown.trim() && files.value.length === 0 && (!postData.value.media || postData.value.media.length === 0)) {
+    if (
+        !markdown.trim() &&
+        files.value.length === 0 &&
+        (!postData.value.media || postData.value.media.length === 0)
+    ) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
     }
@@ -707,22 +770,22 @@ async function publishLater() {
 function loadPost() {
     const route = useRoute();
     loadingPost.value = true;
-    console.log('Loading post with ID:', postId);
+    console.log("Loading post with ID:", postId);
     http.post({ id: postId }, async (res) => {
         loadingPost.value = false;
-        console.log('Post load response:', res);
+        console.log("Post load response:", res);
         if (res && res.success) {
             postData.value = res.data;
-            console.log('Post data loaded:', res.data);
+            console.log("Post data loaded:", res.data);
             initializeEditorContent(res.data);
             await preloadMedia(res.data);
 
             // Устанавливаем выбранный канал только если он не был установлен из query параметров
             if (res.data.channel_id && selectedChannel.value === null) {
                 selectedChannel.value = res.data.channel_id;
-                console.log('Set channel from post data:', res.data.channel_id);
+                console.log("Set channel from post data:", res.data.channel_id);
             }
-            
+
             // Всегда пытаемся сделать автовыбор по категории
             // Это обеспечит выбор правильного канала даже если channel_id не установлен
             autoSelectChannelByCategory();
@@ -732,12 +795,21 @@ function loadPost() {
                 const scheduledDate = new Date(res.data.scheduled_at);
                 // Форматируем дату в формат, который ожидает DateTimePicker (YYYY-MM-DDTHH:mm)
                 const year = scheduledDate.getFullYear();
-                const month = String(scheduledDate.getMonth() + 1).padStart(2, '0');
-                const day = String(scheduledDate.getDate()).padStart(2, '0');
-                const hours = String(scheduledDate.getHours()).padStart(2, '0');
-                const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
+                const month = String(scheduledDate.getMonth() + 1).padStart(
+                    2,
+                    "0"
+                );
+                const day = String(scheduledDate.getDate()).padStart(2, "0");
+                const hours = String(scheduledDate.getHours()).padStart(2, "0");
+                const minutes = String(scheduledDate.getMinutes()).padStart(
+                    2,
+                    "0"
+                );
                 scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-                console.log('Set scheduledAt from post data:', scheduledAt.value);
+                console.log(
+                    "Set scheduledAt from post data:",
+                    scheduledAt.value
+                );
             }
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
@@ -767,16 +839,20 @@ function toggleTextMode() {
 
 async function preloadMedia(post) {
     if (!post || !post.media || !post.media.length) return;
-    
+
     try {
         const mediaUrls = post.media
-            .filter(media => media && media.file_path)
-            .map(media => media.file_path);
-            
+            .filter((media) => media && media.file_path)
+            .map((media) => media.file_path);
+
         if (mediaUrls.length > 0) {
-            console.log("Preloading media for post:", mediaUrls.length, "files");
+            console.log(
+                "Preloading media for post:",
+                mediaUrls.length,
+                "files"
+            );
             // Используем mediaPreloader для предзагрузки
-            await mediaPreloader.preloadMedia(mediaUrls, 'low');
+            await mediaPreloader.preloadMedia(mediaUrls, "low");
         }
     } catch (error) {
         console.warn("Failed to preload media:", error);
@@ -845,7 +921,8 @@ const toolbar = computed(() => {
         {
             label: "1. List",
             title: "Ordered List",
-            action: () => editor.value.chain().focus().toggleOrderedList().run(),
+            action: () =>
+                editor.value.chain().focus().toggleOrderedList().run(),
             isActive: () =>
                 editor.value.isActive && editor.value.isActive("orderedList"),
         },
@@ -963,43 +1040,43 @@ async function uniquizePost() {
 onMounted(() => {
     const route = useRoute();
     loadChannels();
-    
+
     // Получаем данные из query параметров
     const channelId = route.query.channelId;
     const scheduledAtParam = route.query.scheduledAt;
-    
-    console.log('Route query:', route.query);
-    console.log('Channel ID from query:', channelId);
-    console.log('Scheduled at from query:', scheduledAtParam);
-    
+
+    console.log("Route query:", route.query);
+    console.log("Channel ID from query:", channelId);
+    console.log("Scheduled at from query:", scheduledAtParam);
+
     // Устанавливаем время публикации из параметров или по умолчанию
     if (scheduledAtParam) {
         const scheduledDate = new Date(scheduledAtParam);
         // Форматируем дату в формат, который ожидает DateTimePicker (YYYY-MM-DDTHH:mm)
         const year = scheduledDate.getFullYear();
-        const month = String(scheduledDate.getMonth() + 1).padStart(2, '0');
-        const day = String(scheduledDate.getDate()).padStart(2, '0');
-        const hours = String(scheduledDate.getHours()).padStart(2, '0');
-        const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
+        const month = String(scheduledDate.getMonth() + 1).padStart(2, "0");
+        const day = String(scheduledDate.getDate()).padStart(2, "0");
+        const hours = String(scheduledDate.getHours()).padStart(2, "0");
+        const minutes = String(scheduledDate.getMinutes()).padStart(2, "0");
         scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-        console.log('Set scheduledAt to:', scheduledAt.value);
+        console.log("Set scheduledAt to:", scheduledAt.value);
     } else {
         const futureTime = new Date(Date.now() + 60 * 60 * 1000);
         const year = futureTime.getFullYear();
-        const month = String(futureTime.getMonth() + 1).padStart(2, '0');
-        const day = String(futureTime.getDate()).padStart(2, '0');
-        const hours = String(futureTime.getHours()).padStart(2, '0');
-        const minutes = String(futureTime.getMinutes()).padStart(2, '0');
+        const month = String(futureTime.getMonth() + 1).padStart(2, "0");
+        const day = String(futureTime.getDate()).padStart(2, "0");
+        const hours = String(futureTime.getHours()).padStart(2, "0");
+        const minutes = String(futureTime.getMinutes()).padStart(2, "0");
         scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-        console.log('Set default scheduledAt to:', scheduledAt.value);
+        console.log("Set default scheduledAt to:", scheduledAt.value);
     }
-    
+
     // Устанавливаем выбранный канал из параметров
     if (channelId) {
         selectedChannel.value = channelId;
-        console.log('Set selectedChannel to:', selectedChannel.value);
+        console.log("Set selectedChannel to:", selectedChannel.value);
     }
-    
+
     if (postId) {
         loadPost();
     }
@@ -1112,4 +1189,4 @@ button:disabled {
 :global(.ProseMirror p:last-child) {
     margin-bottom: 0 !important;
 }
-</style> 
+</style>

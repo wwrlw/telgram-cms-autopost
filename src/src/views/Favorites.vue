@@ -68,14 +68,18 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import http from "../js/http.js";
-import Thumbs from "../components/Thumbs.vue";
-import ConfirmModal from "../components/Modal/ConfirmModal.vue";
-import MediaViewer from "../components/MediaViewer.vue";
+import http from "@/js/http.js";
+import Thumbs from "@/components/Thumb/Thumbs.vue";
+import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
+import MediaViewer from "@/components/Media/MediaViewer.vue";
 import { useFavorites } from "@/composables/useFavorites.js";
 
 // Используем composable для избранных постов
-const { favoritePosts: favoritePostIds, initializeFavorites, removePublishedFromFavorites } = useFavorites();
+const {
+    favoritePosts: favoritePostIds,
+    initializeFavorites,
+    removePublishedFromFavorites,
+} = useFavorites();
 
 // Reactive state
 const favoritePosts = ref([]);
@@ -144,10 +148,10 @@ const loadFavoritePostsData = async () => {
     Promise.all(promises).then(async (posts) => {
         const validPosts = posts.filter((post) => post !== null);
         favoritePosts.value = validPosts;
-        
+
         // Автоматически удаляем опубликованные посты из избранного
         await removePublishedFromFavorites(validPosts);
-        
+
         loading.value = false;
     });
 };

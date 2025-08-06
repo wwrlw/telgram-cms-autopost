@@ -2,7 +2,7 @@
     <div
         :class="[
             'group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-[1.02] scheduled-post-thumb-component',
-            'post-card-with-media'
+            'post-card-with-media',
         ]"
     >
         <!-- Медиа область - всегда показываем -->
@@ -12,17 +12,27 @@
         >
             <!-- Показываем картинку если есть фото и нет ошибки -->
             <img
-                v-if="hasPhoto(post) && getFirstPhoto(post) && getFirstPhoto(post).file_path && !imageError"
+                v-if="
+                    hasPhoto(post) &&
+                    getFirstPhoto(post) &&
+                    getFirstPhoto(post).file_path &&
+                    !imageError
+                "
                 :src="getCoverImageUrl(getFirstPhoto(post).file_path)"
                 :alt="extractTitle(post.text)"
                 :class="getSquareMediaClasses('preview')"
                 @load="handleImageLoad"
                 @error="handleImageError"
             />
-            
+
             <!-- Показываем видео если есть видео и нет ошибки -->
             <div
-                v-else-if="hasVideo(post) && getFirstVideo(post) && getFirstVideo(post).file_path && !videoError"
+                v-else-if="
+                    hasVideo(post) &&
+                    getFirstVideo(post) &&
+                    getFirstVideo(post).file_path &&
+                    !videoError
+                "
                 class="w-full h-full bg-gray-200 flex items-center justify-center relative"
             >
                 <video
@@ -137,20 +147,53 @@
             <!-- Информация о публикации -->
             <div class="space-y-1 mb-4">
                 <div class="flex items-center text-xs text-gray-500">
-                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                        class="w-3 h-3 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                     </svg>
                     {{ formatDate(post.scheduled_at) }}
                 </div>
                 <div class="flex items-center text-xs text-gray-500">
-                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    <svg
+                        class="w-3 h-3 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
                     </svg>
                     {{ getChannelName(post.scheduled_channel_id) }}
                 </div>
-                <div v-if="post.url" class="flex items-center text-xs text-gray-500">
-                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                <div
+                    v-if="post.url"
+                    class="flex items-center text-xs text-gray-500"
+                >
+                    <svg
+                        class="w-3 h-3 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                        />
                     </svg>
                     {{ post.url }}
                 </div>
@@ -178,7 +221,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import MediaErrorFallback from "./MediaErrorFallback.vue";
+import MediaErrorFallback from "@/components/Media/MediaErrorFallback.vue";
 
 const props = defineProps({
     post: {
@@ -195,7 +238,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['edit', 'cancel']);
+const emit = defineEmits(["edit", "cancel"]);
 
 const router = useRouter();
 const imageError = ref(false);
@@ -203,37 +246,38 @@ const videoError = ref(false);
 
 // Методы для работы с медиа
 const hasPhoto = (post) => {
-    console.log('Checking for photos in post:', post);
-    console.log('Post media:', post.media);
-    const hasPhotos = post.media && post.media.some(media => media.type === 'photo');
-    console.log('Has photos:', hasPhotos);
+    console.log("Checking for photos in post:", post);
+    console.log("Post media:", post.media);
+    const hasPhotos =
+        post.media && post.media.some((media) => media.type === "photo");
+    console.log("Has photos:", hasPhotos);
     return hasPhotos;
 };
 
 const hasVideo = (post) => {
-    return post.media && post.media.some(media => media.type === 'video');
+    return post.media && post.media.some((media) => media.type === "video");
 };
 
 const getFirstPhoto = (post) => {
-    const firstPhoto = post.media?.find(media => media.type === 'photo');
-    console.log('First photo:', firstPhoto);
+    const firstPhoto = post.media?.find((media) => media.type === "photo");
+    console.log("First photo:", firstPhoto);
     return firstPhoto;
 };
 
 const getFirstVideo = (post) => {
-    return post.media?.find(media => media.type === 'video');
+    return post.media?.find((media) => media.type === "video");
 };
 
 const getMediaPath = (filePath) => {
     if (!filePath) return null;
-    console.log('Processing file path:', filePath);
+    console.log("Processing file path:", filePath);
     // Если путь уже содержит полный URL, возвращаем как есть
-    if (filePath.startsWith('http')) return filePath;
+    if (filePath.startsWith("http")) return filePath;
     // Если путь начинается с /media/, возвращаем как есть
-    if (filePath.startsWith('/media/')) return filePath;
+    if (filePath.startsWith("/media/")) return filePath;
     // Иначе добавляем префикс /media/
     const result = `/media/${filePath}`;
-    console.log('Final media path:', result);
+    console.log("Final media path:", result);
     return result;
 };
 
@@ -242,8 +286,8 @@ const getCoverImageUrl = (filePath) => {
 };
 
 const getSquareMediaClasses = (type) => {
-    const baseClasses = 'w-full h-full object-cover';
-    return type === 'preview' ? baseClasses : baseClasses;
+    const baseClasses = "w-full h-full object-cover";
+    return type === "preview" ? baseClasses : baseClasses;
 };
 
 const handleImageLoad = () => {
@@ -264,27 +308,30 @@ const handleVideoError = () => {
 
 // Методы для работы с текстом
 const extractTitle = (text) => {
-    if (!text) return 'Без заголовка';
-    const lines = text.split('\n').filter(line => line.trim());
-    return lines[0] || 'Без заголовка';
+    if (!text) return "Без заголовка";
+    const lines = text.split("\n").filter((line) => line.trim());
+    return lines[0] || "Без заголовка";
 };
 
 const extractContent = (text) => {
-    if (!text) return '';
-    const lines = text.split('\n').filter(line => line.trim());
-    return lines.slice(1).join(' ').substring(0, 150) + (lines.slice(1).join(' ').length > 150 ? '...' : '');
+    if (!text) return "";
+    const lines = text.split("\n").filter((line) => line.trim());
+    return (
+        lines.slice(1).join(" ").substring(0, 150) +
+        (lines.slice(1).join(" ").length > 150 ? "..." : "")
+    );
 };
 
 // Методы для работы с датами и каналами
 const formatDate = (dateString) => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+    return date.toLocaleString("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
     });
 };
 
@@ -294,13 +341,13 @@ const isOverdue = (scheduledAt) => {
 };
 
 const getChannelName = (channelId) => {
-    if (!channelId) return 'Неизвестный канал';
+    if (!channelId) return "Неизвестный канал";
     const channel = props.channels.find((ch) => ch.channel_id === channelId);
     return channel ? channel.name : `ID: ${channelId}`;
 };
 
 const navigateToPost = () => {
-    router.push({ name: 'post', params: { id: props.post._id } });
+    router.push({ name: "post", params: { id: props.post._id } });
 };
 </script>
 
@@ -330,4 +377,4 @@ const navigateToPost = () => {
         grid-template-columns: 1fr;
     }
 }
-</style> 
+</style>

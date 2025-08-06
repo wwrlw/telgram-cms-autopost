@@ -1,4 +1,3 @@
-и
 <template>
     <div>
         <div
@@ -136,11 +135,14 @@ const LoginService = async () => {
                 localStorage.setItem("token", res.data.token);
                 localStorage.setItem("userId", res.data.userId);
                 localStorage.setItem("role", res.data.role);
-                localStorage.setItem("user", JSON.stringify({
-                    id: res.data.userId,
-                    username: loginForm.value.username,
-                    role: res.data.role
-                }));
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify({
+                        id: res.data.userId,
+                        username: loginForm.value.username,
+                        role: res.data.role,
+                    })
+                );
                 router.push("/");
             } else {
                 errorMessage.value = res?.message || "Invalid credentials.";

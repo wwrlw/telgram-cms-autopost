@@ -3,13 +3,24 @@
         <div class="max-w-7xl mx-auto">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Системные логи</h1>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        Системные логи
+                    </h1>
                     <div class="text-sm text-gray-600 mt-1">
                         <p v-if="selectedUserId">
-                            Фильтр: {{ users.find(u => u._id === selectedUserId)?.username || 'Неизвестный пользователь' }}
+                            Фильтр:
+                            {{
+                                users.find((u) => u._id === selectedUserId)
+                                    ?.username || "Неизвестный пользователь"
+                            }}
                         </p>
                         <p>
-                            Сортировка: {{ sortOrder === 'desc' ? 'Сначала новые' : 'Сначала старые' }}
+                            Сортировка:
+                            {{
+                                sortOrder === "desc"
+                                    ? "Сначала новые"
+                                    : "Сначала старые"
+                            }}
                         </p>
                     </div>
                 </div>
@@ -20,7 +31,11 @@
                         class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="">Все пользователи</option>
-                        <option v-for="user in users" :key="user._id" :value="user._id">
+                        <option
+                            v-for="user in users"
+                            :key="user._id"
+                            :value="user._id"
+                        >
                             {{ user.username }}
                         </option>
                     </select>
@@ -37,8 +52,18 @@
                         @click="clearFilter"
                         class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 flex items-center gap-2"
                     >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
                         </svg>
                         Сбросить фильтр
                     </button>
@@ -46,8 +71,18 @@
                         @click="loadLogs"
                         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
                     >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
                         </svg>
                         Обновить
                     </button>
@@ -59,36 +94,59 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
                                     Время
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
                                     Пользователь
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
                                     Действие
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
                                     Детали
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             <tr v-for="log in sortedLogs" :key="log._id">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                                >
                                     {{ formatDate(log.timestamp) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ log.username }}</div>
-                                    <div class="text-sm text-gray-500">{{ log.userId }}</div>
+                                    <div
+                                        class="text-sm font-medium text-gray-900"
+                                    >
+                                        {{ log.username }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        {{ log.userId }}
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span :class="getActionBadgeClass(log.method)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
+                                    <span
+                                        :class="getActionBadgeClass(log.method)"
+                                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                                    >
                                         {{ log.method }}
                                     </span>
-                                    <div class="text-sm text-gray-500 mt-1">{{ log.url }}</div>
+                                    <div class="text-sm text-gray-500 mt-1">
+                                        {{ log.url }}
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium"
+                                >
                                     <button
                                         @click="showLogDetails(log)"
                                         class="text-indigo-600 hover:text-indigo-900"
@@ -102,7 +160,9 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div
+                    class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6"
+                >
                     <div class="flex-1 flex justify-between sm:hidden">
                         <button
                             @click="prevPage"
@@ -119,16 +179,28 @@
                             Следующая
                         </button>
                     </div>
-                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div
+                        class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
+                    >
                         <div>
                             <p class="text-sm text-gray-700">
-                                Показано <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span>
-                                до <span class="font-medium">{{ Math.min(currentPage * pageSize, totalLogs) }}</span>
-                                из <span class="font-medium">{{ totalLogs }}</span> записей
+                                Показано
+                                <span class="font-medium">{{
+                                    (currentPage - 1) * pageSize + 1
+                                }}</span>
+                                до
+                                <span class="font-medium">{{
+                                    Math.min(currentPage * pageSize, totalLogs)
+                                }}</span>
+                                из
+                                <span class="font-medium">{{ totalLogs }}</span>
+                                записей
                             </p>
                         </div>
                         <div>
-                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            <nav
+                                class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                            >
                                 <button
                                     @click="prevPage"
                                     :disabled="currentPage <= 1"
@@ -136,7 +208,9 @@
                                 >
                                     Предыдущая
                                 </button>
-                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                <span
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                                >
                                     {{ currentPage }} из {{ totalPages }}
                                 </span>
                                 <button
@@ -155,36 +229,72 @@
     </div>
 
     <!-- Log Details Modal -->
-    <div v-if="showDetailsModal" class="fixed inset-0 bg-white/30 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
+    <div
+        v-if="showDetailsModal"
+        class="fixed inset-0 bg-white/30 backdrop-blur-sm overflow-y-auto h-full w-full z-50"
+    >
+        <div
+            class="relative top-20 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white"
+        >
             <div class="mt-3">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">Детали лога</h3>
+                    <h3 class="text-lg font-medium text-gray-900">
+                        Детали лога
+                    </h3>
                     <button
                         @click="showDetailsModal = false"
                         class="text-gray-400 hover:text-gray-600"
                     >
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        <svg
+                            class="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
                         </svg>
                     </button>
                 </div>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Действие</label>
-                        <p class="mt-1 text-sm text-gray-900">{{ selectedLog?.action }}</p>
+                        <label class="block text-sm font-medium text-gray-700"
+                            >Действие</label
+                        >
+                        <p class="mt-1 text-sm text-gray-900">
+                            {{ selectedLog?.action }}
+                        </p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">URL</label>
-                        <p class="mt-1 text-sm text-gray-900">{{ selectedLog?.url }}</p>
+                        <label class="block text-sm font-medium text-gray-700"
+                            >URL</label
+                        >
+                        <p class="mt-1 text-sm text-gray-900">
+                            {{ selectedLog?.url }}
+                        </p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">User Agent</label>
-                        <p class="mt-1 text-sm text-gray-900">{{ selectedLog?.userAgent || 'N/A' }}</p>
+                        <label class="block text-sm font-medium text-gray-700"
+                            >User Agent</label
+                        >
+                        <p class="mt-1 text-sm text-gray-900">
+                            {{ selectedLog?.userAgent || "N/A" }}
+                        </p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Тело запроса</label>
-                        <pre class="mt-1 text-sm text-gray-900 bg-gray-100 p-4 rounded-md overflow-auto max-h-64">{{ JSON.stringify(selectedLog?.body, null, 2) }}</pre>
+                        <label class="block text-sm font-medium text-gray-700"
+                            >Тело запроса</label
+                        >
+                        <pre
+                            class="mt-1 text-sm text-gray-900 bg-gray-100 p-4 rounded-md overflow-auto max-h-64"
+                            >{{
+                                JSON.stringify(selectedLog?.body, null, 2)
+                            }}</pre
+                        >
                     </div>
                 </div>
             </div>
@@ -193,16 +303,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import Sidebar from '@/components/Sidebar.vue';
-import http from '@/js/http';
+import { ref, onMounted, computed, watch } from "vue";
+import { useRoute } from "vue-router";
+import Sidebar from "@/components/Sidebar.vue";
+import http from "@/js/http";
 
 const route = useRoute();
 const logs = ref([]);
 const users = ref([]);
-const selectedUserId = ref('');
-const sortOrder = ref('desc'); // desc - новые сначала, asc - старые сначала
+const selectedUserId = ref("");
+const sortOrder = ref("desc"); // desc - новые сначала, asc - старые сначала
 const currentPage = ref(1);
 const pageSize = ref(50);
 const totalLogs = ref(0);
@@ -212,34 +322,34 @@ const selectedLog = ref(null);
 
 const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleString('ru-RU', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+    return date.toLocaleString("ru-RU", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
     });
 };
 
 const getActionBadgeClass = (method) => {
     switch (method) {
-        case 'GET':
-            return 'bg-green-100 text-green-800';
-        case 'POST':
-            return 'bg-blue-100 text-blue-800';
-        case 'PUT':
-            return 'bg-yellow-100 text-yellow-800';
-        case 'DELETE':
-            return 'bg-red-100 text-red-800';
+        case "GET":
+            return "bg-green-100 text-green-800";
+        case "POST":
+            return "bg-blue-100 text-blue-800";
+        case "PUT":
+            return "bg-yellow-100 text-yellow-800";
+        case "DELETE":
+            return "bg-red-100 text-red-800";
         default:
-            return 'bg-gray-100 text-gray-800';
+            return "bg-gray-100 text-gray-800";
     }
 };
 
 const loadUsers = () => {
     http.getAllUsers((response) => {
-        console.log('Users response:', response);
+        console.log("Users response:", response);
         if (response.success) {
             users.value = response.data;
         }
@@ -251,44 +361,66 @@ const loadLogs = () => {
     if (selectedUserId.value !== route.query.userId) {
         currentPage.value = 1;
     }
-    
-    console.log('Loading logs with userId:', selectedUserId.value, 'page:', currentPage.value, 'sort:', sortOrder.value);
-    
+
+    console.log(
+        "Loading logs with userId:",
+        selectedUserId.value,
+        "page:",
+        currentPage.value,
+        "sort:",
+        sortOrder.value
+    );
+
     // Проверяем, что selectedUserId не пустой и не undefined
-    if (selectedUserId.value && selectedUserId.value !== 'undefined') {
-        http.getUserLogs(selectedUserId.value, currentPage.value, pageSize.value, sortOrder.value, (response) => {
-            console.log('Logs response:', response);
-            if (response.success) {
-                logs.value = response.data;
-                if (response.pagination) {
-                    totalLogs.value = response.pagination.total;
-                    totalPages.value = response.pagination.pages;
+    if (selectedUserId.value && selectedUserId.value !== "undefined") {
+        http.getUserLogs(
+            selectedUserId.value,
+            currentPage.value,
+            pageSize.value,
+            sortOrder.value,
+            (response) => {
+                console.log("Logs response:", response);
+                if (response.success) {
+                    logs.value = response.data;
+                    if (response.pagination) {
+                        totalLogs.value = response.pagination.total;
+                        totalPages.value = response.pagination.pages;
+                    }
+                } else {
+                    window.$toast?.error(
+                        "Ошибка загрузки логов: " + response.message
+                    );
                 }
-            } else {
-                window.$toast?.error('Ошибка загрузки логов: ' + response.message);
             }
-        });
+        );
     } else {
         // Если не выбран пользователь, грузим все логи
-        http.getLogs(currentPage.value, pageSize.value, sortOrder.value, (response) => {
-            console.log('Logs response:', response);
-            if (response.success) {
-                logs.value = response.data;
-                if (response.pagination) {
-                    totalLogs.value = response.pagination.total;
-                    totalPages.value = response.pagination.pages;
+        http.getLogs(
+            currentPage.value,
+            pageSize.value,
+            sortOrder.value,
+            (response) => {
+                console.log("Logs response:", response);
+                if (response.success) {
+                    logs.value = response.data;
+                    if (response.pagination) {
+                        totalLogs.value = response.pagination.total;
+                        totalPages.value = response.pagination.pages;
+                    }
+                } else {
+                    window.$toast?.error(
+                        "Ошибка загрузки логов: " + response.message
+                    );
                 }
-            } else {
-                window.$toast?.error('Ошибка загрузки логов: ' + response.message);
             }
-        });
+        );
     }
 };
 
 // Функция для сброса фильтра
 const clearFilter = () => {
-    selectedUserId.value = '';
-    sortOrder.value = 'desc'; // Сбрасываем к сортировке по умолчанию
+    selectedUserId.value = "";
+    sortOrder.value = "desc"; // Сбрасываем к сортировке по умолчанию
     currentPage.value = 1;
     loadLogs();
 };
@@ -319,18 +451,21 @@ const sortedLogs = computed(() => {
 });
 
 // Watch for route query changes
-watch(() => route.query.userId, (newUserId) => {
-    console.log('Route query userId changed:', newUserId);
-    if (newUserId && newUserId !== 'undefined') {
-        selectedUserId.value = newUserId;
-        currentPage.value = 1; // Сбрасываем страницу при смене пользователя
-        loadLogs();
-    } else {
-        selectedUserId.value = '';
-        currentPage.value = 1;
-        loadLogs();
+watch(
+    () => route.query.userId,
+    (newUserId) => {
+        console.log("Route query userId changed:", newUserId);
+        if (newUserId && newUserId !== "undefined") {
+            selectedUserId.value = newUserId;
+            currentPage.value = 1; // Сбрасываем страницу при смене пользователя
+            loadLogs();
+        } else {
+            selectedUserId.value = "";
+            currentPage.value = 1;
+            loadLogs();
+        }
     }
-});
+);
 
 // Watch for sort order changes
 watch(sortOrder, () => {
@@ -339,20 +474,20 @@ watch(sortOrder, () => {
 });
 
 onMounted(() => {
-    console.log('SystemLogs mounted, route.query:', route.query);
+    console.log("SystemLogs mounted, route.query:", route.query);
     // Check if specific user ID is provided in query
-    if (route.query.userId && route.query.userId !== 'undefined') {
+    if (route.query.userId && route.query.userId !== "undefined") {
         selectedUserId.value = route.query.userId;
-        console.log('Set selectedUserId from route:', route.query.userId);
+        console.log("Set selectedUserId from route:", route.query.userId);
     } else {
-        selectedUserId.value = '';
-        console.log('No valid userId in route, setting empty string');
+        selectedUserId.value = "";
+        console.log("No valid userId in route, setting empty string");
     }
-    
+
     loadUsers();
     // Загружаем логи после небольшой задержки, чтобы убедиться, что selectedUserId установлен
     setTimeout(() => {
         loadLogs();
     }, 100);
 });
-</script> 
+</script>

@@ -207,7 +207,10 @@
                             <span v-if="!isCollapsed">Категории</span>
                         </router-link>
                     </li>
-                    <li v-if="!isForbiddenRole(['editor'])" :class="isCollapsed ? 'flex justify-center' : ''">
+                    <li
+                        v-if="!isForbiddenRole(['editor'])"
+                        :class="isCollapsed ? 'flex justify-center' : ''"
+                    >
                         <router-link
                             :to="{ name: 'channels' }"
                             :class="[
@@ -237,7 +240,10 @@
                             <span v-if="!isCollapsed">Каналы</span>
                         </router-link>
                     </li>
-                    <li v-if="!isForbiddenRole(['editor'])" :class="isCollapsed ? 'flex justify-center' : ''">
+                    <li
+                        v-if="!isForbiddenRole(['editor'])"
+                        :class="isCollapsed ? 'flex justify-center' : ''"
+                    >
                         <router-link
                             :to="{ name: 'posted-channels' }"
                             :class="[
@@ -270,7 +276,10 @@
                             <span v-if="!isCollapsed">Каналы публикации</span>
                         </router-link>
                     </li>
-                    <li v-if="!isForbiddenRole(['editor'])" :class="isCollapsed ? 'flex justify-center' : ''">
+                    <li
+                        v-if="!isForbiddenRole(['editor'])"
+                        :class="isCollapsed ? 'flex justify-center' : ''"
+                    >
                         <router-link
                             :to="{ name: 'analytics' }"
                             :class="[
@@ -300,9 +309,12 @@
                             <span v-if="!isCollapsed">Аналитика</span>
                         </router-link>
                     </li>
-                    
+
                     <!-- Super Admin Only -->
-                    <li v-if="userRole === 'super_admin'" :class="isCollapsed ? 'flex justify-center' : ''">
+                    <li
+                        v-if="userRole === 'super_admin'"
+                        :class="isCollapsed ? 'flex justify-center' : ''"
+                    >
                         <router-link
                             :to="{ name: 'users' }"
                             :class="[
@@ -310,7 +322,9 @@
                                 isCollapsed ? 'justify-center' : '',
                                 { 'bg-gray-700': $route.path === '/users' },
                             ]"
-                            :title="isCollapsed ? 'Управление пользователями' : ''"
+                            :title="
+                                isCollapsed ? 'Управление пользователями' : ''
+                            "
                         >
                             <svg
                                 :class="
@@ -332,7 +346,12 @@
                             <span v-if="!isCollapsed">Пользователи</span>
                         </router-link>
                     </li>
-                    <li v-if="userRole === 'super_admin' || userRole === 'admin'" :class="isCollapsed ? 'flex justify-center' : ''">
+                    <li
+                        v-if="
+                            userRole === 'super_admin' || userRole === 'admin'
+                        "
+                        :class="isCollapsed ? 'flex justify-center' : ''"
+                    >
                         <router-link
                             :to="{ name: 'logs' }"
                             :class="[
@@ -368,8 +387,10 @@
                 <div v-if="!isCollapsed" class="text-xs text-gray-400">
                     Logged in as:
                     <span class="text-white font-medium">{{ username }}</span>
-                    <br>
-                    <span class="text-indigo-300 text-xs">{{ userRoleDisplay }}</span>
+                    <br />
+                    <span class="text-indigo-300 text-xs">{{
+                        userRoleDisplay
+                    }}</span>
                 </div>
                 <div v-else class="text-center">
                     <div
@@ -399,14 +420,14 @@ const isCollapsed = ref(false);
 
 const userRoleDisplay = computed(() => {
     switch (userRole.value) {
-        case 'super_admin':
-            return 'Супер Администратор';
-        case 'admin':
-            return 'Администратор';
-        case 'editor':
-            return 'Редактор';
+        case "super_admin":
+            return "Супер Администратор";
+        case "admin":
+            return "Администратор";
+        case "editor":
+            return "Редактор";
         default:
-            return 'Пользователь';
+            return "Пользователь";
     }
 });
 
@@ -423,11 +444,11 @@ const loadUserData = () => {
     try {
         const userData = localStorage.getItem("user");
         const roleFromStorage = localStorage.getItem("role");
-        
-        console.log('Loading user data:', { userData, roleFromStorage }); // Debug log
-        
+
+        console.log("Loading user data:", { userData, roleFromStorage }); // Debug log
+
         userRole.value = roleFromStorage || "";
-        
+
         if (userData) {
             const user = JSON.parse(userData);
             username.value =
@@ -436,7 +457,7 @@ const loadUserData = () => {
                 user.email ||
                 user.displayName ||
                 "Пользователь";
-            
+
             // Also check role from user object if not in separate storage
             if (!userRole.value && user.role) {
                 userRole.value = user.role;
@@ -444,8 +465,8 @@ const loadUserData = () => {
         } else {
             username.value = "Пользователь";
         }
-        
-        console.log('Final user role:', userRole.value); // Debug log
+
+        console.log("Final user role:", userRole.value); // Debug log
     } catch (error) {
         console.error("Error loading user data:", error);
         username.value = "Пользователь";

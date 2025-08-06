@@ -79,16 +79,16 @@ let http = {
             ? `/posts/infinite-scroll?${queryParams.toString()}`
             : "/posts/infinite-scroll";
 
-        console.log('Making infinite scroll request to:', url);
+        console.log("Making infinite scroll request to:", url);
 
         instance
             .get(url)
             .then((res) => {
-                console.log('Infinite scroll response:', res.data);
+                console.log("Infinite scroll response:", res.data);
                 callback(res.data);
             })
             .catch((err) => {
-                console.error('Infinite scroll error:', err);
+                console.error("Infinite scroll error:", err);
                 if (errorCallback) errorCallback(err);
             });
     },
@@ -441,38 +441,44 @@ let http = {
 
     updatePost: function (params, callback) {
         const { id, ...updateData } = params;
-        
+
         // Создаем FormData для отправки данных
         const formData = new FormData();
-        
+
         // Добавляем текстовые поля
         if (updateData.text !== undefined) {
-            formData.append('text', updateData.text);
+            formData.append("text", updateData.text);
         }
         if (updateData.is_unique !== undefined) {
-            formData.append('is_unique', updateData.is_unique.toString());
+            formData.append("is_unique", updateData.is_unique.toString());
         }
         if (updateData.url !== undefined) {
-            formData.append('url', updateData.url);
+            formData.append("url", updateData.url);
         }
         if (updateData.channel_id !== undefined) {
-            formData.append('channel_id', updateData.channel_id);
+            formData.append("channel_id", updateData.channel_id);
         }
-        
+
         // Добавляем медиафайлы
         if (updateData.media && Array.isArray(updateData.media)) {
             updateData.media.forEach((media, index) => {
                 formData.append(`media[${index}][type]`, media.type);
                 formData.append(`media[${index}][file_path]`, media.file_path);
                 if (media.original_name) {
-                    formData.append(`media[${index}][original_name]`, media.original_name);
+                    formData.append(
+                        `media[${index}][original_name]`,
+                        media.original_name
+                    );
                 }
                 if (media.mime_type) {
-                    formData.append(`media[${index}][mime_type]`, media.mime_type);
+                    formData.append(
+                        `media[${index}][mime_type]`,
+                        media.mime_type
+                    );
                 }
             });
         }
-        
+
         instance
             .put(`/posts/${id}`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -509,14 +515,16 @@ let http = {
                 callback && callback(res.data);
             })
             .catch((err) => {
-                console.error('Upload media error:', err);
-                const errorMessage = err.response?.data?.message || 
-                                   err.message || 
-                                   "Ошибка загрузки файла";
+                console.error("Upload media error:", err);
+                const errorMessage =
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Ошибка загрузки файла";
                 if (error) {
                     error({ success: false, message: errorMessage });
                 } else {
-                    callback && callback({ success: false, message: errorMessage });
+                    callback &&
+                        callback({ success: false, message: errorMessage });
                 }
             });
     },
@@ -609,14 +617,19 @@ let http = {
             })
             .catch((err) => {
                 const errorMessage =
-                    err.response?.data?.message ||
-                    "Failed to update user role";
+                    err.response?.data?.message || "Failed to update user role";
                 callback({ success: false, message: errorMessage });
             });
     },
 
     // Logs endpoints (super_admin only)
-    getLogs: function (page = 1, limit = 50, sort = 'desc', callback, errorCallback) {
+    getLogs: function (
+        page = 1,
+        limit = 50,
+        sort = "desc",
+        callback,
+        errorCallback
+    ) {
         instance
             .get(`/logs?page=${page}&limit=${limit}&sort=${sort}`)
             .then((res) => {
@@ -632,9 +645,18 @@ let http = {
             });
     },
 
-    getUserLogs: function (userId, page = 1, limit = 50, sort = 'desc', callback, errorCallback) {
+    getUserLogs: function (
+        userId,
+        page = 1,
+        limit = 50,
+        sort = "desc",
+        callback,
+        errorCallback
+    ) {
         instance
-            .get(`/logs/user/${userId}?page=${page}&limit=${limit}&sort=${sort}`)
+            .get(
+                `/logs/user/${userId}?page=${page}&limit=${limit}&sort=${sort}`
+            )
             .then((res) => {
                 callback(res.data);
             })
@@ -650,7 +672,7 @@ let http = {
 };
 
 export function getToken() {
-  return localStorage.getItem('token') || sessionStorage.getItem('token');
+    return localStorage.getItem("token") || sessionStorage.getItem("token");
 }
 
 export default http;

@@ -1,5 +1,7 @@
 <template>
-    <div class="post-skeleton bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div
+        class="post-skeleton bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+    >
         <div class="aspect-video bg-gray-200 skeleton"></div>
         <div class="p-4 space-y-3">
             <div class="h-4 bg-gray-200 rounded skeleton w-3/4"></div>
@@ -35,4 +37,4 @@
         transform: translateY(0);
     }
 }
-</style> 
+</style>

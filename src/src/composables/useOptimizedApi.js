@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue';
+import { ref, reactive } from "vue";
 
 export function useOptimizedApi() {
     const cache = reactive(new Map());
@@ -15,8 +15,8 @@ export function useOptimizedApi() {
     const createCacheKey = (endpoint, params) => {
         const sortedParams = Object.keys(params || {})
             .sort()
-            .map(key => `${key}:${params[key]}`)
-            .join('&');
+            .map((key) => `${key}:${params[key]}`)
+            .join("&");
         return `${endpoint}?${sortedParams}`;
     };
 
@@ -30,7 +30,7 @@ export function useOptimizedApi() {
         const {
             useCache = true,
             cacheTime = 5 * 60 * 1000, // 5 минут
-            forceRefresh = false
+            forceRefresh = false,
         } = options;
 
         const cacheKey = createCacheKey(apiFunction.name, params);
@@ -51,7 +51,7 @@ export function useOptimizedApi() {
         // Создаем новый запрос
         const requestPromise = new Promise((resolve, reject) => {
             // Проверяем, ожидает ли функция callback
-            if (typeof apiFunction === 'function') {
+            if (typeof apiFunction === "function") {
                 try {
                     // Создаем callback функции
                     const successCallback = (response) => {
@@ -60,19 +60,21 @@ export function useOptimizedApi() {
                             if (useCache) {
                                 cache.set(cacheKey, {
                                     data: response,
-                                    timestamp: Date.now()
+                                    timestamp: Date.now(),
                                 });
                             }
                             resolve(response);
                         } else {
-                            reject(new Error(response?.message || 'Request failed'));
+                            reject(
+                                new Error(response?.message || "Request failed")
+                            );
                         }
                     };
-                    
+
                     const errorCallback = (error) => {
                         reject(error);
                     };
-                    
+
                     // Вызываем функцию с правильными аргументами
                     if (Object.keys(params).length > 0) {
                         apiFunction(params, successCallback, errorCallback);
@@ -83,7 +85,7 @@ export function useOptimizedApi() {
                     reject(error);
                 }
             } else {
-                reject(new Error('apiFunction is not a function'));
+                reject(new Error("apiFunction is not a function"));
             }
         });
 
@@ -144,7 +146,8 @@ export function useOptimizedApi() {
     const cleanupCache = () => {
         const now = Date.now();
         for (const [key, value] of cache) {
-            if (now - value.timestamp > 10 * 60 * 1000) { // 10 минут
+            if (now - value.timestamp > 10 * 60 * 1000) {
+                // 10 минут
                 cache.delete(key);
             }
         }
@@ -160,6 +163,6 @@ export function useOptimizedApi() {
         clearCache,
         cleanupCache,
         cache,
-        pendingRequests
+        pendingRequests,
     };
-} 
+}

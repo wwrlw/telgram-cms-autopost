@@ -17,9 +17,9 @@ const SystemLogs = () => import("@/views/SystemLogs.vue");
 import { getToken } from "@/js/http";
 
 const ROLES = {
-    SUPER_ADMIN: 'super_admin',
-    ADMIN: 'admin',
-    EDITOR: 'editor'
+    SUPER_ADMIN: "super_admin",
+    ADMIN: "admin",
+    EDITOR: "editor",
 };
 
 const routes = [
@@ -32,13 +32,13 @@ const routes = [
         path: "/channels",
         name: "channels",
         component: Channels,
-        meta: { forbiddenRoles: [ROLES.EDITOR] }
+        meta: { forbiddenRoles: [ROLES.EDITOR] },
     },
     {
         path: "/posted-channels",
         name: "posted-channels",
         component: PublicationChannels,
-        meta: { forbiddenRoles: [ROLES.EDITOR] }
+        meta: { forbiddenRoles: [ROLES.EDITOR] },
     },
     {
         path: "/favorites",
@@ -49,7 +49,7 @@ const routes = [
         path: "/analytics",
         name: "analytics",
         component: Analytics,
-        meta: { forbiddenRoles: [ROLES.EDITOR] }
+        meta: { forbiddenRoles: [ROLES.EDITOR] },
     },
     {
         path: "/categories",
@@ -60,13 +60,13 @@ const routes = [
         path: "/users",
         name: "users",
         component: UserManagement,
-        meta: { requiredRole: ROLES.SUPER_ADMIN }
+        meta: { requiredRole: ROLES.SUPER_ADMIN },
     },
     {
         path: "/logs",
         name: "logs",
         component: SystemLogs,
-        meta: { allowedRoles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
+        meta: { allowedRoles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
     },
     {
         path: "/login",
@@ -117,7 +117,8 @@ router.beforeEach(async (to) => {
     let userRole = null;
     try {
         token = getToken();
-        userRole = localStorage.getItem("role") || sessionStorage.getItem("role");
+        userRole =
+            localStorage.getItem("role") || sessionStorage.getItem("role");
     } catch (error) {
         console.error("Error accessing localStorage:", error);
         token = null;
@@ -130,12 +131,16 @@ router.beforeEach(async (to) => {
 
     // Check role-based access
     if (to.meta?.requiredRole && userRole !== to.meta.requiredRole) {
-        console.warn(`Access denied: required role ${to.meta.requiredRole}, user has ${userRole}`);
+        console.warn(
+            `Access denied: required role ${to.meta.requiredRole}, user has ${userRole}`
+        );
         return "/";
     }
 
     if (to.meta?.allowedRoles && !to.meta.allowedRoles.includes(userRole)) {
-        console.warn(`Access denied: allowed roles ${to.meta.allowedRoles}, user has ${userRole}`);
+        console.warn(
+            `Access denied: allowed roles ${to.meta.allowedRoles}, user has ${userRole}`
+        );
         return "/";
     }
 

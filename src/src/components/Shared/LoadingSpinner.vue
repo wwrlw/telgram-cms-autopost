@@ -9,13 +9,13 @@
 defineProps({
     size: {
         type: String,
-        default: 'medium',
-        validator: (value) => ['small', 'medium', 'large'].includes(value)
+        default: "medium",
+        validator: (value) => ["small", "medium", "large"].includes(value),
     },
     text: {
         type: String,
-        default: ''
-    }
+        default: "",
+    },
 });
 </script>
 
@@ -60,7 +60,11 @@ defineProps({
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
-</style> 
+</style>

@@ -1,57 +1,63 @@
 export const getMediaUrl = (filePath) => {
-    if (!filePath || typeof filePath !== 'string') {
-        console.warn('Invalid filePath:', filePath);
-        return '';
+    if (!filePath || typeof filePath !== "string") {
+        console.warn("Invalid filePath:", filePath);
+        return "";
     }
 
     try {
         const cleanPath = filePath.replace("/app/", "");
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://tg.chiorio.com';
-        
+        const baseUrl =
+            import.meta.env.VITE_API_URL || "https://tg.chiorio.com";
+
         // Если путь уже полный URL, возвращаем как есть
-        if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+        if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
             return filePath;
         }
-        
+
         // Убираем лишние слеши и нормализуем путь
-        const normalizedPath = cleanPath.replace(/^\/+/, '').replace(/\/+/g, '/');
-        
+        const normalizedPath = cleanPath
+            .replace(/^\/+/, "")
+            .replace(/\/+/g, "/");
+
         // Создаем базовый URL без параметров качества
         let url = `${baseUrl}/${normalizedPath}`;
-        
+
         return url;
     } catch (error) {
-        console.warn('Error creating media URL:', error);
-        return '';
+        console.warn("Error creating media URL:", error);
+        return "";
     }
 };
 
 // Отдельная функция для получения URL изображений без параметров качества
 export const getCoverImageUrl = (filePath) => {
-    if (!filePath || typeof filePath !== 'string') {
-        console.warn('Invalid filePath:', filePath);
-        return '';
+    if (!filePath || typeof filePath !== "string") {
+        console.warn("Invalid filePath:", filePath);
+        return "";
     }
 
     try {
         const cleanPath = filePath.replace("/app/", "");
-        const baseUrl = import.meta.env.VITE_API_URL || 'https://tg.chiorio.com';
-        
+        const baseUrl =
+            import.meta.env.VITE_API_URL || "https://tg.chiorio.com";
+
         // Если путь уже полный URL, возвращаем как есть
-        if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+        if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
             return filePath;
         }
-        
+
         // Убираем лишние слеши и нормализуем путь
-        const normalizedPath = cleanPath.replace(/^\/+/, '').replace(/\/+/g, '/');
-        
+        const normalizedPath = cleanPath
+            .replace(/^\/+/, "")
+            .replace(/\/+/g, "/");
+
         // Создаем базовый URL БЕЗ параметров
         let url = `${baseUrl}/${normalizedPath}`;
-        
+
         return url;
     } catch (error) {
-        console.warn('Error creating cover image URL:', error);
-        return '';
+        console.warn("Error creating cover image URL:", error);
+        return "";
     }
 };
 
@@ -59,36 +65,40 @@ export const getCoverImageUrl = (filePath) => {
 export const getOptimalObjectFit = (mediaType, isVertical = false) => {
     // Для вертикальных медиа используем contain, чтобы не обрезать
     if (isVertical) {
-        return 'object-contain';
+        return "object-contain";
     }
-    
+
     // Для горизонтальных медиа используем cover для лучшего заполнения
-    return 'object-cover';
+    return "object-cover";
 };
 
 // Функция для определения ориентации медиа по размеру
 export const detectMediaOrientation = (width, height) => {
-    if (!width || !height) return 'horizontal';
-    return width > height ? 'horizontal' : 'vertical';
+    if (!width || !height) return "horizontal";
+    return width > height ? "horizontal" : "vertical";
 };
 
 // Функция для получения единого квадратного формата для всех медиа
-export const getSquareMediaClasses = (context = 'preview') => {
-    const baseClasses = 'transition-all duration-300';
-    
-    if (context === 'preview') {
+export const getSquareMediaClasses = (context = "preview") => {
+    const baseClasses = "transition-all duration-300";
+
+    if (context === "preview") {
         return `${baseClasses} w-full h-full object-cover`;
-    } else if (context === 'viewer') {
+    } else if (context === "viewer") {
         return `${baseClasses} max-w-full max-h-full object-contain`;
-    } else if (context === 'thumbnail') {
+    } else if (context === "thumbnail") {
         return `${baseClasses} w-full h-full object-cover`;
     }
-    
+
     return `${baseClasses} w-full h-full object-cover`;
 };
 
 // Функция для получения стандартных классов для медиа (устаревшая, используйте getSquareMediaClasses)
-export const getMediaClasses = (mediaType, isVertical = false, context = 'preview') => {
+export const getMediaClasses = (
+    mediaType,
+    isVertical = false,
+    context = "preview"
+) => {
     return getSquareMediaClasses(context);
 };
 

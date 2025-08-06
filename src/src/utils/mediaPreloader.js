@@ -8,7 +8,7 @@ class MediaPreloader {
 
     // Проверка и нормализация URL
     normalizeUrl(url) {
-        if (!url || typeof url !== 'string') {
+        if (!url || typeof url !== "string") {
             return null;
         }
 
@@ -16,8 +16,9 @@ class MediaPreloader {
         url = url.trim();
 
         // Если URL относительный, добавляем базовый путь
-        if (url.startsWith('/')) {
-            const baseUrl = import.meta.env.VITE_API_URL || 'https://tg.chiorio.com';
+        if (url.startsWith("/")) {
+            const baseUrl =
+                import.meta.env.VITE_API_URL || "https://tg.chiorio.com";
             url = `${baseUrl}${url}`;
         }
 
@@ -26,7 +27,7 @@ class MediaPreloader {
             new URL(url);
             return url;
         } catch (error) {
-            console.warn('Invalid URL:', url);
+            console.warn("Invalid URL:", url);
             return null;
         }
     }
@@ -36,7 +37,7 @@ class MediaPreloader {
         return new Promise((resolve, reject) => {
             const normalizedUrl = this.normalizeUrl(url);
             if (!normalizedUrl) {
-                reject(new Error('Invalid URL'));
+                reject(new Error("Invalid URL"));
                 return;
             }
 
@@ -46,11 +47,11 @@ class MediaPreloader {
             }
 
             const img = new Image();
-            
+
             // Устанавливаем таймаут для загрузки
             const timeout = setTimeout(() => {
-                img.src = '';
-                reject(new Error('Image load timeout'));
+                img.src = "";
+                reject(new Error("Image load timeout"));
             }, 10000); // 10 секунд таймаут
 
             img.onload = () => {
@@ -58,13 +59,13 @@ class MediaPreloader {
                 this.cache.set(normalizedUrl, img);
                 resolve(img);
             };
-            
+
             img.onerror = (error) => {
                 clearTimeout(timeout);
-                console.warn('Failed to preload image:', normalizedUrl, error);
+                console.warn("Failed to preload image:", normalizedUrl, error);
                 reject(error);
             };
-            
+
             img.src = normalizedUrl;
         });
     }
@@ -74,7 +75,7 @@ class MediaPreloader {
         return new Promise((resolve, reject) => {
             const normalizedUrl = this.normalizeUrl(url);
             if (!normalizedUrl) {
-                reject(new Error('Invalid URL'));
+                reject(new Error("Invalid URL"));
                 return;
             }
 
@@ -83,59 +84,59 @@ class MediaPreloader {
                 return;
             }
 
-            const video = document.createElement('video');
+            const video = document.createElement("video");
             video.muted = true;
-            video.preload = 'metadata';
-            
+            video.preload = "metadata";
+
             // Устанавливаем таймаут для загрузки
             const timeout = setTimeout(() => {
-                video.src = '';
-                reject(new Error('Video load timeout'));
+                video.src = "";
+                reject(new Error("Video load timeout"));
             }, 15000); // 15 секунд таймаут для видео
-            
+
             video.onloadedmetadata = () => {
                 clearTimeout(timeout);
                 this.cache.set(normalizedUrl, video);
                 resolve(video);
             };
-            
+
             video.onerror = (error) => {
                 clearTimeout(timeout);
-                console.warn('Failed to preload video:', normalizedUrl, error);
+                console.warn("Failed to preload video:", normalizedUrl, error);
                 reject(error);
             };
-            
+
             video.src = normalizedUrl;
         });
     }
 
     // Предзагрузка медиа с приоритетом
-    preloadMedia(urls, priority = 'low') {
+    preloadMedia(urls, priority = "low") {
         const validUrls = urls
-            .filter(url => url && typeof url === 'string')
-            .map(url => this.normalizeUrl(url))
-            .filter(url => url !== null);
+            .filter((url) => url && typeof url === "string")
+            .map((url) => this.normalizeUrl(url))
+            .filter((url) => url !== null);
 
         if (validUrls.length === 0) {
             return Promise.resolve();
         }
 
-        const promises = validUrls.map(url => {
+        const promises = validUrls.map((url) => {
             if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                return this.preloadImage(url).catch(error => {
-                    console.warn('Failed to preload image:', url, error);
+                return this.preloadImage(url).catch((error) => {
+                    console.warn("Failed to preload image:", url, error);
                     return null;
                 });
             } else if (url.match(/\.(mp4|webm|ogg|avi|mov)$/i)) {
-                return this.preloadVideo(url).catch(error => {
-                    console.warn('Failed to preload video:', url, error);
+                return this.preloadVideo(url).catch((error) => {
+                    console.warn("Failed to preload video:", url, error);
                     return null;
                 });
             }
             return Promise.resolve(null);
         });
 
-        if (priority === 'high') {
+        if (priority === "high") {
             return Promise.all(promises);
         } else {
             // Для низкого приоритета загружаем последовательно
@@ -149,10 +150,10 @@ class MediaPreloader {
             try {
                 await promise;
                 // Небольшая задержка между загрузками
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise((resolve) => setTimeout(resolve, 100));
             } catch (error) {
                 // Ошибки уже обработаны в preloadMedia
-                console.warn('Media preload error:', error);
+                console.warn("Media preload error:", error);
             }
         }
     }
@@ -174,11 +175,19 @@ class MediaPreloader {
         }
 
         const mediaUrls = [];
-        
-        posts.forEach(post => {
-            if (post.media && Array.isArray(post.media) && post.media.length > 0) {
-                post.media.forEach(media => {
-                    if (media && media.file_path && typeof media.file_path === 'string') {
+
+        posts.forEach((post) => {
+            if (
+                post.media &&
+                Array.isArray(post.media) &&
+                post.media.length > 0
+            ) {
+                post.media.forEach((media) => {
+                    if (
+                        media &&
+                        media.file_path &&
+                        typeof media.file_path === "string"
+                    ) {
                         mediaUrls.push(media.file_path);
                     }
                 });
@@ -188,8 +197,8 @@ class MediaPreloader {
         if (mediaUrls.length > 0) {
             // Запускаем предзагрузку в фоне, не блокируя основной поток
             setTimeout(() => {
-                this.preloadMedia(mediaUrls, 'low').catch(error => {
-                    console.warn('Failed to preload posts media:', error);
+                this.preloadMedia(mediaUrls, "low").catch((error) => {
+                    console.warn("Failed to preload posts media:", error);
                 });
             }, 0);
         }
@@ -199,4 +208,4 @@ class MediaPreloader {
 // Создаем глобальный экземпляр
 const mediaPreloader = new MediaPreloader();
 
-export default mediaPreloader; 
+export default mediaPreloader;

@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import Header from "@/components/Header/HeaderComponent.vue";
+import Header from "@/components/Header.vue";
 import Sidebar from "@/components/Sidebar.vue";
 import Toast from "@/components/Shared/Toast.vue";
 import { ref, provide } from "vue";
@@ -34,20 +34,20 @@ provide("loading", loading);
 provide("refreshTrigger", refreshTrigger);
 
 const refreshPosts = () => {
-    console.log('Refresh button clicked');
-    console.log('Refresh trigger before increment:', refreshTrigger.value);
+    console.log("Refresh button clicked");
+    console.log("Refresh trigger before increment:", refreshTrigger.value);
     loading.value = true;
     refreshTrigger.value++;
-    console.log('Refresh trigger incremented to:', refreshTrigger.value);
-    
+    console.log("Refresh trigger incremented to:", refreshTrigger.value);
+
     // Отправляем событие для обновления постов
-    window.dispatchEvent(new CustomEvent('refresh-posts'));
-    
+    window.dispatchEvent(new CustomEvent("refresh-posts"));
+
     // Также пытаемся вызвать функцию обновления напрямую
     const currentRoute = router.currentRoute.value;
-    if (currentRoute.name === 'posts' || currentRoute.name === 'home') {
+    if (currentRoute.name === "posts" || currentRoute.name === "home") {
         // Если мы на странице постов, пытаемся вызвать функцию обновления
-        const postsComponent = document.querySelector('[data-posts-component]');
+        const postsComponent = document.querySelector("[data-posts-component]");
         if (postsComponent && postsComponent.__vueParentComponent) {
             const postsInstance = postsComponent.__vueParentComponent.exposed;
             if (postsInstance && postsInstance.refreshPosts) {
@@ -55,7 +55,7 @@ const refreshPosts = () => {
             }
         }
     }
-    
+
     // Сбрасываем loading через небольшую задержку
     setTimeout(() => {
         loading.value = false;
@@ -65,6 +65,5 @@ const refreshPosts = () => {
 provide("setLoading", (value) => {
     loading.value = value;
 });
-    
 </script>
 <style scoped></style>

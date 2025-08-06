@@ -1,10 +1,10 @@
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from "vue";
 
 export function useInfiniteScroll(options = {}) {
     const {
         threshold = 100, // пиксели до конца для загрузки
-        rootMargin = '0px',
-        enabled = true
+        rootMargin = "0px",
+        enabled = true,
     } = options;
 
     const isLoading = ref(false);
@@ -12,35 +12,43 @@ export function useInfiniteScroll(options = {}) {
     const observer = ref(null);
 
     const createObserver = (callback) => {
-        if (typeof IntersectionObserver === 'undefined') {
-            console.warn('IntersectionObserver not supported');
+        if (typeof IntersectionObserver === "undefined") {
+            console.warn("IntersectionObserver not supported");
             return null;
         }
 
         const obs = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    console.log('IntersectionObserver entry:', {
+                    console.log("IntersectionObserver entry:", {
                         isIntersecting: entry.isIntersecting,
                         isLoading: isLoading.value,
                         hasMore: hasMore.value,
-                        enabled: enabled
+                        enabled: enabled,
                     });
-                    
-                    if (entry.isIntersecting && !isLoading.value && hasMore.value && enabled) {
-                        console.log('Triggering infinite scroll callback');
+
+                    if (
+                        entry.isIntersecting &&
+                        !isLoading.value &&
+                        hasMore.value &&
+                        enabled
+                    ) {
+                        console.log("Triggering infinite scroll callback");
                         callback();
                     }
                 });
             },
             {
                 rootMargin: `${threshold}px ${rootMargin}`,
-                threshold: 0.1
+                threshold: 0.1,
             }
         );
 
         observer.value = obs;
-        console.log('Created IntersectionObserver with options:', { threshold, rootMargin });
+        console.log("Created IntersectionObserver with options:", {
+            threshold,
+            rootMargin,
+        });
         return obs;
     };
 
@@ -58,24 +66,24 @@ export function useInfiniteScroll(options = {}) {
 
     const startLoading = () => {
         isLoading.value = true;
-        console.log('Started loading');
+        console.log("Started loading");
     };
 
     const stopLoading = () => {
         isLoading.value = false;
-        console.log('Stopped loading');
+        console.log("Stopped loading");
     };
 
     const setHasMore = (value) => {
         hasMore.value = value;
-        console.log('Set hasMore to:', value);
+        console.log("Set hasMore to:", value);
     };
 
     const destroy = () => {
         if (observer.value) {
             observer.value.disconnect();
             observer.value = null;
-            console.log('Destroyed observer');
+            console.log("Destroyed observer");
         }
     };
 
@@ -92,6 +100,6 @@ export function useInfiniteScroll(options = {}) {
         startLoading,
         stopLoading,
         setHasMore,
-        destroy
+        destroy,
     };
-} 
+}

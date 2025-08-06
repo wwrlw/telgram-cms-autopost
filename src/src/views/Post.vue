@@ -3,11 +3,17 @@
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
             <div class="flex items-center gap-3 justify-start mb-4">
                 <h2 class="text-lg font-semibold">Редактировать пост</h2>
-                <div v-if="postData && postData.category_name" class="flex items-center gap-2">
+                <div
+                    v-if="postData && postData.category_name"
+                    class="flex items-center gap-2"
+                >
                     <span class="text-sm text-gray-500">Категория:</span>
-                    <span 
+                    <span
                         class="px-2 py-1 text-xs rounded-full text-white"
-                        :style="{ backgroundColor: postData.category_color || '#6b7280' }"
+                        :style="{
+                            backgroundColor:
+                                postData.category_color || '#6b7280',
+                        }"
                     >
                         {{ postData.category_name }}
                     </span>
@@ -106,14 +112,27 @@
                         class="hidden"
                     />
                     <span class="text-xs text-gray-500">
-                        {{ (postData?.media?.length || 0) + files.length }}/10 файлов
+                        {{ (postData?.media?.length || 0) + files.length }}/10
+                        файлов
                     </span>
                 </div>
 
                 <!-- Медиафайлы -->
-                <div v-if="previews.length > 0 || (postData && postData.media && postData.media.length > 0)" class="mb-4">
+                <div
+                    v-if="
+                        previews.length > 0 ||
+                        (postData &&
+                            postData.media &&
+                            postData.media.length > 0)
+                    "
+                    class="mb-4"
+                >
                     <h4 class="text-sm font-medium text-gray-700 mb-3">
-                        {{ files.length > 0 ? 'Медиафайлы (существующие + новые):' : 'Медиафайлы:' }}
+                        {{
+                            files.length > 0
+                                ? "Медиафайлы (существующие + новые):"
+                                : "Медиафайлы:"
+                        }}
                     </h4>
                     <div
                         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
@@ -139,7 +158,9 @@
                                 >
                                     <video
                                         :src="getMediaUrl(media.file_path)"
-                                        :class="getSquareMediaClasses('thumbnail')"
+                                        :class="
+                                            getSquareMediaClasses('thumbnail')
+                                        "
                                         muted
                                         preload="metadata"
                                     />
@@ -249,13 +270,26 @@
                             {{ channel.name }}
                         </option>
                     </select>
-                    <div v-if="isAutoSelectedChannel" class="mt-1 text-xs text-green-600 flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    <div
+                        v-if="isAutoSelectedChannel"
+                        class="mt-1 text-xs text-green-600 flex items-center gap-1"
+                    >
+                        <svg
+                            class="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clip-rule="evenodd"
+                            />
                         </svg>
-                        Автоматически выбран по категории "{{ postData.category_name }}"
-                        <button 
-                            @click="selectedChannel = ''" 
+                        Автоматически выбран по категории "{{
+                            postData.category_name
+                        }}"
+                        <button
+                            @click="selectedChannel = ''"
                             class="ml-2 text-red-500 hover:text-red-700 underline"
                             title="Сбросить автовыбор"
                         >
@@ -278,8 +312,8 @@
             </div>
 
             <div class="flex justify-end gap-3 mt-4">
-                <button 
-                    @click="cancel" 
+                <button
+                    @click="cancel"
                     class="px-4 py-2 rounded bg-gray-500 text-white"
                     :disabled="isSubmitting"
                 >
@@ -355,7 +389,7 @@
                     class="px-4 py-2 rounded bg-green-600 text-white"
                     :disabled="isSubmitting"
                 >
-                    {{ isSubmitting ? 'Сохранение...' : 'Сохранить' }}
+                    {{ isSubmitting ? "Сохранение..." : "Сохранить" }}
                 </button>
                 <button
                     v-if="schedule"
@@ -363,7 +397,9 @@
                     class="px-4 py-2 rounded bg-indigo-600 text-white"
                     :disabled="isSubmitting"
                 >
-                    {{ isSubmitting ? 'Планирование...' : 'Опубликовать позже' }}
+                    {{
+                        isSubmitting ? "Планирование..." : "Опубликовать позже"
+                    }}
                 </button>
                 <button
                     v-else
@@ -371,7 +407,7 @@
                     class="px-4 py-2 rounded bg-indigo-600 text-white"
                     :disabled="isSubmitting"
                 >
-                    {{ isSubmitting ? 'Публикация...' : 'Опубликовать сейчас' }}
+                    {{ isSubmitting ? "Публикация..." : "Опубликовать сейчас" }}
                 </button>
             </div>
         </div>
@@ -389,7 +425,7 @@ import http from "@/js/http";
 import TurndownService from "turndown";
 import { getMediaUrl, getSquareMediaClasses } from "@/js/utils";
 import "emoji-picker-element";
-import MediaViewer from "@/components/MediaViewer.vue";
+import MediaViewer from "@/components/Media/MediaViewer.vue";
 import DateTimePicker from "@/components/DateTimePicker.vue";
 import mediaPreloader from "@/utils/mediaPreloader";
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
@@ -445,31 +481,44 @@ const loadChannels = () => {
 };
 
 const autoSelectChannelByCategory = () => {
-    if (!postData.value || !postData.value.category_name || channels.value.length === 0) {
+    if (
+        !postData.value ||
+        !postData.value.category_name ||
+        channels.value.length === 0
+    ) {
         return;
     }
-    
+
     const matchingChannel = channels.value.find(
-        channel => channel.name === postData.value.category_name
+        (channel) => channel.name === postData.value.category_name
     );
-    
+
     if (matchingChannel) {
         selectedChannel.value = matchingChannel.channel_id;
-        console.log(`Автовыбор канала "${matchingChannel.name}" для категории "${postData.value.category_name}"`);
+        console.log(
+            `Автовыбор канала "${matchingChannel.name}" для категории "${postData.value.category_name}"`
+        );
     }
 };
 
 // Определяем, был ли канал выбран автоматически
 const isAutoSelectedChannel = computed(() => {
-    if (!postData.value || !postData.value.category_name || !selectedChannel.value) {
+    if (
+        !postData.value ||
+        !postData.value.category_name ||
+        !selectedChannel.value
+    ) {
         return false;
     }
-    
+
     const selectedChannelData = channels.value.find(
-        channel => channel.channel_id === selectedChannel.value
+        (channel) => channel.channel_id === selectedChannel.value
     );
-    
-    return selectedChannelData && selectedChannelData.name === postData.value.category_name;
+
+    return (
+        selectedChannelData &&
+        selectedChannelData.name === postData.value.category_name
+    );
 });
 
 const addFiles = (newArr) => {
@@ -485,7 +534,9 @@ const addFiles = (newArr) => {
 const handleFiles = (e) => {
     const newFiles = Array.from(e.target.files);
     if (files.value.length + newFiles.length > 10) {
-        window?.$toast?.warning(`Максимум 10 файлов. У вас уже ${files.value.length} файлов.`);
+        window?.$toast?.warning(
+            `Максимум 10 файлов. У вас уже ${files.value.length} файлов.`
+        );
         e.target.value = "";
         return;
     }
@@ -511,7 +562,7 @@ const removeExistingMedia = (index) => {
 
 function cancel() {
     // Очищаем файлы и превью при отмене
-    files.value.forEach(file => {
+    files.value.forEach((file) => {
         if (file.url) URL.revokeObjectURL(file.url);
     });
     files.value = [];
@@ -521,7 +572,7 @@ function cancel() {
 
 async function savePost() {
     if (isSubmitting.value) return;
-    
+
     if (!postData.value) {
         window?.$toast?.error("Данные поста не загружены");
         return;
@@ -530,7 +581,11 @@ async function savePost() {
     const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
 
-    if (!markdown.trim() && files.value.length === 0 && (!postData.value.media || postData.value.media.length === 0)) {
+    if (
+        !markdown.trim() &&
+        files.value.length === 0 &&
+        (!postData.value.media || postData.value.media.length === 0)
+    ) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
     }
@@ -575,7 +630,7 @@ async function savePost() {
             text: markdown,
             media: allMedia,
         };
-        
+
         if (selectedChannel.value) {
             updateData.channel_id = selectedChannel.value;
         }
@@ -600,7 +655,7 @@ async function savePost() {
 
 async function publishNow() {
     if (isSubmitting.value) return;
-    
+
     if (!postData.value) {
         window?.$toast?.error("Данные поста не загружены");
         return;
@@ -615,7 +670,11 @@ async function publishNow() {
     const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
 
-    if (!markdown.trim() && files.value.length === 0 && (!postData.value.media || postData.value.media.length === 0)) {
+    if (
+        !markdown.trim() &&
+        files.value.length === 0 &&
+        (!postData.value.media || postData.value.media.length === 0)
+    ) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
     }
@@ -677,7 +736,8 @@ async function publishNow() {
                             router.push("/");
                         } else {
                             window?.$toast?.error(
-                                "Ошибка публикации: " + (publishRes.message || "")
+                                "Ошибка публикации: " +
+                                    (publishRes.message || "")
                             );
                         }
                     }
@@ -698,7 +758,7 @@ async function publishNow() {
 
 async function publishLater() {
     if (isSubmitting.value) return;
-    
+
     if (!postData.value) {
         window?.$toast?.error("Данные поста не загружены");
         return;
@@ -718,7 +778,11 @@ async function publishLater() {
     const html = editor.value?.getHTML() || "";
     const markdown = turndownService.turndown(html);
 
-    if (!markdown.trim() && files.value.length === 0 && (!postData.value.media || postData.value.media.length === 0)) {
+    if (
+        !markdown.trim() &&
+        files.value.length === 0 &&
+        (!postData.value.media || postData.value.media.length === 0)
+    ) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
     }
@@ -780,7 +844,10 @@ async function publishLater() {
                             window?.$toast?.success(
                                 "Пост запланирован на публикацию!"
                             );
-                            emitEvent(EVENTS.SCHEDULED_POST_CREATED, response.data);
+                            emitEvent(
+                                EVENTS.SCHEDULED_POST_CREATED,
+                                response.data
+                            );
                             router.push("/");
                         } else {
                             window?.$toast?.error(
@@ -806,7 +873,7 @@ async function publishLater() {
 
 function loadPost() {
     loadingPost.value = true;
-    
+
     http.post({ id: postId }, async (res) => {
         loadingPost.value = false;
         if (res && res.success) {
@@ -819,7 +886,7 @@ function loadPost() {
             if (res.data.channel_id) {
                 selectedChannel.value = res.data.channel_id;
             }
-            
+
             // Всегда пытаемся сделать автовыбор по категории
             // Это обеспечит выбор правильного канала даже если channel_id не установлен
             autoSelectChannelByCategory();
@@ -851,16 +918,20 @@ function toggleTextMode() {
 
 async function preloadMedia(post) {
     if (!post || !post.media || !post.media.length) return;
-    
+
     try {
         const mediaUrls = post.media
-            .filter(media => media && media.file_path)
-            .map(media => media.file_path);
-            
+            .filter((media) => media && media.file_path)
+            .map((media) => media.file_path);
+
         if (mediaUrls.length > 0) {
-            console.log("Preloading media for post:", mediaUrls.length, "files");
+            console.log(
+                "Preloading media for post:",
+                mediaUrls.length,
+                "files"
+            );
             // Используем mediaPreloader для предзагрузки
-            await mediaPreloader.preloadMedia(mediaUrls, 'low');
+            await mediaPreloader.preloadMedia(mediaUrls, "low");
         }
     } catch (error) {
         console.warn("Failed to preload media:", error);

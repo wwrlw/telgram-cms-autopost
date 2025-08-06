@@ -106,20 +106,33 @@
                         v-for="(item, idx) in previews"
                         :key="idx"
                         class="relative group border rounded overflow-hidden aspect-square"
-                        style="aspect-ratio: 1/1 !important; overflow: hidden !important;"
+                        style="
+                            aspect-ratio: 1/1 !important;
+                            overflow: hidden !important;
+                        "
                     >
                         <img
                             v-if="item.isImage"
                             :src="item.url"
                             class="w-full h-full object-cover"
-                            style="width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center !important;"
+                            style="
+                                width: 100% !important;
+                                height: 100% !important;
+                                object-fit: cover !important;
+                                object-position: center !important;
+                            "
                         />
                         <video
                             v-else
                             muted
                             :src="item.url"
                             class="w-full h-full object-cover"
-                            style="width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center !important;"
+                            style="
+                                width: 100% !important;
+                                height: 100% !important;
+                                object-fit: cover !important;
+                                object-position: center !important;
+                            "
                         ></video>
                         <button
                             @click="removeFile(idx)"
@@ -419,7 +432,12 @@ const send = async (publishLater) => {
         const form = new FormData();
         Object.entries(postData).forEach(([key, value]) => {
             if (Array.isArray(value)) {
-                value.forEach((v, i) => form.append(`${key}[${i}]`, typeof v === 'object' ? JSON.stringify(v) : v));
+                value.forEach((v, i) =>
+                    form.append(
+                        `${key}[${i}]`,
+                        typeof v === "object" ? JSON.stringify(v) : v
+                    )
+                );
             } else {
                 form.append(key, value);
             }
@@ -430,11 +448,11 @@ const send = async (publishLater) => {
             (response) => {
                 isSubmitting.value = false;
                 if (response.success) {
-                    console.log('Create post response:', response.data); // debug
-                    
+                    console.log("Create post response:", response.data); // debug
+
                     // Отправляем событие о создании поста
                     emitEvent(EVENTS.POST_CREATED, response.data);
-                    
+
                     if (publishLater) {
                         window?.$toast?.success("Пост запланирован");
                         emitEvent(EVENTS.SCHEDULED_POST_CREATED, response.data);
@@ -449,7 +467,10 @@ const send = async (publishLater) => {
                                     window?.$toast?.success(
                                         "Пост опубликован в Telegram!"
                                     );
-                                    emitEvent(EVENTS.POST_PUBLISHED, response.data);
+                                    emitEvent(
+                                        EVENTS.POST_PUBLISHED,
+                                        response.data
+                                    );
                                     router.push("/");
                                 } else {
                                     window?.$toast?.error(
@@ -526,14 +547,17 @@ const savePostToDatabase = async () => {
 
         // Создаем FormData для отправки поста
         const formData = new FormData();
-        formData.append('text', markdown);
-        
+        formData.append("text", markdown);
+
         // Добавляем медиафайлы в FormData
         uploadedFiles.forEach((media, index) => {
             formData.append(`media[${index}][type]`, media.type);
             formData.append(`media[${index}][file_path]`, media.file_path);
             if (media.original_name) {
-                formData.append(`media[${index}][original_name]`, media.original_name);
+                formData.append(
+                    `media[${index}][original_name]`,
+                    media.original_name
+                );
             }
             if (media.mime_type) {
                 formData.append(`media[${index}][mime_type]`, media.mime_type);
