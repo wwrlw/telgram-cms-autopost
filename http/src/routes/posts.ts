@@ -42,18 +42,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Тестовый endpoint для проверки
-  fastify.get(
-    "/posts/test",
-    async (request, reply) => {
-      console.log('GET /posts/test endpoint called');
-      return {
-        success: true,
-        message: "Test endpoint works"
-      };
-    }
-  );
-
   fastify.get(
     "/posts/search",
     { 
