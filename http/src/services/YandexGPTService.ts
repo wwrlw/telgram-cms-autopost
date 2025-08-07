@@ -1,38 +1,9 @@
-import axios from 'axios';
+import OpenAI from "openai";
 
-export interface YandexGPTResponse {
-  result: {
-    alternatives: Array<{
-      message: {
-        role: string;
-        text: string;
-      };
-      status: string;
-    }>;
-    usage: {
-      inputTextTokens: string;
-      completionTokens: string;
-      totalTokens: string;
-    };
-    modelVersion: string;
-  };
-}
-
-export interface YandexGPTRequest {
-  modelUri: string;
-  completionOptions: {
-    stream?: boolean;
-    temperature: number;
-    maxTokens: string | number;
-    reasoningOptions?: {
-      mode: string;
-    };
-  };
-  messages: Array<{
-    role: string;
-    text: string;
-  }>;
-}
+const openai = new OpenAI({
+  apiKey: process.env.YANDEX_API_KEY!,
+  baseURL: "https://llm.api.cloud.yandex.net/v1",
+});
 
 export interface RewriteInstruction {
   id: string;
@@ -46,265 +17,44 @@ export interface RewriteInstruction {
 }
 
 export class YandexGPTService {
-  private readonly apiUrl = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion';
   private readonly folderId: string;
-  private readonly apiKey: string;
 
   constructor() {
     this.folderId = process.env.YANDEX_API_FOLDER!;
-    this.apiKey = process.env.YANDEX_API_KEY!;
     
-    if (!this.folderId || !this.apiKey) {
+    if (!this.folderId || !process.env.YANDEX_API_KEY) {
       throw new Error('YANDEX_API_FOLDER and YANDEX_API_KEY environment variables are required');
-    }
-  }
-
-  private buildSystemPrompt(instructions: RewriteInstruction): string {
-    let prompt = `"instructions": [
-      {
-        "id": "${instructions.id}",
-        "channel": "${instructions.channel}",
-        "task": "${instructions.task}",
-        "style": "${instructions.style}",
-        "structure": "${instructions.structure}",
-        "instructions": {`;
-
-    Object.entries(instructions.instructions).forEach(([key, value], index, array) => {
-      prompt += `\n          "${key}": "${value}"`;
-      if (index < array.length - 1) {
-        prompt += ',';
-      }
-    });
-
-    prompt += '\n        },\n        "constraints": {';
-
-    const constraintEntries = Object.entries(instructions.constraints);
-    constraintEntries.forEach(([key, value], index) => {
-      prompt += `\n          "${key}": ${value}`;
-      if (index < constraintEntries.length - 1) {
-        prompt += ',';
-      }
-    });
-
-    prompt += '\n        }';
-
-    if (instructions.notes) {
-      prompt += `,\n        "notes": "${instructions.notes}"`;
-    }
-
-    prompt += '\n      }\n]';
-
-    return prompt;
-  }
-
-  async rewriteWithInstructions(
-    text: string, 
-    instructions: RewriteInstruction,
-    modelType: 'yandexgpt' | 'llama-lite' = 'yandexgpt'
-  ): Promise<string> {
-    try {
-      const systemPrompt = this.buildSystemPrompt(instructions);
-      const modelUri = modelType === 'llama-lite' 
-        ? `gpt://${this.folderId}/llama-lite/latest`
-        : `gpt://${this.folderId}/yandexgpt`;
-
-      const request: YandexGPTRequest = {
-        modelUri,
-        completionOptions: {
-          maxTokens: 500,
-          temperature: 0.2
-        },
-        messages: [
-          {
-            role: "system",
-            text: systemPrompt
-          },
-          {
-            role: "user",
-            text: `Ты профессиональный рерайтер контента для канала ${instructions.channel.toLowerCase()} перепиши данный текст избегай ответа "В интернете есть много сайтов с информацией на эту тему. Посмотрите, что нашлось в поиске" вот текст для обработки "${text}"`
-          }
-        ]
-      };
-
-      const response = await axios.post<YandexGPTResponse>(
-        this.apiUrl,
-        request,
-        {
-          headers: {
-            'Authorization': `Api-Key ${this.apiKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.data.result.alternatives.length === 0) {
-        throw new Error('No alternatives returned from Yandex GPT API');
-      }
-
-      const rewrittenText = response.data.result.alternatives[0].message.text;
-      return rewrittenText;
-
-    } catch (error: any) {
-      console.error('Error rewriting text with instructions:');
-      
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-      }
-      
-      throw new Error('Failed to rewrite text with instructions');
-    }
-  }
-
-  async sendCustomRequest(
-    systemMessage: string,
-    userMessage: string,
-    modelType: 'yandexgpt' | 'llama-lite' = 'yandexgpt',
-    temperature: number = 0.2,
-    maxTokens: number = 500
-  ): Promise<string> {
-    try {
-      const modelUri = modelType === 'llama-lite' 
-        ? `gpt://${this.folderId}/llama-lite/latest`
-        : `gpt://${this.folderId}/yandexgpt`;
-
-      const request: YandexGPTRequest = {
-        modelUri,
-        completionOptions: {
-          maxTokens,
-          temperature
-        },
-        messages: [
-          {
-            role: "system",
-            text: systemMessage
-          },
-          {
-            role: "user",
-            text: userMessage
-          }
-        ]
-      };
-
-      const response = await axios.post<YandexGPTResponse>(
-        this.apiUrl,
-        request,
-        {
-          headers: {
-            'Authorization': `Api-Key ${this.apiKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.data.result.alternatives.length === 0) {
-        throw new Error('No alternatives returned from API');
-      }
-
-      return response.data.result.alternatives[0].message.text;
-
-    } catch (error: any) {
-      console.error('Error sending custom request:');
-      
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-      }
-      
-      throw new Error('Failed to send custom request');
     }
   }
 
   async uniquizeText(text: string): Promise<string> {
     try {
-      const request: YandexGPTRequest = {
-        modelUri: `gpt://${this.folderId}/yandexgpt`,
-        completionOptions: {
-          stream: false,
-          temperature: 0.6,
-          maxTokens: "2000",
-          reasoningOptions: {
-            mode: "DISABLED"
-          }
-        },
+      const modelName = `gpt://${this.folderId}/gpt-oss-120b/latest`; 
+
+      const response = await openai.chat.completions.create({
+        model: modelName,
         messages: [
           {
             role: "system",
-            text: "Ты профессиональный рерайтер контента. Твоя задача - переписать предоставленный текст, полностью сохранив его смысл и информацию, но изменив формулировки, структуру предложений и словесные обороты. Не добавляй никаких комментариев, ссылок, пояснений или предложений найти информацию в интернете. Просто верни переписанный текст."
+            content: "Ты профессиональный рерайтер контента. Твоя задача - переписать предоставленный текст, полностью сохранив его смысл и информацию, но изменив формулировки, структуру предложений и словесные обороты. Не добавляй никаких комментариев, ссылок, пояснений или предложений найти информацию в интернете. Просто верни переписанный текст."
           },
           {
             role: "user",
-            text: `Перепиши этот текст, сохранив всю информацию, но изменив формулировки:\n\n${text}`
+            content: `Перепиши этот текст, сохранив всю информацию, но изменив формулировки:\n\n${text}`
           }
-        ]
-      };
+        ],
+        temperature: 0.6,
+        max_tokens: 2000,
+      });
 
-      const response = await axios.post<YandexGPTResponse>(
-        this.apiUrl,
-        request,
-        {
-          headers: {
-            'Authorization': `Api-Key ${this.apiKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      console.log(response);
 
-      if (response.data.result.alternatives.length === 0) {
-        throw new Error('No alternatives returned from Yandex GPT API');
-      }
-
-      const uniquizedText = response.data.result.alternatives[0].message.text;
+      const uniquizedText = response.choices[0]?.message?.content;
       
-      if (uniquizedText.includes('интернете есть много сайтов') || 
-          uniquizedText.includes('Посмотрите, что нашлось в поиске') ||
-          uniquizedText.includes('ya.ru')) {
-        
-        const retryRequest: YandexGPTRequest = {
-          modelUri: `gpt://${this.folderId}/yandexgpt`,
-          completionOptions: {
-            stream: false,
-            temperature: 0.7,
-            maxTokens: "2000",
-            reasoningOptions: {
-              mode: "DISABLED"
-            }
-          },
-          messages: [
-            {
-              role: "system",
-              text: "Ты помощник-редактор. Перепиши текст, используя синонимы и изменяя структуру предложений, но сохраняя всю информацию. Отвечай только переписанным текстом."
-            },
-            {
-              role: "user",
-              text: `Текст для переписывания: ${text}`
-            }
-          ]
-        };
-        
-        const retryResponse = await axios.post<YandexGPTResponse>(
-          this.apiUrl,
-          retryRequest,
-          {
-            headers: {
-              'Authorization': `Api-Key ${this.apiKey}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        if (retryResponse.data.result.alternatives.length > 0) {
-          const retryText = retryResponse.data.result.alternatives[0].message.text;
-          
-          if (retryText.includes('интернете есть много сайтов') || 
-              retryText.includes('Посмотрите, что нашлось в поиске')) {
-            return text;
-          }
-          
-          return retryText;
-        }
+      if (!uniquizedText) {
+        throw new Error('No content returned from Yandex GPT API');
       }
-      
+      console.log(uniquizedText);
       return uniquizedText;
 
     } catch (error: any) {
@@ -312,9 +62,10 @@ export class YandexGPTService {
       
       if (error.response) {
         console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
       }
       
       throw new Error('Failed to uniquize text');
     }
   }
-} 
+}

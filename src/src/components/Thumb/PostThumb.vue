@@ -5,12 +5,10 @@
             'post-card-with-media',
         ]"
     >
-        <!-- Медиа область - всегда показываем -->
         <div
             class="relative aspect-square bg-gray-50 cursor-pointer media-area"
             @click="navigateToPost"
         >
-            <!-- Показываем картинку если есть фото и нет ошибки -->
             <img
                 v-if="
                     hasPhoto(post) &&
@@ -24,7 +22,6 @@
                 @error="handleImageError"
             />
 
-            <!-- Показываем видео если есть видео и нет ошибки -->
             <div
                 v-else-if="
                     hasVideo(post) &&
@@ -72,7 +69,6 @@
                 message="Видео недоступно"
             />
 
-            <!-- Показываем дефолтную иконку если нет медиа -->
             <div
                 v-else
                 class="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center"
@@ -202,9 +198,7 @@
             </div>
         </div>
 
-        <!-- Контент -->
         <div class="content-area p-3">
-            <!-- Текст поста -->
             <router-link
                 :to="{ name: 'post', params: { id: post._id } }"
                 class="font-medium text-gray-900 mb-2 line-clamp-3 cursor-pointer hover:text-blue-600 transition-colors"
@@ -212,7 +206,6 @@
                 {{ displayText }}
             </router-link>
 
-            <!-- Переключатель уникального текста -->
             <div v-if="post.is_unique && post.unique_text" class="mb-2">
                 <button
                     @click.prevent="toggleTextMode"
@@ -239,8 +232,7 @@
 
             <div class="mb-2">
                 <span
-                    class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
-                    :class="getCategoryStyle()"
+                    class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
                     {{ getCategoryName() }}
                 </span>
@@ -313,7 +305,6 @@
                 </div>
             </div>
 
-            <!-- Метрики конверсии -->
             <div
                 v-if="post.conversion_metrics"
                 class="mt-2 flex items-center justify-between"

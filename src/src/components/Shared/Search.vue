@@ -67,6 +67,17 @@
 <script setup>
 import { ref } from "vue";
 
+const props = defineProps({
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  categories: {
+    type: Array,
+    default: () => [],
+  },
+});
+
 const emit = defineEmits(["update:searchQuery", "clearFilters"]);
 
 const searchQuery = ref("");

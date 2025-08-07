@@ -41,23 +41,10 @@
                 class="h-20 flex items-center justify-center"
             ></div>
 
-            <!-- Loading indicator for infinite scroll -->
             <div v-if="infiniteScrollLoading" class="flex justify-center py-8">
                 <LoadingSpinner size="medium" text="Загружаем еще посты..." />
             </div>
 
-            <PublishModal
-                v-model:show="showPublishModal"
-                :post="selectedPostForPublish"
-                @published="handlePublished"
-            />
-
-            <ConfirmModal
-                :show="showConfirmModal"
-                :message="confirmMessage"
-                @confirm="onConfirm"
-                @cancel="onCancelConfirm"
-            />
         </main>
     </div>
 </template>
@@ -67,9 +54,7 @@ import { ref, onMounted, inject, watch, nextTick } from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
 import Filters from "@/components/Shared/Filters.vue";
-import PublishModal from "@/components/Modal/PublishModal.vue";
 import Thumbs from "@/components/Thumb/Thumbs.vue";
-import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 import Search from "@/components/Shared/Search.vue";
 import LoadingSpinner from "@/components/Shared/LoadingSpinner.vue";
 import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
@@ -100,16 +85,10 @@ const totalCount = ref(0);
 const categories = ref([]);
 const infiniteScrollTrigger = ref(null);
 
-// Infinite scroll
 const {
     createObserver,
-    observeElement,
-    startLoading,
-    stopLoading,
-    setHasMore,
 } = useInfiniteScroll();
 
-// Optimized API
 const { optimizedRequest, debouncedSearch } = useOptimizedApi();
 
 const currentPage = ref(1);
@@ -390,7 +369,6 @@ const deletePost = (post) => {
                             : "Пост успешно удалён"
                     );
 
-                    // Немедленно удаляем пост из локального состояния
                     const index = posts.value.findIndex(
                         (p) => p._id === postObj._id
                     );
@@ -398,13 +376,10 @@ const deletePost = (post) => {
                         posts.value.splice(index, 1);
                     }
 
-                    // Обновляем общее количество
                     totalCount.value = Math.max(0, totalCount.value - 1);
 
-                    // Отправляем событие
                     emitEvent(EVENTS.POST_DELETED, postObj);
 
-                    // Перезагружаем данные для обновления пагинации
                     currentPage.value = 1;
                     hasMore.value = true;
                     await postsService({ page: 1 });
@@ -433,7 +408,6 @@ const loadCategories = async () => {
     }
 };
 
-// Initialize infinite scroll
 const initializeInfiniteScroll = () => {
     console.log("Initializing infinite scroll");
 
@@ -480,7 +454,6 @@ watch(
     { immediate: true }
 );
 
-// Дополнительный обработчик для кнопки обновления
 const handleRefreshPosts = async () => {
     console.log("Manual refresh triggered");
     currentPage.value = 1;
@@ -490,7 +463,6 @@ const handleRefreshPosts = async () => {
     console.log("Manual refresh completed");
 };
 
-// Экспортируем функцию для использования в App.vue
 defineExpose({
     refreshPosts: handleRefreshPosts,
 });
@@ -498,21 +470,18 @@ defineExpose({
 onMounted(async () => {
     console.log("Posts component mounted");
     console.log("Refresh trigger on mount:", refreshTrigger.value);
-    await initializeFavorites(); // Инициализируем избранное
+    await initializeFavorites();
     await postsService({ page: 1 });
     await loadCategories();
 
-    // Initialize infinite scroll after component is mounted
     await nextTick();
     initializeInfiniteScroll();
 
-    // Слушаем событие обновления постов
     window.addEventListener("refresh-posts", async () => {
         console.log("Refresh posts event received from window");
         await handleRefreshPosts();
     });
 
-    // Слушаем события для обновления данных
     onEvent(EVENTS.POST_CREATED, async () => {
         console.log("Post created event received, refreshing posts");
         currentPage.value = 1;
@@ -549,7 +518,6 @@ onMounted(async () => {
     });
 });
 
-// Watch for changes in hasMore to reinitialize observer
 watch(hasMore, async () => {
     if (hasMore.value) {
         await nextTick();
