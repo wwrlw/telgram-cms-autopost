@@ -237,17 +237,15 @@
                 </button>
             </div>
 
-            <!-- Категория -->
             <div class="mb-2">
                 <span
                     class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
-                    :class="getCategoryStyle(post.category_id)"
+                    :class="getCategoryStyle()"
                 >
-                    {{ getCategoryName(post.category_id) }}
+                    {{ getCategoryName() }}
                 </span>
             </div>
 
-            <!-- Метрики и дата -->
             <div
                 class="flex items-center justify-between text-xs text-gray-500"
             >
@@ -395,17 +393,37 @@ const getMediaPath = (filePath) => {
     return getMediaUrl(filePath);
 };
 
-const getCategoryName = (categoryId) => {
-    if (!categoryId) return "Без категории";
-    const category = props.categories.find((cat) => cat.id === categoryId);
+const getCategoryName = () => {
+    if (props.post.category_name) {
+        return props.post.category_name;
+    }
+
+    if (!props.post.category_id) return "Без категории";
+    const category = props.categories.find(
+        (cat) => cat.id === props.post.category_id
+    );
     return category ? category.name : "Неизвестная категория";
 };
 
-const getCategoryStyle = (categoryId) => {
-    if (!categoryId) {
+const getCategoryStyle = () => {
+    // Используем данные напрямую из поста, если они есть
+    if (props.post.category_color) {
+        const color = props.post.category_color.replace("#", "");
+        const r = parseInt(color.substr(0, 2), 16);
+        const g = parseInt(color.substr(2, 2), 16);
+        const b = parseInt(color.substr(4, 2), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        const textColor = brightness > 155 ? "text-gray-900" : "text-white";
+        return `bg-[${props.post.category_color}] ${textColor} border border-[${props.post.category_color}]`;
+    }
+
+    // Fallback к старому способу поиска по ID
+    if (!props.post.category_id) {
         return "bg-gray-100 text-gray-700 border border-gray-200";
     }
-    const category = props.categories.find((cat) => cat.id === categoryId);
+    const category = props.categories.find(
+        (cat) => cat.id === props.post.category_id
+    );
     if (category && category.color) {
         const color = category.color.replace("#", "");
         const r = parseInt(color.substr(0, 2), 16);

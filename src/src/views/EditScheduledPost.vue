@@ -420,7 +420,7 @@ import { useFavorites } from "@/composables/useFavorites.js";
 import "emoji-picker-element";
 import MediaViewer from "@/components/MediaViewer.vue";
 import DateTimePicker from "@/components/DateTimePicker.vue";
-import mediaPreloader from "@/utils/mediaPreloader";
+
 
 const router = useRouter();
 const route = useRoute();
@@ -851,8 +851,7 @@ async function preloadMedia(post) {
                 mediaUrls.length,
                 "files"
             );
-            // Используем mediaPreloader для предзагрузки
-            await mediaPreloader.preloadMedia(mediaUrls, "low");
+            // Медиа файлы будут загружаться браузером при отображении
         }
     } catch (error) {
         console.warn("Failed to preload media:", error);

@@ -20,7 +20,9 @@ export const getMediaUrl = (filePath) => {
             .replace(/\/+/g, "/");
 
         // Создаем базовый URL без параметров качества
-        let url = `${baseUrl}/${normalizedPath}`;
+        // Убираем слэш в конце базового URL если он есть, чтобы избежать двойного слэша
+        const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+        let url = `${cleanBaseUrl}/${normalizedPath}`;
 
         return url;
     } catch (error) {
@@ -52,7 +54,9 @@ export const getCoverImageUrl = (filePath) => {
             .replace(/\/+/g, "/");
 
         // Создаем базовый URL БЕЗ параметров
-        let url = `${baseUrl}/${normalizedPath}`;
+        // Убираем слэш в конце базового URL если он есть, чтобы избежать двойного слэша
+        const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+        let url = `${cleanBaseUrl}/${normalizedPath}`;
 
         return url;
     } catch (error) {
@@ -93,10 +97,9 @@ export const getSquareMediaClasses = (context = "preview") => {
     return `${baseClasses} w-full h-full object-cover`;
 };
 
-// Функция для получения стандартных классов для медиа (устаревшая, используйте getSquareMediaClasses)
 export const getMediaClasses = (
     mediaType,
-    isVertical = false,
+    // isVertical = false,
     context = "preview"
 ) => {
     return getSquareMediaClasses(context);

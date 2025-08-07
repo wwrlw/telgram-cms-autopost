@@ -57,9 +57,20 @@ export class PostRepository implements IPostRepository {
           }
         },
         {
+          $addFields: {
+            'channel.category_id_obj': {
+              $cond: {
+                if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+                then: { $toObjectId: '$channel.category_id' },
+                else: '$channel.category_id'
+              }
+            }
+          }
+        },
+        {
           $lookup: {
             from: 'categories',
-            localField: 'channel.category_id',
+            localField: 'channel.category_id_obj',
             foreignField: '_id',
             as: 'category'
           }
@@ -446,9 +457,20 @@ export class PostRepository implements IPostRepository {
           $sort: { created_at: -1 }
         },
         {
+          $addFields: {
+            'channel.category_id_obj': {
+              $cond: {
+                if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+                then: { $toObjectId: '$channel.category_id' },
+                else: '$channel.category_id'
+              }
+            }
+          }
+        },
+        {
           $lookup: {
             from: 'categories',
-            localField: 'channel.category_id',
+            localField: 'channel.category_id_obj',
             foreignField: '_id',
             as: 'category'
           }
@@ -511,9 +533,20 @@ export class PostRepository implements IPostRepository {
           $sort: { created_at: -1 }
         },
         {
+          $addFields: {
+            'channel.category_id_obj': {
+              $cond: {
+                if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+                then: { $toObjectId: '$channel.category_id' },
+                else: '$channel.category_id'
+              }
+            }
+          }
+        },
+        {
           $lookup: {
             from: 'categories',
-            localField: 'channel.category_id',
+            localField: 'channel.category_id_obj',
             foreignField: '_id',
             as: 'category'
           }

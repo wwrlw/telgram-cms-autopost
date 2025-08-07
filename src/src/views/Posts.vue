@@ -75,7 +75,7 @@ import LoadingSpinner from "@/components/Shared/LoadingSpinner.vue";
 import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
 import { useOptimizedApi } from "@/composables/useOptimizedApi";
 import { useFavorites } from "@/composables/useFavorites.js";
-import mediaPreloader from "@/utils/mediaPreloader";
+
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
 
 const refreshTrigger = inject("refreshTrigger");
@@ -177,12 +177,7 @@ const postsService = async (params = {}, isInfiniteScroll = false) => {
             );
 
             // Предзагружаем медиа для новых постов в фоне
-            if (newPosts.length > 0) {
-                // Запускаем предзагрузку асинхронно, не блокируя основной поток
-                setTimeout(() => {
-                    mediaPreloader.preloadPostsMedia(newPosts);
-                }, 0);
-            }
+            // Новые посты добавлены успешно
         } else {
             // Заменяем посты полностью
             console.log(
@@ -196,12 +191,7 @@ const postsService = async (params = {}, isInfiniteScroll = false) => {
             currentPage.value = 1;
 
             // Предзагружаем медиа для всех постов в фоне
-            if (posts.value.length > 0) {
-                // Запускаем предзагрузку асинхронно, не блокируя основной поток
-                setTimeout(() => {
-                    mediaPreloader.preloadPostsMedia(posts.value);
-                }, 0);
-            }
+            // Посты загружены успешно
         }
 
         // Автоматически удаляем опубликованные посты из избранного
