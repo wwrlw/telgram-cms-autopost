@@ -6,6 +6,7 @@
                 :totalCount="totalCount"
                 :data="posts"
                 type="posts"
+                :stats="postsStats"
             />
 
             <Search
@@ -98,6 +99,11 @@ const loading = ref(false);
 const infiniteScrollLoading = ref(false);
 const totalCount = ref(0);
 const categories = ref([]);
+const postsStats = ref({
+    total: 0,
+    unique: 0,
+    today: 0
+});
 const infiniteScrollTrigger = ref(null);
 
 // Infinite scroll
@@ -115,6 +121,27 @@ const { optimizedRequest, debouncedSearch } = useOptimizedApi();
 const currentPage = ref(1);
 const hasMore = ref(true);
 const pageSize = 24;
+
+const loadPostsStats = async () => {
+    try {
+        return new Promise((resolve, reject) => {
+            http.getPostsStats(
+                (response) => {
+                    if (response.success) {
+                        postsStats.value = response.data;
+                    }
+                    resolve(response);
+                },
+                (error) => {
+                    console.error('Error loading posts stats:', error);
+                    reject(error);
+                }
+            );
+        });
+    } catch (error) {
+        console.error('Error loading posts stats:', error);
+    }
+};
 
 const postsService = async (params = {}, isInfiniteScroll = false) => {
     if (isInfiniteScroll) {
@@ -487,6 +514,7 @@ const handleRefreshPosts = async () => {
     hasMore.value = true;
     await postsService({ page: 1 });
     await loadCategories();
+    await loadPostsStats();
     console.log("Manual refresh completed");
 };
 
@@ -501,6 +529,7 @@ onMounted(async () => {
     await initializeFavorites(); // Инициализируем избранное
     await postsService({ page: 1 });
     await loadCategories();
+    await loadPostsStats(); // Загружаем статистику при монтировании
 
     // Initialize infinite scroll after component is mounted
     await nextTick();
@@ -518,6 +547,7 @@ onMounted(async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
+        await loadPostsStats();
     });
 
     onEvent(EVENTS.POST_UPDATED, async () => {
@@ -525,6 +555,7 @@ onMounted(async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
+        await loadPostsStats();
     });
 
     onEvent(EVENTS.POST_DELETED, async () => {
@@ -532,6 +563,7 @@ onMounted(async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
+        await loadPostsStats();
     });
 
     onEvent(EVENTS.POST_PUBLISHED, async () => {
@@ -539,6 +571,7 @@ onMounted(async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
+        await loadPostsStats();
     });
 
     onEvent(EVENTS.REFRESH_POSTS, async () => {
@@ -546,6 +579,7 @@ onMounted(async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
+        await loadPostsStats();
     });
 });
 

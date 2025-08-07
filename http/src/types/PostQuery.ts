@@ -35,6 +35,12 @@ export interface InfiniteScrollQuery {
   sort?: SortParams;
 }
 
+export interface PostStats {
+  total: number;
+  unique: number;
+  today: number;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   params: {

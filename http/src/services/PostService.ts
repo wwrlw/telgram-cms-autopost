@@ -32,6 +32,10 @@ export class PostService implements IPostService {
     return await this.postRepository.findWithInfiniteScroll(query);
   }
 
+  async getPostsStats(): Promise<{ total: number; unique: number; today: number }> {
+    return await this.postRepository.getPostsStats();
+  }
+
   async createPost(postData: CreatePostDto): Promise<Post> {
     return await this.postRepository.create(postData);
   }

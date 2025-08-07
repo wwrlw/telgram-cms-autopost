@@ -1,7 +1,7 @@
 <template>
     <div
         class="mb-3 bg-white p-4 rounded-lg shadow"
-        v-if="!loading || categories.length > 0"
+        v-if="!loading || hasData"
     >
         <div class="space-y-4">
             <div
@@ -65,11 +65,36 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
+
+// Define props
+const props = defineProps({
+    loading: {
+        type: Boolean,
+        default: false
+    },
+    posts: {
+        type: Array,
+        default: () => []
+    },
+    categories: {
+        type: Array,
+        default: () => []
+    },
+    channels: {
+        type: Array,
+        default: () => []
+    }
+});
 
 const emit = defineEmits(["update:searchQuery", "clearFilters"]);
 
 const searchQuery = ref("");
+
+// Computed property to check if we have any data
+const hasData = computed(() => {
+    return props.posts.length > 0 || props.categories.length > 0 || props.channels.length > 0;
+});
 
 const updateSearch = () => {
     emit("update:searchQuery", searchQuery.value);
