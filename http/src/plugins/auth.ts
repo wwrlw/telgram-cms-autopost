@@ -13,7 +13,8 @@ async function authPlugin(fastify: FastifyInstance) {
       try {
         await request.jwtVerify();
       } catch (err) {
-        reply.send(err);
+        console.error('Authentication error:', err);
+        reply.status(401).send({ success: false, message: 'Authentication failed' });
       }
     }
   );

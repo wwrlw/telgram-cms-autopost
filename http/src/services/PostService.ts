@@ -45,10 +45,14 @@ export class PostService implements IPostService {
   }
 
   async deletePost(id: string): Promise<void> {
+    console.log('PostService.deletePost called with ID:', id);
     const deleted = await this.postRepository.deleteById(id);
+    console.log('PostService.deletePost result:', deleted);
     if (!deleted) {
+      console.error('PostService.deletePost: Post not found');
       throw new NotFoundError('Post not found');
     }
+    console.log('PostService.deletePost: Post deleted successfully');
   }
   async schedulePost(id: string, scheduledAt: Date, channelId: string): Promise<Post> {
     const post = await this.postRepository.findById(id);
