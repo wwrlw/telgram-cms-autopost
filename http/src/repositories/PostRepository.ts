@@ -668,4 +668,58 @@ export class PostRepository implements IPostRepository {
     console.log('findWithInfiniteScroll result:', result);
     return result;
   }
+
+  async getPostsStats(): Promise<{ total: number; unique: number; today: number }> {
+    if (!this.mongo.db) throw new Error("MongoDB is not connected");
+
+    console.log('getPostsStats called');
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    console.log('Date range for today:', { today, tomorrow });
+
+    const pipeline = [
+      {
+        $facet: {
+          total: [{ $count: "count" }],
+          unique: [
+            { $match: { is_unique: true } },
+            { $count: "count" }
+          ],
+          today: [
+            { 
+              $match: { 
+                created_at: { 
+                  $gte: today, 
+                  $lt: tomorrow 
+                } 
+              } 
+            },
+            { $count: "count" }
+          ]
+        }
+      }
+    ];
+
+    console.log('MongoDB pipeline:', JSON.stringify(pipeline, null, 2));
+
+    const result = await this.mongo.db.collection("posts").aggregate(pipeline).toArray();
+    console.log('MongoDB aggregation result:', result);
+    
+    const stats = result[0];
+    console.log('Extracted stats:', stats);
+
+    const finalStats = {
+      total: stats.total[0]?.count || 0,
+      unique: stats.unique[0]?.count || 0,
+      today: stats.today[0]?.count || 0
+    };
+
+    console.log('Final stats:', finalStats);
+    return finalStats;
+  }
 }

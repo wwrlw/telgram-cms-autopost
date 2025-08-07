@@ -92,6 +92,16 @@ let http = {
                 if (errorCallback) errorCallback(err);
             });
     },
+    getPostsStats: function (callback, errorCallback) {
+        instance
+            .get("/posts/stats")
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+            });
+    },
     post: function (params, callback) {
         instance
             .get(`/post/${params.id}`)

@@ -15,6 +15,7 @@ import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
 import { GetPostsWithQueryUseCase } from '../use-cases/GetPostsWithQueryUseCase';
 import { GetPostsInfiniteScrollUseCase } from '../use-cases/GetPostsInfiniteScrollUseCase';
+import { GetPostsStatsUseCase } from '../use-cases/GetPostsStatsUseCase';
 import { DeletePostUseCase } from '../use-cases/DeletePostUseCase';
 import { UniquizePostUseCase } from '../use-cases/UniquizePostUseCase';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
@@ -132,6 +133,10 @@ export class DependencyContainer {
 
   getGetPostsInfiniteScrollUseCase(): GetPostsInfiniteScrollUseCase {
     return new GetPostsInfiniteScrollUseCase(this.getPostService());
+  }
+
+  getGetPostsStatsUseCase(): GetPostsStatsUseCase {
+    return new GetPostsStatsUseCase(this.getPostService());
   }
 
   getDeletePostUseCase(): DeletePostUseCase {

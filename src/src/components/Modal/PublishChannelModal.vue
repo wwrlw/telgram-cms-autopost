@@ -151,7 +151,8 @@ export default {
         },
         postId: {
             type: String,
-            required: true,
+            required: false,
+            default: "",
         },
     },
     data() {
@@ -199,7 +200,7 @@ export default {
         },
 
         async publish() {
-            if (!this.selectedChannel) return;
+            if (!this.selectedChannel || !this.postId) return;
 
             this.publishing = true;
 

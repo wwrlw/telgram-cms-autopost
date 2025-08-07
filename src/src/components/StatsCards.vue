@@ -79,6 +79,14 @@ const props = defineProps({
         validator: (value) =>
             ["posts", "channels", "categories"].includes(value),
     },
+    stats: {
+        type: Object,
+        default: () => ({
+            total: 0,
+            unique: 0,
+            today: 0
+        }),
+    },
 });
 
 const gridClasses = computed(() => {
@@ -103,27 +111,21 @@ const statsConfig = {
             iconPath:
                 "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
             iconBg: "bg-indigo-500",
-            getValue: (totalCount, data) => totalCount,
+            getValue: (totalCount, data, stats) => stats.total,
         },
         {
             key: "unique",
             label: "Уникальные",
             iconPath: "M5 13l4 4L19 7",
             iconBg: "bg-green-500",
-            getValue: (totalCount, data) =>
-                data.filter((post) => post.is_unique).length,
+            getValue: (totalCount, data, stats) => stats.unique,
         },
         {
             key: "today",
             label: "За сегодня",
             iconPath: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
             iconBg: "bg-yellow-500",
-            getValue: (totalCount, data) => {
-                const today = new Date().toDateString();
-                return data.filter(
-                    (post) => new Date(post.timestamp).toDateString() === today
-                ).length;
-            },
+            getValue: (totalCount, data, stats) => stats.today,
         },
     ],
     channels: [
@@ -200,7 +202,7 @@ const computedStats = computed(() => {
     const config = statsConfig[props.type] || [];
     return config.map((stat) => ({
         ...stat,
-        value: stat.getValue(props.totalCount, props.data),
+        value: stat.getValue(props.totalCount, props.data, props.stats),
     }));
 });
 </script>

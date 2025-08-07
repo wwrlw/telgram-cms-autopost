@@ -119,7 +119,8 @@ const props = defineProps({
     },
     post: {
         type: Object,
-        required: true,
+        required: false,
+        default: null,
     },
 });
 

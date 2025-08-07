@@ -4,7 +4,16 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 // https://vite.dev/config/
 export default defineConfig({
-    plugins: [vue(), tailwindcss()],
+    plugins: [
+        vue({
+            template: {
+                compilerOptions: {
+                    isCustomElement: (tag) => tag === 'emoji-picker'
+                }
+            }
+        }), 
+        tailwindcss()
+    ],
     server: {
         host: "0.0.0.0",
         port: 5173,

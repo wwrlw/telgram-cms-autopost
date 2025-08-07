@@ -4,6 +4,7 @@ import { GetPostUseCase } from "../use-cases/GetPostUseCase";
 import { GetPostsUseCase } from "../use-cases/GetPostsUseCase";
 import { GetPostsWithQueryUseCase } from "../use-cases/GetPostsWithQueryUseCase";
 import { GetPostsInfiniteScrollUseCase } from "../use-cases/GetPostsInfiniteScrollUseCase";
+import { GetPostsStatsUseCase } from "../use-cases/GetPostsStatsUseCase";
 import { DeletePostUseCase } from "../use-cases/DeletePostUseCase";
 import { parsePostQuery } from "../utils/queryParser";
 import { parseInfiniteScrollQuery } from "../utils/infiniteScrollQueryParser";
@@ -19,6 +20,27 @@ import { PERMISSIONS } from "../models/Category";
 
 export async function postsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
+
+  // Новый endpoint для статистики постов (в начале для правильного порядка)
+  fastify.get(
+    "/posts/stats",
+    async (request, reply) => {
+      console.log('GET /posts/stats endpoint called');
+      try {
+        const getPostsStatsUseCase = container.getGetPostsStatsUseCase();
+        console.log('GetPostsStatsUseCase created');
+        const stats = await getPostsStatsUseCase.execute();
+        console.log('Stats received:', stats);
+        return {
+          success: true,
+          data: stats
+        };
+      } catch (error) {
+        console.error('Error in /posts/stats endpoint:', error);
+        throw error;
+      }
+    }
+  );
 
   fastify.get(
     "/posts/search",
