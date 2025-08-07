@@ -357,16 +357,24 @@ export class PostRepository implements IPostRepository {
   }
 
   async deleteById(id: string): Promise<boolean> {
-    if (!this.mongo.db) throw new Error("MongoDB is not connected");
+    console.log('PostRepository.deleteById called with ID:', id);
+    
+    if (!this.mongo.db) {
+      console.error('PostRepository.deleteById: MongoDB is not connected');
+      throw new Error("MongoDB is not connected");
+    }
 
     if (!ObjectId.isValid(id)) {
+      console.error('PostRepository.deleteById: Invalid post ID:', id);
       throw new Error("Invalid post ID");
     }
 
+    console.log('PostRepository.deleteById: Executing deleteOne with ObjectId:', new ObjectId(id));
     const result = await this.mongo.db.collection("posts").deleteOne({
       _id: new ObjectId(id),
     });
 
+    console.log('PostRepository.deleteById: Delete result:', result);
     return result.deletedCount > 0;
   }
 

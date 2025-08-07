@@ -71,7 +71,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts",
     { 
-      preValidation: [fastify.authenticate],
+      preHandler: [requireAuth],
       schema: {
         querystring: postQuerySchema
       }
@@ -106,7 +106,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts/infinite-scroll",
     { 
-      preValidation: [fastify.authenticate],
+      preHandler: [requireAuth],
       schema: {
         querystring: infiniteScrollQuerySchema,
         response: {
@@ -132,7 +132,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     '/post/:id', 
-    { preValidation: [fastify.authenticate] }, 
+    { preHandler: [requireAuth] }, 
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
@@ -150,19 +150,37 @@ export async function postsRoutes(fastify: FastifyInstance) {
 
   fastify.delete(
     '/post/:id',
-    { preValidation: [fastify.authenticate] },
+    { 
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_POSTS)]
+    },
     async (request, reply) => {
       try {
+        console.log('DELETE /post/:id called with params:', request.params);
         const id = (request.params as any).id;
+        console.log('Deleting post with ID:', id);
+        
         const deletePostUseCase = container.getDeletePostUseCase();
+        console.log('DeletePostUseCase created');
+        
         const result = await deletePostUseCase.execute(id);
-        // Логируем удаление поста
-        await logAction(request, reply);
+        console.log('DeletePostUseCase result:', result);
+        
+        // Логируем удаление поста только после успешного удаления
+        try {
+          await logAction(request, reply);
+          console.log('Post deletion logged successfully');
+        } catch (logError) {
+          console.error('Error logging post deletion:', logError);
+          // Не прерываем выполнение, если логирование не удалось
+        }
+        
+        console.log('Returning success response');
         return {
           success: true,
           message: result.message
         };
       } catch (error) {
+        console.error('Error deleting post:', error);
         throw error;
       }
     }
@@ -170,7 +188,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Запланировать пост
   fastify.post(
     '/posts/:id/schedule',
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
@@ -193,7 +211,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Получить запланированные посты
   fastify.get(
     '/posts/scheduled',
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
       try {
         const postService = container.getPostService();
@@ -211,7 +229,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Отменить отложенную публикацию
   fastify.delete(
     '/posts/:id/schedule',
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
@@ -232,7 +250,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Получить опубликованные посты
   fastify.get(
     '/posts/published',
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
       try {
         const postService = container.getPostService();
@@ -252,7 +270,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.put(
     '/posts/:id',
     { 
-      preValidation: [fastify.authenticate],
+      preHandler: [requireAuth],
       config: {
         // Разрешаем multipart/form-data для PUT запросов
         bodyLimit: 10485760, // 10MB
@@ -335,7 +353,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
 
   fastify.post(
     '/posts',
-    { preValidation: [fastify.authenticate] },
+    { preHandler: [requireAuth] },
     async (request: any, reply) => {
       const container = DependencyContainer.getInstance();
       const parts = request.parts();
@@ -404,7 +422,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts/test-yandex-config",
     { 
-      preValidation: [fastify.authenticate]
+      preHandler: [requireAuth]
     },
     async (request, reply) => {
       return {
@@ -424,7 +442,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/posts/:id/uniquize",
     { 
-      preValidation: [fastify.authenticate],
+      preHandler: [requireAuth],
       schema: {
         params: {
           type: 'object',

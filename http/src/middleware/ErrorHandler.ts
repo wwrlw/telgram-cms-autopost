@@ -9,6 +9,7 @@ export function errorHandler(
   reply: FastifyReply
 ) {
   request.log.error(error);
+  console.error('ErrorHandler caught error:', error);
 
   if (error instanceof ValidationError) {
     return reply.status(400).send({
@@ -49,6 +50,7 @@ export function errorHandler(
   // Default error
   return reply.status(500).send({
     success: false,
-    message: 'Something went wrong'
+    message: 'Something went wrong',
+    error: process.env.NODE_ENV === 'development' ? error.message : undefined
   });
 } 
