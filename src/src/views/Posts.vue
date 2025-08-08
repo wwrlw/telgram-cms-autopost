@@ -35,7 +35,6 @@
                 @delete="deletePost"
             />
 
-            <!-- Infinite Scroll Trigger -->
             <div
                 v-if="hasMore && !loading"
                 ref="infiniteScrollTrigger"
@@ -45,6 +44,12 @@
             <div v-if="infiniteScrollLoading" class="flex justify-center py-8">
                 <LoadingSpinner size="medium" text="Загружаем еще посты..." />
             </div>
+            <ConfirmModal
+                :show="showConfirmModal"
+                :message="confirmMessage"
+                @confirm="onConfirm"
+                @cancel="onCancelConfirm"
+            />
         </main>
     </div>
 </template>
@@ -57,6 +62,7 @@ import Filters from "@/components/Shared/Filters.vue";
 import Thumbs from "@/components/Thumb/Thumbs.vue";
 import Search from "@/components/Shared/Search.vue";
 import LoadingSpinner from "@/components/Shared/LoadingSpinner.vue";
+import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
 import { useApiCache } from "@/composables/useApiCache";
 import { useFavorites } from "@/composables/useFavorites.js";
@@ -159,45 +165,20 @@ const postsService = async (params = {}, isInfiniteScroll = false) => {
         const apiMethod = isInfiniteScroll
             ? http.postsInfiniteScroll
             : http.posts;
-        console.log("Making API request with params:", requestParams);
         const response = await optimizedRequest(apiMethod, requestParams);
-        console.log("API response:", response);
-        console.log("Response data length:", response.data?.length || 0);
 
         if (isInfiniteScroll) {
-            // Добавляем новые посты к существующим
             const newPosts = response.data || [];
             posts.value = [...posts.value, ...newPosts];
             currentPage.value++;
 
             // Обновляем hasMore из ответа API
             hasMore.value = response.params?.hasMore || false;
-            console.log(
-                "Updated hasMore to:",
-                hasMore.value,
-                "response params:",
-                response.params
-            );
-
-            // Предзагружаем медиа для новых постов в фоне
-            // Новые посты добавлены успешно
         } else {
-            // Заменяем посты полностью
-            console.log(
-                "Replacing posts array, old length:",
-                posts.value.length,
-                "new length:",
-                response.data?.length || 0
-            );
             posts.value = response.data || [];
-            console.log("Posts array updated, new length:", posts.value.length);
             currentPage.value = 1;
-
-            // Предзагружаем медиа для всех постов в фоне
-            // Посты загружены успешно
         }
 
-        // Автоматически удаляем опубликованные посты из избранного
         await removePublishedFromFavorites(posts.value);
 
         const paginationData = response.pagination || response.params;
@@ -212,7 +193,6 @@ const postsService = async (params = {}, isInfiniteScroll = false) => {
 
         return response.data;
     } catch (error) {
-        console.error("Error loading posts:", error);
         if (isInfiniteScroll) {
             infiniteScrollLoading.value = false;
         } else {
@@ -223,20 +203,8 @@ const postsService = async (params = {}, isInfiniteScroll = false) => {
     }
 };
 
-// Infinite scroll handler
 const loadMorePosts = async () => {
-    console.log("loadMorePosts called", {
-        hasMore: hasMore.value,
-        loading: infiniteScrollLoading.value,
-    });
-
     if (!hasMore.value || infiniteScrollLoading.value) {
-        console.log(
-            "Skipping loadMorePosts - hasMore:",
-            hasMore.value,
-            "loading:",
-            infiniteScrollLoading.value
-        );
         return;
     }
 
@@ -245,13 +213,6 @@ const loadMorePosts = async () => {
         const lastPost = posts.value[posts.value.length - 1];
         const lastId = lastPost?._id;
 
-        console.log(
-            "Loading more posts with lastId:",
-            lastId,
-            "page:",
-            currentPage.value
-        );
-
         await postsService(
             {
                 page: currentPage.value,
@@ -259,8 +220,6 @@ const loadMorePosts = async () => {
             },
             true
         );
-
-        console.log("More posts loaded successfully");
     } catch (error) {
         console.error("Error loading more posts:", error);
     }
@@ -322,19 +281,6 @@ const handleClearFilters = async () => {
 const handlePublish = (post) => {
     selectedPostForPublish.value = post;
     showPublishModal.value = true;
-};
-
-const handlePublished = async (result) => {
-    if (result.success) {
-        window.$toast.success("Пост успешно опубликован в Telegram канал!");
-        emitEvent(EVENTS.POST_PUBLISHED, selectedPostForPublish.value);
-        currentPage.value = 1;
-        hasMore.value = true;
-        await postsService({ page: 1 });
-    } else {
-        window.$toast.error("Ошибка при публикации: " + result.message);
-    }
-    selectedPostForPublish.value = null;
 };
 
 const showConfirmModal = ref(false);
