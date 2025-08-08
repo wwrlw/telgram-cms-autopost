@@ -45,7 +45,6 @@
             <div v-if="infiniteScrollLoading" class="flex justify-center py-8">
                 <LoadingSpinner size="medium" text="Загружаем еще посты..." />
             </div>
-
         </main>
     </div>
 </template>
@@ -59,7 +58,7 @@ import Thumbs from "@/components/Thumb/Thumbs.vue";
 import Search from "@/components/Shared/Search.vue";
 import LoadingSpinner from "@/components/Shared/LoadingSpinner.vue";
 import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
-import { useOptimizedApi } from "@/composables/useOptimizedApi";
+import { useApiCache } from "@/composables/useApiCache";
 import { useFavorites } from "@/composables/useFavorites.js";
 
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
@@ -87,15 +86,13 @@ const categories = ref([]);
 const postsStats = ref({
     total: 0,
     unique: 0,
-    today: 0
+    today: 0,
 });
 const infiniteScrollTrigger = ref(null);
 
-const {
-    createObserver,
-} = useInfiniteScroll();
+const { createObserver } = useInfiniteScroll();
 
-const { optimizedRequest, debouncedSearch } = useOptimizedApi();
+const { optimizedRequest, debouncedSearch } = useApiCache();
 
 const currentPage = ref(1);
 const hasMore = ref(true);
@@ -112,13 +109,13 @@ const loadPostsStats = async () => {
                     resolve(response);
                 },
                 (error) => {
-                    console.error('Error loading posts stats:', error);
+                    console.error("Error loading posts stats:", error);
                     reject(error);
                 }
             );
         });
     } catch (error) {
-        console.error('Error loading posts stats:', error);
+        console.error("Error loading posts stats:", error);
     }
 };
 

@@ -21,7 +21,9 @@ export const getMediaUrl = (filePath) => {
 
         // Создаем базовый URL без параметров качества
         // Убираем слэш в конце базового URL если он есть, чтобы избежать двойного слэша
-        const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+        const cleanBaseUrl = baseUrl.endsWith("/")
+            ? baseUrl.slice(0, -1)
+            : baseUrl;
         let url = `${cleanBaseUrl}/${normalizedPath}`;
 
         return url;
@@ -55,7 +57,9 @@ export const getCoverImageUrl = (filePath) => {
 
         // Создаем базовый URL БЕЗ параметров
         // Убираем слэш в конце базового URL если он есть, чтобы избежать двойного слэша
-        const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+        const cleanBaseUrl = baseUrl.endsWith("/")
+            ? baseUrl.slice(0, -1)
+            : baseUrl;
         let url = `${cleanBaseUrl}/${normalizedPath}`;
 
         return url;

@@ -5,176 +5,25 @@
                 <h2 class="text-lg font-semibold">Создать пост</h2>
             </div>
 
-            <div class="mb-4 flex flex-col">
-                <div class="relative">
-                    <div class="flex flex-wrap gap-1 p-2 border-b">
-                        <button
-                            v-for="btn in toolbar"
-                            :key="btn.title"
-                            :title="btn.title"
-                            @click="btn.action"
-                            class="px-2 py-1 text-sm rounded hover:bg-gray-200"
-                            :class="{
-                                'bg-indigo-100 text-indigo-700': btn.isActive(),
-                            }"
-                        >
-                            {{ btn.label }}
-                        </button>
-                    </div>
-                    <div
-                        v-if="showEmojiPicker"
-                        class="absolute top-full left-0 mt-1 bg-white border rounded shadow p-2 z-50 w-72 h-60 overflow-hidden"
-                    >
-                        <emoji-picker
-                            @emoji-click="insertEmojiEvent"
-                            style="
-                                --emoji-size: 20px;
-                                width: 100%;
-                                height: 100%;
-                            "
-                        />
-                    </div>
-                    <div
-                        v-if="showLinkInput"
-                        class="absolute top-full left-0 mt-1 bg-white border rounded shadow p-3 z-50 w-64"
-                    >
-                        <input
-                            v-model="linkUrl"
-                            placeholder="https://example.com"
-                            class="border rounded w-full text-sm px-2 py-1 mb-2"
-                        />
-                        <div class="flex justify-end gap-2">
-                            <button
-                                @click.stop="cancelLink"
-                                class="px-2 py-1 text-sm bg-gray-200 rounded"
-                            >
-                                Отмена
-                            </button>
-                            <button
-                                @click.stop="confirmLink"
-                                class="px-2 py-1 text-sm bg-indigo-600 text-white rounded"
-                            >
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <EditorContent
-                    :editor="editor"
-                    class="p-3 min-h-64 custom-editor-content"
+            <TextEditor v-model="editorHtml" />
+
+            <MediaPicker
+                v-model="files"
+                v-model:previews="previews"
+                :existing-count="0"
+                :max-files="10"
+            />
+
+            <div class="space-y-4 mb-4">
+                <ChannelSelector
+                    v-model="selectedChannel"
+                    :channels="channels"
+                    :category-name="postData?.category_name || ''"
                 />
-            </div>
-
-            <div class="space-y-4 mb-4">
-                <div class="flex items-center gap-2">
-                    <button type="button" class="file-btn" @click="triggerFile">
-                        <svg
-                            class="w-5 h-5 mr-1 text-indigo-600"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a2 2 0 10-2.828-2.828z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M16 7V3a1 1 0 00-1-1h-4a1 1 0 00-1 1v4"
-                            />
-                        </svg>
-                        <span>Прикрепить файлы</span>
-                    </button>
-                    <input
-                        ref="fileInputRef"
-                        type="file"
-                        multiple
-                        accept="image/*,video/*,audio/*"
-                        @change="handleFiles"
-                        class="hidden"
-                    />
-                    <span class="text-xs text-gray-500">До 10 файлов</span>
-                </div>
-                <div
-                    v-if="previews.length"
-                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4"
-                >
-                    <div
-                        v-for="(item, idx) in previews"
-                        :key="idx"
-                        class="relative group border rounded overflow-hidden aspect-square"
-                        style="
-                            aspect-ratio: 1/1 !important;
-                            overflow: hidden !important;
-                        "
-                    >
-                        <img
-                            v-if="item.isImage"
-                            :src="item.url"
-                            class="w-full h-full object-cover"
-                            style="
-                                width: 100% !important;
-                                height: 100% !important;
-                                object-fit: cover !important;
-                                object-position: center !important;
-                            "
-                        />
-                        <video
-                            v-else
-                            muted
-                            :src="item.url"
-                            class="w-full h-full object-cover"
-                            style="
-                                width: 100% !important;
-                                height: 100% !important;
-                                object-fit: cover !important;
-                                object-position: center !important;
-                            "
-                        ></video>
-                        <button
-                            @click="removeFile(idx)"
-                            class="absolute top-1 right-1 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-y-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                        >Канал для публикации</label
-                    >
-                    <select
-                        v-model="selectedChannel"
-                        class="border rounded p-2 text-sm w-full"
-                    >
-                        <option value="">Выберите канал</option>
-                        <option
-                            v-for="channel in channels"
-                            :key="channel._id"
-                            :value="channel.channel_id"
-                        >
-                            {{ channel.name }}
-                        </option>
-                    </select>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input id="schedule" type="checkbox" v-model="schedule" />
-                    <label for="schedule" class="text-sm"
-                        >Опубликовать позже</label
-                    >
-                </div>
-                <div
-                    v-if="schedule"
-                    class="space-y-3 pl-6 border-l-2 border-gray-200"
-                >
-                    <DateTimePicker v-model="scheduledAt" />
-                </div>
+                <ScheduleControls
+                    v-model:schedule="schedule"
+                    v-model:scheduledAt="scheduledAt"
+                />
             </div>
 
             <div class="flex justify-end gap-3 mt-4">
@@ -185,7 +34,6 @@
                 >
                     Отмена
                 </button>
-                <!-- Кнопка переключения текста -->
                 <button
                     v-if="uniqueText"
                     @click="toggleTextMode"
@@ -210,7 +58,6 @@
                             : "Показать уникальный"
                     }}</span>
                 </button>
-                <!-- Кнопка уникализации -->
                 <button
                     @click="uniquizePost"
                     :disabled="uniquizing || isSubmitting || !hasText"
@@ -241,7 +88,7 @@
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             stroke-width="2"
-                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386л-.548-.547z"
                         />
                     </svg>
                     <span>{{
@@ -281,16 +128,15 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { EditorContent, useEditor } from "@tiptap/vue-3";
-import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
-import Underline from "@tiptap/extension-underline";
 import http from "@/js/http";
 import TurndownService from "turndown";
 import { getMediaUrl } from "@/js/utils";
-import "emoji-picker-element";
-import DateTimePicker from "@/components/DateTimePicker.vue";
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
+
+import TextEditor from "@/components/Post/TextEditor.vue";
+import MediaPicker from "@/components/Post/MediaPicker.vue";
+import ChannelSelector from "@/components/Post/ChannelSelector.vue";
+import ScheduleControls from "@/components/Post/ScheduleControls.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -298,7 +144,6 @@ const postId = route.params.id;
 const { emit: emitEvent } = useEventBus();
 
 const files = ref([]);
-const fileInputRef = ref(null);
 const schedule = ref(false);
 const scheduledAt = ref("");
 const selectedChannel = ref("");
@@ -308,18 +153,10 @@ const postData = ref(null);
 const previews = ref([]);
 const isSubmitting = ref(false);
 const uniquizing = ref(false);
-const hasText = computed(() => {
-    const html = editor.value?.getHTML() || "";
-    const text = html.replace(/<[^>]*>/g, "").trim();
-    return text.length > 0;
-});
 const uniqueText = ref("");
 const showingUniqueText = ref(false);
 
-const editor = useEditor({
-    extensions: [StarterKit, Link, Underline],
-    content: "",
-});
+const editorHtml = ref("");
 
 const turndownService = new TurndownService({
     headingStyle: "atx",
@@ -354,24 +191,19 @@ const addFiles = (newArr) => {
     });
 };
 
-const handleFiles = (e) => {
-    addFiles(Array.from(e.target.files));
-    e.target.value = "";
-};
-
-const triggerFile = () => {
-    fileInputRef.value?.click();
-};
-
 const cancel = () => {
     router.back();
 };
 
+const hasText = computed(() => {
+    const text = editorHtml.value.replace(/<[^>]*>/g, "").trim();
+    return text.length > 0;
+});
+
 const send = async (publishLater) => {
     if (isSubmitting.value) return;
 
-    const html = editor.value?.getHTML() || "";
-    const markdown = turndownService.turndown(html);
+    const markdown = turndownService.turndown(editorHtml.value || "");
     if (!markdown.trim() && files.value.length === 0) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
@@ -413,24 +245,23 @@ const send = async (publishLater) => {
                     }
                 } catch (error) {
                     window?.$toast?.error(`Ошибка загрузки файла ${file.name}`);
-                    return;
+                    return error;
                 }
             }
         }
 
-        const postData = {
+        const payload = {
             text: markdown,
             channel_id: selectedChannel.value,
             media: uploadedFiles,
         };
 
         if (publishLater) {
-            postData.scheduled_at = new Date(scheduledAt.value).toISOString();
+            payload.scheduled_at = new Date(scheduledAt.value).toISOString();
         }
 
-        // Всегда используем FormData, как было до изменений
         const form = new FormData();
-        Object.entries(postData).forEach(([key, value]) => {
+        Object.entries(payload).forEach(([key, value]) => {
             if (Array.isArray(value)) {
                 value.forEach((v, i) =>
                     form.append(
@@ -448,9 +279,6 @@ const send = async (publishLater) => {
             (response) => {
                 isSubmitting.value = false;
                 if (response.success) {
-                    console.log("Create post response:", response.data); // debug
-
-                    // Отправляем событие о создании поста
                     emitEvent(EVENTS.POST_CREATED, response.data);
 
                     if (publishLater) {
@@ -458,9 +286,9 @@ const send = async (publishLater) => {
                         emitEvent(EVENTS.SCHEDULED_POST_CREATED, response.data);
                         router.push("/scheduled-posts");
                     } else {
-                        const postId = response.data._id || response.data.id;
+                        const createdId = response.data._id || response.data.id;
                         http.publishToChannel(
-                            postId,
+                            createdId,
                             selectedChannel.value,
                             (publishRes) => {
                                 if (publishRes.success) {
@@ -507,8 +335,7 @@ function savePost() {
 const savePostToDatabase = async () => {
     if (isSubmitting.value) return;
 
-    const html = editor.value?.getHTML() || "";
-    const markdown = turndownService.turndown(html);
+    const markdown = turndownService.turndown(editorHtml.value || "");
     if (!markdown.trim() && files.value.length === 0) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
@@ -540,28 +367,23 @@ const savePostToDatabase = async () => {
                     }
                 } catch (error) {
                     window?.$toast?.error(`Ошибка загрузки файла ${file.name}`);
-                    return;
+                    return error;
                 }
             }
         }
 
-        // Создаем FormData для отправки поста
         const formData = new FormData();
         formData.append("text", markdown);
-
-        // Добавляем медиафайлы в FormData
         uploadedFiles.forEach((media, index) => {
             formData.append(`media[${index}][type]`, media.type);
             formData.append(`media[${index}][file_path]`, media.file_path);
-            if (media.original_name) {
+            if (media.original_name)
                 formData.append(
                     `media[${index}][original_name]`,
                     media.original_name
                 );
-            }
-            if (media.mime_type) {
+            if (media.mime_type)
                 formData.append(`media[${index}][mime_type]`, media.mime_type);
-            }
         });
 
         http.createPost(
@@ -591,17 +413,9 @@ const savePostToDatabase = async () => {
     }
 };
 
-function publishNow() {
-    send(false);
-}
-function publishLater() {
-    send(true);
-}
-
 async function uniquizePost() {
     if (uniquizing.value) return;
-    const html = editor.value?.getHTML() || "";
-    const markdown = turndownService.turndown(html);
+    const markdown = turndownService.turndown(editorHtml.value || "");
     if (!markdown.trim()) {
         window?.$toast?.error("Добавьте текст для уникализации");
         return;
@@ -618,9 +432,7 @@ async function uniquizePost() {
         ) {
             uniqueText.value = response.data.data.unique_text;
             showingUniqueText.value = true;
-            if (editor.value) {
-                editor.value.commands.setContent(uniqueText.value);
-            }
+            editorHtml.value = uniqueText.value;
             window?.$toast?.success("Текст уникализирован!");
         } else {
             window?.$toast?.error(
@@ -653,20 +465,13 @@ function loadPost() {
         loadingPost.value = false;
         if (res && res.success) {
             postData.value = res.data;
-            initializeEditorContent(res.data);
+            const htmlContent = (res.data.text || "").replace(/\n/g, "<br>");
+            editorHtml.value = htmlContent;
             await preloadMedia(res.data);
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
         }
     });
-}
-
-function initializeEditorContent(post) {
-    if (!post) return;
-    const htmlContent = (post.text || "").replace(/\n/g, "<br>");
-    if (editor.value) {
-        editor.value.commands.setContent(htmlContent);
-    }
 }
 
 async function preloadMedia(post) {
@@ -687,141 +492,19 @@ async function preloadMedia(post) {
     addFiles(arr);
 }
 
-const toolbar = computed(() => {
-    if (!editor.value) return [];
-    return [
-        {
-            label: "B",
-            title: "Bold",
-            action: () => editor.value.chain().focus().toggleBold().run(),
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("bold"),
-        },
-        {
-            label: "I",
-            title: "Italic",
-            action: () => editor.value.chain().focus().toggleItalic().run(),
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("italic"),
-        },
-        {
-            label: "U",
-            title: "Underline",
-            action: () => editor.value.chain().focus().toggleUnderline().run(),
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("underline"),
-        },
-        {
-            label: "S",
-            title: "Strike",
-            action: () => editor.value.chain().focus().toggleStrike().run(),
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("strike"),
-        },
-        {
-            label: "</>",
-            title: "Code",
-            action: () => editor.value.chain().focus().toggleCodeBlock().run(),
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("codeBlock"),
-        },
-        {
-            label: "{}",
-            title: "Inline code",
-            action: () => editor.value.chain().focus().toggleCode().run(),
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("code"),
-        },
-        {
-            label: '"',
-            title: "Quote",
-            action: () => editor.value.chain().focus().toggleBlockquote().run(),
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("blockquote"),
-        },
-        {
-            label: "• List",
-            title: "Bullet List",
-            action: () => editor.value.chain().focus().toggleBulletList().run(),
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("bulletList"),
-        },
-        {
-            label: "1. List",
-            title: "Ordered List",
-            action: () =>
-                editor.value.chain().focus().toggleOrderedList().run(),
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("orderedList"),
-        },
-        {
-            label: "😀",
-            title: "Emoji",
-            action: toggleEmojiPicker,
-            isActive: () => false,
-        },
-        {
-            label: "🔗",
-            title: "Link",
-            action: toggleLinkInput,
-            isActive: () =>
-                editor.value.isActive && editor.value.isActive("link"),
-        },
-    ];
-});
-
-function removeFile(index) {
-    files.value.splice(index, 1);
-    const prev = previews.value.splice(index, 1)[0];
-    if (prev?.url) URL.revokeObjectURL(prev.url);
+function publishNow() {
+    send(false);
 }
-
-const showEmojiPicker = ref(false);
-const showLinkInput = ref(false);
-const linkUrl = ref("");
-
-function toggleEmojiPicker() {
-    showLinkInput.value = false;
-    showEmojiPicker.value = !showEmojiPicker.value;
-}
-
-function insertEmojiEvent(e) {
-    const emoji = e.detail.unicode;
-    if (emoji) editor.value.chain().focus().insertContent(emoji).run();
-}
-
-function toggleLinkInput() {
-    showLinkInput.value = !showLinkInput.value;
-    showEmojiPicker.value = false;
-    linkUrl.value = "";
-}
-
-function confirmLink() {
-    if (linkUrl.value.trim()) {
-        editor.value
-            .chain()
-            .focus()
-            .extendMarkRange("link")
-            .setLink({ href: linkUrl.value.trim() })
-            .run();
-    }
-    showLinkInput.value = false;
-}
-
-function cancelLink() {
-    showLinkInput.value = false;
+function publishLater() {
+    send(true);
 }
 
 function toggleTextMode() {
     showingUniqueText.value = !showingUniqueText.value;
     if (showingUniqueText.value && uniqueText.value) {
-        // Показываем последний сгенерированный уникальный текст
-        editor.value?.commands.setContent(uniqueText.value);
-    } else {
-        // Показываем оригинал
-        if (postData.value && postData.value.text) {
-            editor.value?.commands.setContent(postData.value.text);
-        }
+        editorHtml.value = uniqueText.value;
+    } else if (postData.value?.text) {
+        editorHtml.value = postData.value.text;
     }
 }
 
@@ -839,119 +522,5 @@ onMounted(() => {
 button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-.custom-editor-content {
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    outline: none;
-    min-height: 200px;
-    background: #fff;
-    caret-color: #3b82f6;
-    font-size: 1rem;
-    font-family: inherit;
-    cursor: text;
-    resize: vertical;
-    overflow-y: auto;
-}
-.custom-editor-content:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
-}
-.custom-editor-content .ProseMirror:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
-}
-
-/* Убираем все синие рамки и фокусы */
-.custom-editor-content .ProseMirror {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-    min-height: 180px;
-    padding: 0;
-    margin: 0;
-}
-
-.custom-editor-content .ProseMirror:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-}
-
-.custom-editor-content .ProseMirror p {
-    margin: 0;
-    padding: 0;
-    min-height: 1.5em;
-}
-
-.custom-editor-content .ProseMirror p:first-child {
-    margin-top: 0;
-}
-
-.custom-editor-content .ProseMirror p:last-child {
-    margin-bottom: 0;
-}
-
-.file-btn {
-    display: inline-flex;
-    align-items: center;
-    background: #eef2ff;
-    color: #3730a3;
-    border: none;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.file-btn:hover {
-    background: #c7d2fe;
-}
-
-/* Принудительные стили для превью изображений */
-.grid img,
-.grid video {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    object-position: center !important;
-}
-
-/* Стили для контейнеров превью */
-.grid > div {
-    aspect-ratio: 1/1 !important;
-    overflow: hidden !important;
-}
-
-/* Глобальные стили для удаления всех рамок в редакторе */
-:global(.ProseMirror) {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-    min-height: 180px !important;
-}
-
-:global(.ProseMirror:focus) {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-}
-
-:global(.ProseMirror p) {
-    margin: 0 !important;
-    padding: 0 !important;
-    min-height: 1.5em !important;
-}
-
-:global(.ProseMirror p:first-child) {
-    margin-top: 0 !important;
-}
-
-:global(.ProseMirror p:last-child) {
-    margin-bottom: 0 !important;
 }
 </style>

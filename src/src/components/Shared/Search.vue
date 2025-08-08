@@ -1,8 +1,5 @@
 <template>
-    <div
-        class="mb-3 bg-white p-4 rounded-lg shadow"
-        v-if="!loading || hasData"
-    >
+    <div class="mb-3 bg-white p-4 rounded-lg shadow" v-if="!loading || hasData">
         <div class="space-y-4">
             <div
                 class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4"
@@ -70,22 +67,21 @@ import { ref, computed } from "vue";
 const props = defineProps({
     loading: {
         type: Boolean,
-        default: false
+        default: false,
     },
     posts: {
         type: Array,
-        default: () => []
+        default: () => [],
     },
     categories: {
         type: Array,
-        default: () => []
+        default: () => [],
     },
     channels: {
         type: Array,
-        default: () => []
-    }
+        default: () => [],
+    },
 });
-
 
 const emit = defineEmits(["update:searchQuery", "clearFilters"]);
 
@@ -93,7 +89,11 @@ const searchQuery = ref("");
 
 // Computed property to check if we have any data
 const hasData = computed(() => {
-    return props.posts.length > 0 || props.categories.length > 0 || props.channels.length > 0;
+    return (
+        props.posts.length > 0 ||
+        props.categories.length > 0 ||
+        props.channels.length > 0
+    );
 });
 
 const updateSearch = () => {

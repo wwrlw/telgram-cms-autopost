@@ -84,7 +84,7 @@ const props = defineProps({
         default: () => ({
             total: 0,
             unique: 0,
-            today: 0
+            today: 0,
         }),
     },
 });

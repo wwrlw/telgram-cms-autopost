@@ -1,17 +1,12 @@
-import { ref, reactive } from "vue";
+import { reactive } from "vue";
 
-export function useOptimizedApi() {
+export function useApiCache() {
     const cache = reactive(new Map());
     const pendingRequests = reactive(new Map());
-    const requestQueue = [];
 
-    // Дебаунсер для поиска
     let searchDebounceTimer = null;
-
-    // Кэш для медиа файлов
     const mediaCache = new Map();
 
-    // Функция для создания ключа кэша
     const createCacheKey = (endpoint, params) => {
         const sortedParams = Object.keys(params || {})
             .sort()
@@ -20,47 +15,40 @@ export function useOptimizedApi() {
         return `${endpoint}?${sortedParams}`;
     };
 
-    // Функция для проверки актуальности кэша (5 минут)
-    const isCacheValid = (timestamp) => {
-        return Date.now() - timestamp < 5 * 60 * 1000;
+    const isCacheValid = (timestamp, cacheTime) => {
+        return Date.now() - timestamp < cacheTime;
     };
 
-    // Оптимизированный запрос с кэшированием
     const optimizedRequest = async (apiFunction, params = {}, options = {}) => {
         const {
             useCache = true,
-            cacheTime = 5 * 60 * 1000, // 5 минут
+            cacheTime = 5 * 60 * 1000, // 5 минут по умолчанию
             forceRefresh = false,
         } = options;
 
-        const cacheKey = createCacheKey(apiFunction.name, params);
+        const cacheKey = createCacheKey(apiFunction.name || "fn", params);
 
-        // Проверяем кэш
         if (useCache && !forceRefresh && cache.has(cacheKey)) {
             const cachedData = cache.get(cacheKey);
-            if (isCacheValid(cachedData.timestamp)) {
+            if (isCacheValid(cachedData.timestamp, cacheTime)) {
                 return cachedData.data;
             }
         }
 
-        // Проверяем, есть ли уже pending запрос
         if (pendingRequests.has(cacheKey)) {
             return pendingRequests.get(cacheKey);
         }
 
-        // Создаем новый запрос
         const requestPromise = new Promise((resolve, reject) => {
-            // Проверяем, ожидает ли функция callback
             if (typeof apiFunction === "function") {
                 try {
-                    // Создаем callback функции
                     const successCallback = (response) => {
                         if (response && response.success) {
-                            // Сохраняем в кэш
                             if (useCache) {
                                 cache.set(cacheKey, {
                                     data: response,
                                     timestamp: Date.now(),
+                                    ttl: cacheTime,
                                 });
                             }
                             resolve(response);
@@ -75,7 +63,6 @@ export function useOptimizedApi() {
                         reject(error);
                     };
 
-                    // Вызываем функцию с правильными аргументами
                     if (Object.keys(params).length > 0) {
                         apiFunction(params, successCallback, errorCallback);
                     } else {
@@ -89,7 +76,6 @@ export function useOptimizedApi() {
             }
         });
 
-        // Сохраняем pending запрос
         pendingRequests.set(cacheKey, requestPromise);
 
         try {
@@ -102,17 +88,35 @@ export function useOptimizedApi() {
         }
     };
 
-    // Дебаунсированный поиск
-    const debouncedSearch = (searchFunction, delay = 500) => {
-        return new Promise((resolve) => {
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(() => {
-                searchFunction().then(resolve);
+    const debouncedSearch = (searchFunction, delay = 500, controller) => {
+        return new Promise((resolve, reject) => {
+            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+
+            searchDebounceTimer = setTimeout(async () => {
+                try {
+                    if (controller?.signal?.aborted) {
+                        return reject(
+                            new DOMException("Aborted", "AbortError")
+                        );
+                    }
+                    const result = await searchFunction();
+                    resolve(result);
+                } catch (err) {
+                    reject(err);
+                }
             }, delay);
+
+            controller?.signal?.addEventListener(
+                "abort",
+                () => {
+                    clearTimeout(searchDebounceTimer);
+                    reject(new DOMException("Aborted", "AbortError"));
+                },
+                { once: true }
+            );
         });
     };
 
-    // Предзагрузка медиа
     const preloadMedia = (url) => {
         if (mediaCache.has(url)) {
             return Promise.resolve(mediaCache.get(url));
@@ -129,7 +133,6 @@ export function useOptimizedApi() {
         });
     };
 
-    // Очистка кэша
     const clearCache = (pattern = null) => {
         if (pattern) {
             for (const [key] of cache) {
@@ -142,19 +145,16 @@ export function useOptimizedApi() {
         }
     };
 
-    // Очистка старых записей кэша
-    const cleanupCache = () => {
-        const now = Date.now();
+    const cleanupCache = (now = Date.now()) => {
         for (const [key, value] of cache) {
-            if (now - value.timestamp > 10 * 60 * 1000) {
-                // 10 минут
+            const ttl = value.ttl ?? 5 * 60 * 1000;
+            if (now - value.timestamp > ttl) {
                 cache.delete(key);
             }
         }
     };
 
-    // Автоматическая очистка кэша каждые 5 минут
-    setInterval(cleanupCache, 5 * 60 * 1000);
+    setInterval(() => cleanupCache(), 60 * 1000); // очистка каждый минут на основе TTL
 
     return {
         optimizedRequest,

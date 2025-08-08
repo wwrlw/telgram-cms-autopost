@@ -260,16 +260,16 @@ let http = {
     },
 
     deletePost: function (params, callback) {
-        console.log('deletePost called with params:', params);
+        console.log("deletePost called with params:", params);
         instance
             .delete(`/post/${params.id}`)
             .then((res) => {
-                console.log('deletePost success response:', res.data);
+                console.log("deletePost success response:", res.data);
                 callback(res.data);
             })
             .catch((err) => {
-                console.error('deletePost error:', err);
-                console.error('deletePost error response:', err.response);
+                console.error("deletePost error:", err);
+                console.error("deletePost error response:", err.response);
                 const errorMessage =
                     err.response?.data?.message || "Failed to delete post";
                 callback({ success: false, message: errorMessage });

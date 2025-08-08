@@ -421,7 +421,6 @@ import "emoji-picker-element";
 import MediaViewer from "@/components/MediaViewer.vue";
 import DateTimePicker from "@/components/DateTimePicker.vue";
 
-
 const router = useRouter();
 const route = useRoute();
 const postId = route.params.id;

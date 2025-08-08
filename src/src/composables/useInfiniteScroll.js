@@ -1,11 +1,7 @@
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onUnmounted } from "vue";
 
 export function useInfiniteScroll(options = {}) {
-    const {
-        threshold = 100, // пиксели до конца для загрузки
-        rootMargin = "0px",
-        enabled = true,
-    } = options;
+    const { threshold = 100, rootMargin = "0px", enabled = true } = options;
 
     const isLoading = ref(false);
     const hasMore = ref(true);
@@ -52,7 +48,7 @@ export function useInfiniteScroll(options = {}) {
         return obs;
     };
 
-    const observeElement = (element, callback) => {
+    const observeElement = (element) => {
         if (!element || !observer.value) return;
 
         observer.value.observe(element);

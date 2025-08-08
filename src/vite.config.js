@@ -8,11 +8,11 @@ export default defineConfig({
         vue({
             template: {
                 compilerOptions: {
-                    isCustomElement: (tag) => tag === 'emoji-picker'
-                }
-            }
-        }), 
-        tailwindcss()
+                    isCustomElement: (tag) => tag === "emoji-picker",
+                },
+            },
+        }),
+        tailwindcss(),
     ],
     server: {
         host: "0.0.0.0",

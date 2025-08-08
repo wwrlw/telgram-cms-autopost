@@ -1,6 +1,3 @@
-import { ref } from "vue";
-
-// Создаем глобальный event bus
 const eventBus = {
     events: new Map(),
 

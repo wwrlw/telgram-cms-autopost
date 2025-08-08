@@ -396,36 +396,36 @@ const getCategoryName = () => {
     return category ? category.name : "Неизвестная категория";
 };
 
-const getCategoryStyle = () => {
-    // Используем данные напрямую из поста, если они есть
-    if (props.post.category_color) {
-        const color = props.post.category_color.replace("#", "");
-        const r = parseInt(color.substr(0, 2), 16);
-        const g = parseInt(color.substr(2, 2), 16);
-        const b = parseInt(color.substr(4, 2), 16);
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        const textColor = brightness > 155 ? "text-gray-900" : "text-white";
-        return `bg-[${props.post.category_color}] ${textColor} border border-[${props.post.category_color}]`;
-    }
+// const getCategoryStyle = () => {
+//     // Используем данные напрямую из поста, если они есть
+//     if (props.post.category_color) {
+//         const color = props.post.category_color.replace("#", "");
+//         const r = parseInt(color.substr(0, 2), 16);
+//         const g = parseInt(color.substr(2, 2), 16);
+//         const b = parseInt(color.substr(4, 2), 16);
+//         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+//         const textColor = brightness > 155 ? "text-gray-900" : "text-white";
+//         return `bg-[${props.post.category_color}] ${textColor} border border-[${props.post.category_color}]`;
+//     }
 
-    // Fallback к старому способу поиска по ID
-    if (!props.post.category_id) {
-        return "bg-gray-100 text-gray-700 border border-gray-200";
-    }
-    const category = props.categories.find(
-        (cat) => cat.id === props.post.category_id
-    );
-    if (category && category.color) {
-        const color = category.color.replace("#", "");
-        const r = parseInt(color.substr(0, 2), 16);
-        const g = parseInt(color.substr(2, 2), 16);
-        const b = parseInt(color.substr(4, 2), 16);
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        const textColor = brightness > 155 ? "text-gray-900" : "text-white";
-        return `bg-[${category.color}] ${textColor} border border-[${category.color}]`;
-    }
-    return "bg-gray-100 text-gray-700 border border-gray-200";
-};
+//     // Fallback к старому способу поиска по ID
+//     if (!props.post.category_id) {
+//         return "bg-gray-100 text-gray-700 border border-gray-200";
+//     }
+//     const category = props.categories.find(
+//         (cat) => cat.id === props.post.category_id
+//     );
+//     if (category && category.color) {
+//         const color = category.color.replace("#", "");
+//         const r = parseInt(color.substr(0, 2), 16);
+//         const g = parseInt(color.substr(2, 2), 16);
+//         const b = parseInt(color.substr(4, 2), 16);
+//         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+//         const textColor = brightness > 155 ? "text-gray-900" : "text-white";
+//         return `bg-[${category.color}] ${textColor} border border-[${category.color}]`;
+//     }
+//     return "bg-gray-100 text-gray-700 border border-gray-200";
+// };
 
 const navigateToPost = () => {
     router.push({ name: "post", params: { id: props.post._id } });
@@ -457,7 +457,6 @@ const handleVideoError = (event) => {
     videoError.value = true;
 };
 
-// Следим за изменением поста и сбрасываем ошибки
 watch(
     () => props.post._id,
     () => {
