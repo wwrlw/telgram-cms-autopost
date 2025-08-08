@@ -5,12 +5,10 @@
             'post-card-with-media',
         ]"
     >
-        <!-- Медиа область - всегда показываем -->
         <div
             class="relative aspect-square bg-gray-50 cursor-pointer media-area"
             @click="navigateToPost"
         >
-            <!-- Показываем картинку если есть фото и нет ошибки -->
             <img
                 v-if="
                     hasPhoto(post) &&
@@ -25,7 +23,6 @@
                 @error="handleImageError"
             />
 
-            <!-- Показываем видео если есть видео и нет ошибки -->
             <div
                 v-else-if="
                     hasVideo(post) &&
@@ -61,19 +58,16 @@
                 </div>
             </div>
 
-            <!-- Показываем ошибку для картинки -->
             <MediaErrorFallback
                 v-else-if="imageError"
                 message="Изображение недоступно"
             />
 
-            <!-- Показываем ошибку для видео -->
             <MediaErrorFallback
                 v-else-if="videoError"
                 message="Видео недоступно"
             />
 
-            <!-- Показываем дефолтную иконку если нет медиа -->
             <div
                 v-else
                 class="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center"
@@ -93,7 +87,6 @@
                 </svg>
             </div>
 
-            <!-- Статусные бейджи -->
             <div class="absolute top-2 left-2 flex flex-col gap-1">
                 <span
                     v-if="isOverdue(post.scheduled_at)"
@@ -109,7 +102,6 @@
                 </span>
             </div>
 
-            <!-- Количество медиафайлов -->
             <div
                 v-if="post.media && post.media.length > 1"
                 class="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-full"
@@ -117,7 +109,6 @@
                 +{{ post.media.length - 1 }}
             </div>
 
-            <!-- Категория -->
             <div
                 v-if="post.category_name"
                 class="absolute bottom-2 left-2 bg-white bg-opacity-90 text-gray-700 text-xs px-2 py-1 rounded-full shadow-sm"
@@ -126,9 +117,7 @@
             </div>
         </div>
 
-        <!-- Контент поста -->
         <div class="p-4">
-            <!-- Заголовок -->
             <h3
                 class="text-sm font-medium text-gray-900 line-clamp-2 mb-2 cursor-pointer hover:text-indigo-600 transition-colors"
                 @click="navigateToPost"
@@ -136,7 +125,6 @@
                 {{ extractTitle(post.text) }}
             </h3>
 
-            <!-- Текст поста -->
             <p
                 class="text-xs text-gray-600 line-clamp-3 mb-3 cursor-pointer hover:text-gray-800 transition-colors"
                 @click="navigateToPost"
@@ -144,7 +132,6 @@
                 {{ extractContent(post.text) }}
             </p>
 
-            <!-- Информация о публикации -->
             <div class="space-y-1 mb-4">
                 <div class="flex items-center text-xs text-gray-500">
                     <svg
@@ -199,7 +186,6 @@
                 </div>
             </div>
 
-            <!-- Кнопки действий -->
             <div class="flex space-x-2">
                 <button
                     @click="$emit('edit', post)"

@@ -69,7 +69,7 @@ import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 
 const ChannelTableSkeleton = PostTableSkeleton;
 
-const refreshTrigger = inject("refreshTrigger", null);
+const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading", null);
 
 const channels = ref([]);

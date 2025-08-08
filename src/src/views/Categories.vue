@@ -66,7 +66,7 @@ import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 
 const CategoryTableSkeleton = PostTableSkeleton;
 
-const refreshTrigger = inject("refreshTrigger", null);
+const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading", null);
 
 const categories = ref([]);

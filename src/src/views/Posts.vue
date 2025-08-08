@@ -69,8 +69,7 @@ import { useFavorites } from "@/composables/useFavorites.js";
 
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
 
-const refreshTrigger = inject("refreshTrigger");
-console.log("Posts.vue: refreshTrigger injected:", refreshTrigger.value);
+const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading");
 const { removePublishedFromFavorites, initializeFavorites } = useFavorites();
 const { on: onEvent, emit: emitEvent } = useEventBus();
@@ -94,9 +93,11 @@ const postsStats = ref({
     unique: 0,
     today: 0,
 });
+
+const force = ref(false);
 const infiniteScrollTrigger = ref(null);
 
-const { createObserver } = useInfiniteScroll();
+const { createObserver, destroy } = useInfiniteScroll();
 
 const { optimizedRequest, debouncedSearch } = useApiCache();
 
@@ -125,7 +126,11 @@ const loadPostsStats = async () => {
     }
 };
 
-const postsService = async (params = {}, isInfiniteScroll = false) => {
+const postsService = async (
+    params = {},
+    isInfiniteScroll = false,
+    options = {}
+) => {
     if (isInfiniteScroll) {
         infiniteScrollLoading.value = true;
     } else {
@@ -165,7 +170,11 @@ const postsService = async (params = {}, isInfiniteScroll = false) => {
         const apiMethod = isInfiniteScroll
             ? http.postsInfiniteScroll
             : http.posts;
-        const response = await optimizedRequest(apiMethod, requestParams);
+        const response = await optimizedRequest(
+            apiMethod,
+            requestParams,
+            options
+        );
 
         if (isInfiniteScroll) {
             const newPosts = response.data || [];
@@ -369,7 +378,11 @@ const deletePost = (post) => {
 
 const loadCategories = async () => {
     try {
-        const response = await optimizedRequest(http.categories);
+        const response = await optimizedRequest(
+            http.categories,
+            {},
+            force.value ? { force: true, useCache: false } : {}
+        );
         if (response.success && response.data) {
             categories.value = response.data;
         }
@@ -379,83 +392,40 @@ const loadCategories = async () => {
 };
 
 const initializeInfiniteScroll = () => {
-    console.log("Initializing infinite scroll");
-
+    destroy();
     const observer = createObserver(loadMorePosts);
     if (observer && infiniteScrollTrigger.value) {
-        console.log("Observer created and observing trigger element");
         observer.observe(infiniteScrollTrigger.value);
-    } else {
-        console.warn(
-            "Failed to initialize infinite scroll - observer:",
-            !!observer,
-            "trigger:",
-            !!infiniteScrollTrigger.value
-        );
     }
 };
 
 watch(
     refreshTrigger,
-    async (newValue, oldValue) => {
-        console.log("Refresh trigger changed:", { newValue, oldValue });
+    async () => {
         if (refreshTrigger && refreshTrigger.value > 0) {
-            console.log("Refreshing posts...");
             currentPage.value = 1;
             hasMore.value = true;
-            await postsService({ page: 1 });
-            await loadCategories();
-            console.log(
-                "Posts refreshed successfully, posts count:",
-                posts.value.length
-            );
-            console.log(
-                "First few posts:",
-                posts.value
-                    .slice(0, 3)
-                    .map((p) => ({ id: p._id, title: p.title }))
-            );
-        } else {
-            console.log("Refresh trigger condition not met:", {
-                refreshTrigger: refreshTrigger.value,
+            await postsService({ page: 1 }, false, {
+                forceRefresh: true,
+                useCache: false,
             });
+            await loadPostsStats();
+            initializeInfiniteScroll();
         }
     },
     { immediate: true }
 );
 
-const handleRefreshPosts = async () => {
-    console.log("Manual refresh triggered");
-    currentPage.value = 1;
-    hasMore.value = true;
-    await postsService({ page: 1 });
-    await loadCategories();
-    await loadPostsStats();
-    console.log("Manual refresh completed");
-};
-
-defineExpose({
-    refreshPosts: handleRefreshPosts,
-});
-
 onMounted(async () => {
-    console.log("Posts component mounted");
-    console.log("Refresh trigger on mount:", refreshTrigger.value);
     await initializeFavorites();
     await postsService({ page: 1 });
     await loadCategories();
-    await loadPostsStats(); // Загружаем статистику при монтировании
+    await loadPostsStats();
 
     await nextTick();
     initializeInfiniteScroll();
 
-    window.addEventListener("refresh-posts", async () => {
-        console.log("Refresh posts event received from window");
-        await handleRefreshPosts();
-    });
-
     onEvent(EVENTS.POST_CREATED, async () => {
-        console.log("Post created event received, refreshing posts");
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
@@ -463,7 +433,6 @@ onMounted(async () => {
     });
 
     onEvent(EVENTS.POST_UPDATED, async () => {
-        console.log("Post updated event received, refreshing posts");
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
@@ -471,7 +440,6 @@ onMounted(async () => {
     });
 
     onEvent(EVENTS.POST_DELETED, async () => {
-        console.log("Post deleted event received, refreshing posts");
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
@@ -479,7 +447,6 @@ onMounted(async () => {
     });
 
     onEvent(EVENTS.POST_PUBLISHED, async () => {
-        console.log("Post published event received, refreshing posts");
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
@@ -487,7 +454,6 @@ onMounted(async () => {
     });
 
     onEvent(EVENTS.REFRESH_POSTS, async () => {
-        console.log("Refresh posts event received");
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
@@ -495,8 +461,8 @@ onMounted(async () => {
     });
 });
 
-watch(hasMore, async () => {
-    if (hasMore.value) {
+watch(loading, async (val) => {
+    if (!val && hasMore.value) {
         await nextTick();
         initializeInfiniteScroll();
     }
