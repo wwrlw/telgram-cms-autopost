@@ -836,4 +836,32 @@ export class PostRepository implements IPostRepository {
     console.log('Final stats:', finalStats);
     return finalStats;
   }
+
+  // Cleanup helper methods
+  async countAll(): Promise<number> {
+    if (!this.mongo.db) throw new Error('MongoDB is not connected');
+    return await this.mongo.db.collection('posts').estimatedDocumentCount();
+  }
+
+  async findOldestWithMedia(limit: number): Promise<Post[]> {
+    if (!this.mongo.db) throw new Error('MongoDB is not connected');
+    const docs = await this.mongo.db
+      .collection('posts')
+      .find({ is_published: { $ne: true } })
+      .project({ media: 1 })
+      .sort({ created_at: 1, _id: 1 })
+      .limit(limit)
+      .toArray();
+    return docs as Post[];
+  }
+
+  async deleteMany(ids: string[]): Promise<number> {
+    if (!this.mongo.db) throw new Error('MongoDB is not connected');
+    const objectIds = ids
+      .filter(id => ObjectId.isValid(id))
+      .map(id => new ObjectId(id));
+    if (objectIds.length === 0) return 0;
+    const res = await this.mongo.db.collection('posts').deleteMany({ _id: { $in: objectIds } });
+    return res.deletedCount || 0;
+  }
 }

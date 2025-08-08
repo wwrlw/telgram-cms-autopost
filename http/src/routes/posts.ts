@@ -472,4 +472,25 @@ export async function postsRoutes(fastify: FastifyInstance) {
       }
     }
   );
+
+  // Очистка старых постов и медиа
+  fastify.post(
+    "/posts/cleanup",
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_POSTS)] },
+    async (request: any, reply) => {
+      try {
+        const container = DependencyContainer.getInstance();
+        const postService = container.getPostService();
+        const { threshold, removeCount, dryRun } = (request.query || {}) as any;
+        const result = await postService.cleanupOldPosts({
+          threshold: threshold ? Number(threshold) : undefined,
+          removeCount: removeCount ? Number(removeCount) : undefined,
+          dryRun: dryRun === 'true' || dryRun === true,
+        });
+        return { success: true, data: result };
+      } catch (error) {
+        throw error;
+      }
+    }
+  );
 }

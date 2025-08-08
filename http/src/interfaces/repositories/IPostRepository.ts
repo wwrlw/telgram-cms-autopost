@@ -18,4 +18,8 @@ export interface IPostRepository {
   update(id: string, data: Partial<Post>): Promise<Post | null>;
   findScheduled(): Promise<Post[]>;
   findPublished(): Promise<Post[]>;
+  // Cleanup helpers
+  countAll(): Promise<number>;
+  findOldestWithMedia(limit: number): Promise<Post[]>;
+  deleteMany(ids: string[]): Promise<number>;
 } 

@@ -169,6 +169,75 @@ export class PostService implements IPostService {
     return await this.postRepository.findPublished();
   }
 
+  async cleanupOldPosts(options?: { threshold?: number; removeCount?: number; dryRun?: boolean }): Promise<{ totalBefore: number; toDelete: number; deleted: number; errors: number }> {
+    const threshold = options?.threshold ?? 2500;
+    const removeCount = options?.removeCount ?? 500;
+    const dryRun = options?.dryRun ?? false;
+
+    const totalBefore = await this.postRepository.countAll();
+    if (totalBefore <= threshold) {
+      return { totalBefore, toDelete: 0, deleted: 0, errors: 0 };
+    }
+
+    const candidates = await this.postRepository.findOldestWithMedia(removeCount);
+    const ids: string[] = [];
+    let errors = 0;
+
+    // Delete media files from disk
+    for (const doc of candidates) {
+      const id = (doc as any)._id?.toString();
+      if (id) ids.push(id);
+      try {
+        if (Array.isArray(doc.media)) {
+          for (const m of doc.media) {
+            if (!m?.file_path) continue;
+            await this.safeDeleteMediaFile(m.file_path);
+            const thumb = (m as any).thumbnail_path as string | undefined;
+            if (thumb) {
+              await this.safeDeleteMediaFile(thumb);
+            }
+          }
+        }
+      } catch (e) {
+        // Continue deleting others, but count error
+        errors += 1;
+      }
+    }
+
+    if (dryRun) {
+      return { totalBefore, toDelete: ids.length, deleted: 0, errors };
+    }
+
+    const deleted = await this.postRepository.deleteMany(ids);
+    return { totalBefore, toDelete: ids.length, deleted, errors };
+  }
+
+  private async safeDeleteMediaFile(filePath: string): Promise<void> {
+    const fs = await import('fs');
+    const path = await import('path');
+
+    // Two possible patterns in codebase: absolute path (parser) or public /media link (http upload)
+    const candidates: string[] = [];
+
+    if (filePath.startsWith('/media/')) {
+      candidates.push(path.join(process.cwd(), filePath));
+      // also consider docker mount `/app/media` if process.cwd() differs
+      candidates.push(path.join('/app', filePath));
+    } else {
+      // absolute path from parser, keep as-is
+      candidates.push(filePath);
+    }
+
+    for (const p of candidates) {
+      try {
+        await fs.promises.unlink(p);
+        return; // deleted once is enough
+      } catch (_) {
+        // ignore and try next
+      }
+    }
+  }
+
   async updatePost(id: string, updateData: Partial<Post>): Promise<Post> {
     const post = await this.postRepository.findById(id);
     if (!post) {
