@@ -36,61 +36,75 @@ export class PostRepository implements IPostRepository {
   async findAllWithCategories(): Promise<Post[]> {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
-    const posts = await this.mongo.db
-      .collection("posts")
-      .aggregate([
-        {
-          $sort: { created_at: -1 }
-        },
-        {
-          $lookup: {
-            from: 'channels',
-            localField: 'channel_id',
-            foreignField: 'channel_id',
-            as: 'channel'
-          }
-        },
-        {
-          $unwind: {
-            path: '$channel',
-            preserveNullAndEmptyArrays: true
-          }
-        },
-        {
-          $addFields: {
-            'channel.category_id_obj': {
-              $cond: {
-                if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
-                then: { $toObjectId: '$channel.category_id' },
-                else: '$channel.category_id'
-              }
+    const t0 = Date.now();
+    const pipeline = [
+      {
+        $sort: { created_at: -1 }
+      },
+      {
+        $lookup: {
+          from: 'channels',
+          localField: 'channel_id',
+          foreignField: 'channel_id',
+          as: 'channel'
+        }
+      },
+      {
+        $unwind: {
+          path: '$channel',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          'channel.category_id_obj': {
+            $cond: {
+              if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+              then: { $toObjectId: '$channel.category_id' },
+              else: '$channel.category_id'
             }
           }
-        },
-        {
-          $lookup: {
-            from: 'categories',
-            localField: 'channel.category_id_obj',
-            foreignField: '_id',
-            as: 'category'
-          }
-        },
-        {
-          $unwind: {
-            path: '$category',
-            preserveNullAndEmptyArrays: true
-          }
-        },
-        {
-          $addFields: {
-            category_id: '$category._id',
-            category_name: '$category.name',
-            category_color: '$category.color',
-            channel_username: '$channel.username'
-          }
         }
-      ])
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'channel.category_id_obj',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      {
+        $unwind: {
+          path: '$category',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          category_id: '$category._id',
+          category_name: '$category.name',
+          category_color: '$category.color',
+          channel_username: '$channel.username'
+        }
+      }
+    ];
+
+    if (process.env.MONGO_EXPLAIN === '1') {
+      const plan: any = await this.mongo.db
+        .collection("posts")
+        .aggregate(pipeline, { allowDiskUse: true })
+        .explain('executionStats');
+      console.log('findAllWithCategories explain:', JSON.stringify(plan, null, 2));
+    }
+
+    const posts = await this.mongo.db
+      .collection("posts")
+      .aggregate(pipeline, { allowDiskUse: true })
       .toArray();
+
+    const t1 = Date.now();
+    console.log('findAllWithCategories timings(ms): total=', t1 - t0, 'count=', posts.length);
 
     return posts as Post[];
   }
@@ -139,7 +153,14 @@ export class PostRepository implements IPostRepository {
     const mongoSort = this.buildMongoSort(sort);
     const skip = (pagination.page - 1) * pagination.limit;
 
-    const pipeline: any[] = [
+    const { postMatch, categoryMatch } = this.buildAggregationFiltersSplit(filters);
+
+    const t0 = Date.now();
+
+    // Build count pipeline (accurate total with category filter applied when present)
+    const countPipeline: any[] = [];
+    if (Object.keys(postMatch).length > 0) countPipeline.push({ $match: postMatch });
+    countPipeline.push(
       {
         $lookup: {
           from: 'channels',
@@ -148,12 +169,7 @@ export class PostRepository implements IPostRepository {
           as: 'channel'
         }
       },
-      {
-        $unwind: {
-          path: '$channel',
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'categories',
@@ -162,44 +178,69 @@ export class PostRepository implements IPostRepository {
           as: 'category'
         }
       },
-      {
-        $unwind: {
-          path: '$category',
-          preserveNullAndEmptyArrays: true
-        }
-      }
-    ];
+      { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } }
+    );
+    if (Object.keys(categoryMatch).length > 0) countPipeline.push({ $match: categoryMatch });
+    countPipeline.push({ $count: 'total' });
 
-    const matchStage = this.buildAggregationFilters(filters);
-    
-    if (Object.keys(matchStage).length > 0) {
-      pipeline.push({ $match: matchStage });
-    }
-
-
-    const countPipeline = [...pipeline, { $count: "total" }];
-    const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline).toArray();
+    const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline, { allowDiskUse: true }).toArray();
     const total = countResult.length > 0 ? countResult[0].total : 0;
 
     if (total === 0 && pagination.page === 1) {
-        return {
-            data: [],
-            params: {
-                page: pagination.page,
-                limit: pagination.limit,
-                total: 0,
-                totalPages: 0,
-                hasNext: false,
-                hasPrev: false,
-            },
-        };
+      return {
+        data: [],
+        params: {
+          page: pagination.page,
+          limit: pagination.limit,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
     }
 
+    const t1 = Date.now();
+
+    // Optimize: if there is NO category filter, paginate before lookups
+    const optimizedPath = Object.keys(categoryMatch).length === 0;
+
+    const pipeline: any[] = [];
+    if (Object.keys(postMatch).length > 0) pipeline.push({ $match: postMatch });
+
+    if (optimizedPath) {
+      pipeline.push({ $sort: mongoSort }, { $skip: skip }, { $limit: pagination.limit });
+    }
+
+    // Lookups
     pipeline.push(
-      { $sort: mongoSort },
-      { $skip: skip },
-      { $limit: pagination.limit }
+      {
+        $lookup: {
+          from: 'channels',
+          localField: 'channel_id',
+          foreignField: 'channel_id',
+          as: 'channel'
+        }
+      },
+      { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'channel.category_id',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } }
     );
+
+    if (!optimizedPath) {
+      if (Object.keys(categoryMatch).length > 0) pipeline.push({ $match: categoryMatch });
+      pipeline.push({ $sort: mongoSort }, { $skip: skip }, { $limit: pagination.limit });
+    } else {
+      // In optimized path, apply categoryMatch if it somehow appears (should not), harmless no-op
+      if (Object.keys(categoryMatch).length > 0) pipeline.push({ $match: categoryMatch });
+    }
 
     pipeline.push({
       $addFields: {
@@ -210,7 +251,15 @@ export class PostRepository implements IPostRepository {
       }
     });
 
-    const posts = await this.mongo.db.collection("posts").aggregate(pipeline).toArray();
+    if (process.env.MONGO_EXPLAIN === '1') {
+      const plan: any = await this.mongo.db.collection("posts").aggregate(pipeline, { allowDiskUse: true }).explain('executionStats');
+      console.log('findWithQueryAndCategories explain:', JSON.stringify(plan, null, 2));
+    }
+
+    const posts = await this.mongo.db.collection("posts").aggregate(pipeline, { allowDiskUse: true }).toArray();
+
+    const t2 = Date.now();
+    console.log('findWithQueryAndCategories timings(ms): count=', t1 - t0, 'data=', t2 - t1, 'total=', t2 - t0, 'optimizedPath=', optimizedPath);
 
     const totalPages = Math.ceil(total / pagination.limit);
 
@@ -268,6 +317,33 @@ export class PostRepository implements IPostRepository {
     }
 
     return mongoFilters;
+  }
+
+  private buildAggregationFiltersSplit(filters?: PostFilters): { postMatch: any; categoryMatch: any } {
+    const postMatch: any = {};
+    const categoryMatch: any = {};
+
+    if (!filters) return { postMatch, categoryMatch };
+
+    if (filters.source_channel) {
+      postMatch.source_channel = { $regex: filters.source_channel, $options: 'i' };
+    }
+    if (filters.text) {
+      postMatch.text = { $regex: filters.text, $options: 'i' };
+    }
+    if (filters.is_unique !== undefined) {
+      postMatch.is_unique = filters.is_unique;
+    }
+    if (filters.date_from || filters.date_to) {
+      postMatch.created_at = {};
+      if (filters.date_from) postMatch.created_at.$gte = filters.date_from;
+      if (filters.date_to) postMatch.created_at.$lte = filters.date_to;
+    }
+    if (filters.category_id && ObjectId.isValid(filters.category_id)) {
+      categoryMatch['category._id'] = new ObjectId(filters.category_id);
+    }
+
+    return { postMatch, categoryMatch };
   }
 
   async count(filters: any = {}): Promise<number> {
@@ -586,8 +662,62 @@ export class PostRepository implements IPostRepository {
 
     const { pagination, filters, sort } = query;
     const mongoSort = this.buildMongoSort(sort);
-    
-    const pipeline: any[] = [
+
+    const { postMatch, categoryMatch } = this.buildAggregationFiltersSplit(filters);
+
+    // Add cursor-based pagination filter to postMatch
+    if (pagination.lastId) {
+      const lastObjectId = new ObjectId(pagination.lastId);
+      postMatch._id = { $lt: lastObjectId };
+      console.log('Adding cursor filter with lastId:', pagination.lastId);
+    }
+
+    const t0 = Date.now();
+
+    // Total only for first page
+    let total = 0;
+    if (pagination.page === 1) {
+      const countPipeline: any[] = [];
+      if (Object.keys(postMatch).length > 0) countPipeline.push({ $match: postMatch });
+      countPipeline.push(
+        {
+          $lookup: {
+            from: 'channels',
+            localField: 'channel_id',
+            foreignField: 'channel_id',
+            as: 'channel'
+          }
+        },
+        { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'channel.category_id',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } }
+      );
+      if (Object.keys(categoryMatch).length > 0) countPipeline.push({ $match: categoryMatch });
+      countPipeline.push({ $count: 'total' });
+
+      const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline, { allowDiskUse: true }).toArray();
+      total = countResult.length > 0 ? countResult[0].total : 0;
+    }
+
+    const t1 = Date.now();
+
+    const pipeline: any[] = [];
+    if (Object.keys(postMatch).length > 0) pipeline.push({ $match: postMatch });
+
+    const optimizedPath = Object.keys(categoryMatch).length === 0;
+
+    if (optimizedPath) {
+      pipeline.push({ $sort: mongoSort }, { $limit: pagination.limit + 1 });
+    }
+
+    pipeline.push(
       {
         $lookup: {
           from: 'channels',
@@ -596,12 +726,7 @@ export class PostRepository implements IPostRepository {
           as: 'channel'
         }
       },
-      {
-        $unwind: {
-          path: '$channel',
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'categories',
@@ -610,42 +735,15 @@ export class PostRepository implements IPostRepository {
           as: 'category'
         }
       },
-      {
-        $unwind: {
-          path: '$category',
-          preserveNullAndEmptyArrays: true
-        }
-      }
-    ];
-
-    const matchStage = this.buildAggregationFilters(filters);
-    if (Object.keys(matchStage).length > 0) {
-      pipeline.push({ $match: matchStage });
-    }
-
-    // Add cursor-based pagination
-    if (pagination.lastId) {
-      const lastObjectId = new ObjectId(pagination.lastId);
-      console.log('Adding cursor filter with lastId:', pagination.lastId);
-      pipeline.push({
-        $match: {
-          _id: { $lt: lastObjectId }
-        }
-      });
-    }
-
-    // Get total count for the first page
-    let total = 0;
-    if (pagination.page === 1) {
-      const countPipeline = [...pipeline, { $count: "total" }];
-      const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline).toArray();
-      total = countResult.length > 0 ? countResult[0].total : 0;
-    }
-
-    pipeline.push(
-      { $sort: mongoSort },
-      { $limit: pagination.limit + 1 } // Fetch one extra to check if there are more
+      { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } }
     );
+
+    if (!optimizedPath) {
+      if (Object.keys(categoryMatch).length > 0) pipeline.push({ $match: categoryMatch });
+      pipeline.push({ $sort: mongoSort }, { $limit: pagination.limit + 1 });
+    } else {
+      if (Object.keys(categoryMatch).length > 0) pipeline.push({ $match: categoryMatch });
+    }
 
     pipeline.push({
       $addFields: {
@@ -656,11 +754,18 @@ export class PostRepository implements IPostRepository {
       }
     });
 
-    const posts = await this.mongo.db.collection("posts").aggregate(pipeline).toArray();
-    
+    if (process.env.MONGO_EXPLAIN === '1') {
+      const plan: any = await this.mongo.db.collection("posts").aggregate(pipeline, { allowDiskUse: true }).explain('executionStats');
+      console.log('findWithInfiniteScroll explain:', JSON.stringify(plan, null, 2));
+    }
+
+    const posts = await this.mongo.db.collection("posts").aggregate(pipeline, { allowDiskUse: true }).toArray();
+
+    const t2 = Date.now();
+
     const hasMore = posts.length > pagination.limit;
-    const data = hasMore ? posts.slice(0, -1) : posts;
-    const lastId = data.length > 0 ? data[data.length - 1]._id.toString() : undefined;
+    const data = hasMore ? posts.slice(0, - 1) : posts;
+    const lastId = data.length > 0 ? (data[data.length - 1] as any)._id.toString() : undefined;
 
     const result = {
       data: data as Post[],
@@ -673,7 +778,8 @@ export class PostRepository implements IPostRepository {
       },
     };
 
-    console.log('findWithInfiniteScroll result:', result);
+    console.log('findWithInfiniteScroll timings(ms): count=', t1 - t0, 'data=', t2 - t1, 'total=', t2 - t0, 'optimizedPath=', optimizedPath);
+
     return result;
   }
 

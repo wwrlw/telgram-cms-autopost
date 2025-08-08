@@ -21,7 +21,12 @@ export class PostService implements IPostService {
   }
 
   async getPosts(): Promise<Post[]> {
-    return await this.postRepository.findAllWithCategories();
+    const result = await this.postRepository.findWithQueryAndCategories({
+      pagination: { page: 1, limit: 24 },
+      filters: undefined,
+      sort: undefined
+    } as any);
+    return result.data;
   }
 
   async getPostsWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>> {

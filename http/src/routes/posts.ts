@@ -78,23 +78,27 @@ export async function postsRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        // Если есть query параметры, используем новую логику
+        // Всегда используем пагинацию; если нет параметров, применим дефолтные
         const queryParams = request.query as any;
-        if (Object.keys(queryParams).length > 0) {
-          const query = parsePostQuery(queryParams);
-          const getPostsWithQueryUseCase = container.getGetPostsWithQueryUseCase();
-          const result = await getPostsWithQueryUseCase.execute(query);
+        const hasParams = Object.keys(queryParams).length > 0;
+        const query = hasParams
+          ? parsePostQuery(queryParams)
+          : { pagination: { page: 1, limit: 24 } } as any;
+
+        const getPostsWithQueryUseCase = container.getGetPostsWithQueryUseCase();
+        const result = await getPostsWithQueryUseCase.execute(query);
+
+        if (hasParams) {
           return {
             success: true,
             ...result
           };
         }
 
-        const getPostsUseCase = container.getGetPostsUseCase();
-        const posts = await getPostsUseCase.execute();
+        // Совместимость: когда нет параметров, возвращаем только массив данных
         return {
           success: true,
-          data: posts
+          data: result.data
         };
       } catch (error) {
         throw error;

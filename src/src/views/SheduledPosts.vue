@@ -265,26 +265,16 @@ const getPreviewText = (text) => {
     return text.length > 80 ? text.substring(0, 80) + "..." : text;
 };
 
-const isOverdue = (scheduledDate) => {
-    const now = new Date();
-    const scheduled = new Date(scheduledDate);
-    return scheduled < now;
-};
-
 const getChannelName = (channelId) => {
     const channel = channels.value.find((ch) => ch.channel_id === channelId);
     return channel ? channel.name : `ID: ${channelId}`;
 };
 
 const editSchedule = (post) => {
-    // Переходим на страницу редактирования отложенной публикации
-    // Передаем данные о канале и времени через query параметры
-    console.log("Post data for editing:", post);
     const query = {
         channelId: post.scheduled_channel_id,
         scheduledAt: post.scheduled_at,
     };
-    console.log("Query parameters:", query);
     router.push({
         name: "edit-scheduled-post",
         params: { id: post._id },
@@ -318,11 +308,7 @@ onMounted(() => {
     loadCategories();
     loadChannels();
 
-    // Слушаем события для обновления данных
     onEvent(EVENTS.SCHEDULED_POST_CREATED, () => {
-        console.log(
-            "Scheduled post created event received, refreshing scheduled posts"
-        );
         loadScheduledPosts();
     });
 

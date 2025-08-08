@@ -29,11 +29,6 @@ instance.interceptors.response.use(
 instance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("token");
-        console.log("Request interceptor - URL:", config.url);
-        console.log(
-            "Request interceptor - Token:",
-            token ? "Present" : "Missing"
-        );
         if (token) {
             config.headers["Authorization"] = `Bearer ${token}`;
         }
@@ -79,8 +74,6 @@ let http = {
             ? `/posts/infinite-scroll?${queryParams.toString()}`
             : "/posts/infinite-scroll";
 
-        console.log("Making infinite scroll request to:", url);
-
         instance
             .get(url)
             .then((res) => {
@@ -109,7 +102,7 @@ let http = {
                 callback(res.data);
             })
             .catch((err) => {
-                callback({ success: false, message: "Failed to load post" });
+                callback({ success: false, message: err });
             });
     },
     login: function (params, callback) {
