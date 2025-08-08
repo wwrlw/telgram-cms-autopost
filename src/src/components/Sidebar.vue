@@ -411,11 +411,8 @@
 
 <script setup>
 import { ref, onMounted, computed, onUnmounted } from "vue";
-import { useRoute } from "vue-router";
-
 const username = ref("");
 const userRole = ref("");
-const route = useRoute();
 const isCollapsed = ref(false);
 
 const userRoleDisplay = computed(() => {
@@ -445,8 +442,6 @@ const loadUserData = () => {
         const userData = localStorage.getItem("user");
         const roleFromStorage = localStorage.getItem("role");
 
-        console.log("Loading user data:", { userData, roleFromStorage }); // Debug log
-
         userRole.value = roleFromStorage || "";
 
         if (userData) {
@@ -458,19 +453,16 @@ const loadUserData = () => {
                 user.displayName ||
                 "Пользователь";
 
-            // Also check role from user object if not in separate storage
             if (!userRole.value && user.role) {
                 userRole.value = user.role;
             }
         } else {
             username.value = "Пользователь";
         }
-
-        console.log("Final user role:", userRole.value); // Debug log
     } catch (error) {
-        console.error("Error loading user data:", error);
         username.value = "Пользователь";
         userRole.value = "";
+        throw error;
     }
 };
 

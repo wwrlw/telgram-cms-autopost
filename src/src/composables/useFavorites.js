@@ -14,8 +14,8 @@ const loadUser = () => {
             userId.value = user.id;
         }
     } catch (error) {
-        console.error("Error loading user data:", error);
         userId.value = null;
+        throw error;
     }
 };
 
@@ -120,7 +120,6 @@ const initializeFavorites = async () => {
     }
 };
 
-// Функция для автоматического удаления опубликованных постов из избранного
 const removePublishedFromFavorites = async (posts) => {
     if (!userId.value || !posts || !Array.isArray(posts)) return;
 
@@ -130,19 +129,12 @@ const removePublishedFromFavorites = async (posts) => {
 
     if (publishedPostIds.length === 0) return;
 
-    console.log(
-        "Автоматическое удаление опубликованных постов из избранного:",
-        publishedPostIds
-    );
-
-    // Удаляем каждый опубликованный пост из избранного
     for (const postId of publishedPostIds) {
         if (isFavorite(postId)) {
             await removeFromFavorites(postId);
         }
     }
 
-    // Уведомляем пользователя
     if (publishedPostIds.length > 0) {
         const count = publishedPostIds.length;
         const message =

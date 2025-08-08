@@ -269,21 +269,11 @@
 </template>
 
 <script setup>
-import {
-    ref,
-    reactive,
-    onMounted,
-    getCurrentInstance,
-    inject,
-    watch,
-    nextTick,
-} from "vue";
+import { ref, onMounted, inject, watch, nextTick } from "vue";
 import http from "../js/http.js";
 import { Chart, registerables } from "chart.js";
 
 Chart.register(...registerables);
-
-const { proxy } = getCurrentInstance();
 
 const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading");
@@ -331,18 +321,10 @@ const loadChannelAnalytics = async () => {
         (c) => c.channel_id === selectedChannelId.value
     );
 
-    // Отладочная информация
-    console.log("loadChannelAnalytics called");
-    console.log("selectedChannelId:", selectedChannelId.value);
-    console.log("Token in localStorage:", localStorage.getItem("token"));
-    console.log("User in localStorage:", localStorage.getItem("user"));
-
     try {
-        // Вызываем API для получения аналитики
         http.getChannelAnalytics(
             selectedChannelId.value,
             (response) => {
-                console.log("Analytics response:", response);
                 if (response.success) {
                     analytics.value = response.data;
                     nextTick(() => {

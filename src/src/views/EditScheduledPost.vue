@@ -407,7 +407,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
@@ -416,7 +416,6 @@ import Underline from "@tiptap/extension-underline";
 import http from "@/js/http";
 import TurndownService from "turndown";
 import { getMediaUrl, getSquareMediaClasses } from "@/js/utils";
-import { useFavorites } from "@/composables/useFavorites.js";
 import "emoji-picker-element";
 import MediaViewer from "@/components/MediaViewer.vue";
 import DateTimePicker from "@/components/DateTimePicker.vue";
@@ -427,7 +426,7 @@ const postId = route.params.id;
 
 const files = ref([]);
 const fileInputRef = ref(null);
-const schedule = ref(true); // По умолчанию включено для отложенных публикаций
+const schedule = ref(true);
 const scheduledAt = ref("");
 const selectedChannel = ref(null);
 const channels = ref([]);
@@ -462,7 +461,6 @@ const loadChannels = () => {
     http.getActivePublicationChannels((response) => {
         if (response.success) {
             channels.value = response.data || [];
-            // После загрузки каналов пытаемся сделать автовыбор
             if (postData.value && postData.value.category_name) {
                 autoSelectChannelByCategory();
             }
@@ -484,26 +482,20 @@ const autoSelectChannelByCategory = () => {
     );
 
     if (matchingChannel) {
-        // Проверяем, соответствует ли текущий выбранный канал категории
         const currentChannel = channels.value.find(
             (channel) => channel.channel_id === selectedChannel.value
         );
 
-        // Если канал не выбран или выбранный канал не соответствует категории, выбираем подходящий
         if (
             selectedChannel.value === null ||
             !currentChannel ||
             currentChannel.name !== postData.value.category_name
         ) {
             selectedChannel.value = matchingChannel.channel_id;
-            console.log(
-                `Автовыбор канала "${matchingChannel.name}" для категории "${postData.value.category_name}"`
-            );
         }
     }
 };
 
-// Определяем, был ли канал выбран автоматически
 const isAutoSelectedChannel = computed(() => {
     if (
         !postData.value ||
@@ -563,7 +555,6 @@ const removeExistingMedia = (index) => {
 };
 
 function cancel() {
-    // Очищаем файлы и превью при отмене
     files.value.forEach((file) => {
         if (file.url) URL.revokeObjectURL(file.url);
     });
@@ -618,7 +609,7 @@ async function savePost() {
                     }
                 } catch (error) {
                     window?.$toast?.error(`Ошибка загрузки файла ${file.name}`);
-                    return;
+                    return error;
                 }
             }
         }
@@ -712,7 +703,7 @@ async function publishLater() {
                     }
                 } catch (error) {
                     window?.$toast?.error(`Ошибка загрузки файла ${file.name}`);
-                    return;
+                    return error;
                 }
             }
         }
@@ -769,30 +760,21 @@ async function publishLater() {
 function loadPost() {
     const route = useRoute();
     loadingPost.value = true;
-    console.log("Loading post with ID:", postId);
     http.post({ id: postId }, async (res) => {
         loadingPost.value = false;
-        console.log("Post load response:", res);
         if (res && res.success) {
             postData.value = res.data;
-            console.log("Post data loaded:", res.data);
             initializeEditorContent(res.data);
             await preloadMedia(res.data);
 
-            // Устанавливаем выбранный канал только если он не был установлен из query параметров
             if (res.data.channel_id && selectedChannel.value === null) {
                 selectedChannel.value = res.data.channel_id;
-                console.log("Set channel from post data:", res.data.channel_id);
             }
 
-            // Всегда пытаемся сделать автовыбор по категории
-            // Это обеспечит выбор правильного канала даже если channel_id не установлен
             autoSelectChannelByCategory();
 
-            // Устанавливаем время публикации только если оно не было установлено из query параметров
             if (res.data.scheduled_at && !route.query.scheduledAt) {
                 const scheduledDate = new Date(res.data.scheduled_at);
-                // Форматируем дату в формат, который ожидает DateTimePicker (YYYY-MM-DDTHH:mm)
                 const year = scheduledDate.getFullYear();
                 const month = String(scheduledDate.getMonth() + 1).padStart(
                     2,
@@ -805,10 +787,6 @@ function loadPost() {
                     "0"
                 );
                 scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-                console.log(
-                    "Set scheduledAt from post data:",
-                    scheduledAt.value
-                );
             }
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
@@ -819,7 +797,6 @@ function loadPost() {
 function initializeEditorContent(post) {
     if (!post) return;
 
-    // Определяем какой текст показывать
     let textToShow = post.text || "";
     if (showingUniqueText.value && post.unique_text) {
         textToShow = post.unique_text;
@@ -1043,11 +1020,6 @@ onMounted(() => {
     const channelId = route.query.channelId;
     const scheduledAtParam = route.query.scheduledAt;
 
-    console.log("Route query:", route.query);
-    console.log("Channel ID from query:", channelId);
-    console.log("Scheduled at from query:", scheduledAtParam);
-
-    // Устанавливаем время публикации из параметров или по умолчанию
     if (scheduledAtParam) {
         const scheduledDate = new Date(scheduledAtParam);
         // Форматируем дату в формат, который ожидает DateTimePicker (YYYY-MM-DDTHH:mm)
@@ -1057,7 +1029,6 @@ onMounted(() => {
         const hours = String(scheduledDate.getHours()).padStart(2, "0");
         const minutes = String(scheduledDate.getMinutes()).padStart(2, "0");
         scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-        console.log("Set scheduledAt to:", scheduledAt.value);
     } else {
         const futureTime = new Date(Date.now() + 60 * 60 * 1000);
         const year = futureTime.getFullYear();
@@ -1066,13 +1037,10 @@ onMounted(() => {
         const hours = String(futureTime.getHours()).padStart(2, "0");
         const minutes = String(futureTime.getMinutes()).padStart(2, "0");
         scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-        console.log("Set default scheduledAt to:", scheduledAt.value);
     }
 
-    // Устанавливаем выбранный канал из параметров
     if (channelId) {
         selectedChannel.value = channelId;
-        console.log("Set selectedChannel to:", selectedChannel.value);
     }
 
     if (postId) {

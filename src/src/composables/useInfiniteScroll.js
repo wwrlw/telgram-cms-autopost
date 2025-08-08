@@ -16,20 +16,12 @@ export function useInfiniteScroll(options = {}) {
         const obs = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    console.log("IntersectionObserver entry:", {
-                        isIntersecting: entry.isIntersecting,
-                        isLoading: isLoading.value,
-                        hasMore: hasMore.value,
-                        enabled: enabled,
-                    });
-
                     if (
                         entry.isIntersecting &&
                         !isLoading.value &&
                         hasMore.value &&
                         enabled
                     ) {
-                        console.log("Triggering infinite scroll callback");
                         callback();
                     }
                 });
@@ -41,10 +33,6 @@ export function useInfiniteScroll(options = {}) {
         );
 
         observer.value = obs;
-        console.log("Created IntersectionObserver with options:", {
-            threshold,
-            rootMargin,
-        });
         return obs;
     };
 
@@ -62,24 +50,20 @@ export function useInfiniteScroll(options = {}) {
 
     const startLoading = () => {
         isLoading.value = true;
-        console.log("Started loading");
     };
 
     const stopLoading = () => {
         isLoading.value = false;
-        console.log("Stopped loading");
     };
 
     const setHasMore = (value) => {
         hasMore.value = value;
-        console.log("Set hasMore to:", value);
     };
 
     const destroy = () => {
         if (observer.value) {
             observer.value.disconnect();
             observer.value = null;
-            console.log("Destroyed observer");
         }
     };
 

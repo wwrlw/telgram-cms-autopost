@@ -205,7 +205,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 import MediaErrorFallback from "@/components/Media/MediaErrorFallback.vue";
 
@@ -230,13 +230,9 @@ const router = useRouter();
 const imageError = ref(false);
 const videoError = ref(false);
 
-// Методы для работы с медиа
 const hasPhoto = (post) => {
-    console.log("Checking for photos in post:", post);
-    console.log("Post media:", post.media);
     const hasPhotos =
         post.media && post.media.some((media) => media.type === "photo");
-    console.log("Has photos:", hasPhotos);
     return hasPhotos;
 };
 
@@ -246,7 +242,6 @@ const hasVideo = (post) => {
 
 const getFirstPhoto = (post) => {
     const firstPhoto = post.media?.find((media) => media.type === "photo");
-    console.log("First photo:", firstPhoto);
     return firstPhoto;
 };
 
@@ -256,14 +251,12 @@ const getFirstVideo = (post) => {
 
 const getMediaPath = (filePath) => {
     if (!filePath) return null;
-    console.log("Processing file path:", filePath);
     // Если путь уже содержит полный URL, возвращаем как есть
     if (filePath.startsWith("http")) return filePath;
     // Если путь начинается с /media/, возвращаем как есть
     if (filePath.startsWith("/media/")) return filePath;
     // Иначе добавляем префикс /media/
     const result = `/media/${filePath}`;
-    console.log("Final media path:", result);
     return result;
 };
 
@@ -292,7 +285,6 @@ const handleVideoError = () => {
     videoError.value = true;
 };
 
-// Методы для работы с текстом
 const extractTitle = (text) => {
     if (!text) return "Без заголовка";
     const lines = text.split("\n").filter((line) => line.trim());
@@ -308,7 +300,6 @@ const extractContent = (text) => {
     );
 };
 
-// Методы для работы с датами и каналами
 const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);

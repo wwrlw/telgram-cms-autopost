@@ -38,7 +38,6 @@
                     preload="none"
                     loading="lazy"
                     @loadedmetadata="handleVideoMetadata"
-                    @error="handleVideoError"
                 />
                 <div
                     class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-200"
@@ -57,13 +56,11 @@
                 </div>
             </div>
 
-            <!-- Показываем ошибку для картинки -->
             <MediaErrorFallback
                 v-else-if="imageError"
                 message="Изображение недоступно"
             />
 
-            <!-- Показываем ошибку для видео -->
             <MediaErrorFallback
                 v-else-if="videoError"
                 message="Видео недоступно"
@@ -88,7 +85,6 @@
                 </svg>
             </div>
 
-            <!-- Статусные бейджи -->
             <div class="absolute top-2 left-2 flex flex-col gap-1">
                 <span
                     v-if="post.is_published"
@@ -110,7 +106,6 @@
                 </span>
             </div>
 
-            <!-- Действия -->
             <div
                 class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
@@ -435,12 +430,10 @@ const imageError = ref(false);
 const videoError = ref(false);
 
 const handleImageLoad = () => {
-    console.log("Image loaded successfully");
     imageError.value = false;
 };
 
 const handleVideoMetadata = () => {
-    console.log("Video metadata loaded");
     videoError.value = false;
 };
 
@@ -450,11 +443,6 @@ const handleImageError = () => {
         "Failed to load image:",
         getCoverImageUrl(getFirstPhoto(props.post).file_path)
     );
-};
-
-const handleVideoError = (event) => {
-    console.warn("Failed to load video:", event.target.src);
-    videoError.value = true;
 };
 
 watch(
