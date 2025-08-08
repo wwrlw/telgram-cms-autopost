@@ -599,6 +599,34 @@ let http = {
             });
     },
 
+    // Maintenance: cleanup old posts and media
+    cleanupPosts: function (params = {}, callback, errorCallback) {
+        const queryParams = new URLSearchParams();
+        if (params.threshold !== undefined)
+            queryParams.append("threshold", params.threshold);
+        if (params.removeCount !== undefined)
+            queryParams.append("removeCount", params.removeCount);
+        if (params.dryRun !== undefined)
+            queryParams.append("dryRun", params.dryRun);
+
+        const url = queryParams.toString()
+            ? `/posts/cleanup?${queryParams.toString()}`
+            : "/posts/cleanup";
+
+        instance
+            .post(url)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else {
+                    const msg = err.response?.data?.message || "Cleanup failed";
+                    callback({ success: false, message: msg });
+                }
+            });
+    },
+
     // User management endpoints (super_admin only)
     getAllUsers: function (callback, errorCallback) {
         instance

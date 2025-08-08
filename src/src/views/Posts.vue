@@ -1,6 +1,53 @@
 <template>
     <div class="min-h-screen bg-gray-50" data-posts-component>
         <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div v-if="canManagePosts" class="mb-6 p-4 bg-white shadow rounded">
+                <h3 class="text-lg font-semibold mb-3">
+                    Очистка старых постов
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1"
+                            >Порог (threshold)</label
+                        >
+                        <input
+                            type="number"
+                            v-model.number="cleanupThreshold"
+                            class="w-full border rounded px-3 py-2"
+                            min="0"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1"
+                            >Удалить (removeCount)</label
+                        >
+                        <input
+                            type="number"
+                            v-model.number="cleanupRemoveCount"
+                            class="w-full border rounded px-3 py-2"
+                            min="1"
+                        />
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input
+                            id="dryrun"
+                            type="checkbox"
+                            v-model="cleanupDryRun"
+                        />
+                        <label for="dryrun" class="text-sm text-gray-700"
+                            >Dry run</label
+                        >
+                    </div>
+                    <div>
+                        <button
+                            @click="confirmCleanup"
+                            class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+                        >
+                            Запустить очистку
+                        </button>
+                    </div>
+                </div>
+            </div>
             <StatsCards
                 v-if="!loading || posts.length > 0"
                 :totalCount="totalCount"
@@ -55,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, watch, nextTick } from "vue";
+import { ref, onMounted, inject, watch, nextTick, computed } from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
 import Filters from "@/components/Shared/Filters.vue";
@@ -66,8 +113,8 @@ import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
 import { useApiCache } from "@/composables/useApiCache";
 import { useFavorites } from "@/composables/useFavorites.js";
-
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
+import { getToken } from "@/js/http";
 
 const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading");
@@ -104,6 +151,47 @@ const { optimizedRequest, debouncedSearch } = useApiCache();
 const currentPage = ref(1);
 const hasMore = ref(true);
 const pageSize = 24;
+
+// Cleanup UI state
+const cleanupThreshold = ref(2500);
+const cleanupRemoveCount = ref(500);
+const cleanupDryRun = ref(false);
+
+// Permission check (simple: rely on server to enforce; optionally hide for non-admins)
+const canManagePosts = computed(() => true);
+
+const confirmCleanup = () => {
+    const message = `Запустить очистку?\nthreshold=${cleanupThreshold.value}, removeCount=${cleanupRemoveCount.value}, dryRun=${cleanupDryRun.value}`;
+    showConfirm(message, async () => {
+        try {
+            const res = await new Promise((resolve, reject) => {
+                http.cleanupPosts(
+                    {
+                        threshold: cleanupThreshold.value,
+                        removeCount: cleanupRemoveCount.value,
+                        dryRun: cleanupDryRun.value,
+                    },
+                    resolve,
+                    reject
+                );
+            });
+            if (res.success) {
+                window.$toast?.success(
+                    `Готово. Всего до: ${res.data.totalBefore}, будет удалено: ${res.data.toDelete}, удалено: ${res.data.deleted}, ошибок файлов: ${res.data.errors}`
+                );
+                // Обновим список и статистику
+                currentPage.value = 1;
+                hasMore.value = true;
+                await postsService({ page: 1 });
+                await loadPostsStats();
+            } else {
+                window.$toast?.error(res.message || "Ошибка очистки");
+            }
+        } catch (e) {
+            window.$toast?.error("Ошибка запроса очистки");
+        }
+    });
+};
 
 const loadPostsStats = async () => {
     try {
