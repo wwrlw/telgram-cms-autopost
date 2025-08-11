@@ -67,7 +67,6 @@ import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
 import { useApiCache } from "@/composables/useApiCache";
 import { useFavorites } from "@/composables/useFavorites.js";
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
-// import { getToken } from "@/js/http";
 
 const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading");
@@ -185,7 +184,7 @@ const postsService = async (
             hasMore.value = response.params?.hasMore || false;
         } else {
             posts.value = response.data || [];
-            currentPage.value = 1;
+            currentPage.value = (requestParams.page || 1) + 1;
         }
 
         await removePublishedFromFavorites(posts.value);
