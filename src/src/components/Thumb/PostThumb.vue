@@ -234,11 +234,12 @@
             </div>
 
             <div
+                v-if="post.conversion_metrics && (post.conversion_metrics.views > 0 || post.conversion_metrics.comments > 0 || post.conversion_metrics.forwards > 0)"
                 class="flex items-center justify-between text-xs text-gray-500"
             >
                 <div class="flex items-center space-x-3">
                     <span
-                        v-if="post.conversion_metrics?.views !== undefined"
+                        v-if="post.conversion_metrics?.views !== undefined && post.conversion_metrics.views > 0"
                         class="flex items-center space-x-1"
                     >
                         <svg
@@ -265,7 +266,7 @@
                         }}</span>
                     </span>
                     <span
-                        v-if="post.conversion_metrics?.comments !== undefined"
+                        v-if="post.conversion_metrics?.comments !== undefined && post.conversion_metrics.comments > 0"
                         class="flex items-center space-x-1"
                     >
                         <svg
@@ -286,7 +287,7 @@
                         }}</span>
                     </span>
                     <span
-                        v-if="post.conversion_metrics?.forwards !== undefined"
+                        v-if="post.conversion_metrics?.forwards !== undefined && post.conversion_metrics.forwards > 0"
                         class="flex items-center space-x-1"
                     >
                         <span>🔄</span>
@@ -296,23 +297,23 @@
                     </span>
                 </div>
                 <div class="text-xs text-gray-400">
-                    {{ formatDate(post.timestamp) }}
+                    {{ formatDate(post.timestamp || post.created_at) }}
                 </div>
             </div>
 
             <div
-                v-if="post.conversion_metrics"
+                v-if="post.conversion_metrics && (post.conversion_metrics.er > 0 || post.conversion_metrics.err > 0)"
                 class="mt-2 flex items-center justify-between"
             >
                 <div class="flex items-center space-x-2">
                     <span
-                        v-if="post.conversion_metrics.er !== undefined"
+                        v-if="post.conversion_metrics.er !== undefined && post.conversion_metrics.er > 0"
                         class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-700"
                     >
                         ER: {{ post.conversion_metrics.er }}%
                     </span>
                     <span
-                        v-if="post.conversion_metrics.err !== undefined"
+                        v-if="post.conversion_metrics.err !== undefined && post.conversion_metrics.err > 0"
                         class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700"
                     >
                         ERR: {{ post.conversion_metrics.err }}%
@@ -380,15 +381,27 @@ const getMediaPath = (filePath) => {
 };
 
 const getCategoryName = () => {
-    if (props.post.category_name) {
+    // Приоритет 1: Используем данные напрямую из поста
+    if (props.post.category_name && props.post.category_name.trim() !== '') {
         return props.post.category_name;
     }
 
-    if (!props.post.category_id) return "Без категории";
-    const category = props.categories.find(
-        (cat) => cat.id === props.post.category_id
-    );
-    return category ? category.name : "Неизвестная категория";
+    // Приоритет 2: Ищем по ID категории в списке категорий
+    if (props.post.category_id) {
+        const category = props.categories.find(
+            (cat) => cat._id === props.post.category_id || cat.id === props.post.category_id
+        );
+        if (category && category.name) {
+            return category.name;
+        }
+    }
+
+    // Приоритет 3: Проверяем, есть ли channel_id для дополнительной диагностики
+    if (props.post.channel_id) {
+        console.warn(`Post ${props.post._id} has channel_id ${props.post.channel_id} but no category`);
+    }
+
+    return "Без категории";
 };
 
 // const getCategoryStyle = () => {

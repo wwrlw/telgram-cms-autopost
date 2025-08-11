@@ -85,7 +85,8 @@ export class PostRepository implements IPostRepository {
           category_id: '$category._id',
           category_name: '$category.name',
           category_color: '$category.color',
-          channel_username: '$channel.username'
+          channel_username: '$channel.username',
+          timestamp: '$timestamp'
         }
       }
     ];
@@ -247,7 +248,8 @@ export class PostRepository implements IPostRepository {
         category_id: '$category._id',
         category_name: '$category.name',
         category_color: '$category.color',
-        channel_username: '$channel.username'
+        channel_username: '$channel.username',
+        timestamp: '$timestamp'
       }
     });
 
@@ -570,7 +572,8 @@ export class PostRepository implements IPostRepository {
             category_id: '$category._id',
             category_name: '$category.name',
             category_color: '$category.color',
-            channel_username: '$channel.username'
+            channel_username: '$channel.username',
+            timestamp: '$timestamp'
           }
         }
       ])
@@ -646,7 +649,8 @@ export class PostRepository implements IPostRepository {
             category_id: '$category._id',
             category_name: '$category.name',
             category_color: '$category.color',
-            channel_username: '$channel.username'
+            channel_username: '$channel.username',
+            timestamp: '$timestamp'
           }
         }
       ])
@@ -750,7 +754,8 @@ export class PostRepository implements IPostRepository {
         category_id: '$category._id',
         category_name: '$category.name',
         category_color: '$category.color',
-        channel_username: '$channel.username'
+        channel_username: '$channel.username',
+        timestamp: '$timestamp'
       }
     });
 
