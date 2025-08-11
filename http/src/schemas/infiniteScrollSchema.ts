@@ -30,6 +30,7 @@ export const infiniteScrollResponseSchema = {
           is_published: { type: 'boolean' },
           scheduled_at: { type: 'string', format: 'date-time' },
           published_at: { type: 'string', format: 'date-time' },
+          timestamp: { type: 'string', format: 'date-time' },
           created_at: { type: 'string', format: 'date-time' },
           updated_at: { type: 'string', format: 'date-time' },
           media: {

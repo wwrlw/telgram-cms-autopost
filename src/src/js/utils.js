@@ -172,7 +172,18 @@ export const extractTitle = (text) => {
 };
 
 export const formatDate = (dateString) => {
+    if (!dateString) {
+        return "Дата не указана";
+    }
+    
     const date = new Date(dateString);
+    
+    // Проверяем, что дата валидна
+    if (isNaN(date.getTime())) {
+        console.warn("Invalid date:", dateString);
+        return "Неверная дата";
+    }
+    
     return date.toLocaleDateString("ru-RU", {
         day: "2-digit",
         month: "2-digit",
