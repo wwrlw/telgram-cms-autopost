@@ -14,13 +14,6 @@
                     {{ errorMessage }}
                 </div>
 
-                <div
-                    v-if="loading"
-                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-                >
-                    <div class="bg-white p-4 rounded-lg">Loading...</div>
-                </div>
-
                 <div id="signin-form-container">
                     <div class="text-center mb-8">
                         <div
@@ -113,24 +106,18 @@ import http from "@/js/http";
 
 const router = useRouter();
 const errorMessage = ref("");
-const loading = ref(false);
 
 const loginForm = ref({
     username: "",
     password: "",
-    rememberMe: false, // добавлено
+    rememberMe: false,
 });
-
-// Удаляю все, что связано с кастомной маской пароля (passwordInput, isFocused, maskPassword, handlePasswordInput, handlePasswordFocus, handlePasswordBlur) из <script setup>.
 
 const LoginService = async () => {
     errorMessage.value = "";
-    loading.value = true;
 
     try {
         await http.login(loginForm.value, (res) => {
-            loading.value = false;
-
             if (res && res.success) {
                 localStorage.setItem("token", res.data.token);
                 localStorage.setItem("userId", res.data.userId);
@@ -149,7 +136,6 @@ const LoginService = async () => {
             }
         });
     } catch (err) {
-        loading.value = false;
         errorMessage.value = "An error occurred. Please try again later.";
         console.error("Login error:", err);
     }
