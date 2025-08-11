@@ -14,6 +14,7 @@ const EditScheduledPost = () => import("@/views/EditScheduledPost.vue");
 const Analytics = () => import("@/views/Analytics.vue");
 const UserManagement = () => import("@/views/UserManagement.vue");
 const SystemLogs = () => import("@/views/SystemLogs.vue");
+const Settings = () => import("@/views/Settings.vue");
 import { getToken } from "@/js/http";
 
 const ROLES = {
@@ -33,6 +34,12 @@ const routes = [
         name: "channels",
         component: Channels,
         meta: { forbiddenRoles: [ROLES.EDITOR] },
+    },
+    {
+        path: "/settings",
+        name: "settings",
+        component: Settings,
+        meta: { requiredRole: ROLES.SUPER_ADMIN },
     },
     {
         path: "/posted-channels",

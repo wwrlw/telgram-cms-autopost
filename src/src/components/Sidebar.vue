@@ -381,6 +381,47 @@
                             <span v-if="!isCollapsed">Логи</span>
                         </router-link>
                     </li>
+                    <li
+                        v-if="
+                            userRole === 'super_admin' || userRole === 'admin'
+                        "
+                        :class="isCollapsed ? 'flex justify-center' : ''"
+                    >
+                        <router-link
+                            :to="{ name: 'settings' }"
+                            :class="[
+                                'flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors',
+                                isCollapsed ? 'justify-center' : '',
+                                { 'bg-gray-700': $route.path === '/settings' },
+                            ]"
+                            :title="isCollapsed ? 'Настройки' : ''"
+                        >
+                            <svg
+                                :class="
+                                    isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
+                                "
+                                width="100%"
+                                height="100%"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M11.049 2.927c.3-1.14 1.952-1.14 2.252 0l.149.57a1.125 1.125 0 001.18.832l.583-.066c1.178-.133 1.98 1.166 1.246 2.109l-.383.49a1.125 1.125 0 000 1.415l.383.49c.734.943-.068 2.242-1.246 2.109l-.583-.066a1.125 1.125 0 00-1.18.832l-.149.57c-.3 1.14-1.952 1.14-2.252 0l-.149-.57a1.125 1.125 0 00-1.18-.832l-.583.066c-1.178.133-1.98-1.166-1.246-2.109l.383-.49a1.125 1.125 0 000-1.415l-.383-.49c-.734-.943.068-2.242 1.246-2.109l.583.066a1.125 1.125 0 001.18-.832l.149-.57z"
+                                />
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                            </svg>
+                            <span v-if="!isCollapsed">Настройки</span>
+                        </router-link>
+                    </li>
                 </ul>
             </nav>
             <div class="p-4 border-t border-gray-700">
