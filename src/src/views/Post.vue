@@ -393,7 +393,8 @@ async function publishNow() {
             }
         }
 
-        const allMedia = uploadedFiles;
+        const existingMedia = postData.value.media || [];
+        const allMedia = [...existingMedia, ...uploadedFiles];
 
         const updateData = {
             id: postData.value._id,
