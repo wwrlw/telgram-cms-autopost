@@ -27,6 +27,28 @@
             </div>
 
             <div class="flex justify-end gap-3 mt-4">
+                <!-- Показываем кнопки навигации после сохранения поста -->
+                <div v-if="postSaved" class="flex gap-3 mr-auto">
+                    <button
+                        @click="createNewPost"
+                        class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                        Создать еще один пост
+                    </button>
+                    <button
+                        @click="goToPosts"
+                        class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                    >
+                        Перейти к постам
+                    </button>
+                    <button
+                        @click="goToScheduledPosts"
+                        class="px-4 py-2 rounded bg-yellow-600 text-white hover:bg-yellow-700"
+                    >
+                        Запланированные посты
+                    </button>
+                </div>
+                
                 <button
                     @click="cancel"
                     class="px-4 py-2 rounded bg-gray-200"
@@ -35,7 +57,7 @@
                     Отмена
                 </button>
                 <button
-                    v-if="uniqueText"
+                    v-if="uniqueText && !postSaved"
                     @click="toggleTextMode"
                     class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
                 >
@@ -59,6 +81,7 @@
                     }}</span>
                 </button>
                 <button
+                    v-if="!postSaved"
                     @click="uniquizePost"
                     :disabled="uniquizing || isSubmitting || !hasText"
                     class="px-4 py-2 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -96,6 +119,7 @@
                     }}</span>
                 </button>
                 <button
+                    v-if="!postSaved"
                     @click="savePost"
                     class="px-4 py-2 rounded bg-green-600 text-white"
                     :disabled="isSubmitting"
@@ -155,6 +179,7 @@ const isSubmitting = ref(false);
 const uniquizing = ref(false);
 const uniqueText = ref("");
 const showingUniqueText = ref(false);
+const postSaved = ref(false);
 
 const editorHtml = ref("");
 
@@ -193,6 +218,31 @@ const addFiles = (newArr) => {
 
 const cancel = () => {
     router.back();
+};
+
+const createNewPost = () => {
+    // Сбрасываем форму для создания нового поста
+    postSaved.value = false;
+    editorHtml.value = "";
+    files.value = [];
+    previews.value = [];
+    selectedChannel.value = "";
+    schedule.value = false;
+    scheduledAt.value = "";
+    uniqueText.value = "";
+    showingUniqueText.value = false;
+    
+    // Устанавливаем время по умолчанию (через час)
+    const futureTime = new Date(Date.now() + 60 * 60 * 1000);
+    scheduledAt.value = futureTime.toISOString().slice(0, 16);
+};
+
+const goToPosts = () => {
+    router.push("/posts");
+};
+
+const goToScheduledPosts = () => {
+    router.push("/scheduled-posts");
 };
 
 const hasText = computed(() => {
@@ -284,7 +334,9 @@ const send = async (publishLater) => {
                     if (publishLater) {
                         window?.$toast?.success("Пост запланирован");
                         emitEvent(EVENTS.SCHEDULED_POST_CREATED, response.data);
-                        router.push("/scheduled-posts");
+                        // Убираем автоматическое перенаправление на страницу запланированных постов
+                        // router.push("/scheduled-posts");
+                        postSaved.value = true;
                     } else {
                         const createdId = response.data._id || response.data.id;
                         http.publishToChannel(
@@ -299,7 +351,9 @@ const send = async (publishLater) => {
                                         EVENTS.POST_PUBLISHED,
                                         response.data
                                     );
-                                    router.push("/");
+                                    // Убираем автоматическое перенаправление после публикации
+                                    // router.push("/");
+                                    postSaved.value = true;
                                 } else {
                                     window?.$toast?.error(
                                         "Ошибка публикации: " +
@@ -393,7 +447,9 @@ const savePostToDatabase = async () => {
                 if (response.success) {
                     window?.$toast?.success("Пост сохранен в базе данных!");
                     emitEvent(EVENTS.POST_CREATED, response.data);
-                    router.push("/");
+                    postSaved.value = true;
+                    // Убираем автоматическое перенаправление на главную страницу
+                    // router.push("/");
                 } else {
                     window?.$toast?.error(
                         response.message || "Ошибка сохранения поста"

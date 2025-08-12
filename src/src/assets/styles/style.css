@@ -347,4 +347,94 @@ video {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+/* Глобальные правила для удаления синих рамок из редактора */
+.custom-editor-content,
+.custom-editor-content *,
+.custom-editor-content *:before,
+.custom-editor-content *:after {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.custom-editor-content *:focus,
+.custom-editor-content *:focus-visible,
+.custom-editor-content *:focus-within,
+.custom-editor-content *:active,
+.custom-editor-content *:hover {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Дополнительные правила для TipTap редактора */
+.ProseMirror,
+.ProseMirror *,
+.ProseMirror *:before,
+.ProseMirror *:after {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.ProseMirror *:focus,
+.ProseMirror *:focus-visible,
+.ProseMirror *:focus-within,
+.ProseMirror *:active,
+.ProseMirror *:hover {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Убираем синие рамки для всех contenteditable элементов */
+[contenteditable],
+[contenteditable] *,
+[contenteditable] *:focus,
+[contenteditable] *:focus-visible,
+[contenteditable] *:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Дополнительные правила для всех браузеров */
+*::-moz-focus-inner,
+*::-moz-focus-outer {
+    outline: none !important;
+    border: none !important;
+}
+
+*::-webkit-focus-ring-color {
+    outline: none !important;
+}
+
+*::-webkit-tap-highlight-color {
+    background: transparent !important;
+}
+
+/* Глобальные правила для удаления outline для всех элементов */
+*:focus,
+*:focus-visible,
+*:focus-within {
+    outline: none !important;
+}
+
+/* Специальные правила для редактора и его содержимого */
+.editor-content,
+.editor-content *,
+.text-editor,
+.text-editor * {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.editor-content *:focus,
+.editor-content *:focus-visible,
+.editor-content *:focus-within,
+.text-editor *:focus,
+.text-editor *:focus-visible,
+.text-editor *:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
   

@@ -13,23 +13,37 @@ export class TelegramPublishService implements ITelegramPublishService {
 
   async publishPost(post: Post, channel: PostedChannel): Promise<{ success: boolean; message: string; messageId?: string }> {
     try {
-      console.log('Начинаем публикацию поста:', { id: post._id });
+      console.log('=== НАЧАЛО ПУБЛИКАЦИИ В TELEGRAM ===');
+      console.log('Начинаем публикацию поста:', { 
+        id: post._id, 
+        textLength: post.text?.length || 0,
+        mediaCount: post.media?.length || 0 
+      });
+      
+      if (post.media && post.media.length > 0) {
+        console.log('📎 Детали медиафайлов:');
+        post.media.forEach((media, index) => {
+          console.log(`  ${index + 1}. Тип: ${media.type}, Путь: ${media.file_path}, MIME: ${(media as any).mime_type || 'не указан'}`);
+        });
+      }
   
       const messageText = this.formatMessageText(post, channel);
+      console.log('📝 Форматированный текст для Telegram:', messageText);
   
-              if (post.media && post.media.length > 0) {
-          console.log(`📎 Обнаружено ${post.media.length} медиа-файлов. Отправляем медиа с подписью.`);
-          const result = await this.sendMedia(post, channel, messageText);
-          if (result.success) {
-            console.log('✅ Пост успешно опубликован');
-            return { 
-              success: true, 
-              message: `Пост успешно опубликован в канал ${channel.name}`,
-              messageId: result.messageId
-            };
-          } else {
-            return { success: false, message: result.message };
-          }
+      if (post.media && post.media.length > 0) {
+        console.log(`📎 Обнаружено ${post.media.length} медиа-файлов. Отправляем медиа с подписью.`);
+        const result = await this.sendMedia(post, channel, messageText);
+        if (result.success) {
+          console.log('✅ Пост с медиа успешно опубликован');
+          return { 
+            success: true, 
+            message: `Пост с медиа успешно опубликован в канал ${channel.name}`,
+            messageId: result.messageId
+          };
+        } else {
+          console.error('❌ Ошибка публикации медиа:', result.message);
+          return { success: false, message: result.message };
+        }
       } else {
         console.log('📝 Медиа не найдено. Отправляем текстовое сообщение.');
         const requestBody = {
@@ -38,6 +52,8 @@ export class TelegramPublishService implements ITelegramPublishService {
           parse_mode: 'HTML',
           disable_web_page_preview: true
         };
+  
+        console.log('📤 Отправляем текстовое сообщение в Telegram:', JSON.stringify(requestBody, null, 2));
   
         const response = await fetch(`${this.baseUrl}/sendMessage`, {
           method: 'POST',
@@ -53,10 +69,10 @@ export class TelegramPublishService implements ITelegramPublishService {
           return { success: false, message: `Ошибка Telegram API: ${result.description}` };
         }
   
-        console.log('✅ Пост успешно опубликован');
+        console.log('✅ Текстовый пост успешно опубликован');
         return { 
           success: true, 
-          message: `Пост успешно опубликован в канал ${channel.name}`,
+          message: `Текстовый пост успешно опубликован в канал ${channel.name}`,
           messageId: result.result.message_id.toString()
         };
       }
@@ -143,23 +159,28 @@ export class TelegramPublishService implements ITelegramPublishService {
     };
   
     try {
-      for (let i = 0; i < post.media.length; i++) {
-        const media = post.media[i];
-        console.log(`📎 Отправляем медиа ${i + 1}/${post.media.length}:`, {
+      console.log(`🔄 Начинаем отправку медиа. Всего файлов: ${post.media.length}`);
+      
+      // Если медиафайл один, отправляем его с подписью
+      if (post.media.length === 1) {
+        const media = post.media[0];
+        console.log(`📎 Отправляем одиночный медиафайл:`, {
           type: media.type,
-          file_path: media.file_path
+          file_path: media.file_path,
+          mime_type: (media as any).mime_type || 'не указан'
         });
         
         const mediaType = media.type;
         const method = this.getMediaMethod(mediaType);
+        console.log(`🔧 Определен метод для типа ${mediaType}: ${method}`);
         
         if (method) {
           const publicUrl = getMediaUrl(media.file_path);
-          console.log('Публичный URL медиа:', publicUrl);
+          console.log('🌐 Публичный URL медиа:', publicUrl);
           
           try {
             const fileCheckResponse = await fetch(publicUrl, { method: 'HEAD' });
-            console.log('Статус доступности файла:', fileCheckResponse.status);
+            console.log('📡 Статус доступности файла:', fileCheckResponse.status);
             if (!fileCheckResponse.ok) {
               console.error('❌ Файл недоступен по URL:', publicUrl);
             }
@@ -174,7 +195,7 @@ export class TelegramPublishService implements ITelegramPublishService {
             parse_mode: 'HTML'
           };
           
-          console.log('Запрос медиа к Telegram API:', JSON.stringify(mediaRequestBody, null, 2));
+          console.log('📤 Запрос медиа к Telegram API:', JSON.stringify(mediaRequestBody, null, 2));
 
           const mediaResponse = await fetch(`${this.baseUrl}/${method}`, {
             method: 'POST',
@@ -185,21 +206,104 @@ export class TelegramPublishService implements ITelegramPublishService {
           });
 
           const mediaResult = await mediaResponse.json();
-          console.log('Ответ от Telegram API (медиа):', JSON.stringify(mediaResult, null, 2));
+          console.log('📥 Ответ от Telegram API (медиа):', JSON.stringify(mediaResult, null, 2));
 
           if (mediaResult.ok) {
-            console.log(`✅ Медиа ${i + 1} отправлено успешно`);
+            console.log(`✅ Одиночный медиафайл отправлен успешно`);
             return { success: true, message: 'Медиа отправлено успешно', messageId: mediaResult.result.message_id.toString() };
           } else {
-            console.error(`❌ Ошибка отправки медиа ${i + 1}:`, mediaResult.description);
-            return { success: false, message: `Ошибка отправки медиа ${i + 1}: ${mediaResult.description}` };
+            console.error(`❌ Ошибка отправки медиа:`, mediaResult.description);
+            return { success: false, message: `Ошибка отправки медиа: ${mediaResult.description}` };
           }
         } else {
           console.error(`❌ Неизвестный тип медиа: ${mediaType}`);
           return { success: false, message: `Неизвестный тип медиа: ${mediaType}` };
         }
+      } 
+      // Если медиафайлов несколько, отправляем их как группу
+      else if (post.media.length > 1) {
+        console.log(`📎 Отправляем группу из ${post.media.length} медиафайлов`);
+        
+        // Отправляем первый файл с подписью
+        const firstMedia = post.media[0];
+        const firstMediaType = firstMedia.type;
+        const firstMethod = this.getMediaMethod(firstMediaType);
+        
+        console.log(`🔧 Первый медиафайл: тип=${firstMediaType}, метод=${firstMethod}`);
+        
+        if (!firstMethod) {
+          console.error(`❌ Неизвестный тип медиа для первого файла: ${firstMediaType}`);
+          return { success: false, message: `Неизвестный тип медиа: ${firstMediaType}` };
+        }
+        
+        const firstMediaUrl = getMediaUrl(firstMedia.file_path);
+        const firstMediaRequestBody = {
+          chat_id: channel.channel_id,
+          [firstMediaType]: firstMediaUrl,
+          caption: caption.substring(0, 1024), 
+          parse_mode: 'HTML'
+        };
+        
+        console.log('📤 Отправляем первый медиафайл с подписью:', JSON.stringify(firstMediaRequestBody, null, 2));
+        
+        const firstMediaResponse = await fetch(`${this.baseUrl}/${firstMethod}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(firstMediaRequestBody)
+        });
+        
+        const firstMediaResult = await firstMediaResponse.json();
+        console.log('📥 Ответ от Telegram API (первый медиафайл):', JSON.stringify(firstMediaResult, null, 2));
+        
+        if (!firstMediaResult.ok) {
+          console.error(`❌ Ошибка отправки первого медиафайла:`, firstMediaResult.description);
+          return { success: false, message: `Ошибка отправки первого медиафайла: ${firstMediaResult.description}` };
+        }
+        
+        const firstMessageId = firstMediaResult.result.message_id;
+        console.log(`✅ Первый медиафайл отправлен успешно, ID: ${firstMessageId}`);
+        
+        // Отправляем остальные файлы без подписи
+        for (let i = 1; i < post.media.length; i++) {
+          const media = post.media[i];
+          const mediaType = media.type;
+          const method = this.getMediaMethod(mediaType);
+          
+          console.log(`🔄 Отправляем медиафайл ${i + 1}/${post.media.length}: тип=${mediaType}, метод=${method}`);
+          
+          if (method) {
+            const mediaUrl = getMediaUrl(media.file_path);
+            const mediaRequestBody = {
+              chat_id: channel.channel_id,
+              [mediaType]: mediaUrl
+            };
+            
+            console.log(`📤 Отправляем медиафайл ${i + 1}/${post.media.length}:`, JSON.stringify(mediaRequestBody, null, 2));
+            
+            try {
+              const mediaResponse = await fetch(`${this.baseUrl}/${method}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(mediaRequestBody)
+              });
+              
+              const mediaResult = await mediaResponse.json();
+              if (mediaResult.ok) {
+                console.log(`✅ Медиафайл ${i + 1} отправлен успешно`);
+              } else {
+                console.error(`❌ Ошибка отправки медиафайла ${i + 1}:`, mediaResult.description);
+              }
+            } catch (error) {
+              console.error(`❌ Ошибка при отправке медиафайла ${i + 1}:`, error);
+            }
+          }
+        }
+        
+        console.log(`✅ Группа медиафайлов отправлена успешно`);
+        return { success: true, message: 'Группа медиафайлов отправлена успешно', messageId: firstMessageId.toString() };
       }
-      return { success: true, message: 'Медиа отправлено успешно', messageId: undefined }; // Should not reach here if media is present
+      
+      return { success: false, message: 'Нет медиафайлов для отправки' };
     } catch (error) {
       console.error('❌ Ошибка при отправке медиа:', error);
       return { success: false, message: 'Критическая ошибка при отправке медиа' };
@@ -207,6 +311,8 @@ export class TelegramPublishService implements ITelegramPublishService {
   }
 
   private getMediaMethod(mediaType: string): string | null {
+    console.log(`🔍 Определяем метод для типа медиа: "${mediaType}"`);
+    
     const mediaMethods: { [key: string]: string } = {
       'photo': 'sendPhoto',
       'video': 'sendVideo',
@@ -215,7 +321,10 @@ export class TelegramPublishService implements ITelegramPublishService {
       'voice': 'sendVoice'
     };
     
-    return mediaMethods[mediaType] || null;
+    const method = mediaMethods[mediaType] || null;
+    console.log(`🔧 Найден метод: ${method}`);
+    
+    return method;
   }
 
   private markdownToHtml(text: string): string {

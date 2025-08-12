@@ -259,6 +259,12 @@ function cancel() {
     router.back();
 }
 
+function removeExistingMedia(index) {
+    if (postData.value && postData.value.media) {
+        postData.value.media.splice(index, 1);
+    }
+}
+
 async function savePost() {
     if (isSubmitting.value) return;
 
@@ -325,7 +331,8 @@ async function savePost() {
             isSubmitting.value = false;
             if (response.success) {
                 window?.$toast?.success("Пост успешно сохранён");
-                router.push("/");
+                // Убираем автоматическое перенаправление на главную страницу
+                // router.push("/");
             } else {
                 window?.$toast?.error(
                     "Ошибка сохранения: " + (response.message || "")

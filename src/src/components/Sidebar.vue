@@ -382,9 +382,7 @@
                         </router-link>
                     </li>
                     <li
-                        v-if="
-                            userRole === 'super_admin' || userRole === 'admin'
-                        "
+                        v-if="userRole === 'super_admin'"
                         :class="isCollapsed ? 'flex justify-center' : ''"
                     >
                         <router-link

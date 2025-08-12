@@ -51,6 +51,7 @@
         <EditorContent
             :editor="editor"
             class="p-3 min-h-64 custom-editor-content"
+            @click="focusEditor"
         />
     </div>
 </template>
@@ -121,6 +122,10 @@ function confirmLink() {
 
 function cancelLink() {
     showLinkInput.value = false;
+}
+
+function focusEditor() {
+    editor.value?.chain().focus().run();
 }
 
 const toolbar = computed(() => {
@@ -231,16 +236,13 @@ defineExpose({ getHTML });
     resize: vertical;
     overflow-y: auto;
 }
+
 .custom-editor-content:focus {
     outline: none !important;
     box-shadow: none !important;
     border: 1px solid #d1d5db !important;
 }
-.custom-editor-content .ProseMirror:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border: 1px solid #d1d5db !important;
-}
+
 .custom-editor-content .ProseMirror {
     outline: none !important;
     box-shadow: none !important;
@@ -248,10 +250,147 @@ defineExpose({ getHTML });
     min-height: 180px;
     padding: 0;
     margin: 0;
+    cursor: text;
 }
+
+/* Убираем все синие рамки и outline для всех элементов внутри редактора */
+.custom-editor-content .ProseMirror * {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.custom-editor-content .ProseMirror:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.custom-editor-content .ProseMirror:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Убираем синие рамки для всех интерактивных элементов */
+.custom-editor-content .ProseMirror button,
+.custom-editor-content .ProseMirror input,
+.custom-editor-content .ProseMirror textarea,
+.custom-editor-content .ProseMirror [contenteditable] {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.custom-editor-content .ProseMirror button:focus,
+.custom-editor-content .ProseMirror input:focus,
+.custom-editor-content .ProseMirror textarea:focus,
+.custom-editor-content .ProseMirror [contenteditable]:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Убираем синие рамки для параграфов и других блоков */
+.custom-editor-content .ProseMirror p,
+.custom-editor-content .ProseMirror div,
+.custom-editor-content .ProseMirror h1,
+.custom-editor-content .ProseMirror h2,
+.custom-editor-content .ProseMirror h3,
+.custom-editor-content .ProseMirror h4,
+.custom-editor-content .ProseMirror h5,
+.custom-editor-content .ProseMirror h6,
+.custom-editor-content .ProseMirror ul,
+.custom-editor-content .ProseMirror ol,
+.custom-editor-content .ProseMirror li,
+.custom-editor-content .ProseMirror blockquote,
+.custom-editor-content .ProseMirror pre,
+.custom-editor-content .ProseMirror code {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0;
+    padding: 0;
+}
+
 .custom-editor-content .ProseMirror p {
     margin: 0;
     padding: 0;
     min-height: 1.5em;
+}
+
+/* Убираем синие рамки для всех состояний фокуса */
+.custom-editor-content .ProseMirror *:focus,
+.custom-editor-content .ProseMirror *:focus-visible,
+.custom-editor-content .ProseMirror *:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Убираем синие рамки для всех состояний активного элемента */
+.custom-editor-content .ProseMirror *:active,
+.custom-editor-content .ProseMirror *:hover {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Дополнительные правила для полного удаления outline */
+.custom-editor-content *,
+.custom-editor-content *:before,
+.custom-editor-content *:after {
+    outline: none !important;
+}
+
+.custom-editor-content *:focus,
+.custom-editor-content *:focus-visible,
+.custom-editor-content *:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Дополнительные правила для полной кликабельности */
+.custom-editor-content {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+.custom-editor-content .ProseMirror {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    cursor: text;
+}
+
+/* Убираем все возможные синие рамки для всех браузеров */
+.custom-editor-content *::-moz-focus-inner,
+.custom-editor-content *::-moz-focus-outer {
+    outline: none !important;
+    border: none !important;
+}
+
+.custom-editor-content *::-webkit-focus-ring-color {
+    outline: none !important;
+}
+
+/* Дополнительные правила для Safari */
+.custom-editor-content *::-webkit-tap-highlight-color {
+    background: transparent !important;
+}
+
+/* Убираем синие рамки для всех состояний фокуса в разных браузерах */
+.custom-editor-content *:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.custom-editor-content *:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 </style>
