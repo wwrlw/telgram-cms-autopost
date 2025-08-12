@@ -17,13 +17,13 @@
                         :src="getMediaUrl(m.file_path)"
                         :class="getSquareMediaClasses('thumbnail')"
                         class="cursor-pointer hover:opacity-90 transition-opacity"
-                        @click="$emit('open', m, id)"
+                        @click="emit('open', m, id)"
                     />
-                    <div
-                        v-else-if="isVideoMedia(m)"
-                        class="relative cursor-pointer hover:opacity-90 transition-opacity w-full h-full"
-                        @click="$emit('open', m, id)"
-                    >
+                                            <div
+                            v-else-if="isVideoMedia(m)"
+                            class="relative cursor-pointer hover:opacity-90 transition-opacity w-full h-full"
+                            @click="emit('open', m, id)"
+                        >
                         <video
                             :src="getMediaUrl(m.file_path)"
                             :class="getSquareMediaClasses('thumbnail')"
@@ -66,8 +66,8 @@
                     </div>
                 </div>
                 <button
-                    @click="$emit('remove', id)"
-                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                    @click="emit('remove', id)"
+                    class="absolute top-1 right-1 bg-red-500 text-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                     title="Удалить файл"
                 >
                     ✕
@@ -86,6 +86,8 @@ const props = defineProps({
     showCombinedHeading: { type: Boolean, default: false },
     hasNewFiles: { type: Boolean, default: false },
 });
+
+const emit = defineEmits(['open', 'remove']);
 
 function isImageMedia(media) {
     return media?.type === "photo" || media?.type === "MessageMediaPhoto";

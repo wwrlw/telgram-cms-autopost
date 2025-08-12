@@ -1,6 +1,6 @@
 <template>
-    <div>
-        <div v-if="canManagePosts" class="mb-6 p-4 bg-white shadow rounded">
+    <div v-if="canManagePosts">
+        <div class="mb-6 p-4 bg-white shadow rounded">
             <h3 class="text-lg font-semibold mb-3">Очистка старых постов</h3>
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                 <div>
@@ -56,7 +56,14 @@ const cleanupThreshold = ref(2500);
 const cleanupRemoveCount = ref(500);
 const cleanupDryRun = ref(false);
 
-const canManagePosts = computed(() => true);
+const canManagePosts = computed(() => {
+    try {
+        const roleFromStorage = localStorage.getItem("role");
+        return roleFromStorage === "super_admin";
+    } catch (error) {
+        return false;
+    }
+});
 
 const confirmCleanup = async () => {
     const message = `Запустить очистку?\nthreshold=${cleanupThreshold.value}, removeCount=${cleanupRemoveCount.value}, dryRun=${cleanupDryRun.value}`;

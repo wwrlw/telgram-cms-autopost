@@ -628,11 +628,38 @@ async function savePost() {
             updateData.channel_id = selectedChannel.value;
         }
 
+        // Обновляем локальные данные поста перед отправкой
+        postData.value = {
+            ...postData.value,
+            text: markdown,
+            media: allMedia,
+            channel_id: selectedChannel.value
+        };
+
         http.updatePost(updateData, (response) => {
             isSubmitting.value = false;
             if (response.success) {
                 window?.$toast?.success("Пост успешно сохранён");
-                router.push("/scheduled-posts");
+                // Обновляем данные поста в локальном состоянии
+                if (response.data) {
+                    postData.value = { ...postData.value, ...response.data };
+                }
+                // Обновляем выбранный канал в интерфейсе
+                if (selectedChannel.value !== null) {
+                    postData.value.channel_id = selectedChannel.value;
+                }
+                // Обновляем состояние планирования
+                if (schedule.value && scheduledAt.value) {
+                    postData.value.scheduled_at = scheduledAt.value;
+                }
+                // Показываем пользователю, что пост обновлен
+                window?.$toast?.info("Пост обновлен в интерфейсе");
+                // Очищаем новые файлы после успешного сохранения
+                files.value.forEach((file) => {
+                    if (file.url) URL.revokeObjectURL(file.url);
+                });
+                files.value = [];
+                previews.value = [];
             } else {
                 window?.$toast?.error(
                     "Ошибка сохранения: " + (response.message || "")
@@ -719,6 +746,14 @@ async function publishLater() {
             media: allMedia,
         };
 
+        // Обновляем локальные данные поста перед отправкой
+        postData.value = {
+            ...postData.value,
+            text: markdown,
+            media: allMedia,
+            channel_id: selectedChannel.value
+        };
+
         http.updatePost(updateData, (response) => {
             if (response.success) {
                 // После сохранения планируем публикацию
@@ -734,7 +769,26 @@ async function publishLater() {
                             window?.$toast?.success(
                                 "Пост запланирован на публикацию!"
                             );
-                            router.push("/scheduled-posts");
+                            // Обновляем данные поста в локальном состоянии
+                            if (scheduleRes.data) {
+                                postData.value = { ...postData.value, ...scheduleRes.data };
+                            }
+                            // Обновляем выбранный канал в интерфейсе
+                            if (selectedChannel.value !== null) {
+                                postData.value.channel_id = selectedChannel.value;
+                            }
+                            // Обновляем состояние планирования
+                            if (schedule.value && scheduledAt.value) {
+                                postData.value.scheduled_at = scheduledAt.value;
+                            }
+                            // Показываем пользователю, что пост обновлен
+                            window?.$toast?.info("Пост обновлен в интерфейсе");
+                            // Очищаем новые файлы после успешного планирования
+                            files.value.forEach((file) => {
+                                if (file.url) URL.revokeObjectURL(file.url);
+                            });
+                            files.value = [];
+                            previews.value = [];
                         } else {
                             window?.$toast?.error(
                                 "Ошибка планирования: " +

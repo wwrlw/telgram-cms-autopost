@@ -44,7 +44,8 @@ export async function mediaRoutes(fastify: FastifyInstance) {
               
               uploadedFiles.push({
                 type: part.mimetype.startsWith('video') ? 'video' : 
-                      part.mimetype.startsWith('audio') ? 'audio' : 'photo',
+                      part.mimetype.startsWith('audio') ? 'audio' : 
+                      part.mimetype.startsWith('image') ? 'photo' : 'document',
                 file_path: `/media/${fileName}`,
                 original_name: part.filename,
                 mime_type: part.mimetype
