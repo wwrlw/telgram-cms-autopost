@@ -91,11 +91,25 @@
                                     class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
                                 >
                                     <button
-                                        v-if="user.role !== 'super_admin'"
+                                        v-if="user.role !== 'super_admin' && user.role !== 'banned'"
+                                        @click="banUser(user)"
+                                        class="text-red-600 hover:text-red-900"
+                                    >
+                                        Заблокировать
+                                    </button>
+                                    <button
+                                        v-if="user.role !== 'super_admin' && user.role !== 'banned'"
                                         @click="openRoleModal(user)"
                                         class="text-indigo-600 hover:text-indigo-900"
                                     >
                                         Изменить роль
+                                    </button>
+                                    <button
+                                        v-if="user.role === 'banned'"
+                                        @click="openUnbanModal(user)"
+                                        class="text-green-600 hover:text-green-900"
+                                    >
+                                        Разблокировать
                                     </button>
                                     <button
                                         @click="viewUserLogs(user)"
@@ -232,6 +246,64 @@
             </div>
         </div>
     </div>
+
+    <!-- Unban User Modal -->
+    <div
+        v-if="showUnbanModal"
+        class="fixed inset-0 bg-white/30 backdrop-blur-sm overflow-y-auto h-full w-full z-50"
+    >
+        <div
+            class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+        >
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    Разблокировать пользователя
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    {{ selectedUser?.username }}
+                </p>
+                <form @submit.prevent="unbanUser">
+                    <div class="mb-4">
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                            >Новая роль</label
+                        >
+                        <select
+                            v-model="selectedRole"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="editor">Редактор</option>
+                            <option value="admin">Администратор</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button
+                            type="button"
+                            @click="showUnbanModal = false"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                        >
+                            Отмена
+                        </button>
+                        <button
+                            type="submit"
+                            :disabled="updating"
+                            class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
+                        >
+                            {{ updating ? "Разблокировка..." : "Разблокировать" }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <ConfirmModal
+        :show="showConfirmModal"
+        :message="confirmMessage"
+        @confirm="onConfirm"
+        @cancel="onCancelConfirm"
+    />
 </template>
 
 <script setup>
@@ -239,21 +311,45 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import Sidebar from "@/components/Sidebar.vue";
 import http from "@/js/http";
+import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 
 const router = useRouter();
 const users = ref([]);
 const showCreateModal = ref(false);
 const showRoleModal = ref(false);
+const showUnbanModal = ref(false);
+const showConfirmModal = ref(false);
+const confirmMessage = ref("");
 const selectedUser = ref(null);
 const selectedRole = ref("");
 const creating = ref(false);
 const updating = ref(false);
+let confirmAction = null;
+let confirmPayload = null;
 
 const newUser = ref({
     username: "",
     password: "",
     role: "editor",
 });
+
+function showConfirm(message, action, payload = null) {
+    confirmMessage.value = message;
+    confirmAction = action;
+    confirmPayload = payload;
+    showConfirmModal.value = true;
+}
+
+function onConfirm() {
+    showConfirmModal.value = false;
+    if (confirmAction) confirmAction(confirmPayload);
+}
+
+function onCancelConfirm() {
+    showConfirmModal.value = false;
+    confirmAction = null;
+    confirmPayload = null;
+}
 
 const getRoleDisplay = (role) => {
     switch (role) {
@@ -263,6 +359,8 @@ const getRoleDisplay = (role) => {
             return "Администратор";
         case "editor":
             return "Редактор";
+        case "banned":
+            return "Заблокирован";
         default:
             return "Неизвестно";
     }
@@ -276,6 +374,8 @@ const getRoleBadgeClass = (role) => {
             return "bg-blue-100 text-blue-800";
         case "editor":
             return "bg-green-100 text-green-800";
+        case "banned":
+            return "bg-red-100 text-red-800";
         default:
             return "bg-gray-100 text-gray-800";
     }
@@ -335,6 +435,53 @@ const updateUserRole = () => {
             } else {
                 window.$toast?.error(
                     "Ошибка обновления роли: " + response.message
+                );
+            }
+        }
+    );
+};
+
+const banUser = (user) => {
+    showConfirm(
+        `Вы уверены, что хотите заблокировать пользователя ${user.username}?`,
+        (userId) => {
+            updating.value = true;
+            http.banUser(userId, (response) => {
+                updating.value = false;
+                if (response.success) {
+                    window.$toast?.success("Пользователь заблокирован");
+                    loadUsers();
+                } else {
+                    window.$toast?.error(
+                        "Ошибка блокировки пользователя: " + response.message
+                    );
+                }
+            });
+        },
+        user.id
+    );
+};
+
+const openUnbanModal = (user) => {
+    selectedUser.value = user;
+    selectedRole.value = "editor"; // По умолчанию разблокируем как редактора
+    showUnbanModal.value = true;
+};
+
+const unbanUser = () => {
+    updating.value = true;
+    http.unbanUser(
+        selectedUser.value.id,
+        selectedRole.value,
+        (response) => {
+            updating.value = false;
+            if (response.success) {
+                window.$toast?.success("Пользователь разблокирован");
+                showUnbanModal.value = false;
+                loadUsers();
+            } else {
+                window.$toast?.error(
+                    "Ошибка разблокировки пользователя: " + response.message
                 );
             }
         }

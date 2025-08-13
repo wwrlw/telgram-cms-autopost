@@ -24,8 +24,10 @@ import Header from "@/components/Header.vue";
 import Sidebar from "@/components/Sidebar.vue";
 import Toast from "@/components/Shared/Toast.vue";
 import { ref, provide, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
 import http from "@/js/http";
 
+const router = useRouter();
 const loading = ref(false);
 const refreshTrigger = ref(0);
 
@@ -54,6 +56,26 @@ const checkBackendConnection = async () => {
     }
   } catch (error) {
     console.error('Backend connection check failed:', error);
+    
+    // Проверяем, заблокирован ли пользователь
+    if (error.response?.status === 403 && error.response?.data?.code === 'USER_BANNED') {
+      console.warn('User is banned, logging out...');
+      
+      // Очищаем токен и роль
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('role');
+      
+      // Показываем уведомление о блокировке
+      if (window.$toast) {
+        window.$toast.error('Ваш аккаунт заблокирован', 10000);
+      }
+      
+      // Перенаправляем на страницу логина
+      router.push('/login');
+      return;
+    }
     
     // Проверяем, является ли ошибка связанной с подключением
     if (error.code === 'ERR_NETWORK' || 

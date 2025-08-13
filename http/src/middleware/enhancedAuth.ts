@@ -45,6 +45,14 @@ export const enhancedRequireAuth = async (request: FastifyRequest, reply: Fastif
         });
       }
 
+      // Проверяем, что пользователь не заблокирован
+      if (userPermissions.role === ROLES.BANNED) {
+        return reply.status(403).send({ 
+          success: false, 
+          message: 'User account is banned' 
+        });
+      }
+
       console.log(`Enhanced auth: User ${userPermissions.username} authenticated with role ${userPermissions.role} and permissions:`, userPermissions.permissions);
 
     } catch (permissionError) {

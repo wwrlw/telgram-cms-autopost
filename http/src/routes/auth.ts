@@ -14,6 +14,18 @@ export default async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/login', async (request, reply) => {
     try {
       const loginData = request.body as LoginDto;
+      
+      // Проверяем, не заблокирован ли пользователь
+      const userService = container.getUserService();
+      const user = await userService.findByUsername(loginData.username);
+      
+      if (user && user.role === ROLES.BANNED) {
+        return reply.status(403).send({ 
+          success: false, 
+          message: 'User account is banned' 
+        });
+      }
+      
       const loginUseCase = container.getLoginUseCase();
       const result = await loginUseCase.execute(loginData);
       
@@ -84,6 +96,58 @@ export default async function authRoutes(fastify: FastifyInstance) {
       reply.send({
         success: true,
         data: result
+      });
+    } catch (error: any) {
+      reply.status(400).send({
+        success: false,
+        message: error.message
+      });
+    }
+  });
+
+  // Ban user (super_admin only)
+  fastify.post('/users/:id/ban', {
+    preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      
+      const userService = container.getUserService();
+      const result = await userService.updateUserRole(id, ROLES.BANNED);
+      reply.send({
+        success: true,
+        data: result,
+        message: 'User has been banned'
+      });
+    } catch (error: any) {
+      reply.status(400).send({
+        success: false,
+        message: error.message
+      });
+    }
+  });
+
+  // Unban user (super_admin only)
+  fastify.post('/users/:id/unban', {
+    preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { role } = request.body as { role: string };
+      
+      if (!role || role === ROLES.BANNED) {
+        return reply.status(400).send({
+          success: false,
+          message: 'Valid role must be specified for unbanning'
+        });
+      }
+      
+      const userService = container.getUserService();
+      const result = await userService.updateUserRole(id, role);
+      reply.send({
+        success: true,
+        data: result,
+        message: 'User has been unbanned'
       });
     } catch (error: any) {
       reply.status(400).send({
@@ -168,6 +232,15 @@ export default async function authRoutes(fastify: FastifyInstance) {
       
       const { ObjectId } = await import('mongodb');
       const dbUser = await usersCollection.findOne({ _id: new ObjectId(user.userId) });
+      
+      // Проверяем, не заблокирован ли пользователь
+      if (dbUser && dbUser.role === ROLES.BANNED) {
+        return reply.status(403).send({ 
+          success: false, 
+          message: 'User account is banned',
+          code: 'USER_BANNED'
+        });
+      }
       
       reply.send({
         success: true,

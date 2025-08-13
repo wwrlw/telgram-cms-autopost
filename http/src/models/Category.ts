@@ -44,7 +44,8 @@ export interface Role {
 export const ROLES = {
   SUPER_ADMIN: 'super_admin',
   ADMIN: 'admin',
-  EDITOR: 'editor'
+  EDITOR: 'editor',
+  BANNED: 'banned'
 } as const;
 
 export const PERMISSIONS = {
@@ -106,5 +107,6 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.MANAGE_PUBLICATION_CHANNELS,
     PERMISSIONS.MANAGE_CHANNELS,
     PERMISSIONS.VIEW_ANALYTICS
-  ]
+  ],
+  [ROLES.BANNED]: [] // Заблокированные пользователи не имеют никаких разрешений
 } as const; 

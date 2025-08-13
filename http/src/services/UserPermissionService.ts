@@ -27,10 +27,15 @@ export class UserPermissionService implements IUserPermissionService {
         throw new Error('User not found');
       }
 
-       // Проверяем, что пользователь активен (можно добавить поле is_active в модель User)
-       const isActive = true; // Пока всегда true, можно расширить модель
+      // Проверяем, что пользователь не заблокирован
+      if (user.role === ROLES.BANNED) {
+        throw new Error('User account is banned');
+      }
 
-             // Получаем права для роли
+      // Проверяем, что пользователь активен (можно добавить поле is_active в модель User)
+      const isActive = true; // Пока всегда true, можно расширить модель
+
+      // Получаем права для роли
       const permissions = [...(ROLE_PERMISSIONS[user.role as keyof typeof ROLE_PERMISSIONS] || [])];
 
        console.log(`UserPermissionService: Verified user ${user.username} with role ${user.role} and permissions:`, permissions);

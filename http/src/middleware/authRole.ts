@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { ROLE_PERMISSIONS, PERMISSIONS } from '../models/Category';
+import { ROLE_PERMISSIONS, PERMISSIONS, ROLES } from '../models/Category';
 
 export const requireAuth = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
@@ -7,6 +7,16 @@ export const requireAuth = async (request: FastifyRequest, reply: FastifyReply) 
     console.log('requireAuth: headers:', request.headers);
     await (request as any).jwtVerify();
     console.log('requireAuth: after jwtVerify, user:', (request as any).user);
+    
+    // Проверяем, что пользователь не заблокирован
+    const user = (request as any).user;
+    if (user && user.role === ROLES.BANNED) {
+      console.log('requireAuth: User is banned, access denied');
+      return reply.status(403).send({ 
+        success: false, 
+        message: 'User account is banned'
+      });
+    }
   } catch (error) {
     console.error('requireAuth: JWT verification failed:', error);
     return reply.status(401).send({ success: false, message: 'Invalid token' });
@@ -38,6 +48,15 @@ export const requirePermission = (permission: typeof PERMISSIONS[keyof typeof PE
         if (dbUser) {
           actualRole = dbUser.role;
           console.log(`requirePermission: Token role: ${user.role}, DB role: ${actualRole}`);
+          
+          // Проверяем, что пользователь не заблокирован
+          if (actualRole === ROLES.BANNED) {
+            console.log('requirePermission: User is banned, access denied');
+            return reply.status(403).send({ 
+              success: false, 
+              message: 'User account is banned'
+            });
+          }
         } else {
           // Пользователь не найден в БД - отказываем в доступе
           console.log('requirePermission: User not found in DB, access denied');
@@ -88,6 +107,15 @@ export const requireRole = (role: string) => {
         if (dbUser) {
           const actualRole = dbUser.role;
           console.log(`requireRole: Token role: ${user.role}, DB role: ${actualRole}`);
+          
+          // Проверяем, что пользователь не заблокирован
+          if (actualRole === ROLES.BANNED) {
+            console.log('requireRole: User is banned, access denied');
+            return reply.status(403).send({ 
+              success: false, 
+              message: 'User account is banned'
+            });
+          }
           
           if (actualRole !== role) {
             console.log(`requireRole: Access denied. Required: ${role}, DB role: ${actualRole}`);

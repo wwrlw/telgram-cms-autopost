@@ -22,6 +22,34 @@ instance.interceptors.response.use(
         return response;
     },
     (error) => {
+        // Check if user is banned
+        if (
+            error.response &&
+            error.response.status === 403 &&
+            error.response.data &&
+            error.response.data.code === "USER_BANNED"
+        ) {
+            console.warn("User is banned, logging out...");
+            
+            // Clear token and role
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("role");
+            
+            // Show notification about ban
+            if (window.$toast) {
+                window.$toast.error("Ваш аккаунт заблокирован", 10000);
+            }
+            
+            // Redirect to login page
+            if (window.location.pathname !== "/login") {
+                window.location.href = "/login";
+            }
+            
+            return Promise.reject(error);
+        }
+        
         // If backend responds with 403 and provides updated role info, refresh localStorage role
         try {
             if (
@@ -672,6 +700,32 @@ let http = {
             .catch((err) => {
                 const errorMessage =
                     err.response?.data?.message || "Failed to update user role";
+                callback({ success: false, message: errorMessage });
+            });
+    },
+
+    banUser: function (userId, callback) {
+        instance
+            .post(`/auth/users/${userId}/ban`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to ban user";
+                callback({ success: false, message: errorMessage });
+            });
+    },
+
+    unbanUser: function (userId, role, callback) {
+        instance
+            .post(`/auth/users/${userId}/unban`, { role })
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to unban user";
                 callback({ success: false, message: errorMessage });
             });
     },
