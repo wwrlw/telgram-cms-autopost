@@ -22,6 +22,25 @@ instance.interceptors.response.use(
         return response;
     },
     (error) => {
+        // If backend responds with 403 and provides updated role info, refresh localStorage role
+        try {
+            if (
+                error.response &&
+                error.response.status === 403 &&
+                error.response.data &&
+                error.response.data.debug &&
+                error.response.data.debug.actualRole
+            ) {
+                const newRole = error.response.data.debug.actualRole;
+                if (newRole) {
+                    localStorage.setItem("role", newRole);
+                    // Trigger manual storage event so same-tab listeners update
+                    window.dispatchEvent(new Event("storage"));
+                }
+            }
+        } catch (e) {
+            console.error("Error handling 403 role update:", e);
+        }
         return Promise.reject(error);
     }
 );

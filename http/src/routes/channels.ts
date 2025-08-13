@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { DependencyContainer } from "../container/DependencyContainer";
-import { requireAuth } from "../middleware/authRole";
+import { requireAuth, requirePermission } from "../middleware/authRole";
+import { PERMISSIONS } from "../models/Category";
 import { logAction } from "../middleware/logging";
 
 export async function channelsRoutes(fastify: FastifyInstance) {
@@ -8,7 +9,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     "/channels",
-    { preHandler: [requireAuth] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
       try {
         const getChannelsUseCase = container.getGetChannelsUseCase();
@@ -25,7 +26,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     "/channels/:id",
-    { preHandler: [requireAuth] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
@@ -44,7 +45,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/channels",
     { 
-      preHandler: [requireAuth, logAction],
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CHANNELS), logAction],
       schema: {
         body: {
           type: 'object',
@@ -74,7 +75,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
   fastify.delete(
     "/channels/:id",
-    { preHandler: [requireAuth, logAction] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CHANNELS), logAction] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
@@ -92,7 +93,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     "/channels/parser/ids",
-    { preHandler: [requireAuth] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
       try {
         const getChannelIdsForParserUseCase = container.getGetChannelIdsForParserUseCase();
@@ -108,7 +109,7 @@ export async function channelsRoutes(fastify: FastifyInstance) {
   );
   fastify.put(
     "/channels/:id",
-    { preHandler: [requireAuth, logAction] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CHANNELS), logAction] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;

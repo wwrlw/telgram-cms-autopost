@@ -11,6 +11,7 @@ import { PublicationChannelService } from '../services/PublicationChannelService
 import { CategoryService } from '../services/CategoryService';
 import { AuthService } from '../services/AuthService';
 import { YandexGPTService } from '../services/YandexGPTService';
+import { UserPermissionService } from '../services/UserPermissionService';
 import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
 import { GetPostsWithQueryUseCase } from '../use-cases/GetPostsWithQueryUseCase';
@@ -93,6 +94,10 @@ export class DependencyContainer {
   getAuthService(): AuthService {
     const jwtSecret = process.env.JWT_SECRET || 'supersecretkey';
     return new AuthService(jwtSecret);
+  }
+
+  getUserPermissionService(): UserPermissionService {
+    return new UserPermissionService(this.getUserRepository());
   }
 
   getYandexGPTService(): YandexGPTService {

@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
 import { LoginUseCase } from '../use-cases/LoginUseCase';
 import { CreateUserDto, LoginDto } from '../models/User';
-import { requireAuth, requireRole } from '../middleware/authRole';
+import { requireAuth, requireRole, requirePermission } from '../middleware/authRole';
 import { logAction } from '../middleware/logging';
 import { ROLES, PERMISSIONS } from '../models/Category';
 import { DependencyContainer } from '../container/DependencyContainer';
@@ -31,7 +31,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
   // Create user endpoint (super_admin only)
   fastify.post('/register', {
-    preHandler: [requireAuth, requireRole(ROLES.SUPER_ADMIN), logAction]
+    preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
   }, async (request, reply) => {
     try {
       const userData = request.body as CreateUserDto;
@@ -52,7 +52,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
   // Get all users (super_admin only)
   fastify.get('/users', {
-    preHandler: [requireAuth, requireRole(ROLES.SUPER_ADMIN)]
+    preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS)]
   }, async (request, reply) => {
     // DEBUG: print user
     console.log('AUTH USERS ROUTE: request.user =', (request as any).user);
@@ -73,7 +73,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
   // Update user role (super_admin only)
   fastify.put('/users/:id/role', {
-    preHandler: [requireAuth, requireRole(ROLES.SUPER_ADMIN), logAction]
+    preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
