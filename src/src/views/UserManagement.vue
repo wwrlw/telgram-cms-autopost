@@ -91,6 +91,7 @@
                                     class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
                                 >
                                     <button
+                                        v-if="user.role !== 'super_admin'"
                                         @click="openRoleModal(user)"
                                         class="text-indigo-600 hover:text-indigo-900"
                                     >
@@ -310,6 +311,11 @@ const createUser = () => {
 };
 
 const openRoleModal = (user) => {
+    // Не открываем модальное окно для супер администраторов
+    if (user.role === 'super_admin') {
+        return;
+    }
+    
     selectedUser.value = user;
     selectedRole.value = user.role;
     showRoleModal.value = true;

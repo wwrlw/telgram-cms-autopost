@@ -477,7 +477,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Очистка старых постов и медиа
   fastify.post(
     "/posts/cleanup",
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.BULK_DELETE_POSTS)] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.CLEANUP_POSTS)] },
     async (request: any, reply) => {
       try {
         const container = DependencyContainer.getInstance();
