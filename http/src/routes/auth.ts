@@ -15,28 +15,59 @@ export default async function authRoutes(fastify: FastifyInstance) {
     try {
       const loginData = request.body as LoginDto;
       
-      // Проверяем, не заблокирован ли пользователь
+      // Сначала проверяем, существует ли пользователь
       const userService = container.getUserService();
       const user = await userService.findByUsername(loginData.username);
       
-      if (user && user.role === ROLES.BANNED) {
-        return reply.status(403).send({ 
+      // Если пользователь не найден
+      if (!user) {
+        return reply.status(404).send({ 
           success: false, 
-          message: 'User account is banned' 
+          message: 'User not found in database',
+          code: 'USER_NOT_FOUND'
         });
       }
       
-      const loginUseCase = container.getLoginUseCase();
-      const result = await loginUseCase.execute(loginData);
+      // Если пользователь заблокирован
+      if (user.role === ROLES.BANNED) {
+        return reply.status(403).send({ 
+          success: false, 
+          message: 'User account is banned',
+          code: 'USER_BANNED'
+        });
+      }
       
-      reply.send({ 
-        success: true, 
-        data: result 
-      });
+      // Теперь пробуем залогинить пользователя
+      try {
+        const loginUseCase = container.getLoginUseCase();
+        const result = await loginUseCase.execute(loginData);
+        
+        reply.send({ 
+          success: true, 
+          data: result 
+        });
+      } catch (loginError: any) {
+        // Если ошибка логина, значит пароль неправильный
+        if (loginError.message === 'Invalid username or password') {
+          return reply.status(400).send({ 
+            success: false, 
+            message: 'Invalid password',
+            code: 'INVALID_PASSWORD'
+          });
+        }
+        
+        // Другие ошибки логина
+        reply.status(400).send({ 
+          success: false, 
+          message: loginError.message 
+        });
+      }
+      
     } catch (error: any) {
-      reply.status(400).send({ 
+      console.error('Login error:', error);
+      reply.status(500).send({ 
         success: false, 
-        message: error.message 
+        message: 'Internal server error' 
       });
     }
   });
@@ -221,20 +252,47 @@ export default async function authRoutes(fastify: FastifyInstance) {
   });
 
   // Check current user role from database
-  fastify.get('/check', {
-    preHandler: [requireAuth]
-  }, async (request, reply) => {
+  fastify.get('/check', async (request, reply) => {
     try {
-      const user = (request as any).user;
+      // Проверяем JWT токен вручную
+      let tokenUser;
+      try {
+        await (request as any).jwtVerify();
+        tokenUser = (request as any).user;
+      } catch (jwtError) {
+        return reply.status(401).send({ 
+          success: false, 
+          message: 'Invalid token',
+          code: 'INVALID_TOKEN'
+        });
+      }
+
+      if (!tokenUser || !tokenUser.userId) {
+        return reply.status(401).send({ 
+          success: false, 
+          message: 'Invalid user data in token',
+          code: 'INVALID_TOKEN'
+        });
+      }
+
       const mongo = (request.server as any).mongo;
       const db = mongo.db;
       const usersCollection = db.collection('users');
       
       const { ObjectId } = await import('mongodb');
-      const dbUser = await usersCollection.findOne({ _id: new ObjectId(user.userId) });
+      const dbUser = await usersCollection.findOne({ _id: new ObjectId(tokenUser.userId) });
+      
+      // Проверяем, что пользователь существует в БД
+      if (!dbUser) {
+        return reply.status(404).send({ 
+          success: false, 
+          message: 'User not found in database',
+          code: 'USER_NOT_FOUND'
+        });
+      }
       
       // Проверяем, не заблокирован ли пользователь
-      if (dbUser && dbUser.role === ROLES.BANNED) {
+      if (dbUser.role === ROLES.BANNED) {
         return reply.status(403).send({ 
           success: false, 
           message: 'User account is banned',
@@ -245,14 +303,15 @@ export default async function authRoutes(fastify: FastifyInstance) {
       reply.send({
         success: true,
         data: {
-          role: dbUser?.role || user.role,
-          username: dbUser?.username || user.username
+          role: dbUser.role,
+          username: dbUser.username
         }
       });
     } catch (error: any) {
+      console.error('Error in /check endpoint:', error);
       reply.status(500).send({ 
         success: false, 
-        message: error.message 
+        message: 'Internal server error' 
       });
     }
   });

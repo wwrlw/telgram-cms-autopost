@@ -148,6 +148,17 @@ router.beforeEach(async (to) => {
         return "/login";
     }
 
+    // Проверяем, что пользователь существует (дополнительная проверка)
+    if (!userRole || userRole === "undefined" || userRole === "null") {
+        console.warn("Access denied: invalid user role");
+        // Очищаем токен и роль для невалидного пользователя
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("role");
+        return "/login";
+    }
+
     // Check role-based access
     if (to.meta?.requiredRole && userRole !== to.meta.requiredRole) {
         console.warn(

@@ -60,9 +60,10 @@ export const requirePermission = (permission: typeof PERMISSIONS[keyof typeof PE
         } else {
           // Пользователь не найден в БД - отказываем в доступе
           console.log('requirePermission: User not found in DB, access denied');
-          return reply.status(403).send({ 
+          return reply.status(404).send({ 
             success: false, 
-            message: 'User not found in database'
+            message: 'User not found in database',
+            code: 'USER_NOT_FOUND'
           });
         }
       } else {
@@ -132,9 +133,10 @@ export const requireRole = (role: string) => {
         } else {
           // Пользователь не найден в БД - отказываем в доступе
           console.log('requireRole: User not found in DB, access denied');
-          return reply.status(403).send({ 
+          return reply.status(404).send({ 
             success: false, 
-            message: 'User not found in database'
+            message: 'User not found in database',
+            code: 'USER_NOT_FOUND'
           });
         }
       } else {

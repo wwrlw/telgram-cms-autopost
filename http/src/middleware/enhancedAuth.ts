@@ -57,6 +57,16 @@ export const enhancedRequireAuth = async (request: FastifyRequest, reply: Fastif
 
     } catch (permissionError) {
       console.error('Permission verification failed:', permissionError);
+      
+      // Проверяем, является ли ошибка связанной с тем, что пользователь не найден
+      if ((permissionError as any).code === 'USER_NOT_FOUND') {
+        return reply.status(404).send({ 
+          success: false, 
+          message: 'User not found in database',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+      
       return reply.status(403).send({ 
         success: false, 
         message: 'Failed to verify user permissions' 

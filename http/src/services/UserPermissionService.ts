@@ -24,7 +24,9 @@ export class UserPermissionService implements IUserPermissionService {
       const user = await this.userRepository.findById(userId);
       
       if (!user) {
-        throw new Error('User not found');
+        const error = new Error('User not found');
+        (error as any).code = 'USER_NOT_FOUND';
+        throw error;
       }
 
       // Проверяем, что пользователь не заблокирован

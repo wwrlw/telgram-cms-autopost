@@ -76,6 +76,26 @@ const checkBackendConnection = async () => {
       router.push('/login');
       return;
     }
+
+    // Проверяем, не найден ли пользователь в БД
+    if (error.response?.status === 404 && error.response?.data?.code === 'USER_NOT_FOUND') {
+      console.warn('User not found in database, logging out...');
+      
+      // Очищаем токен и роль
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('role');
+      
+      // Показываем уведомление
+      if (window.$toast) {
+        window.$toast.error('Пользователь не найден в базе данных', 10000);
+      }
+      
+      // Перенаправляем на страницу логина
+      router.push('/login');
+      return;
+    }
     
     // Проверяем, является ли ошибка связанной с подключением
     if (error.code === 'ERR_NETWORK' || 
