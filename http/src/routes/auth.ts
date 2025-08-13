@@ -155,4 +155,32 @@ export default async function authRoutes(fastify: FastifyInstance) {
       });
     }
   });
+
+  // Check current user role from database
+  fastify.get('/check', {
+    preHandler: [requireAuth]
+  }, async (request, reply) => {
+    try {
+      const user = (request as any).user;
+      const mongo = (request.server as any).mongo;
+      const db = mongo.db;
+      const usersCollection = db.collection('users');
+      
+      const { ObjectId } = await import('mongodb');
+      const dbUser = await usersCollection.findOne({ _id: new ObjectId(user.userId) });
+      
+      reply.send({
+        success: true,
+        data: {
+          role: dbUser?.role || user.role,
+          username: dbUser?.username || user.username
+        }
+      });
+    } catch (error: any) {
+      reply.status(500).send({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  });
 }
