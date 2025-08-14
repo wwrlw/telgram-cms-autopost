@@ -49,7 +49,20 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="user in users" :key="user.id">
+                            <tr v-if="usersLoading" class="bg-white">
+                                <td colspan="3" class="px-6 py-8 text-center">
+                                    <div class="flex items-center justify-center">
+                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                        <span class="ml-2 text-gray-600">Загрузка пользователей...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-else-if="users.length === 0" class="bg-white">
+                                <td colspan="3" class="px-6 py-8 text-center text-gray-500">
+                                    Пользователи не найдены
+                                </td>
+                            </tr>
+                            <tr v-else v-for="user in users" :key="user.id">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
@@ -307,7 +320,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import Sidebar from "@/components/Sidebar.vue";
 import http from "@/js/http";
@@ -324,6 +337,7 @@ const selectedUser = ref(null);
 const selectedRole = ref("");
 const creating = ref(false);
 const updating = ref(false);
+const usersLoading = ref(false);
 let confirmAction = null;
 let confirmPayload = null;
 
@@ -382,14 +396,30 @@ const getRoleBadgeClass = (role) => {
 };
 
 const loadUsers = () => {
-    http.getAllUsers((response) => {
-        if (response.success) {
-            users.value = response.data;
-        } else {
+    return new Promise((resolve, reject) => {
+        usersLoading.value = true;
+        http.getAllUsers((response) => {
+            usersLoading.value = false;
+            if (response.success) {
+                users.value = response.data;
+                resolve(response.data);
+            } else {
+                console.error("Error loading users:", response.message);
+                window.$toast?.error(
+                    "Ошибка загрузки пользователей: " + response.message
+                );
+                users.value = [];
+                reject(new Error(response.message));
+            }
+        }, (error) => {
+            usersLoading.value = false;
+            console.error("Error loading users:", error);
             window.$toast?.error(
-                "Ошибка загрузки пользователей: " + response.message
+                "Ошибка загрузки пользователей: " + (error.message || "Неизвестная ошибка")
             );
-        }
+            users.value = [];
+            reject(error);
+        });
     });
 };
 
@@ -492,7 +522,37 @@ const viewUserLogs = (user) => {
     router.push(`/logs?userId=${user._id}`);
 };
 
-onMounted(() => {
-    loadUsers();
+// Обработчик обновления пользователей из Header
+const refreshUsersHandler = async () => {
+    console.log('Refresh users event received');
+    
+    try {
+        await loadUsers();
+    } catch (error) {
+        console.error('Error refreshing users:', error);
+        
+        // Показываем уведомление об ошибке
+        if (window.$toast) {
+            window.$toast.error(
+                "Ошибка обновления пользователей: " + (error.message || "Неизвестная ошибка")
+            );
+        }
+    }
+};
+
+onMounted(async () => {
+    try {
+        await loadUsers();
+    } catch (error) {
+        console.error('Error in onMounted:', error);
+    }
+    
+    // Слушаем событие обновления пользователей из Header
+    window.addEventListener('refreshUsers', refreshUsersHandler);
+});
+
+onUnmounted(() => {
+    // Очищаем event listener
+    window.removeEventListener('refreshUsers', refreshUsersHandler);
 });
 </script>

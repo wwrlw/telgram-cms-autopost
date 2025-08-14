@@ -839,6 +839,34 @@ let http = {
                     });
             });
     },
+
+    // Infinite scroll methods for logs
+    logsInfiniteScroll: function (
+        params = {},
+        callback,
+        errorCallback
+    ) {
+        const queryParams = new URLSearchParams();
+        
+        if (params.limit) queryParams.append('limit', params.limit);
+        if (params.lastId) queryParams.append('lastId', params.lastId);
+        if (params.sort) queryParams.append('sort', params.sort);
+        if (params.userId) queryParams.append('userId', params.userId);
+        
+        instance
+            .get(`/logs/infinite-scroll?${queryParams.toString()}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load logs",
+                    });
+            });
+    },
 };
 
 export function getToken() {

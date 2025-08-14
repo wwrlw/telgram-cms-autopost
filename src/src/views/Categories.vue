@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, watch } from "vue";
+import { ref, onMounted, onUnmounted, inject, watch } from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
 import Search from "@/components/Shared/Search.vue";
@@ -245,13 +245,38 @@ const clearSelection = () => {
     selectedCategories.value = [];
 };
 
-watch(refreshTrigger, () => {
-    if (refreshTrigger && refreshTrigger.value > 0) {
-        categoriesService();
+// Убираем дублирующий watch, так как обновление теперь происходит через события
+// watch(refreshTrigger, () => {
+//     if (refreshTrigger && refreshTrigger.value > 0) {
+//         categoriesService();
+//     }
+// });
+
+// Обработчик обновления категорий из Header
+const refreshCategoriesHandler = async () => {
+    console.log('Refresh categories event received');
+    loading.value = true;
+    if (setLoading) setLoading(true);
+    
+    try {
+        await categoriesService();
+    } catch (error) {
+        console.error('Error refreshing categories:', error);
+    } finally {
+        loading.value = false;
+        if (setLoading) setLoading(false);
     }
-});
+};
 
 onMounted(() => {
     categoriesService();
+    
+    // Слушаем событие обновления категорий из Header
+    window.addEventListener('refreshCategories', refreshCategoriesHandler);
+});
+
+onUnmounted(() => {
+    // Очищаем event listener
+    window.removeEventListener('refreshCategories', refreshCategoriesHandler);
 });
 </script>

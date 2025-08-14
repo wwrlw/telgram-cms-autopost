@@ -142,4 +142,78 @@ export default async function logsRoutes(fastify: FastifyInstance) {
       });
     }
   });
+
+  // Infinite scroll endpoint for logs
+  fastify.get('/infinite-scroll', {
+    preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_LOGS)]
+  }, async (request, reply) => {
+    try {
+      if (!fastify.mongo.db) throw new Error('MongoDB is not connected');
+      
+      const query = request.query as { 
+        limit?: any; 
+        lastId?: any; 
+        sort?: any; 
+        userId?: any 
+      };
+      
+      const limitNum = Number(query.limit) || 50;
+      let sort = query.sort;
+      if (sort !== 'asc' && sort !== 'desc') {
+        sort = 'desc'; // значение по умолчанию
+      }
+      const sortOrder = sort === 'asc' ? 1 : -1;
+      
+      const db = fastify.mongo.client.db('parse-news');
+      const collection = db.collection<Log>('logs');
+      
+      let findQuery: any = {};
+      
+      // Если указан userId, фильтруем по пользователю
+      if (query.userId && query.userId !== 'undefined' && query.userId !== 'null') {
+        const { ObjectId } = await import('mongodb');
+        if (ObjectId.isValid(query.userId)) {
+          findQuery.userId = new ObjectId(query.userId);
+        }
+      }
+      
+      // Если указан lastId, используем курсорную пагинацию
+      if (query.lastId && query.lastId !== 'undefined' && query.lastId !== 'null') {
+        const { ObjectId } = await import('mongodb');
+        if (ObjectId.isValid(query.lastId)) {
+          if (sortOrder === -1) {
+            // Для сортировки по убыванию (новые сначала)
+            findQuery._id = { $lt: new ObjectId(query.lastId) };
+          } else {
+            // Для сортировки по возрастанию (старые сначала)
+            findQuery._id = { $gt: new ObjectId(query.lastId) };
+          }
+        }
+      }
+      
+      const logs = await collection
+        .find(findQuery)
+        .sort({ timestamp: sortOrder })
+        .limit(limitNum + 1) // Берем на один больше для проверки hasMore
+        .toArray();
+      
+      const hasMore = logs.length > limitNum;
+      const resultLogs = hasMore ? logs.slice(0, limitNum) : logs;
+      
+      reply.send({
+        success: true,
+        data: resultLogs,
+        params: {
+          hasMore,
+          lastId: resultLogs.length > 0 ? resultLogs[resultLogs.length - 1]._id : null
+        }
+      });
+    } catch (error: any) {
+      console.error('Error in /logs/infinite-scroll:', error);
+      reply.status(500).send({
+        success: false,
+        message: error.message
+      });
+    }
+  });
 } 

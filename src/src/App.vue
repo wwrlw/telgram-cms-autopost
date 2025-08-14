@@ -4,6 +4,7 @@
             <Header
                 :loading="loading"
                 @refreshPosts="refreshPosts"
+                @refreshData="refreshData"
                 class="bg-white shadow-sm border-b border-gray-200 flex-shrink-0"
             />
 
@@ -37,6 +38,40 @@ provide("refreshTrigger", refreshTrigger);
 const refreshPosts = () => {
     refreshTrigger.value++;
     loading.value = true;
+};
+
+const refreshData = (dataType) => {
+    loading.value = true;
+    
+    // Эмитим событие для конкретного типа данных
+    if (dataType === 'logs') {
+        // Для логов используем специальное событие
+        window.dispatchEvent(new CustomEvent('refreshLogs'));
+    } else if (dataType === 'categories') {
+        window.dispatchEvent(new CustomEvent('refreshCategories'));
+    } else if (dataType === 'channels') {
+        window.dispatchEvent(new CustomEvent('refreshChannels'));
+    } else if (dataType === 'publication-channels') {
+        window.dispatchEvent(new CustomEvent('refreshPublicationChannels'));
+    } else if (dataType === 'scheduled-posts') {
+        window.dispatchEvent(new CustomEvent('refreshScheduledPosts'));
+    } else if (dataType === 'analytics') {
+        window.dispatchEvent(new CustomEvent('refreshAnalytics'));
+    } else if (dataType === 'users') {
+        window.dispatchEvent(new CustomEvent('refreshUsers'));
+    } else if (dataType === 'favorites') {
+        // Для избранного используем существующий механизм
+        refreshTrigger.value++;
+    } else if (dataType === 'settings') {
+        // Для настроек используем существующий механизм
+        refreshTrigger.value++;
+    }
+    
+    // Сбрасываем loading через задержку, чтобы страница успела обработать событие
+    // Увеличиваем задержку для надежности
+    setTimeout(() => {
+        loading.value = false;
+    }, 500);
 };
 
 provide("setLoading", (value) => {

@@ -286,7 +286,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, inject, watch } from "vue";
+import { ref, reactive, onMounted, onUnmounted, inject, watch } from "vue";
 import http from "@/js/http.js";
 import { formatDate } from "@/js/utils";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
@@ -453,11 +453,35 @@ const deleteChannel = (channel) => {
     );
 };
 
+// Обработчик обновления каналов публикации из Header
+const refreshPublicationChannelsHandler = async () => {
+    console.log('Refresh publication channels event received');
+    loading.value = true;
+    if (setLoading) setLoading(true);
+    
+    try {
+        loadChannels();
+    } catch (error) {
+        console.error('Error refreshing publication channels:', error);
+    } finally {
+        loading.value = false;
+        if (setLoading) setLoading(false);
+    }
+};
+
 watch(refreshTrigger, () => {
     loadChannels();
 });
 
 onMounted(() => {
     loadChannels();
+    
+    // Слушаем событие обновления каналов публикации из Header
+    window.addEventListener('refreshPublicationChannels', refreshPublicationChannelsHandler);
+});
+
+onUnmounted(() => {
+    // Очищаем event listener
+    window.removeEventListener('refreshPublicationChannels', refreshPublicationChannelsHandler);
 });
 </script>
