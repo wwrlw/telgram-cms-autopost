@@ -9,7 +9,7 @@ export const infiniteScrollQuerySchema = {
     category_id: { type: 'string' },
     date_from: { type: 'string', format: 'date-time' },
     date_to: { type: 'string', format: 'date-time' },
-    sort_field: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel'] },
+    sort_field: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel', 'err'] },
     sort_order: { type: 'string', enum: ['asc', 'desc'] }
   }
 };

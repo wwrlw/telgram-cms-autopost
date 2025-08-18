@@ -150,7 +150,7 @@ let connectionCheckInterval;
 onMounted(() => {
     connectionCheckInterval = setInterval(checkBackendConnection, 30000);
 
-    setTimeout(checkBackendConnection, 10000);
+    setTimeout(checkBackendConnection, 30000);
 });
 
 onUnmounted(() => {

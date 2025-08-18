@@ -468,10 +468,6 @@ const userRoleDisplay = computed(() => {
     }
 });
 
-const isForbiddenRole = (forbiddenRoles) => {
-    return forbiddenRoles.includes(userRole.value);
-};
-
 const toggleCollapse = () => {
     isCollapsed.value = !isCollapsed.value;
     localStorage.setItem("sidebarCollapsed", isCollapsed.value.toString());
@@ -508,7 +504,6 @@ const loadUserData = () => {
 
 const checkUserRole = async () => {
     try {
-        // Check current user role from database
         const response = await http.instance.get("/auth/check");
         if (response.data.success) {
             const newRole = response.data.data.role;
@@ -520,7 +515,6 @@ const checkUserRole = async () => {
         }
     } catch (error) {
         console.error("Error checking user role:", error);
-        // Уведомления о проблемах с подключением теперь показываются глобально в App.vue
     }
 };
 
@@ -532,17 +526,14 @@ onMounted(() => {
         isCollapsed.value = true;
     }
     loadUserData();
-    // Check user role every 10 seconds
-    const roleCheckInterval = setInterval(checkUserRole, 10000);
+    const roleCheckInterval = setInterval(checkUserRole, 30000);
     window.addEventListener("storage", (e) => {
         if (e.key === "user" || e.key === "role") {
             loadUserData();
         }
     });
-    // Добавляю обработчик resize
     window.addEventListener("resize", handleResize);
 
-    // Cleanup interval on unmount
     onUnmounted(() => {
         clearInterval(roleCheckInterval);
     });

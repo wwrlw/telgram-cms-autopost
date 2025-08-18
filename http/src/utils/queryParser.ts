@@ -67,7 +67,7 @@ function parseSort(query: any): SortParams | undefined {
     return undefined;
   }
 
-  const validFields = ['timestamp', 'created_at', 'source_channel'];
+  const validFields = ['timestamp', 'created_at', 'source_channel', 'err'];
   const field = validFields.includes(query.sort_field) ? query.sort_field : 'created_at';
   const order = query.sort_order === 'asc' ? 'asc' : 'desc';
 

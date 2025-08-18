@@ -19,7 +19,7 @@ export interface PostFilters {
 }
 
 export interface SortParams {
-  field: 'timestamp' | 'created_at' | 'source_channel';
+  field: 'timestamp' | 'created_at' | 'source_channel' | 'err';
   order: 'asc' | 'desc';
 }
 

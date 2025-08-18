@@ -402,6 +402,12 @@ export class PostRepository implements IPostRepository {
     }
 
     const sortOrder = sort.order === "asc" ? 1 : -1;
+    
+    // Handle nested err field from conversion_metrics
+    if (sort.field === 'err') {
+      return { 'conversion_metrics.err': sortOrder };
+    }
+    
     return { [sort.field]: sortOrder };
   }
 

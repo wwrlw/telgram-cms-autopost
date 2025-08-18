@@ -38,7 +38,7 @@ export const postQuerySchema = {
     },
     sort_field: {
       type: 'string',
-      enum: ['timestamp', 'created_at', 'source_channel']
+      enum: ['timestamp', 'created_at', 'source_channel', 'err']
     },
     sort_order: {
       type: 'string',

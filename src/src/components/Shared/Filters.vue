@@ -73,6 +73,7 @@
                         <option value="created_at">По дате создания</option>
                         <option value="timestamp">По времени поста</option>
                         <option value="source_channel">По каналу</option>
+                        <option value="err">По ERR</option>
                     </select>
                     <select
                         v-model="sortOrder"
@@ -109,7 +110,6 @@
 
 <script setup>
 import { ref, watch } from "vue";
-import Search from "@/components/Shared/Search.vue";
 
 const props = defineProps({
     loading: {
