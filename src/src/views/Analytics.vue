@@ -269,7 +269,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, watch, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, inject, watch, nextTick } from "vue";
 import http from "../js/http.js";
 import { Chart, registerables } from "chart.js";
 
@@ -541,11 +541,38 @@ const getContentTypeName = (type) => {
     return types[type] || type;
 };
 
+// Обработчик обновления аналитики из Header
+const refreshAnalyticsHandler = async () => {
+    console.log('Refresh analytics event received');
+    loading.value = true;
+    if (setLoading) setLoading(true);
+    
+    try {
+        loadChannels();
+        if (selectedChannelId.value) {
+            await loadChannelAnalytics();
+        }
+    } catch (error) {
+        console.error('Error refreshing analytics:', error);
+    } finally {
+        loading.value = false;
+        if (setLoading) setLoading(false);
+    }
+};
+
 watch(refreshTrigger, () => {
     loadChannels();
 });
 
 onMounted(() => {
     loadChannels();
+    
+    // Слушаем событие обновления аналитики из Header
+    window.addEventListener('refreshAnalytics', refreshAnalyticsHandler);
+});
+
+onUnmounted(() => {
+    // Очищаем event listener
+    window.removeEventListener('refreshAnalytics', refreshAnalyticsHandler);
 });
 </script>

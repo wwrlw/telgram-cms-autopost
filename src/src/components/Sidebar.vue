@@ -208,7 +208,7 @@
                         </router-link>
                     </li>
                     <li
-                        v-if="!isForbiddenRole(['editor'])"
+                        v-if="userRole !== 'editor'"
                         :class="isCollapsed ? 'flex justify-center' : ''"
                     >
                         <router-link
@@ -241,7 +241,7 @@
                         </router-link>
                     </li>
                     <li
-                        v-if="!isForbiddenRole(['editor'])"
+                        v-if="userRole !== 'editor'"
                         :class="isCollapsed ? 'flex justify-center' : ''"
                     >
                         <router-link
@@ -277,7 +277,7 @@
                         </router-link>
                     </li>
                     <li
-                        v-if="!isForbiddenRole(['editor'])"
+                        v-if="userRole !== 'editor'"
                         :class="isCollapsed ? 'flex justify-center' : ''"
                     >
                         <router-link
@@ -450,6 +450,7 @@
 
 <script setup>
 import { ref, onMounted, computed, onUnmounted } from "vue";
+import http from "../js/http";
 const username = ref("");
 const userRole = ref("");
 const isCollapsed = ref(false);
@@ -505,6 +506,24 @@ const loadUserData = () => {
     }
 };
 
+const checkUserRole = async () => {
+  try {
+    // Check current user role from database
+    const response = await http.instance.get('/auth/check');
+    if (response.data.success) {
+      const newRole = response.data.data.role;
+      if (newRole !== userRole.value) {
+        userRole.value = newRole;
+        localStorage.setItem('role', newRole);
+        console.log('Role updated to:', newRole);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking user role:', error);
+    // Уведомления о проблемах с подключением теперь показываются глобально в App.vue
+  }
+};
+
 onMounted(() => {
     const savedState = localStorage.getItem("sidebarCollapsed");
     if (savedState !== null) {
@@ -513,6 +532,8 @@ onMounted(() => {
         isCollapsed.value = true;
     }
     loadUserData();
+    // Check user role every 10 seconds
+    const roleCheckInterval = setInterval(checkUserRole, 10000);
     window.addEventListener("storage", (e) => {
         if (e.key === "user" || e.key === "role") {
             loadUserData();
@@ -520,6 +541,11 @@ onMounted(() => {
     });
     // Добавляю обработчик resize
     window.addEventListener("resize", handleResize);
+    
+    // Cleanup interval on unmount
+    onUnmounted(() => {
+        clearInterval(roleCheckInterval);
+    });
 });
 
 const handleResize = () => {

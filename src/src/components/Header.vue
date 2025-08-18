@@ -30,7 +30,7 @@
                             route.name !== 'create-post' &&
                             route.name !== 'edit-scheduled-post'
                         "
-                        @click="refreshPosts"
+                        @click="refreshData"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
                     >
                         <svg
@@ -58,7 +58,7 @@
 import { useRoute, useRouter } from "vue-router";
 const route = useRoute();
 const router = useRouter();
-const emit = defineEmits(["refreshPosts", "showPublishModal"]);
+const emit = defineEmits(["refreshPosts", "showPublishModal", "refreshData"]);
 const props = defineProps({
     loading: {
         type: Boolean,
@@ -72,7 +72,31 @@ const logout = () => {
     router.push("/login");
 };
 
-const refreshPosts = () => {
-    emit("refreshPosts");
+const refreshData = () => {
+    // Определяем тип данных для обновления в зависимости от текущей страницы
+    if (route.name === 'posts') {
+        emit("refreshPosts");
+    } else if (route.name === 'favorites') {
+        emit("refreshData", 'favorites');
+    } else if (route.name === 'system-logs') {
+        emit("refreshData", 'logs');
+    } else if (route.name === 'categories') {
+        emit("refreshData", 'categories');
+    } else if (route.name === 'channels') {
+        emit("refreshData", 'channels');
+    } else if (route.name === 'publication-channels') {
+        emit("refreshData", 'publication-channels');
+    } else if (route.name === 'scheduled-posts') {
+        emit("refreshData", 'scheduled-posts');
+    } else if (route.name === 'analytics') {
+        emit("refreshData", 'analytics');
+    } else if (route.name === 'user-management') {
+        emit("refreshData", 'users');
+    } else if (route.name === 'settings') {
+        emit("refreshData", 'settings');
+    } else {
+        // По умолчанию обновляем посты
+        emit("refreshPosts");
+    }
 };
 </script>

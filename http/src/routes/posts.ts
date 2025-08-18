@@ -24,6 +24,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Новый endpoint для статистики постов (в начале для правильного порядка)
   fastify.get(
     "/posts/stats",
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
       console.log('GET /posts/stats endpoint called');
       try {
@@ -45,7 +46,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts/search",
     { 
-      preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_POSTS)],
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)],
       schema: {
         querystring: postQuerySchema,
         response: {
@@ -71,7 +72,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts",
     { 
-      preHandler: [requireAuth],
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)],
       schema: {
         querystring: postQuerySchema
       }
@@ -110,7 +111,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts/infinite-scroll",
     { 
-      preHandler: [requireAuth],
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)],
       schema: {
         querystring: infiniteScrollQuerySchema,
         response: {
@@ -136,7 +137,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     '/post/:id', 
-    { preHandler: [requireAuth] }, 
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] }, 
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
@@ -155,7 +156,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.delete(
     '/post/:id',
     { 
-      preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_POSTS)]
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.DELETE_POSTS)]
     },
     async (request, reply) => {
       try {
@@ -192,7 +193,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Запланировать пост
   fastify.post(
     '/posts/:id/schedule',
-    { preHandler: [requireAuth] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] },
     async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
@@ -215,7 +216,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Получить запланированные посты
   fastify.get(
     '/posts/scheduled',
-    { preHandler: [requireAuth] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
       try {
         const postService = container.getPostService();
@@ -233,7 +234,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Отменить отложенную публикацию
   fastify.delete(
     '/posts/:id/schedule',
-    { preHandler: [requireAuth] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.DELETE_POSTS)] },
     async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
@@ -254,7 +255,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Получить опубликованные посты
   fastify.get(
     '/posts/published',
-    { preHandler: [requireAuth] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
       try {
         const postService = container.getPostService();
@@ -274,7 +275,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.put(
     '/posts/:id',
     { 
-      preHandler: [requireAuth],
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.EDIT_POSTS)],
       config: {
         // Разрешаем multipart/form-data для PUT запросов
         bodyLimit: 10485760, // 10MB
@@ -357,7 +358,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
 
   fastify.post(
     '/posts',
-    { preHandler: [requireAuth] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.CREATE_POSTS)] },
     async (request: any, reply) => {
       const container = DependencyContainer.getInstance();
       const parts = request.parts();
@@ -426,7 +427,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts/test-yandex-config",
     { 
-      preHandler: [requireAuth]
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)]
     },
     async (request, reply) => {
       return {
@@ -446,7 +447,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/posts/:id/uniquize",
     { 
-      preHandler: [requireAuth],
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.EDIT_POSTS)],
       schema: {
         params: {
           type: 'object',
@@ -476,7 +477,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
   // Очистка старых постов и медиа
   fastify.post(
     "/posts/cleanup",
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_POSTS)] },
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.CLEANUP_POSTS)] },
     async (request: any, reply) => {
       try {
         const container = DependencyContainer.getInstance();

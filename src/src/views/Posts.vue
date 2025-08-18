@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, watch, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, inject, watch, nextTick } from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
 import Filters from "@/components/Shared/Filters.vue";
@@ -424,32 +424,47 @@ onMounted(async () => {
     await nextTick();
     initializeInfiniteScroll();
 
+    // Автоматическое обновление постов каждую минуту
+    const autoRefreshInterval = setInterval(async () => {
+        try {
+            // Обновляем только если страница активна и пользователь не взаимодействует
+            if (!document.hidden && !loading.value) {
+                await postsService({ page: 1 }, false, { 
+                    forceRefresh: false, 
+                    useCache: true 
+                });
+            }
+        } catch (error) {
+            console.error('Auto refresh error:', error);
+        }
+    }, 60000); // 60 секунд = 1 минута
+
     onEvent(EVENTS.POST_CREATED, async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
-        await loadPostsStats();
+        // Убираем дублирующий вызов loadPostsStats
     });
 
     onEvent(EVENTS.POST_UPDATED, async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
-        await loadPostsStats();
+        // Убираем дублирующий вызов loadPostsStats
     });
 
     onEvent(EVENTS.POST_DELETED, async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
-        await loadPostsStats();
+        // Убираем дублирующий вызов loadPostsStats, так как stats уже обновляются в postsService
     });
 
     onEvent(EVENTS.POST_PUBLISHED, async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
-        await loadPostsStats();
+        // Убираем дублирующий вызов loadPostsStats
     });
 
     onEvent(EVENTS.REFRESH_POSTS, async () => {
@@ -457,6 +472,13 @@ onMounted(async () => {
         hasMore.value = true;
         await postsService({ page: 1 });
         await loadPostsStats();
+    });
+
+    // Очистка интервала при размонтировании компонента
+    onUnmounted(() => {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+        }
     });
 });
 

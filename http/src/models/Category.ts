@@ -44,7 +44,8 @@ export interface Role {
 export const ROLES = {
   SUPER_ADMIN: 'super_admin',
   ADMIN: 'admin',
-  EDITOR: 'editor'
+  EDITOR: 'editor',
+  BANNED: 'banned'
 } as const;
 
 export const PERMISSIONS = {
@@ -52,10 +53,19 @@ export const PERMISSIONS = {
   CREATE_USER: 'create_user',
   ASSIGN_ROLE: 'assign_role',
   VIEW_LOGS: 'view_logs',
+  MANAGE_USERS: 'manage_users',
 
   // Content management
   MANAGE_POSTS: 'manage_posts',
   MANAGE_CATEGORIES: 'manage_categories',
+  DELETE_POSTS: 'delete_posts',
+  BULK_DELETE_POSTS: 'bulk_delete_posts',
+  CLEANUP_POSTS: 'cleanup_posts',
+  PUBLISH_POSTS: 'publish_posts',
+  UPLOAD_MEDIA: 'upload_media',
+  CREATE_POSTS: 'create_posts',
+  EDIT_POSTS: 'edit_posts',
+  VIEW_POSTS: 'view_posts',
 
   // Channel management
   MANAGE_CHANNELS: 'manage_channels',
@@ -73,10 +83,30 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.MANAGE_CATEGORIES,
     PERMISSIONS.MANAGE_CHANNELS,
     PERMISSIONS.MANAGE_PUBLICATION_CHANNELS,
-    PERMISSIONS.VIEW_ANALYTICS
+    PERMISSIONS.VIEW_ANALYTICS,
+    PERMISSIONS.DELETE_POSTS,
+    PERMISSIONS.PUBLISH_POSTS,
+    PERMISSIONS.UPLOAD_MEDIA,
+    PERMISSIONS.CREATE_POSTS,
+    PERMISSIONS.EDIT_POSTS,
+    PERMISSIONS.VIEW_POSTS,
+    PERMISSIONS.MANAGE_USERS,
+    PERMISSIONS.ASSIGN_ROLE,
+    PERMISSIONS.CREATE_USER
   ],
   [ROLES.EDITOR]: [
     PERMISSIONS.MANAGE_POSTS,
-    PERMISSIONS.MANAGE_CATEGORIES
-  ]
+    PERMISSIONS.MANAGE_CATEGORIES,
+    PERMISSIONS.PUBLISH_POSTS,
+    PERMISSIONS.UPLOAD_MEDIA,
+    PERMISSIONS.CREATE_POSTS,
+    PERMISSIONS.EDIT_POSTS,
+    PERMISSIONS.VIEW_POSTS,
+    PERMISSIONS.DELETE_POSTS,
+    PERMISSIONS.BULK_DELETE_POSTS,
+    PERMISSIONS.MANAGE_PUBLICATION_CHANNELS,
+    PERMISSIONS.MANAGE_CHANNELS,
+    PERMISSIONS.VIEW_ANALYTICS
+  ],
+  [ROLES.BANNED]: [] // Заблокированные пользователи не имеют никаких разрешений
 } as const; 

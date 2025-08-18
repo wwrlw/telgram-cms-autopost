@@ -46,7 +46,7 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
   // Получить канал по ID
   fastify.get(
     '/posted-channels/:id',
-    { preValidation: [fastify.authenticate] },
+    { preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
@@ -66,7 +66,7 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
   fastify.post(
     '/posted-channels',
     { 
-      preValidation: [fastify.authenticate],
+      preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)],
       schema: {
         body: {
           type: 'object',
@@ -101,7 +101,7 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
   fastify.put(
     '/posted-channels/:id',
     { 
-      preValidation: [fastify.authenticate],
+      preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)],
       schema: {
         body: {
           type: 'object',
@@ -135,7 +135,7 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
   // Удалить канал публикации
   fastify.delete(
     '/posted-channels/:id',
-    { preValidation: [fastify.authenticate] },
+    { preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;

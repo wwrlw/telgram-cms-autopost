@@ -1,6 +1,8 @@
 import { FastifyInstance } from "fastify";
 import { DependencyContainer } from "../container/DependencyContainer";
 import { CreateCategoryDto, UpdateCategoryDto } from "../models/Category";
+import { requireAuth, requirePermission } from "../middleware/authRole";
+import { PERMISSIONS } from "../models/Category";
 
 export async function categoriesRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
@@ -8,7 +10,7 @@ export async function categoriesRoutes(fastify: FastifyInstance) {
   // GET /categories - получить все категории
   fastify.get(
     "/categories",
-    { preValidation: [fastify.authenticate] },
+    { preValidation: [requireAuth] },
     async (request, reply) => {
       try {
         const getCategoriesUseCase = container.getGetCategoriesUseCase();
@@ -26,7 +28,7 @@ export async function categoriesRoutes(fastify: FastifyInstance) {
   // GET /categories/:id - получить категорию по ID
   fastify.get(
     "/categories/:id",
-    { preValidation: [fastify.authenticate] },
+    { preValidation: [requireAuth] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
@@ -46,7 +48,7 @@ export async function categoriesRoutes(fastify: FastifyInstance) {
   fastify.post(
     "/categories",
     { 
-      preValidation: [fastify.authenticate],
+      preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CATEGORIES)],
       schema: {
         body: {
           type: 'object',
@@ -82,7 +84,7 @@ export async function categoriesRoutes(fastify: FastifyInstance) {
   fastify.put(
     "/categories/:id",
     { 
-      preValidation: [fastify.authenticate],
+      preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CATEGORIES)],
       schema: {
         body: {
           type: 'object',
@@ -117,7 +119,7 @@ export async function categoriesRoutes(fastify: FastifyInstance) {
   // DELETE /categories/:id - удалить категорию
   fastify.delete(
     "/categories/:id",
-    { preValidation: [fastify.authenticate] },
+    { preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CATEGORIES)] },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;

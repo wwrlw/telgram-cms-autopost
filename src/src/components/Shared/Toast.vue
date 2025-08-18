@@ -102,10 +102,15 @@ const clear = () => {
     notifications.value = [];
 };
 
+const clearByType = (type) => {
+    notifications.value = notifications.value.filter(n => n.type !== type);
+};
+
 defineExpose({
     success,
     error,
     clear,
+    clearByType,
     add,
     remove,
 });
@@ -128,6 +133,7 @@ onMounted(() => {
             success,
             error,
             clear,
+            clearByType,
         };
     }
 });

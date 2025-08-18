@@ -21,6 +21,7 @@ const ROLES = {
     SUPER_ADMIN: "super_admin",
     ADMIN: "admin",
     EDITOR: "editor",
+    BANNED: "banned",
 };
 
 const routes = [
@@ -133,6 +134,28 @@ router.beforeEach(async (to) => {
     }
 
     if (!token) {
+        return "/login";
+    }
+
+    // Проверяем, что пользователь не заблокирован
+    if (userRole === ROLES.BANNED) {
+        console.warn("Access denied: user is banned");
+        // Очищаем токен и роль для заблокированного пользователя
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("role");
+        return "/login";
+    }
+
+    // Проверяем, что пользователь существует (дополнительная проверка)
+    if (!userRole || userRole === "undefined" || userRole === "null") {
+        console.warn("Access denied: invalid user role");
+        // Очищаем токен и роль для невалидного пользователя
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("role");
         return "/login";
     }
 

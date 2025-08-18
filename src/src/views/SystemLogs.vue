@@ -9,10 +9,13 @@
                     <div class="text-sm text-gray-600 mt-1">
                         <p v-if="selectedUserId">
                             Фильтр:
-                            {{
-                                users.find((u) => u._id === selectedUserId)
-                                    ?.username || "Неизвестный пользователь"
-                            }}
+                            <span v-if="usersLoading" class="text-gray-400">Загрузка...</span>
+                            <span v-else>
+                                {{
+                                    users.find((u) => u._id === selectedUserId)
+                                        ?.username || "Неизвестный пользователь"
+                                }}
+                            </span>
                         </p>
                         <p>
                             Сортировка:
@@ -27,11 +30,14 @@
                 <div class="flex items-center space-x-4">
                     <select
                         v-model="selectedUserId"
-                        @change="loadLogs"
+                        @change="handleFilterChange"
                         class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        :disabled="usersLoading"
                     >
                         <option value="">Все пользователи</option>
+                        <option v-if="usersLoading" value="" disabled>Загрузка пользователей...</option>
                         <option
+                            v-else
                             v-for="user in users"
                             :key="user._id"
                             :value="user._id"
@@ -41,7 +47,7 @@
                     </select>
                     <select
                         v-model="sortOrder"
-                        @change="loadLogs"
+                        @change="handleFilterChange"
                         class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="desc">Сначала новые</option>
@@ -67,30 +73,28 @@
                         </svg>
                         Сбросить фильтр
                     </button>
-                    <button
-                        @click="loadLogs"
-                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                    >
-                        <svg
-                            class="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                            />
-                        </svg>
-                        Обновить
-                    </button>
                 </div>
             </div>
 
             <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="overflow-x-auto">
+                <!-- Loading indicator -->
+                <div v-if="loading && logs.length === 0" class="flex justify-center py-8">
+                    <LoadingSpinner size="medium" text="Загружаем логи..." />
+                </div>
+                
+                <!-- Empty state -->
+                <div v-else-if="!loading && logs.length === 0" class="flex justify-center py-8">
+                    <div class="text-center">
+                        <div class="text-gray-400 mb-2">
+                            <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <p class="text-gray-500">Логи не найдены</p>
+                    </div>
+                </div>
+                
+                <div v-else class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -159,70 +163,16 @@
                     </table>
                 </div>
 
-                <!-- Pagination -->
+                <!-- Infinite Scroll Trigger -->
                 <div
-                    class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6"
-                >
-                    <div class="flex-1 flex justify-between sm:hidden">
-                        <button
-                            @click="prevPage"
-                            :disabled="currentPage <= 1"
-                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            Предыдущая
-                        </button>
-                        <button
-                            @click="nextPage"
-                            :disabled="currentPage >= totalPages"
-                            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            Следующая
-                        </button>
-                    </div>
-                    <div
-                        class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
-                    >
-                        <div>
-                            <p class="text-sm text-gray-700">
-                                Показано
-                                <span class="font-medium">{{
-                                    (currentPage - 1) * pageSize + 1
-                                }}</span>
-                                до
-                                <span class="font-medium">{{
-                                    Math.min(currentPage * pageSize, totalLogs)
-                                }}</span>
-                                из
-                                <span class="font-medium">{{ totalLogs }}</span>
-                                записей
-                            </p>
-                        </div>
-                        <div>
-                            <nav
-                                class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                            >
-                                <button
-                                    @click="prevPage"
-                                    :disabled="currentPage <= 1"
-                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                >
-                                    Предыдущая
-                                </button>
-                                <span
-                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
-                                >
-                                    {{ currentPage }} из {{ totalPages }}
-                                </span>
-                                <button
-                                    @click="nextPage"
-                                    :disabled="currentPage >= totalPages"
-                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                >
-                                    Следующая
-                                </button>
-                            </nav>
-                        </div>
-                    </div>
+                    v-if="hasMore && !loading"
+                    ref="infiniteScrollTrigger"
+                    class="h-20 flex items-center justify-center"
+                ></div>
+
+                <!-- Infinite Scroll Loading -->
+                <div v-if="infiniteScrollLoading" class="flex justify-center py-8">
+                    <LoadingSpinner size="medium" text="Загружаем еще логи..." />
                 </div>
             </div>
         </div>
@@ -303,22 +253,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch, nextTick, inject } from "vue";
 import { useRoute } from "vue-router";
 import Sidebar from "@/components/Sidebar.vue";
 import http from "@/js/http";
+import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
+import { useApiCache } from "@/composables/useApiCache";
+import LoadingSpinner from "@/components/Shared/LoadingSpinner.vue";
 
 const route = useRoute();
 const logs = ref([]);
 const users = ref([]);
 const selectedUserId = ref("");
 const sortOrder = ref("desc"); // desc - новые сначала, asc - старые сначала
-const currentPage = ref(1);
-const pageSize = ref(50);
-const totalLogs = ref(0);
-const totalPages = ref(0);
+const loading = ref(false);
+const usersLoading = ref(false);
+const infiniteScrollLoading = ref(false);
+const hasMore = ref(true);
 const showDetailsModal = ref(false);
 const selectedLog = ref(null);
+
+// Глобальное состояние загрузки
+const setLoading = inject("setLoading", null);
+
+// Infinite scroll
+const { createObserver, destroy } = useInfiniteScroll();
+const { optimizedRequest } = useApiCache();
+const infiniteScrollTrigger = ref(null);
 
 const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -348,100 +309,243 @@ const getActionBadgeClass = (method) => {
 };
 
 const loadUsers = () => {
-    http.getAllUsers((response) => {
-        console.log("Users response:", response);
-        if (response.success) {
-            users.value = response.data;
-        }
+    return new Promise((resolve, reject) => {
+        usersLoading.value = true;
+        http.getAllUsers((response) => {
+            usersLoading.value = false;
+            if (response.success) {
+                users.value = response.data;
+                resolve(response.data);
+            } else {
+                console.error("Error loading users:", response.message);
+                users.value = [];
+                reject(new Error(response.message));
+            }
+        }, (error) => {
+            usersLoading.value = false;
+            console.error("Error loading users:", error);
+            users.value = [];
+            reject(error);
+        });
     });
 };
 
-const loadLogs = () => {
-    // Сбрасываем страницу при изменении фильтра или сортировки
-    if (selectedUserId.value !== route.query.userId) {
-        currentPage.value = 1;
+const logsService = async (
+    params = {},
+    isInfiniteScroll = false,
+    options = {}
+) => {
+    if (isInfiniteScroll) {
+        infiniteScrollLoading.value = true;
+    } else {
+        loading.value = true;
+        if (setLoading) setLoading(true);
     }
 
-    console.log(
-        "Loading logs with userId:",
-        selectedUserId.value,
-        "page:",
-        currentPage.value,
-        "sort:",
-        sortOrder.value
-    );
+    try {
+        // Проверяем, доступен ли новый endpoint
+        if (http.logsInfiniteScroll && typeof http.logsInfiniteScroll === 'function') {
+            const requestParams = {
+                limit: params.limit || 50,
+                lastId: params.lastId || undefined,
+                sort: sortOrder.value,
+                userId: selectedUserId.value || undefined,
+            };
 
-    // Проверяем, что selectedUserId не пустой и не undefined
-    if (selectedUserId.value && selectedUserId.value !== "undefined") {
-        http.getUserLogs(
-            selectedUserId.value,
-            currentPage.value,
-            pageSize.value,
-            sortOrder.value,
-            (response) => {
-                console.log("Logs response:", response);
-                if (response.success) {
-                    logs.value = response.data;
-                    if (response.pagination) {
-                        totalLogs.value = response.pagination.total;
-                        totalPages.value = response.pagination.pages;
-                    }
-                } else {
-                    window.$toast?.error(
-                        "Ошибка загрузки логов: " + response.message
-                    );
+            Object.keys(requestParams).forEach((key) => {
+                if (requestParams[key] === undefined) {
+                    delete requestParams[key];
                 }
-            }
-        );
-    } else {
-        // Если не выбран пользователь, грузим все логи
-        http.getLogs(
-            currentPage.value,
-            pageSize.value,
-            sortOrder.value,
-            (response) => {
-                console.log("Logs response:", response);
-                if (response.success) {
-                    logs.value = response.data;
-                    if (response.pagination) {
-                        totalLogs.value = response.pagination.total;
-                        totalPages.value = response.pagination.pages;
+            });
+
+            // Используем Promise-based подход для logsInfiniteScroll
+            const response = await new Promise((resolve, reject) => {
+                http.logsInfiniteScroll(
+                    requestParams,
+                    (result) => {
+                        if (result && result.success) {
+                            resolve(result);
+                        } else {
+                            reject(new Error(result?.message || 'Failed to load logs'));
+                        }
+                    },
+                    (error) => {
+                        reject(error);
                     }
-                } else {
-                    window.$toast?.error(
-                        "Ошибка загрузки логов: " + response.message
-                    );
-                }
+                );
+            });
+
+            if (isInfiniteScroll) {
+                const newLogs = response.data || [];
+                logs.value = [...logs.value, ...newLogs];
+                hasMore.value = response.params?.hasMore || false;
+            } else {
+                logs.value = response.data || [];
+                hasMore.value = response.params?.hasMore || false;
             }
+        } else {
+            // Fallback на старый метод загрузки логов
+            
+            if (selectedUserId.value && selectedUserId.value !== "undefined") {
+                // Загружаем логи пользователя
+                return new Promise((resolve, reject) => {
+                    http.getUserLogs(
+                        selectedUserId.value,
+                        1,
+                        50,
+                        sortOrder.value,
+                        (response) => {
+                            if (response.success) {
+                                logs.value = response.data || [];
+                                hasMore.value = false; // Старый метод не поддерживает infinite scroll
+                                resolve(response.data);
+                            } else {
+                                logs.value = [];
+                                hasMore.value = false;
+                                reject(new Error(response.message || 'Failed to load user logs'));
+                            }
+                        },
+                        (error) => {
+                            console.error("Error loading user logs:", error);
+                            reject(error);
+                        }
+                    );
+                });
+            } else {
+                // Загружаем все логи
+                return new Promise((resolve, reject) => {
+                    http.getLogs(
+                        1,
+                        50,
+                        sortOrder.value,
+                        (response) => {
+                            if (response.success) {
+                                logs.value = response.data || [];
+                                hasMore.value = false; // Старый метод не поддерживает infinite scroll
+                                resolve(response.data);
+                            } else {
+                                logs.value = [];
+                                hasMore.value = false;
+                                reject(new Error(response.message || 'Failed to load logs'));
+                            }
+                        },
+                        (error) => {
+                            console.error("Error loading logs:", error);
+                            reject(error);
+                        }
+                    );
+                });
+            }
+        }
+
+        if (isInfiniteScroll) {
+            infiniteScrollLoading.value = false;
+        } else {
+            loading.value = false;
+            if (setLoading) setLoading(false);
+        }
+
+        return logs.value;
+    } catch (error) {
+        console.error("Error in logsService:", error);
+        
+        if (isInfiniteScroll) {
+            infiniteScrollLoading.value = false;
+        } else {
+            loading.value = false;
+            if (setLoading) setLoading(false);
+        }
+        
+        throw error;
+    }
+};
+
+const loadMoreLogs = async () => {
+    if (!hasMore.value || infiniteScrollLoading.value) {
+        return;
+    }
+
+    try {
+        // Получаем ID последнего лога для курсорной пагинации
+        const lastLog = logs.value[logs.value.length - 1];
+        const lastId = lastLog?._id;
+
+        await logsService(
+            {
+                lastId: lastId,
+            },
+            true
         );
+    } catch (error) {
+        console.error("Error loading more logs:", error);
+        
+        // Показываем уведомление об ошибке
+        if (window.$toast) {
+            window.$toast.error(
+                "Ошибка загрузки дополнительных логов: " + (error.message || "Неизвестная ошибка")
+            );
+        }
+        
+        // Сбрасываем состояние загрузки
+        infiniteScrollLoading.value = false;
+    }
+};
+
+const loadLogs = async () => {
+    try {
+        const result = await logsService({}, false);
+    } catch (error) {
+        console.error("Error in loadLogs:", error);
+        logs.value = [];
+        hasMore.value = false;
+        
+        // Показываем уведомление об ошибке
+        if (window.$toast) {
+            window.$toast.error(
+                "Ошибка загрузки логов: " + (error.message || "Неизвестная ошибка")
+            );
+        }
     }
 };
 
 // Функция для сброса фильтра
-const clearFilter = () => {
-    selectedUserId.value = "";
-    sortOrder.value = "desc"; // Сбрасываем к сортировке по умолчанию
-    currentPage.value = 1;
-    loadLogs();
-};
-
-const prevPage = () => {
-    if (currentPage.value > 1) {
-        currentPage.value--;
-        loadLogs();
+const clearFilter = async () => {
+    try {
+        selectedUserId.value = "";
+        sortOrder.value = "desc"; // Сбрасываем к сортировке по умолчанию
+        logs.value = [];
+        hasMore.value = true;
+        await loadLogs();
+    } catch (error) {
+        console.error('Error in clearFilter:', error);
     }
 };
 
-const nextPage = () => {
-    if (currentPage.value < totalPages.value) {
-        currentPage.value++;
-        loadLogs();
+const handleFilterChange = async () => {
+    try {
+        logs.value = [];
+        hasMore.value = true;
+        await loadLogs();
+    } catch (error) {
+        console.error('Error in handleFilterChange:', error);
     }
 };
 
 const showLogDetails = (log) => {
     selectedLog.value = log;
     showDetailsModal.value = true;
+};
+
+const initializeInfiniteScroll = () => {
+    try {
+        destroy();
+        const observer = createObserver(loadMoreLogs);
+        if (observer && infiniteScrollTrigger.value) {
+            observer.observe(infiniteScrollTrigger.value);
+        }
+    } catch (error) {
+        console.error('Error in initializeInfiniteScroll:', error);
+    }
 };
 
 const sortedLogs = computed(() => {
@@ -453,41 +557,105 @@ const sortedLogs = computed(() => {
 // Watch for route query changes
 watch(
     () => route.query.userId,
-    (newUserId) => {
-        console.log("Route query userId changed:", newUserId);
-        if (newUserId && newUserId !== "undefined") {
-            selectedUserId.value = newUserId;
-            currentPage.value = 1; // Сбрасываем страницу при смене пользователя
-            loadLogs();
-        } else {
-            selectedUserId.value = "";
-            currentPage.value = 1;
-            loadLogs();
+    async (newUserId) => {
+        try {
+            if (newUserId && newUserId !== "undefined") {
+                selectedUserId.value = newUserId;
+                logs.value = [];
+                hasMore.value = true;
+                await loadLogs();
+            } else {
+                selectedUserId.value = "";
+                logs.value = [];
+                hasMore.value = true;
+                await loadLogs();
+            }
+        } catch (error) {
+            console.error('Error in route query watch:', error);
         }
     }
 );
 
 // Watch for sort order changes
-watch(sortOrder, () => {
-    currentPage.value = 1; // Сбрасываем страницу при изменении сортировки
-    loadLogs();
+watch(sortOrder, async () => {
+    try {
+        logs.value = [];
+        hasMore.value = true;
+        await loadLogs();
+    } catch (error) {
+        console.error('Error in sortOrder watch:', error);
+    }
 });
 
-onMounted(() => {
-    console.log("SystemLogs mounted, route.query:", route.query);
+// Обработчик обновления логов из Header
+const refreshLogsHandler = async () => {
+    logs.value = [];
+    hasMore.value = true;
+    loading.value = true;
+    if (setLoading) setLoading(true);
+    
+    try {
+        await loadLogs();
+        await nextTick();
+        initializeInfiniteScroll();
+    } catch (error) {
+        console.error('Error refreshing logs:', error);
+        
+        // Показываем уведомление об ошибке
+        if (window.$toast) {
+            window.$toast.error(
+                "Ошибка обновления логов: " + (error.message || "Неизвестная ошибка")
+            );
+        }
+        
+        // Сбрасываем состояние загрузки
+        logs.value = [];
+        hasMore.value = false;
+    } finally {
+        loading.value = false;
+        if (setLoading) setLoading(false);
+    }
+};
+
+onMounted(async () => {
     // Check if specific user ID is provided in query
     if (route.query.userId && route.query.userId !== "undefined") {
         selectedUserId.value = route.query.userId;
-        console.log("Set selectedUserId from route:", route.query.userId);
     } else {
         selectedUserId.value = "";
-        console.log("No valid userId in route, setting empty string");
     }
 
-    loadUsers();
-    // Загружаем логи после небольшой задержки, чтобы убедиться, что selectedUserId установлен
-    setTimeout(() => {
-        loadLogs();
-    }, 100);
+    // Загружаем пользователей и логи
+    try {
+        await loadUsers();
+        // Загружаем логи после небольшой задержки, чтобы убедиться, что selectedUserId установлен
+        setTimeout(async () => {
+            await loadLogs();
+            await nextTick();
+            initializeInfiniteScroll();
+        }, 100);
+    } catch (error) {
+        console.error('Error in onMounted:', error);
+    }
+
+    // Слушаем событие обновления логов из Header
+    window.addEventListener('refreshLogs', refreshLogsHandler);
+});
+
+onUnmounted(() => {
+    // Очищаем event listener
+    window.removeEventListener('refreshLogs', refreshLogsHandler);
+});
+
+// Watch for loading changes to reinitialize infinite scroll
+watch(loading, async (val) => {
+    try {
+        if (!val && hasMore.value) {
+            await nextTick();
+            initializeInfiniteScroll();
+        }
+    } catch (error) {
+        console.error('Error in loading watch:', error);
+    }
 });
 </script>

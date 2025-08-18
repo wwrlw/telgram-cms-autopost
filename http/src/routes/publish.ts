@@ -8,7 +8,8 @@ import { PostedChannelRepository } from '../repositories/PostedChannelRepository
 import { TelegramPublishService } from '../services/TelegramPublishService';
 import { YandexGPTService } from '../services/YandexGPTService';
 import { logAction } from '../middleware/logging';
-import { requireAuth } from '../middleware/authRole';
+import { requireAuth, requirePermission } from '../middleware/authRole';
+import { PERMISSIONS } from '../models/Category';
 
 export default async function publishRoutes(fastify: FastifyInstance) {
   const postRepository = new PostRepository(fastify.mongo);
@@ -30,7 +31,9 @@ export default async function publishRoutes(fastify: FastifyInstance) {
   );
 
   // Публикация поста в конкретный канал
-  fastify.post('/publish/:postId/:channelId', { preValidation: [requireAuth] }, async (request, reply) => {
+  fastify.post('/publish/:postId/:channelId', { 
+    preValidation: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] 
+  }, async (request, reply) => {
     try {
       const { postId, channelId } = request.params as { postId: string; channelId: string };
       
@@ -50,7 +53,9 @@ export default async function publishRoutes(fastify: FastifyInstance) {
   });
 
   // Удаление поста из Telegram
-  fastify.delete('/publish/:postId', { preValidation: [requireAuth] }, async (request, reply) => {
+  fastify.delete('/publish/:postId', { 
+    preValidation: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] 
+  }, async (request, reply) => {
     try {
       const { postId } = request.params as { postId: string };
       

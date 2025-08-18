@@ -79,6 +79,10 @@ export class UserService implements IUserService {
     };
   }
 
+  async findByUsername(username: string): Promise<User | null> {
+    return await this.userRepository.findByUsername(username);
+  }
+
   async getAllUsers(): Promise<UserResponse[]> {
     const users = await this.userRepository.findAll();
     return users.map(user => ({

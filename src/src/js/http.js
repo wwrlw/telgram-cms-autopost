@@ -22,6 +22,93 @@ instance.interceptors.response.use(
         return response;
     },
     (error) => {
+        // Check if user is banned
+        if (
+            error.response &&
+            error.response.status === 403 &&
+            error.response.data &&
+            error.response.data.code === "USER_BANNED"
+        ) {
+            console.warn("User is banned, logging out...");
+            
+            // Clear token and role
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("role");
+            
+            // Show notification about ban
+            if (window.$toast) {
+                window.$toast.error("Ваш аккаунт заблокирован", 10000);
+            }
+            
+            // Redirect to login page
+            if (window.location.pathname !== "/login") {
+                window.location.href = "/login";
+            }
+            
+            return Promise.reject(error);
+        }
+
+        // Check if user is not found in database
+        if (
+            error.response &&
+            error.response.status === 404 &&
+            error.response.data &&
+            error.response.data.code === "USER_NOT_FOUND"
+        ) {
+            console.warn("User not found in database, logging out...");
+            
+            // Clear token and role
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("role");
+            
+            // Show notification
+            if (window.$toast) {
+                window.$toast.error("Пользователь не найден в базе данных", 10000);
+            }
+            
+            // Redirect to login page
+            if (window.location.pathname !== "/login") {
+                window.location.href = "/login";
+            }
+            
+            return Promise.reject(error);
+        }
+
+        // Check if user provided invalid password (don't logout for this)
+        if (
+            error.response &&
+            error.response.status === 400 &&
+            error.response.data &&
+            error.response.data.code === "INVALID_PASSWORD"
+        ) {
+            console.warn("Invalid password provided, not logging out");
+            // Don't clear localStorage or redirect for invalid password
+            return Promise.reject(error);
+        }
+        
+        // If backend responds with 403 and provides updated role info, refresh localStorage role
+        try {
+            if (
+                error.response &&
+                error.response.status === 403 &&
+                error.response.data &&
+                error.response.data.debug &&
+                error.response.data.debug.actualRole
+            ) {
+                const newRole = error.response.data.debug.actualRole;
+                if (newRole) {
+                    localStorage.setItem("role", newRole);
+                    // Trigger manual storage event so same-tab listeners update
+                    window.dispatchEvent(new Event("storage"));
+                }
+            }
+        } catch (e) {
+            console.error("Error handling 403 role update:", e);
+        }
         return Promise.reject(error);
     }
 );
@@ -112,6 +199,28 @@ let http = {
                 callback(res.data);
             })
             .catch((err) => {
+                // Проверяем, является ли ошибка связанной с тем, что пользователь не найден
+                if (err.response?.status === 404 && err.response?.data?.code === 'USER_NOT_FOUND') {
+                    console.warn('User not found in database, clearing localStorage...');
+                    
+                    // Очищаем токен и роль
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("role");
+                    sessionStorage.removeItem("token");
+                    sessionStorage.removeItem("role");
+                    
+                    // Показываем уведомление
+                    if (window.$toast) {
+                        window.$toast.error("Пользователь не найден в базе данных", 10000);
+                    }
+                }
+                
+                // Проверяем, является ли ошибка связанной с неправильным паролем
+                if (err.response?.status === 400 && err.response?.data?.code === 'INVALID_PASSWORD') {
+                    // Не очищаем localStorage для неправильного пароля
+                    console.warn('Invalid password provided');
+                }
+                
                 const errorMessage =
                     err.response?.data?.message || "Network error occurred";
                 callback({ success: false, message: errorMessage });
@@ -657,6 +766,32 @@ let http = {
             });
     },
 
+    banUser: function (userId, callback) {
+        instance
+            .post(`/auth/users/${userId}/ban`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to ban user";
+                callback({ success: false, message: errorMessage });
+            });
+    },
+
+    unbanUser: function (userId, role, callback) {
+        instance
+            .post(`/auth/users/${userId}/unban`, { role })
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                const errorMessage =
+                    err.response?.data?.message || "Failed to unban user";
+                callback({ success: false, message: errorMessage });
+            });
+    },
+
     // Logs endpoints (super_admin only)
     getLogs: function (
         page = 1,
@@ -701,6 +836,34 @@ let http = {
                     callback({
                         success: false,
                         message: "Failed to load user logs",
+                    });
+            });
+    },
+
+    // Infinite scroll methods for logs
+    logsInfiniteScroll: function (
+        params = {},
+        callback,
+        errorCallback
+    ) {
+        const queryParams = new URLSearchParams();
+        
+        if (params.limit) queryParams.append('limit', params.limit);
+        if (params.lastId) queryParams.append('lastId', params.lastId);
+        if (params.sort) queryParams.append('sort', params.sort);
+        if (params.userId) queryParams.append('userId', params.userId);
+        
+        instance
+            .get(`/logs/infinite-scroll?${queryParams.toString()}`)
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load logs",
                     });
             });
     },

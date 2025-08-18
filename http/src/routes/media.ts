@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import { pipeline } from 'stream/promises';
 import { DependencyContainer } from '../container/DependencyContainer';
+import { requireAuth, requirePermission } from '../middleware/authRole';
+import { PERMISSIONS } from '../models/Category';
 
 export async function mediaRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
@@ -10,7 +12,7 @@ export async function mediaRoutes(fastify: FastifyInstance) {
   // Эндпоинт для загрузки медиафайлов
   fastify.post(
     '/media/upload',
-    { preValidation: [fastify.authenticate] },
+    { preValidation: [requireAuth, requirePermission(PERMISSIONS.UPLOAD_MEDIA)] },
     async (request: any, reply) => {
       try {
         const parts = request.parts();

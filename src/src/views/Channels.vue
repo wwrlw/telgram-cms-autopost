@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, watch } from "vue";
+import { ref, onMounted, onUnmounted, inject, watch } from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
 import ChannelsTable from "@/components/Channel/Table.vue";
@@ -272,6 +272,22 @@ const clearSelection = () => {
     selectedChannels.value = [];
 };
 
+// Обработчик обновления каналов из Header
+const refreshChannelsHandler = async () => {
+    console.log('Refresh channels event received');
+    loading.value = true;
+    if (setLoading) setLoading(true);
+    
+    try {
+        await channelsService();
+    } catch (error) {
+        console.error('Error refreshing channels:', error);
+    } finally {
+        loading.value = false;
+        if (setLoading) setLoading(false);
+    }
+};
+
 watch(refreshTrigger, () => {
     if (refreshTrigger && refreshTrigger.value > 0) {
         channelsService();
@@ -280,5 +296,13 @@ watch(refreshTrigger, () => {
 
 onMounted(() => {
     channelsService();
+    
+    // Слушаем событие обновления каналов из Header
+    window.addEventListener('refreshChannels', refreshChannelsHandler);
+});
+
+onUnmounted(() => {
+    // Очищаем event listener
+    window.removeEventListener('refreshChannels', refreshChannelsHandler);
 });
 </script>

@@ -20,6 +20,11 @@ export default {
                     return toastInstance.clear();
                 }
             },
+            clearByType: (type) => {
+                if (toastInstance) {
+                    return toastInstance.clearByType(type);
+                }
+            },
         };
 
         app.config.globalProperties.$toast = toast;
