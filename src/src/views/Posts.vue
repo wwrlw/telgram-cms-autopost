@@ -429,13 +429,13 @@ onMounted(async () => {
         try {
             // Обновляем только если страница активна и пользователь не взаимодействует
             if (!document.hidden && !loading.value) {
-                await postsService({ page: 1 }, false, { 
-                    forceRefresh: false, 
-                    useCache: true 
+                await postsService({ page: 1 }, false, {
+                    forceRefresh: false,
+                    useCache: true,
                 });
             }
         } catch (error) {
-            console.error('Auto refresh error:', error);
+            console.error("Auto refresh error:", error);
         }
     }, 60000); // 60 секунд = 1 минута
 

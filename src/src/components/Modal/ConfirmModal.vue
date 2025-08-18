@@ -4,7 +4,9 @@
         class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/30"
     >
         <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs mx-2">
-            <div class="mb-4 text-lg font-semibold text-gray-900 text-center whitespace-pre-line">
+            <div
+                class="mb-4 text-lg font-semibold text-gray-900 text-center whitespace-pre-line"
+            >
                 {{ message }}
             </div>
             <div class="flex justify-center gap-4 mt-6">

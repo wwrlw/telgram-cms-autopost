@@ -543,17 +543,17 @@ const getContentTypeName = (type) => {
 
 // Обработчик обновления аналитики из Header
 const refreshAnalyticsHandler = async () => {
-    console.log('Refresh analytics event received');
+    console.log("Refresh analytics event received");
     loading.value = true;
     if (setLoading) setLoading(true);
-    
+
     try {
         loadChannels();
         if (selectedChannelId.value) {
             await loadChannelAnalytics();
         }
     } catch (error) {
-        console.error('Error refreshing analytics:', error);
+        console.error("Error refreshing analytics:", error);
     } finally {
         loading.value = false;
         if (setLoading) setLoading(false);
@@ -566,13 +566,13 @@ watch(refreshTrigger, () => {
 
 onMounted(() => {
     loadChannels();
-    
+
     // Слушаем событие обновления аналитики из Header
-    window.addEventListener('refreshAnalytics', refreshAnalyticsHandler);
+    window.addEventListener("refreshAnalytics", refreshAnalyticsHandler);
 });
 
 onUnmounted(() => {
     // Очищаем event listener
-    window.removeEventListener('refreshAnalytics', refreshAnalyticsHandler);
+    window.removeEventListener("refreshAnalytics", refreshAnalyticsHandler);
 });
 </script>

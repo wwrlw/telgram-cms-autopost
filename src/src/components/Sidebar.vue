@@ -507,21 +507,21 @@ const loadUserData = () => {
 };
 
 const checkUserRole = async () => {
-  try {
-    // Check current user role from database
-    const response = await http.instance.get('/auth/check');
-    if (response.data.success) {
-      const newRole = response.data.data.role;
-      if (newRole !== userRole.value) {
-        userRole.value = newRole;
-        localStorage.setItem('role', newRole);
-        console.log('Role updated to:', newRole);
-      }
+    try {
+        // Check current user role from database
+        const response = await http.instance.get("/auth/check");
+        if (response.data.success) {
+            const newRole = response.data.data.role;
+            if (newRole !== userRole.value) {
+                userRole.value = newRole;
+                localStorage.setItem("role", newRole);
+                console.log("Role updated to:", newRole);
+            }
+        }
+    } catch (error) {
+        console.error("Error checking user role:", error);
+        // Уведомления о проблемах с подключением теперь показываются глобально в App.vue
     }
-  } catch (error) {
-    console.error('Error checking user role:', error);
-    // Уведомления о проблемах с подключением теперь показываются глобально в App.vue
-  }
 };
 
 onMounted(() => {
@@ -541,7 +541,7 @@ onMounted(() => {
     });
     // Добавляю обработчик resize
     window.addEventListener("resize", handleResize);
-    
+
     // Cleanup interval on unmount
     onUnmounted(() => {
         clearInterval(roleCheckInterval);

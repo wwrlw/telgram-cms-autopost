@@ -48,7 +48,7 @@
                         Запланированные посты
                     </button>
                 </div>
-                
+
                 <button
                     @click="cancel"
                     class="px-4 py-2 rounded bg-gray-200"
@@ -231,7 +231,7 @@ const createNewPost = () => {
     scheduledAt.value = "";
     uniqueText.value = "";
     showingUniqueText.value = false;
-    
+
     // Устанавливаем время по умолчанию (через час)
     const futureTime = new Date(Date.now() + 60 * 60 * 1000);
     scheduledAt.value = futureTime.toISOString().slice(0, 16);

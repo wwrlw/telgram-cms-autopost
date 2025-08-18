@@ -51,14 +51,23 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             <tr v-if="usersLoading" class="bg-white">
                                 <td colspan="3" class="px-6 py-8 text-center">
-                                    <div class="flex items-center justify-center">
-                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                        <span class="ml-2 text-gray-600">Загрузка пользователей...</span>
+                                    <div
+                                        class="flex items-center justify-center"
+                                    >
+                                        <div
+                                            class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+                                        ></div>
+                                        <span class="ml-2 text-gray-600"
+                                            >Загрузка пользователей...</span
+                                        >
                                     </div>
                                 </td>
                             </tr>
                             <tr v-else-if="users.length === 0" class="bg-white">
-                                <td colspan="3" class="px-6 py-8 text-center text-gray-500">
+                                <td
+                                    colspan="3"
+                                    class="px-6 py-8 text-center text-gray-500"
+                                >
                                     Пользователи не найдены
                                 </td>
                             </tr>
@@ -104,14 +113,20 @@
                                     class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
                                 >
                                     <button
-                                        v-if="user.role !== 'super_admin' && user.role !== 'banned'"
+                                        v-if="
+                                            user.role !== 'super_admin' &&
+                                            user.role !== 'banned'
+                                        "
                                         @click="banUser(user)"
                                         class="text-red-600 hover:text-red-900"
                                     >
                                         Заблокировать
                                     </button>
                                     <button
-                                        v-if="user.role !== 'super_admin' && user.role !== 'banned'"
+                                        v-if="
+                                            user.role !== 'super_admin' &&
+                                            user.role !== 'banned'
+                                        "
                                         @click="openRoleModal(user)"
                                         class="text-indigo-600 hover:text-indigo-900"
                                     >
@@ -302,7 +317,9 @@
                             :disabled="updating"
                             class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
                         >
-                            {{ updating ? "Разблокировка..." : "Разблокировать" }}
+                            {{
+                                updating ? "Разблокировка..." : "Разблокировать"
+                            }}
                         </button>
                     </div>
                 </form>
@@ -398,28 +415,32 @@ const getRoleBadgeClass = (role) => {
 const loadUsers = () => {
     return new Promise((resolve, reject) => {
         usersLoading.value = true;
-        http.getAllUsers((response) => {
-            usersLoading.value = false;
-            if (response.success) {
-                users.value = response.data;
-                resolve(response.data);
-            } else {
-                console.error("Error loading users:", response.message);
+        http.getAllUsers(
+            (response) => {
+                usersLoading.value = false;
+                if (response.success) {
+                    users.value = response.data;
+                    resolve(response.data);
+                } else {
+                    console.error("Error loading users:", response.message);
+                    window.$toast?.error(
+                        "Ошибка загрузки пользователей: " + response.message
+                    );
+                    users.value = [];
+                    reject(new Error(response.message));
+                }
+            },
+            (error) => {
+                usersLoading.value = false;
+                console.error("Error loading users:", error);
                 window.$toast?.error(
-                    "Ошибка загрузки пользователей: " + response.message
+                    "Ошибка загрузки пользователей: " +
+                        (error.message || "Неизвестная ошибка")
                 );
                 users.value = [];
-                reject(new Error(response.message));
+                reject(error);
             }
-        }, (error) => {
-            usersLoading.value = false;
-            console.error("Error loading users:", error);
-            window.$toast?.error(
-                "Ошибка загрузки пользователей: " + (error.message || "Неизвестная ошибка")
-            );
-            users.value = [];
-            reject(error);
-        });
+        );
     });
 };
 
@@ -442,10 +463,10 @@ const createUser = () => {
 
 const openRoleModal = (user) => {
     // Не открываем модальное окно для супер администраторов
-    if (user.role === 'super_admin') {
+    if (user.role === "super_admin") {
         return;
     }
-    
+
     selectedUser.value = user;
     selectedRole.value = user.role;
     showRoleModal.value = true;
@@ -500,22 +521,18 @@ const openUnbanModal = (user) => {
 
 const unbanUser = () => {
     updating.value = true;
-    http.unbanUser(
-        selectedUser.value.id,
-        selectedRole.value,
-        (response) => {
-            updating.value = false;
-            if (response.success) {
-                window.$toast?.success("Пользователь разблокирован");
-                showUnbanModal.value = false;
-                loadUsers();
-            } else {
-                window.$toast?.error(
-                    "Ошибка разблокировки пользователя: " + response.message
-                );
-            }
+    http.unbanUser(selectedUser.value.id, selectedRole.value, (response) => {
+        updating.value = false;
+        if (response.success) {
+            window.$toast?.success("Пользователь разблокирован");
+            showUnbanModal.value = false;
+            loadUsers();
+        } else {
+            window.$toast?.error(
+                "Ошибка разблокировки пользователя: " + response.message
+            );
         }
-    );
+    });
 };
 
 const viewUserLogs = (user) => {
@@ -524,17 +541,18 @@ const viewUserLogs = (user) => {
 
 // Обработчик обновления пользователей из Header
 const refreshUsersHandler = async () => {
-    console.log('Refresh users event received');
-    
+    console.log("Refresh users event received");
+
     try {
         await loadUsers();
     } catch (error) {
-        console.error('Error refreshing users:', error);
-        
+        console.error("Error refreshing users:", error);
+
         // Показываем уведомление об ошибке
         if (window.$toast) {
             window.$toast.error(
-                "Ошибка обновления пользователей: " + (error.message || "Неизвестная ошибка")
+                "Ошибка обновления пользователей: " +
+                    (error.message || "Неизвестная ошибка")
             );
         }
     }
@@ -544,15 +562,15 @@ onMounted(async () => {
     try {
         await loadUsers();
     } catch (error) {
-        console.error('Error in onMounted:', error);
+        console.error("Error in onMounted:", error);
     }
-    
+
     // Слушаем событие обновления пользователей из Header
-    window.addEventListener('refreshUsers', refreshUsersHandler);
+    window.addEventListener("refreshUsers", refreshUsersHandler);
 });
 
 onUnmounted(() => {
     // Очищаем event listener
-    window.removeEventListener('refreshUsers', refreshUsersHandler);
+    window.removeEventListener("refreshUsers", refreshUsersHandler);
 });
 </script>

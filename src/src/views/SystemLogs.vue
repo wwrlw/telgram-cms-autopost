@@ -9,7 +9,9 @@
                     <div class="text-sm text-gray-600 mt-1">
                         <p v-if="selectedUserId">
                             Фильтр:
-                            <span v-if="usersLoading" class="text-gray-400">Загрузка...</span>
+                            <span v-if="usersLoading" class="text-gray-400"
+                                >Загрузка...</span
+                            >
                             <span v-else>
                                 {{
                                     users.find((u) => u._id === selectedUserId)
@@ -35,7 +37,9 @@
                         :disabled="usersLoading"
                     >
                         <option value="">Все пользователи</option>
-                        <option v-if="usersLoading" value="" disabled>Загрузка пользователей...</option>
+                        <option v-if="usersLoading" value="" disabled>
+                            Загрузка пользователей...
+                        </option>
                         <option
                             v-else
                             v-for="user in users"
@@ -78,22 +82,38 @@
 
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <!-- Loading indicator -->
-                <div v-if="loading && logs.length === 0" class="flex justify-center py-8">
+                <div
+                    v-if="loading && logs.length === 0"
+                    class="flex justify-center py-8"
+                >
                     <LoadingSpinner size="medium" text="Загружаем логи..." />
                 </div>
-                
+
                 <!-- Empty state -->
-                <div v-else-if="!loading && logs.length === 0" class="flex justify-center py-8">
+                <div
+                    v-else-if="!loading && logs.length === 0"
+                    class="flex justify-center py-8"
+                >
                     <div class="text-center">
                         <div class="text-gray-400 mb-2">
-                            <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <svg
+                                class="mx-auto h-12 w-12"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
                             </svg>
                         </div>
                         <p class="text-gray-500">Логи не найдены</p>
                     </div>
                 </div>
-                
+
                 <div v-else class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -171,8 +191,14 @@
                 ></div>
 
                 <!-- Infinite Scroll Loading -->
-                <div v-if="infiniteScrollLoading" class="flex justify-center py-8">
-                    <LoadingSpinner size="medium" text="Загружаем еще логи..." />
+                <div
+                    v-if="infiniteScrollLoading"
+                    class="flex justify-center py-8"
+                >
+                    <LoadingSpinner
+                        size="medium"
+                        text="Загружаем еще логи..."
+                    />
                 </div>
             </div>
         </div>
@@ -253,7 +279,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch, nextTick, inject } from "vue";
+import {
+    ref,
+    onMounted,
+    onUnmounted,
+    computed,
+    watch,
+    nextTick,
+    inject,
+} from "vue";
 import { useRoute } from "vue-router";
 import Sidebar from "@/components/Sidebar.vue";
 import http from "@/js/http";
@@ -311,22 +345,25 @@ const getActionBadgeClass = (method) => {
 const loadUsers = () => {
     return new Promise((resolve, reject) => {
         usersLoading.value = true;
-        http.getAllUsers((response) => {
-            usersLoading.value = false;
-            if (response.success) {
-                users.value = response.data;
-                resolve(response.data);
-            } else {
-                console.error("Error loading users:", response.message);
+        http.getAllUsers(
+            (response) => {
+                usersLoading.value = false;
+                if (response.success) {
+                    users.value = response.data;
+                    resolve(response.data);
+                } else {
+                    console.error("Error loading users:", response.message);
+                    users.value = [];
+                    reject(new Error(response.message));
+                }
+            },
+            (error) => {
+                usersLoading.value = false;
+                console.error("Error loading users:", error);
                 users.value = [];
-                reject(new Error(response.message));
+                reject(error);
             }
-        }, (error) => {
-            usersLoading.value = false;
-            console.error("Error loading users:", error);
-            users.value = [];
-            reject(error);
-        });
+        );
     });
 };
 
@@ -344,7 +381,10 @@ const logsService = async (
 
     try {
         // Проверяем, доступен ли новый endpoint
-        if (http.logsInfiniteScroll && typeof http.logsInfiniteScroll === 'function') {
+        if (
+            http.logsInfiniteScroll &&
+            typeof http.logsInfiniteScroll === "function"
+        ) {
             const requestParams = {
                 limit: params.limit || 50,
                 lastId: params.lastId || undefined,
@@ -366,7 +406,11 @@ const logsService = async (
                         if (result && result.success) {
                             resolve(result);
                         } else {
-                            reject(new Error(result?.message || 'Failed to load logs'));
+                            reject(
+                                new Error(
+                                    result?.message || "Failed to load logs"
+                                )
+                            );
                         }
                     },
                     (error) => {
@@ -385,7 +429,7 @@ const logsService = async (
             }
         } else {
             // Fallback на старый метод загрузки логов
-            
+
             if (selectedUserId.value && selectedUserId.value !== "undefined") {
                 // Загружаем логи пользователя
                 return new Promise((resolve, reject) => {
@@ -402,7 +446,12 @@ const logsService = async (
                             } else {
                                 logs.value = [];
                                 hasMore.value = false;
-                                reject(new Error(response.message || 'Failed to load user logs'));
+                                reject(
+                                    new Error(
+                                        response.message ||
+                                            "Failed to load user logs"
+                                    )
+                                );
                             }
                         },
                         (error) => {
@@ -426,7 +475,12 @@ const logsService = async (
                             } else {
                                 logs.value = [];
                                 hasMore.value = false;
-                                reject(new Error(response.message || 'Failed to load logs'));
+                                reject(
+                                    new Error(
+                                        response.message ||
+                                            "Failed to load logs"
+                                    )
+                                );
                             }
                         },
                         (error) => {
@@ -448,14 +502,14 @@ const logsService = async (
         return logs.value;
     } catch (error) {
         console.error("Error in logsService:", error);
-        
+
         if (isInfiniteScroll) {
             infiniteScrollLoading.value = false;
         } else {
             loading.value = false;
             if (setLoading) setLoading(false);
         }
-        
+
         throw error;
     }
 };
@@ -478,14 +532,15 @@ const loadMoreLogs = async () => {
         );
     } catch (error) {
         console.error("Error loading more logs:", error);
-        
+
         // Показываем уведомление об ошибке
         if (window.$toast) {
             window.$toast.error(
-                "Ошибка загрузки дополнительных логов: " + (error.message || "Неизвестная ошибка")
+                "Ошибка загрузки дополнительных логов: " +
+                    (error.message || "Неизвестная ошибка")
             );
         }
-        
+
         // Сбрасываем состояние загрузки
         infiniteScrollLoading.value = false;
     }
@@ -498,11 +553,12 @@ const loadLogs = async () => {
         console.error("Error in loadLogs:", error);
         logs.value = [];
         hasMore.value = false;
-        
+
         // Показываем уведомление об ошибке
         if (window.$toast) {
             window.$toast.error(
-                "Ошибка загрузки логов: " + (error.message || "Неизвестная ошибка")
+                "Ошибка загрузки логов: " +
+                    (error.message || "Неизвестная ошибка")
             );
         }
     }
@@ -517,7 +573,7 @@ const clearFilter = async () => {
         hasMore.value = true;
         await loadLogs();
     } catch (error) {
-        console.error('Error in clearFilter:', error);
+        console.error("Error in clearFilter:", error);
     }
 };
 
@@ -527,7 +583,7 @@ const handleFilterChange = async () => {
         hasMore.value = true;
         await loadLogs();
     } catch (error) {
-        console.error('Error in handleFilterChange:', error);
+        console.error("Error in handleFilterChange:", error);
     }
 };
 
@@ -544,7 +600,7 @@ const initializeInfiniteScroll = () => {
             observer.observe(infiniteScrollTrigger.value);
         }
     } catch (error) {
-        console.error('Error in initializeInfiniteScroll:', error);
+        console.error("Error in initializeInfiniteScroll:", error);
     }
 };
 
@@ -571,7 +627,7 @@ watch(
                 await loadLogs();
             }
         } catch (error) {
-            console.error('Error in route query watch:', error);
+            console.error("Error in route query watch:", error);
         }
     }
 );
@@ -583,7 +639,7 @@ watch(sortOrder, async () => {
         hasMore.value = true;
         await loadLogs();
     } catch (error) {
-        console.error('Error in sortOrder watch:', error);
+        console.error("Error in sortOrder watch:", error);
     }
 });
 
@@ -593,21 +649,22 @@ const refreshLogsHandler = async () => {
     hasMore.value = true;
     loading.value = true;
     if (setLoading) setLoading(true);
-    
+
     try {
         await loadLogs();
         await nextTick();
         initializeInfiniteScroll();
     } catch (error) {
-        console.error('Error refreshing logs:', error);
-        
+        console.error("Error refreshing logs:", error);
+
         // Показываем уведомление об ошибке
         if (window.$toast) {
             window.$toast.error(
-                "Ошибка обновления логов: " + (error.message || "Неизвестная ошибка")
+                "Ошибка обновления логов: " +
+                    (error.message || "Неизвестная ошибка")
             );
         }
-        
+
         // Сбрасываем состояние загрузки
         logs.value = [];
         hasMore.value = false;
@@ -635,16 +692,16 @@ onMounted(async () => {
             initializeInfiniteScroll();
         }, 100);
     } catch (error) {
-        console.error('Error in onMounted:', error);
+        console.error("Error in onMounted:", error);
     }
 
     // Слушаем событие обновления логов из Header
-    window.addEventListener('refreshLogs', refreshLogsHandler);
+    window.addEventListener("refreshLogs", refreshLogsHandler);
 });
 
 onUnmounted(() => {
     // Очищаем event listener
-    window.removeEventListener('refreshLogs', refreshLogsHandler);
+    window.removeEventListener("refreshLogs", refreshLogsHandler);
 });
 
 // Watch for loading changes to reinitialize infinite scroll
@@ -655,7 +712,7 @@ watch(loading, async (val) => {
             initializeInfiniteScroll();
         }
     } catch (error) {
-        console.error('Error in loading watch:', error);
+        console.error("Error in loading watch:", error);
     }
 });
 </script>

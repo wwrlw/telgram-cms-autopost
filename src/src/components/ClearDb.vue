@@ -1,14 +1,29 @@
 <template>
     <div v-if="canManagePosts">
         <!-- Отображение ошибок -->
-        <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded">
+        <div
+            v-if="error"
+            class="mb-6 p-4 bg-red-50 border border-red-200 rounded"
+        >
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <svg class="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                        class="w-5 h-5 text-red-400 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                     </svg>
                     <div>
-                        <h3 class="text-sm font-medium text-red-800">Ошибка очистки</h3>
+                        <h3 class="text-sm font-medium text-red-800">
+                            Ошибка очистки
+                        </h3>
                         <p class="text-sm text-red-700 mt-1">{{ error }}</p>
                     </div>
                 </div>
@@ -68,8 +83,8 @@
         </div>
 
         <!-- Модальное окно для подтверждения очистки -->
-        <ConfirmModal 
-            :show="showConfirmModal" 
+        <ConfirmModal
+            :show="showConfirmModal"
             :message="confirmMessage"
             confirm-text="Да"
             cancel-text="Отмена"
@@ -90,7 +105,7 @@ const cleanupDryRun = ref(false);
 const error = ref("");
 
 // Получаем функцию showError из родительского компонента
-const showError = inject('showError', null);
+const showError = inject("showError", null);
 
 const canManagePosts = computed(() => {
     try {
@@ -118,7 +133,7 @@ const confirmCleanup = () => {
     if (showError) {
         showError("");
     }
-    
+
     const message = `Запустить очистку?\nthreshold=${cleanupThreshold.value}, removeCount=${cleanupRemoveCount.value}, dryRun=${cleanupDryRun.value}`;
     confirmMessage.value = message;
     showConfirmModal.value = true;
@@ -153,20 +168,22 @@ const executeCleanup = async () => {
         // Обрабатываем различные типы ошибок
         let errorMessage = "";
         if (e.response?.status === 403) {
-            errorMessage = "У вас нет прав для выполнения очистки. Недостаточно прав.";
-        } else if (e.code === 'ERR_NETWORK' || !e.response) {
-            errorMessage = "Ошибка подключения к серверу. Проверьте интернет-соединение.";
+            errorMessage =
+                "У вас нет прав для выполнения очистки. Недостаточно прав.";
+        } else if (e.code === "ERR_NETWORK" || !e.response) {
+            errorMessage =
+                "Ошибка подключения к серверу. Проверьте интернет-соединение.";
         } else if (e.response?.data?.message) {
             errorMessage = e.response.data.message;
         } else {
             errorMessage = `Ошибка запроса очистки: ${e.message}`;
         }
-        
+
         error.value = errorMessage;
         if (showError) {
             showError(errorMessage);
         }
-        
+
         window.$toast?.error("Ошибка запроса очистки");
     } finally {
         showConfirmModal.value = false;

@@ -274,14 +274,14 @@ const clearSelection = () => {
 
 // Обработчик обновления каналов из Header
 const refreshChannelsHandler = async () => {
-    console.log('Refresh channels event received');
+    console.log("Refresh channels event received");
     loading.value = true;
     if (setLoading) setLoading(true);
-    
+
     try {
         await channelsService();
     } catch (error) {
-        console.error('Error refreshing channels:', error);
+        console.error("Error refreshing channels:", error);
     } finally {
         loading.value = false;
         if (setLoading) setLoading(false);
@@ -296,13 +296,13 @@ watch(refreshTrigger, () => {
 
 onMounted(() => {
     channelsService();
-    
+
     // Слушаем событие обновления каналов из Header
-    window.addEventListener('refreshChannels', refreshChannelsHandler);
+    window.addEventListener("refreshChannels", refreshChannelsHandler);
 });
 
 onUnmounted(() => {
     // Очищаем event listener
-    window.removeEventListener('refreshChannels', refreshChannelsHandler);
+    window.removeEventListener("refreshChannels", refreshChannelsHandler);
 });
 </script>

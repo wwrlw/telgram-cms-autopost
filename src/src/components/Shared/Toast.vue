@@ -103,7 +103,7 @@ const clear = () => {
 };
 
 const clearByType = (type) => {
-    notifications.value = notifications.value.filter(n => n.type !== type);
+    notifications.value = notifications.value.filter((n) => n.type !== type);
 };
 
 defineExpose({

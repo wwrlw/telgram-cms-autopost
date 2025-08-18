@@ -254,14 +254,14 @@ const clearSelection = () => {
 
 // Обработчик обновления категорий из Header
 const refreshCategoriesHandler = async () => {
-    console.log('Refresh categories event received');
+    console.log("Refresh categories event received");
     loading.value = true;
     if (setLoading) setLoading(true);
-    
+
     try {
         await categoriesService();
     } catch (error) {
-        console.error('Error refreshing categories:', error);
+        console.error("Error refreshing categories:", error);
     } finally {
         loading.value = false;
         if (setLoading) setLoading(false);
@@ -270,13 +270,13 @@ const refreshCategoriesHandler = async () => {
 
 onMounted(() => {
     categoriesService();
-    
+
     // Слушаем событие обновления категорий из Header
-    window.addEventListener('refreshCategories', refreshCategoriesHandler);
+    window.addEventListener("refreshCategories", refreshCategoriesHandler);
 });
 
 onUnmounted(() => {
     // Очищаем event listener
-    window.removeEventListener('refreshCategories', refreshCategoriesHandler);
+    window.removeEventListener("refreshCategories", refreshCategoriesHandler);
 });
 </script>

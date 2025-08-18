@@ -19,11 +19,11 @@
                         class="cursor-pointer hover:opacity-90 transition-opacity"
                         @click="emit('open', m, id)"
                     />
-                                            <div
-                            v-else-if="isVideoMedia(m)"
-                            class="relative cursor-pointer hover:opacity-90 transition-opacity w-full h-full"
-                            @click="emit('open', m, id)"
-                        >
+                    <div
+                        v-else-if="isVideoMedia(m)"
+                        class="relative cursor-pointer hover:opacity-90 transition-opacity w-full h-full"
+                        @click="emit('open', m, id)"
+                    >
                         <video
                             :src="getMediaUrl(m.file_path)"
                             :class="getSquareMediaClasses('thumbnail')"
@@ -87,7 +87,7 @@ const props = defineProps({
     hasNewFiles: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['open', 'remove']);
+const emit = defineEmits(["open", "remove"]);
 
 function isImageMedia(media) {
     return media?.type === "photo" || media?.type === "MessageMediaPhoto";

@@ -74,26 +74,26 @@ const logout = () => {
 
 const refreshData = () => {
     // Определяем тип данных для обновления в зависимости от текущей страницы
-    if (route.name === 'posts') {
+    if (route.name === "posts") {
         emit("refreshPosts");
-    } else if (route.name === 'favorites') {
-        emit("refreshData", 'favorites');
-    } else if (route.name === 'system-logs') {
-        emit("refreshData", 'logs');
-    } else if (route.name === 'categories') {
-        emit("refreshData", 'categories');
-    } else if (route.name === 'channels') {
-        emit("refreshData", 'channels');
-    } else if (route.name === 'publication-channels') {
-        emit("refreshData", 'publication-channels');
-    } else if (route.name === 'scheduled-posts') {
-        emit("refreshData", 'scheduled-posts');
-    } else if (route.name === 'analytics') {
-        emit("refreshData", 'analytics');
-    } else if (route.name === 'user-management') {
-        emit("refreshData", 'users');
-    } else if (route.name === 'settings') {
-        emit("refreshData", 'settings');
+    } else if (route.name === "favorites") {
+        emit("refreshData", "favorites");
+    } else if (route.name === "system-logs") {
+        emit("refreshData", "logs");
+    } else if (route.name === "categories") {
+        emit("refreshData", "categories");
+    } else if (route.name === "channels") {
+        emit("refreshData", "channels");
+    } else if (route.name === "publication-channels") {
+        emit("refreshData", "publication-channels");
+    } else if (route.name === "scheduled-posts") {
+        emit("refreshData", "scheduled-posts");
+    } else if (route.name === "analytics") {
+        emit("refreshData", "analytics");
+    } else if (route.name === "user-management") {
+        emit("refreshData", "users");
+    } else if (route.name === "settings") {
+        emit("refreshData", "settings");
     } else {
         // По умолчанию обновляем посты
         emit("refreshPosts");

@@ -455,14 +455,14 @@ const deleteChannel = (channel) => {
 
 // Обработчик обновления каналов публикации из Header
 const refreshPublicationChannelsHandler = async () => {
-    console.log('Refresh publication channels event received');
+    console.log("Refresh publication channels event received");
     loading.value = true;
     if (setLoading) setLoading(true);
-    
+
     try {
         loadChannels();
     } catch (error) {
-        console.error('Error refreshing publication channels:', error);
+        console.error("Error refreshing publication channels:", error);
     } finally {
         loading.value = false;
         if (setLoading) setLoading(false);
@@ -475,13 +475,19 @@ watch(refreshTrigger, () => {
 
 onMounted(() => {
     loadChannels();
-    
+
     // Слушаем событие обновления каналов публикации из Header
-    window.addEventListener('refreshPublicationChannels', refreshPublicationChannelsHandler);
+    window.addEventListener(
+        "refreshPublicationChannels",
+        refreshPublicationChannelsHandler
+    );
 });
 
 onUnmounted(() => {
     // Очищаем event listener
-    window.removeEventListener('refreshPublicationChannels', refreshPublicationChannelsHandler);
+    window.removeEventListener(
+        "refreshPublicationChannels",
+        refreshPublicationChannelsHandler
+    );
 });
 </script>

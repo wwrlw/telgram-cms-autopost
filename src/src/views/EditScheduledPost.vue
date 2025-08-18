@@ -633,7 +633,7 @@ async function savePost() {
             ...postData.value,
             text: markdown,
             media: allMedia,
-            channel_id: selectedChannel.value
+            channel_id: selectedChannel.value,
         };
 
         http.updatePost(updateData, (response) => {
@@ -751,7 +751,7 @@ async function publishLater() {
             ...postData.value,
             text: markdown,
             media: allMedia,
-            channel_id: selectedChannel.value
+            channel_id: selectedChannel.value,
         };
 
         http.updatePost(updateData, (response) => {
@@ -771,11 +771,15 @@ async function publishLater() {
                             );
                             // Обновляем данные поста в локальном состоянии
                             if (scheduleRes.data) {
-                                postData.value = { ...postData.value, ...scheduleRes.data };
+                                postData.value = {
+                                    ...postData.value,
+                                    ...scheduleRes.data,
+                                };
                             }
                             // Обновляем выбранный канал в интерфейсе
                             if (selectedChannel.value !== null) {
-                                postData.value.channel_id = selectedChannel.value;
+                                postData.value.channel_id =
+                                    selectedChannel.value;
                             }
                             // Обновляем состояние планирования
                             if (schedule.value && scheduledAt.value) {
