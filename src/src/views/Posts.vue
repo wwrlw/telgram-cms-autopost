@@ -6,7 +6,7 @@
                 :totalCount="totalCount"
                 :data="posts"
                 type="posts"
-                :stats="postsStats"
+                :todayCount="todayCount"
             />
 
             <Search
@@ -96,11 +96,7 @@ const loading = ref(false);
 const infiniteScrollLoading = ref(false);
 const totalCount = ref(0);
 const categories = ref([]);
-const postsStats = ref({
-    total: 0,
-    unique: 0,
-    today: 0,
-});
+const todayCount = ref(0);
 
 const force = ref(false);
 const infiniteScrollTrigger = ref(null);
@@ -116,24 +112,24 @@ const pageSize = 24;
 const savedScrollTop = ref(0);
 const getScroller = () => document.getElementById("app-scroller");
 
-const loadPostsStats = async () => {
+const loadTodayCount = async () => {
     try {
         return new Promise((resolve, reject) => {
-            http.getPostsStats(
+            http.getPostsStatsToday(
                 (response) => {
                     if (response.success) {
-                        postsStats.value = response.data;
+                        todayCount.value = response.data;
                     }
                     resolve(response);
                 },
                 (error) => {
-                    console.error("Error loading posts stats:", error);
+                    console.error("Error loading today posts count:", error);
                     reject(error);
                 }
             );
         });
     } catch (error) {
-        console.error("Error loading posts stats:", error);
+        console.error("Error loading today posts count:", error);
     }
 };
 
@@ -432,7 +428,7 @@ watch(
                 forceRefresh: true,
                 useCache: false,
             });
-            await loadPostsStats();
+            await loadTodayCount();
             initializeInfiniteScroll();
         }
     },
@@ -443,7 +439,7 @@ onMounted(async () => {
     await initializeFavorites();
     await postsService({ page: 1 });
     await loadCategories();
-    await loadPostsStats();
+    await loadTodayCount();
 
     await nextTick();
     initializeInfiniteScroll();
@@ -489,7 +485,7 @@ onMounted(async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
-        await loadPostsStats();
+        await loadTodayCount();
     });
 
     onUnmounted(() => {

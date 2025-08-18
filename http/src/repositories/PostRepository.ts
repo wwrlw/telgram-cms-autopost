@@ -788,10 +788,10 @@ export class PostRepository implements IPostRepository {
     return result;
   }
 
-  async getPostsStats(): Promise<{ total: number; unique: number; today: number }> {
+  async getPostsStatsToday(): Promise<number> {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
-    console.log('getPostsStats called');
+    console.log('getPostsStatsToday called');
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -802,25 +802,16 @@ export class PostRepository implements IPostRepository {
     console.log('Date range for today:', { today, tomorrow });
 
     const pipeline = [
-      {
-        $facet: {
-          total: [{ $count: "count" }],
-          unique: [
-            { $match: { is_unique: true } },
-            { $count: "count" }
-          ],
-          today: [
-            { 
-              $match: { 
-                created_at: { 
-                  $gte: today, 
-                  $lt: tomorrow 
-                } 
-              } 
-            },
-            { $count: "count" }
-          ]
-        }
+      { 
+        $match: { 
+          created_at: { 
+            $gte: today, 
+            $lt: tomorrow 
+          } 
+        } 
+      },
+      { 
+        $count: "count" 
       }
     ];
 
@@ -828,19 +819,12 @@ export class PostRepository implements IPostRepository {
 
     const result = await this.mongo.db.collection("posts").aggregate(pipeline).toArray();
     console.log('MongoDB aggregation result:', result);
+
+    const count = result[0]?.count || 0;
+    console.log('Final count for today:', count);
     
-    const stats = result[0];
-    console.log('Extracted stats:', stats);
-
-    const finalStats = {
-      total: stats.total[0]?.count || 0,
-      unique: stats.unique[0]?.count || 0,
-      today: stats.today[0]?.count || 0
-    };
-
-    console.log('Final stats:', finalStats);
-    return finalStats;
-  }
+    return count;
+}
 
   // Cleanup helper methods
   async countAll(): Promise<number> {

@@ -175,7 +175,7 @@ let http = {
                 if (errorCallback) errorCallback(err);
             });
     },
-    getPostsStats: function (callback, errorCallback) {
+    getPostsStatsToday: function (callback, errorCallback) {
         instance
             .get("/posts/stats")
             .then((res) => {

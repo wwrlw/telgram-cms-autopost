@@ -227,9 +227,10 @@
 
             <div class="mb-2">
                 <span
-                    class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
+                    class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium text-black"
+                    :style="{ 'background-color': post.category_color }"
                 >
-                    {{ getCategoryName() }}
+                    {{ post.category_name || "Без категории" }}
                 </span>
             </div>
 
@@ -403,65 +404,6 @@ const toggleTextMode = () => {
 const getMediaPath = (filePath) => {
     return getMediaUrl(filePath);
 };
-
-const getCategoryName = () => {
-    // Приоритет 1: Используем данные напрямую из поста
-    if (props.post.category_name && props.post.category_name.trim() !== "") {
-        return props.post.category_name;
-    }
-
-    // Приоритет 2: Ищем по ID категории в списке категорий
-    if (props.post.category_id) {
-        const category = props.categories.find(
-            (cat) =>
-                cat._id === props.post.category_id ||
-                cat.id === props.post.category_id
-        );
-        if (category && category.name) {
-            return category.name;
-        }
-    }
-
-    // Приоритет 3: Проверяем, есть ли channel_id для дополнительной диагностики
-    if (props.post.channel_id) {
-        console.warn(
-            `Post ${props.post._id} has channel_id ${props.post.channel_id} but no category`
-        );
-    }
-
-    return "Без категории";
-};
-
-// const getCategoryStyle = () => {
-//     // Используем данные напрямую из поста, если они есть
-//     if (props.post.category_color) {
-//         const color = props.post.category_color.replace("#", "");
-//         const r = parseInt(color.substr(0, 2), 16);
-//         const g = parseInt(color.substr(2, 2), 16);
-//         const b = parseInt(color.substr(4, 2), 16);
-//         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-//         const textColor = brightness > 155 ? "text-gray-900" : "text-white";
-//         return `bg-[${props.post.category_color}] ${textColor} border border-[${props.post.category_color}]`;
-//     }
-
-//     // Fallback к старому способу поиска по ID
-//     if (!props.post.category_id) {
-//         return "bg-gray-100 text-gray-700 border border-gray-200";
-//     }
-//     const category = props.categories.find(
-//         (cat) => cat.id === props.post.category_id
-//     );
-//     if (category && category.color) {
-//         const color = category.color.replace("#", "");
-//         const r = parseInt(color.substr(0, 2), 16);
-//         const g = parseInt(color.substr(2, 2), 16);
-//         const b = parseInt(color.substr(4, 2), 16);
-//         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-//         const textColor = brightness > 155 ? "text-gray-900" : "text-white";
-//         return `bg-[${category.color}] ${textColor} border border-[${category.color}]`;
-//     }
-//     return "bg-gray-100 text-gray-700 border border-gray-200";
-// };
 
 const navigateToPost = () => {
     router.push({ name: "post", params: { id: props.post._id } });

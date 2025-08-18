@@ -8,7 +8,7 @@ export interface IPostRepository {
   findWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>>;
   findWithQueryAndCategories(query: PostQuery): Promise<PaginatedResponse<Post>>;
   findWithInfiniteScroll(query: InfiniteScrollQuery): Promise<InfiniteScrollResponse<Post>>;
-  getPostsStats(): Promise<PostStats>;
+  getPostsStatsToday(): Promise<number>;
   create(post: CreatePostDto): Promise<Post>;
   findByChannel(channel: string): Promise<Post[]>;
   findByCategory(categoryId: string): Promise<Post[]>;

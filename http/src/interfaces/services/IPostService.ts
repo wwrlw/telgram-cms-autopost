@@ -6,7 +6,7 @@ export interface IPostService {
   getPosts(): Promise<Post[]>;
   getPostsWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>>;
   getPostsInfiniteScroll(query: InfiniteScrollQuery): Promise<InfiniteScrollResponse<Post>>;
-  getPostsStats(): Promise<PostStats>;
+  getPostsStatsToday(): Promise<number>;
   createPost(post: CreatePostDto): Promise<Post>;
   getPostsByChannel(channel: string): Promise<Post[]>;
   getPostsByCategory(categoryId: string): Promise<Post[]>;
