@@ -256,11 +256,14 @@
 
             <div class="space-y-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                    <label
+                        for="channel"
+                        class="block text-sm font-medium text-gray-700 mb-1"
                         >Канал для публикации</label
                     >
                     <select
                         v-model="selectedChannel"
+                        id="channel"
                         class="border rounded p-2 text-sm w-full"
                     >
                         <option :value="null">Выберите канал</option>

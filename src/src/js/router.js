@@ -29,6 +29,7 @@ const routes = [
         path: "/",
         name: "index",
         component: Posts,
+        meta: { keepAlive: true },
     },
     {
         path: "/channels",
@@ -111,6 +112,10 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(),
     routes,
+    scrollBehavior(to, from, savedPosition) {
+        if (savedPosition) return savedPosition;
+        return false;
+    },
 });
 
 router.beforeEach(async (to) => {
@@ -137,10 +142,8 @@ router.beforeEach(async (to) => {
         return "/login";
     }
 
-    // Проверяем, что пользователь не заблокирован
     if (userRole === ROLES.BANNED) {
         console.warn("Access denied: user is banned");
-        // Очищаем токен и роль для заблокированного пользователя
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         sessionStorage.removeItem("token");
@@ -148,10 +151,8 @@ router.beforeEach(async (to) => {
         return "/login";
     }
 
-    // Проверяем, что пользователь существует (дополнительная проверка)
     if (!userRole || userRole === "undefined" || userRole === "null") {
         console.warn("Access denied: invalid user role");
-        // Очищаем токен и роль для невалидного пользователя
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         sessionStorage.removeItem("token");
@@ -159,7 +160,6 @@ router.beforeEach(async (to) => {
         return "/login";
     }
 
-    // Check role-based access
     if (to.meta?.requiredRole && userRole !== to.meta.requiredRole) {
         console.warn(
             `Access denied: required role ${to.meta.requiredRole}, user has ${userRole}`
@@ -182,8 +182,8 @@ router.beforeEach(async (to) => {
     return;
 });
 
-router.afterEach(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-});
+// router.afterEach(() => {
+//     window.scrollTo({ top: 0, behavior: "smooth" });
+// });
 
 export default router;

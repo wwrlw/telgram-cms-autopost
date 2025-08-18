@@ -55,7 +55,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, inject, watch, nextTick } from "vue";
+import {
+    ref,
+    onMounted,
+    onUnmounted,
+    inject,
+    watch,
+    nextTick,
+    onActivated,
+    onDeactivated,
+} from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
 import Filters from "@/components/Shared/Filters.vue";
@@ -103,6 +112,9 @@ const { optimizedRequest, debouncedSearch } = useApiCache();
 const currentPage = ref(1);
 const hasMore = ref(true);
 const pageSize = 24;
+
+const savedScrollTop = ref(0);
+const getScroller = () => document.getElementById("app-scroller");
 
 const loadPostsStats = async () => {
     try {
@@ -240,6 +252,8 @@ const handleSearchChange = async (query) => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
+        const el = getScroller();
+        if (el) el.scrollTop = 0;
     }, 500);
 };
 
@@ -248,6 +262,8 @@ const handleStatusFilterChange = async (status) => {
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
+    const el = getScroller();
+    if (el) el.scrollTop = 0;
 };
 
 const handleCategoryFilterChange = async (categoryId) => {
@@ -255,6 +271,8 @@ const handleCategoryFilterChange = async (categoryId) => {
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
+    const el = getScroller();
+    if (el) el.scrollTop = 0;
 };
 
 const handleDateFiltersChange = async (dateFilters) => {
@@ -263,6 +281,8 @@ const handleDateFiltersChange = async (dateFilters) => {
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
+    const el = getScroller();
+    if (el) el.scrollTop = 0;
 };
 
 const handleSortOptionsChange = async (sortOptions) => {
@@ -271,6 +291,8 @@ const handleSortOptionsChange = async (sortOptions) => {
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
+    const el = getScroller();
+    if (el) el.scrollTop = 0;
 };
 
 const handleClearFilters = async () => {
@@ -284,6 +306,8 @@ const handleClearFilters = async () => {
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
+    const el = getScroller();
+    if (el) el.scrollTop = 0;
 };
 
 const handlePublish = (post) => {
@@ -424,10 +448,8 @@ onMounted(async () => {
     await nextTick();
     initializeInfiniteScroll();
 
-    // Автоматическое обновление постов каждую минуту
     const autoRefreshInterval = setInterval(async () => {
         try {
-            // Обновляем только если страница активна и пользователь не взаимодействует
             if (!document.hidden && !loading.value) {
                 await postsService({ page: 1 }, false, {
                     forceRefresh: false,
@@ -437,34 +459,30 @@ onMounted(async () => {
         } catch (error) {
             console.error("Auto refresh error:", error);
         }
-    }, 60000); // 60 секунд = 1 минута
+    }, 60000);
 
     onEvent(EVENTS.POST_CREATED, async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
-        // Убираем дублирующий вызов loadPostsStats
     });
 
     onEvent(EVENTS.POST_UPDATED, async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
-        // Убираем дублирующий вызов loadPostsStats
     });
 
     onEvent(EVENTS.POST_DELETED, async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
-        // Убираем дублирующий вызов loadPostsStats, так как stats уже обновляются в postsService
     });
 
     onEvent(EVENTS.POST_PUBLISHED, async () => {
         currentPage.value = 1;
         hasMore.value = true;
         await postsService({ page: 1 });
-        // Убираем дублирующий вызов loadPostsStats
     });
 
     onEvent(EVENTS.REFRESH_POSTS, async () => {
@@ -474,7 +492,6 @@ onMounted(async () => {
         await loadPostsStats();
     });
 
-    // Очистка интервала при размонтировании компонента
     onUnmounted(() => {
         if (autoRefreshInterval) {
             clearInterval(autoRefreshInterval);
@@ -487,5 +504,18 @@ watch(loading, async (val) => {
         await nextTick();
         initializeInfiniteScroll();
     }
+});
+
+onDeactivated(() => {
+    const el = getScroller();
+    if (el) savedScrollTop.value = el.scrollTop;
+    destroy();
+});
+
+onActivated(async () => {
+    const el = getScroller();
+    if (el) el.scrollTop = savedScrollTop.value || 0;
+    await nextTick();
+    initializeInfiniteScroll();
 });
 </script>
