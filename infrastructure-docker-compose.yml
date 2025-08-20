@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  backend:
+    image: tg-parse-backend:latest
+    container_name: tg-parse-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - /opt/tg-parse/media:/app/media
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017
+      - MONGODB_DB=${MONGODB_DB}
+      - JWT_SECRET=${JWT_SECRET}
+      - YANDEX_API_FOLDER=${YANDEX_API_FOLDER}
+      - YANDEX_API_KEY=${YANDEX_API_KEY}
+    networks:
+      - bots_bots
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  parser:
+    image: tg-parse-parser:latest
+    container_name: tg-parse-parser
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3002:3002"
+    volumes:
+      - /opt/tg-parse/media:/app/media
+    environment:
+      - NODE_ENV=production
+      - STRING_SESSION=${STRING_SESSION}
+      - MONGO_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017
+      - API_ID=${API_ID}
+      - API_HASH=${API_HASH}
+      - MEDIA_PATH=/app/media
+      - MONGO_DB_NAME=${MONGODB_DB}
+      - API_BASE_URL=http://backend:3001
+      - API_USERNAME=${API_USERNAME}
+      - API_PASSWORD=${API_PASSWORD}
+      - STATS_UPDATE_LIMIT=${STATS_UPDATE_LIMIT}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - bots_bots
+
+  frontend:
+    image: tg-parse-frontend:latest
+    container_name: tg-parse-frontend
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:5173:5173'
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://localhost:3001
+    depends_on:
+      - backend
+    networks:
+      - bots_bots
+
+networks:
+  bots_bots:
+    external: true 
