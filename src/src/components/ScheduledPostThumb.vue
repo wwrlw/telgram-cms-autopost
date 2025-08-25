@@ -16,7 +16,7 @@
                     getFirstPhoto(post).file_path &&
                     !imageError
                 "
-                :src="getCoverImageUrl(getFirstPhoto(post).file_path)"
+                :src="getMediaUrl(getFirstPhoto(post).file_path)"
                 :alt="extractTitle(post.text)"
                 :class="getSquareMediaClasses('preview')"
                 @load="handleImageLoad"
@@ -207,6 +207,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { getMediaUrl, formatDate } from "@/js/utils";
 import MediaErrorFallback from "@/components/Media/MediaErrorFallback.vue";
 
 const props = defineProps({
@@ -249,21 +250,6 @@ const getFirstVideo = (post) => {
     return post.media?.find((media) => media.type === "video");
 };
 
-const getMediaPath = (filePath) => {
-    if (!filePath) return null;
-    // Если путь уже содержит полный URL, возвращаем как есть
-    if (filePath.startsWith("http")) return filePath;
-    // Если путь начинается с /media/, возвращаем как есть
-    if (filePath.startsWith("/media/")) return filePath;
-    // Иначе добавляем префикс /media/
-    const result = `/media/${filePath}`;
-    return result;
-};
-
-const getCoverImageUrl = (filePath) => {
-    return getMediaPath(filePath);
-};
-
 const getSquareMediaClasses = (type) => {
     const baseClasses = "w-full h-full object-cover";
     return type === "preview" ? baseClasses : baseClasses;
@@ -298,18 +284,6 @@ const extractContent = (text) => {
         lines.slice(1).join(" ").substring(0, 150) +
         (lines.slice(1).join(" ").length > 150 ? "..." : "")
     );
-};
-
-const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleString("ru-RU", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
 };
 
 const isOverdue = (scheduledAt) => {
