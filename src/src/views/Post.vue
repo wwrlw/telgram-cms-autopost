@@ -22,7 +22,10 @@
                 </div>
             </div>
 
-            <TextEditor v-model="editorHtml" />
+            <div class="flex mb-4 gap-2">
+                <TextEditor v-model="editorHtml" />
+                <Stats v-if="postData !== null" :post-data="postData" />
+            </div>
 
             <div class="space-y-4 mb-4">
                 <ExistingMediaGrid
@@ -140,7 +143,7 @@ import { useRouter, useRoute } from "vue-router";
 import http from "@/js/http";
 import TurndownService from "turndown";
 import MediaViewer from "@/components/Media/MediaViewer.vue";
-
+import Stats from "@/components/Post/Stats.vue";
 import TextEditor from "@/components/Post/TextEditor.vue";
 import MediaPicker from "@/components/Post/MediaPicker.vue";
 import ExistingMediaGrid from "@/components/Post/ExistingMediaGrid.vue";

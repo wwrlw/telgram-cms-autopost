@@ -1,7 +1,7 @@
 <template>
-    <div class="mb-4 flex flex-col">
+    <div class="flex flex-col h-full">
         <div class="relative">
-            <div class="flex flex-wrap gap-1 p-2 border-b">
+            <div class="flex flex-wrap gap-1 p-2">
                 <button
                     v-for="btn in toolbar"
                     :key="btn.title"

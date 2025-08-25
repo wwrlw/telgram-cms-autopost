@@ -22,7 +22,6 @@ instance.interceptors.response.use(
         return response;
     },
     (error) => {
-        // Check if user is banned
         if (
             error.response &&
             error.response.status === 403 &&
@@ -31,18 +30,15 @@ instance.interceptors.response.use(
         ) {
             console.warn("User is banned, logging out...");
 
-            // Clear token and role
             localStorage.removeItem("token");
             localStorage.removeItem("role");
             sessionStorage.removeItem("token");
             sessionStorage.removeItem("role");
 
-            // Show notification about ban
             if (window.$toast) {
                 window.$toast.error("Ваш аккаунт заблокирован", 10000);
             }
 
-            // Redirect to login page
             if (window.location.pathname !== "/login") {
                 window.location.href = "/login";
             }
@@ -50,7 +46,6 @@ instance.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        // Check if user is not found in database
         if (
             error.response &&
             error.response.status === 404 &&
@@ -59,13 +54,11 @@ instance.interceptors.response.use(
         ) {
             console.warn("User not found in database, logging out...");
 
-            // Clear token and role
             localStorage.removeItem("token");
             localStorage.removeItem("role");
             sessionStorage.removeItem("token");
             sessionStorage.removeItem("role");
 
-            // Show notification
             if (window.$toast) {
                 window.$toast.error(
                     "Пользователь не найден в базе данных",
@@ -73,7 +66,6 @@ instance.interceptors.response.use(
                 );
             }
 
-            // Redirect to login page
             if (window.location.pathname !== "/login") {
                 window.location.href = "/login";
             }
@@ -81,7 +73,6 @@ instance.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        // Check if user provided invalid password (don't logout for this)
         if (
             error.response &&
             error.response.status === 400 &&
@@ -89,11 +80,9 @@ instance.interceptors.response.use(
             error.response.data.code === "INVALID_PASSWORD"
         ) {
             console.warn("Invalid password provided, not logging out");
-            // Don't clear localStorage or redirect for invalid password
             return Promise.reject(error);
         }
 
-        // If backend responds with 403 and provides updated role info, refresh localStorage role
         try {
             if (
                 error.response &&
@@ -105,7 +94,6 @@ instance.interceptors.response.use(
                 const newRole = error.response.data.debug.actualRole;
                 if (newRole) {
                     localStorage.setItem("role", newRole);
-                    // Trigger manual storage event so same-tab listeners update
                     window.dispatchEvent(new Event("storage"));
                 }
             }
@@ -167,7 +155,6 @@ let http = {
         instance
             .get(url)
             .then((res) => {
-                console.log("Infinite scroll response:", res.data);
                 callback(res.data);
             })
             .catch((err) => {
@@ -202,7 +189,6 @@ let http = {
                 callback(res.data);
             })
             .catch((err) => {
-                // Проверяем, является ли ошибка связанной с тем, что пользователь не найден
                 if (
                     err.response?.status === 404 &&
                     err.response?.data?.code === "USER_NOT_FOUND"
@@ -211,13 +197,11 @@ let http = {
                         "User not found in database, clearing localStorage..."
                     );
 
-                    // Очищаем токен и роль
                     localStorage.removeItem("token");
                     localStorage.removeItem("role");
                     sessionStorage.removeItem("token");
                     sessionStorage.removeItem("role");
 
-                    // Показываем уведомление
                     if (window.$toast) {
                         window.$toast.error(
                             "Пользователь не найден в базе данных",
@@ -226,12 +210,10 @@ let http = {
                     }
                 }
 
-                // Проверяем, является ли ошибка связанной с неправильным паролем
                 if (
                     err.response?.status === 400 &&
                     err.response?.data?.code === "INVALID_PASSWORD"
                 ) {
-                    // Не очищаем localStorage для неправильного пароля
                     console.warn("Invalid password provided");
                 }
 
@@ -376,11 +358,9 @@ let http = {
     },
 
     deletePost: function (params, callback) {
-        console.log("deletePost called with params:", params);
         instance
             .delete(`/post/${params.id}`)
             .then((res) => {
-                console.log("deletePost success response:", res.data);
                 callback(res.data);
             })
             .catch((err) => {
@@ -517,7 +497,6 @@ let http = {
             })
             .then((res) => {
                 callback(res.data);
-                console.log(res.data);
             })
             .catch((err) => {
                 const errorMessage =
@@ -660,13 +639,9 @@ let http = {
     },
 
     getChannelAnalytics: function (channelId, callback, errorCallback) {
-        console.log("getChannelAnalytics called with channelId:", channelId);
-        console.log("Token from localStorage:", localStorage.getItem("token"));
-
         instance
             .get(`/analytics?channelid=${channelId}`)
             .then((res) => {
-                console.log("Analytics API response:", res.data);
                 callback(res.data);
             })
             .catch((err) => {

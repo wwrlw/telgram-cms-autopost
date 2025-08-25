@@ -7,7 +7,7 @@ export class TelegramPublishService implements ITelegramPublishService {
   private baseUrl: string;
 
   constructor() {
-    this.botToken = process.env.TELEGRAM_BOT_TOKEN || '8175655426:AAEw_vSc04q4LJ44Jg4WqX0rmLITy_R-hNE';
+    this.botToken = process.env.TELEGRAM_BOT_TOKEN;
     this.baseUrl = `https://api.telegram.org/bot${this.botToken}`;
   }
 

@@ -192,7 +192,10 @@
                     </button>
 
                     <button
-                        v-if="post.scheduled_at && route.name === 'scheduled-posts'"
+                        v-if="
+                            post.scheduled_at &&
+                            route.name === 'scheduled-posts'
+                        "
                         @click.prevent.stop="$emit('cancel', post)"
                         class="p-1.5 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors backdrop-blur-sm action-button"
                         title="Отменить публикацию"
@@ -367,7 +370,6 @@
                     </span>
                 </div>
             </div>
-
         </div>
     </div>
 </template>
