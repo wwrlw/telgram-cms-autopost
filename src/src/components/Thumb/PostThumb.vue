@@ -15,7 +15,7 @@
                     getMediaPath(getFirstPhoto(post).file_path) &&
                     !imageError
                 "
-                :src="getCoverImageUrl(getFirstPhoto(post).file_path)"
+                v-lazy="getCoverImageUrl(getFirstPhoto(post).file_path)"
                 :alt="extractTitle(post.text)"
                 :class="getSquareMediaClasses('preview')"
                 @load="handleImageLoad"
@@ -171,7 +171,7 @@
                     </button>
 
                     <button
-                        v-if="!post.scheduled_at && !post.is_published"
+                        v-if="route.name !== 'scheduled-posts'"
                         @click.prevent.stop="$emit('delete', post)"
                         class="p-1.5 bg-black bg-opacity-60 text-white rounded-full hover:bg-red-600 transition-colors backdrop-blur-sm action-button"
                         title="Удалить"
@@ -191,8 +191,8 @@
                         </svg>
                     </button>
 
-                    <!-- <button
-                        v-if="post.scheduled_at"
+                    <button
+                        v-if="post.scheduled_at && route.name === 'scheduled-posts'"
                         @click.prevent.stop="$emit('cancel', post)"
                         class="p-1.5 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors backdrop-blur-sm action-button"
                         title="Отменить публикацию"
@@ -210,7 +210,7 @@
                                 d="M6 18L18 6M6 6l12 12"
                             />
                         </svg>
-                    </button> -->
+                    </button>
                 </div>
             </div>
         </div>
@@ -368,17 +368,6 @@
                 </div>
             </div>
 
-            <div
-                v-if="post.scheduled_at"
-                class="mt-3 pt-3 border-t border-gray-100"
-            >
-                <button
-                    @click.prevent="$emit('cancel', post)"
-                    class="w-full bg-orange-500 text-white text-xs font-medium py-2 px-3 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
-                >
-                    Отменить публикацию
-                </button>
-            </div>
         </div>
     </div>
 </template>
@@ -396,13 +385,14 @@ import {
     getFirstVideo,
     getSquareMediaClasses,
 } from "@/js/utils";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { ref, computed, onMounted, watch } from "vue";
 import { useFavorites } from "@/composables/useFavorites";
 import MediaErrorFallback from "@/components/Media/MediaErrorFallback.vue";
 
 const router = useRouter();
 const { isFavorite, toggleFavorite, initializeFavorites } = useFavorites();
+const route = useRoute();
 
 const props = defineProps({
     post: {
