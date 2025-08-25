@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-white flex flex-col">
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
             <div class="flex items-center gap-3 justify-start mb-4">
-                <h2 class="text-lg font-semibold">Редактировать пост</h2>
+                <!-- <h2 class="text-lg font-semibold">Редактировать пост</h2> -->
                 <div
                     v-if="postData && postData.category_name"
                     class="flex items-center gap-2"
@@ -27,8 +27,10 @@
                     :media="postData?.media || []"
                     :show-combined-heading="true"
                     :has-new-files="previews.length > 0"
+                    :new-previews="previews"
                     @open="openMediaViewer"
                     @remove="removeExistingMedia"
+                    @removeNew="removeNewPreview"
                 />
 
                 <MediaPicker
@@ -36,6 +38,7 @@
                     v-model:previews="previews"
                     :existing-count="postData?.media?.length || 0"
                     :max-files="10"
+                    :show-grid="false"
                 />
             </div>
 
@@ -80,19 +83,7 @@
                     @click="toggleTextMode"
                     class="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700 flex items-center gap-2"
                 >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                        />
-                    </svg>
+                    <ArrowLeftRight class="w-4 h-4" />
                     <span>{{
                         showingUniqueText
                             ? "Показать оригинал"
@@ -104,34 +95,9 @@
                     :disabled="uniquizing || !hasText"
                     class="px-4 py-2 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                    <svg
-                        v-if="uniquizing"
-                        class="w-4 h-4 animate-spin"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
-                    </svg>
-                    <svg
-                        v-else
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        />
-                    </svg>
+                    <Loader2 v-if="uniquizing" class="w-4 h-4 animate-spin" />
+
+                    <Brain v-else />
                     <span>{{
                         uniquizing ? "Уникализация..." : "Уникализировать с ИИ"
                     }}</span>
@@ -171,7 +137,6 @@ import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import http from "@/js/http";
 import TurndownService from "turndown";
-// import { getMediaUrl, getSquareMediaClasses } from "@/js/utils";
 import MediaViewer from "@/components/Media/MediaViewer.vue";
 
 import TextEditor from "@/components/Post/TextEditor.vue";
@@ -181,6 +146,8 @@ import ChannelSelector from "@/components/Post/ChannelSelector.vue";
 import ScheduleControls from "@/components/Post/ScheduleControls.vue";
 
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
+
+import { Brain, ArrowLeftRight, Loader2 } from "lucide-vue-next";
 
 const router = useRouter();
 const route = useRoute();
@@ -265,6 +232,11 @@ function removeExistingMedia(index) {
     }
 }
 
+function removeNewPreview(index) {
+    const prev = previews.value.splice(index, 1)[0];
+    if (prev?.url) URL.revokeObjectURL(prev.url);
+}
+
 async function savePost() {
     if (isSubmitting.value) return;
 
@@ -331,8 +303,7 @@ async function savePost() {
             isSubmitting.value = false;
             if (response.success) {
                 window?.$toast?.success("Пост успешно сохранён");
-                // Убираем автоматическое перенаправление на главную страницу
-                // router.push("/");
+                router.push("/");
             } else {
                 window?.$toast?.error(
                     "Ошибка сохранения: " + (response.message || "")

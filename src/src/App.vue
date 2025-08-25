@@ -2,6 +2,7 @@
     <div v-if="$route.name !== 'login'">
         <Sidebar>
             <Header
+                v-if="route.name !== 'post'"
                 :loading="loading"
                 @refreshPosts="refreshPosts"
                 @refreshData="refreshData"
@@ -32,9 +33,10 @@ import Header from "@/components/Header.vue";
 import Sidebar from "@/components/Sidebar.vue";
 import Toast from "@/components/Shared/Toast.vue";
 import { ref, provide, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import http from "@/js/http";
 
+const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
 const refreshTrigger = ref(0);

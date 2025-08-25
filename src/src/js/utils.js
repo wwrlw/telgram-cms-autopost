@@ -9,18 +9,14 @@ export const getMediaUrl = (filePath) => {
         const baseUrl =
             import.meta.env.VITE_API_URL || "https://tg.chiorio.com";
 
-        // Если путь уже полный URL, возвращаем как есть
         if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
             return filePath;
         }
 
-        // Убираем лишние слеши и нормализуем путь
         const normalizedPath = cleanPath
             .replace(/^\/+/, "")
             .replace(/\/+/g, "/");
 
-        // Создаем базовый URL без параметров качества
-        // Убираем слэш в конце базового URL если он есть, чтобы избежать двойного слэша
         const cleanBaseUrl = baseUrl.endsWith("/")
             ? baseUrl.slice(0, -1)
             : baseUrl;
@@ -33,7 +29,6 @@ export const getMediaUrl = (filePath) => {
     }
 };
 
-// Отдельная функция для получения URL изображений без параметров качества
 export const getCoverImageUrl = (filePath) => {
     if (!filePath || typeof filePath !== "string") {
         console.warn("Invalid filePath:", filePath);
@@ -164,7 +159,6 @@ export const formatDate = (dateString) => {
 
     const date = new Date(dateString);
 
-    // Проверяем, что дата валидна
     if (isNaN(date.getTime())) {
         console.warn("Invalid date:", dateString);
         return "Неверная дата";

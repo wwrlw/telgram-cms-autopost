@@ -1,25 +1,12 @@
 <template>
     <div class="space-y-4 mb-4">
         <div class="flex items-center gap-2">
-            <button type="button" class="file-btn" @click="triggerFile">
-                <svg
-                    class="w-5 h-5 mr-1 text-indigo-600"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a2 2 0 10-2.828-2.828z"
-                    />
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M16 7V3a1 1 0 00-1-1h-4a1 1 0 00-1 1v4"
-                    />
-                </svg>
+            <button
+                type="button"
+                class="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-md cursor-pointer"
+                @click="triggerFile"
+            >
+                <Paperclip class="w-4 h-4" />
                 <span>Прикрепить файлы</span>
             </button>
             <input
@@ -36,7 +23,7 @@
         </div>
 
         <div
-            v-if="previewsLocal.length"
+            v-if="previewsLocal.length && showGrid"
             class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4"
         >
             <div
@@ -70,11 +57,14 @@
 <script setup>
 import { ref, watch, computed } from "vue";
 
+import { Paperclip } from "lucide-vue-next";
+
 const props = defineProps({
-    modelValue: { type: Array, default: () => [] }, // files
+    modelValue: { type: Array, default: () => [] },
     previews: { type: Array, default: () => [] },
     maxFiles: { type: Number, default: 10 },
     existingCount: { type: Number, default: 0 },
+    showGrid: { type: Boolean, default: true },
 });
 const emit = defineEmits(["update:modelValue", "update:previews"]);
 
@@ -141,22 +131,3 @@ function triggerFile() {
     fileInputRef.value?.click();
 }
 </script>
-
-<style scoped>
-.file-btn {
-    display: inline-flex;
-    align-items: center;
-    background: #eef2ff;
-    color: #3730a3;
-    border: none;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.file-btn:hover {
-    background: #c7d2fe;
-}
-</style>

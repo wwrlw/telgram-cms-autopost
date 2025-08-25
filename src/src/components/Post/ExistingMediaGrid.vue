@@ -4,29 +4,29 @@
             {{ headingText }}
         </h4>
         <div
-            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+            class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
         >
             <div
-                v-for="(m, id) in media"
-                :key="'existing-' + id"
+                v-for="(item, idx) in combinedItems"
+                :key="item.key"
                 class="relative group border rounded overflow-hidden"
+                :class="getAspectClass(item.raw)"
             >
-                <div class="aspect-square overflow-hidden">
+                <div class="overflow-hidden" :class="getAspectClass(item.raw)">
                     <img
-                        v-if="isImageMedia(m)"
-                        :src="getMediaUrl(m.file_path)"
-                        :class="getSquareMediaClasses('thumbnail')"
-                        class="cursor-pointer hover:opacity-90 transition-opacity"
-                        @click="emit('open', m, id)"
+                        v-if="isImageItem(item.raw)"
+                        :src="getItemSrc(item.raw)"
+                        class="cursor-pointer hover:opacity-90 transition-opacity w-full h-full object-cover"
+                        @click="emit('open', item.raw, idx)"
+                        @load="onImageLoad($event, item.raw, idx)"
                     />
                     <div
-                        v-else-if="isVideoMedia(m)"
-                        class="relative cursor-pointer hover:opacity-90 transition-opacity w-full h-full"
-                        @click="emit('open', m, id)"
+                        v-else-if="isVideoItem(item.raw)"
+                        class="relative cursor-pointer hover:opacity-90 transition-opacity w-full h-full object-cover"
+                        @click="emit('open', item.raw, idx)"
                     >
                         <video
-                            :src="getMediaUrl(m.file_path)"
-                            :class="getSquareMediaClasses('thumbnail')"
+                            :src="getItemSrc(item.raw)"
                             muted
                             preload="metadata"
                         />
@@ -66,7 +66,7 @@
                     </div>
                 </div>
                 <button
-                    @click="emit('remove', id)"
+                    @click="handleRemove(item)"
                     class="absolute top-1 right-1 bg-red-500 text-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                     title="Удалить файл"
                 >
@@ -78,16 +78,19 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { getMediaUrl, getSquareMediaClasses } from "@/js/utils";
+import { computed, ref } from "vue";
+import { getMediaUrl } from "@/js/utils";
 
 const props = defineProps({
     media: { type: Array, default: () => [] },
     showCombinedHeading: { type: Boolean, default: false },
     hasNewFiles: { type: Boolean, default: false },
+    newPreviews: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(["open", "remove"]);
+const emit = defineEmits(["open", "remove", "removeNew"]);
+
+const imageDimensions = ref(new Map());
 
 function isImageMedia(media) {
     return media?.type === "photo" || media?.type === "MessageMediaPhoto";
@@ -100,9 +103,73 @@ function isVideoMedia(media) {
     );
 }
 
+function isImageItem(item) {
+    if (!item) return false;
+    if (item.url) return !!item.isImage;
+    return isImageMedia(item);
+}
+function isVideoItem(item) {
+    if (!item) return false;
+    if (item.url) return !item.isImage;
+    return isVideoMedia(item);
+}
+
+function getItemSrc(item) {
+    if (item.url) return item.url;
+    return getMediaUrl(item.file_path);
+}
+
+function getAspectClass(media) {
+    if (isImageItem(media)) {
+        const key = media.url || media.id || media.file_path;
+        const dimensions = imageDimensions.value.get(key);
+        if (dimensions) {
+            const ratio = dimensions.width / dimensions.height;
+            return ratio > 1.2 ? "aspect-video" : "aspect-square";
+        }
+    }
+    if (isVideoItem(media)) {
+        return "aspect-video";
+    }
+    return "aspect-square";
+}
+
+function onImageLoad(event, media, id) {
+    const img = event.target;
+    const key = media.url || media.id || media.file_path || id;
+    imageDimensions.value.set(key, {
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+    });
+}
+
 const headingText = computed(() =>
     props.showCombinedHeading && props.hasNewFiles
         ? "Медиафайлы (существующие + новые):"
         : "Медиафайлы:"
 );
+
+const combinedItems = computed(() => {
+    const existing = (props.media || []).map((m, index) => ({
+        kind: "existing",
+        raw: m,
+        key: `existing-${index}`,
+        existingIndex: index,
+    }));
+    const news = (props.newPreviews || []).map((p, index) => ({
+        kind: "new",
+        raw: p,
+        key: `new-${index}`,
+        newIndex: index,
+    }));
+    return [...existing, ...news];
+});
+
+function handleRemove(item) {
+    if (item.kind === "existing") {
+        emit("remove", item.existingIndex);
+    } else if (item.kind === "new") {
+        emit("removeNew", item.newIndex);
+    }
+}
 </script>
