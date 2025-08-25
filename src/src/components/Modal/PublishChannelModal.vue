@@ -177,7 +177,7 @@ export default {
             this.error = null;
 
             try {
-                return new Promise((resolve, reject) => {
+                return new Promise((resolve) => {
                     http.getPostedChannels((response) => {
                         if (response.success) {
                             this.channels = response.data;
@@ -205,7 +205,7 @@ export default {
             this.publishing = true;
 
             try {
-                return new Promise((resolve, reject) => {
+                return new Promise((resolve) => {
                     http.publishToChannel(
                         this.postId,
                         this.selectedChannel.channel_id,

@@ -22,19 +22,16 @@
                 </div>
             </div>
 
-            <!-- Заголовок -->
             <h1 class="text-6xl font-bold text-gray-900 mb-4">404</h1>
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">
                 Страница не найдена
             </h2>
 
-            <!-- Описание -->
             <p class="text-lg text-gray-600 mb-8 max-w-md mx-auto">
                 К сожалению, запрашиваемая страница не существует или была
                 перемещена.
             </p>
 
-            <!-- Кнопки действий -->
             <div
                 class="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
@@ -78,7 +75,6 @@
                     Назад
                 </button>
             </div>
-            <!-- Код ошибки -->
             <div class="mt-8 text-xs text-gray-400 space-y-1">
                 <div>Код ошибки: 404 • Время: {{ currentTime }}</div>
                 <div>URL: {{ currentUrl }}</div>
@@ -89,10 +85,9 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 
 const router = useRouter();
-const route = useRoute();
 const currentTime = ref("");
 const currentUrl = ref("");
 
@@ -111,7 +106,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Дополнительные анимации */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -127,17 +121,14 @@ onMounted(() => {
     animation: fadeInUp 0.6s ease-out;
 }
 
-/* Градиент для иконки */
 .bg-gradient-to-br {
     background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
 }
 
-/* Hover эффекты для кнопок */
 .transition-colors {
     transition: all 0.2s ease-in-out;
 }
 
-/* Тень для кнопок */
 .shadow-lg {
     box-shadow:
         0 10px 15px -3px rgba(0, 0, 0, 0.1),

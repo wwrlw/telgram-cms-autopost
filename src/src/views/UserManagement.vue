@@ -339,7 +339,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import Sidebar from "@/components/Sidebar.vue";
 import http from "@/js/http";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 

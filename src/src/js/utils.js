@@ -45,18 +45,14 @@ export const getCoverImageUrl = (filePath) => {
         const baseUrl =
             import.meta.env.VITE_API_URL || "https://tg.chiorio.com";
 
-        // Если путь уже полный URL, возвращаем как есть
         if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
             return filePath;
         }
 
-        // Убираем лишние слеши и нормализуем путь
         const normalizedPath = cleanPath
             .replace(/^\/+/, "")
             .replace(/\/+/g, "/");
 
-        // Создаем базовый URL БЕЗ параметров
-        // Убираем слэш в конце базового URL если он есть, чтобы избежать двойного слэша
         const cleanBaseUrl = baseUrl.endsWith("/")
             ? baseUrl.slice(0, -1)
             : baseUrl;
@@ -69,24 +65,19 @@ export const getCoverImageUrl = (filePath) => {
     }
 };
 
-// Функция для определения оптимального object-fit на основе ориентации
 export const getOptimalObjectFit = (mediaType, isVertical = false) => {
-    // Для вертикальных медиа используем contain, чтобы не обрезать
     if (isVertical) {
         return "object-contain";
     }
 
-    // Для горизонтальных медиа используем cover для лучшего заполнения
     return "object-cover";
 };
 
-// Функция для определения ориентации медиа по размеру
 export const detectMediaOrientation = (width, height) => {
     if (!width || !height) return "horizontal";
     return width > height ? "horizontal" : "vertical";
 };
 
-// Функция для получения единого квадратного формата для всех медиа
 export const getSquareMediaClasses = (context = "preview") => {
     const baseClasses = "transition-all duration-300";
 
@@ -101,15 +92,10 @@ export const getSquareMediaClasses = (context = "preview") => {
     return `${baseClasses} w-full h-full object-cover`;
 };
 
-export const getMediaClasses = (
-    mediaType,
-    // isVertical = false,
-    context = "preview"
-) => {
+export const getMediaClasses = (mediaType, context = "preview") => {
     return getSquareMediaClasses(context);
 };
 
-// Функции для работы с медиа
 export const hasPhoto = (post) => {
     if (!post.media) return false;
     if (Array.isArray(post.media)) {

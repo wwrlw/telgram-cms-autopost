@@ -1,6 +1,5 @@
 <template>
     <div v-if="canManagePosts">
-        <!-- Отображение ошибок -->
         <div
             v-if="error"
             class="mb-6 p-4 bg-red-50 border border-red-200 rounded"
@@ -82,7 +81,6 @@
             </div>
         </div>
 
-        <!-- Модальное окно для подтверждения очистки -->
         <ConfirmModal
             :show="showConfirmModal"
             :message="confirmMessage"
@@ -104,7 +102,6 @@ const cleanupRemoveCount = ref(500);
 const cleanupDryRun = ref(false);
 const error = ref("");
 
-// Получаем функцию showError из родительского компонента
 const showError = inject("showError", null);
 
 const canManagePosts = computed(() => {
@@ -112,7 +109,7 @@ const canManagePosts = computed(() => {
         const roleFromStorage = localStorage.getItem("role");
         return roleFromStorage === "super_admin";
     } catch (error) {
-        return false;
+        return error;
     }
 });
 
@@ -121,14 +118,12 @@ const confirmMessage = ref("");
 
 const clearError = () => {
     error.value = "";
-    // Также очищаем ошибку в родительском компоненте
     if (showError) {
         showError("");
     }
 };
 
 const confirmCleanup = () => {
-    // Очищаем предыдущие ошибки при новой попытке
     error.value = "";
     if (showError) {
         showError("");
@@ -165,7 +160,6 @@ const executeCleanup = async () => {
             window.$toast?.error(errorMessage);
         }
     } catch (e) {
-        // Обрабатываем различные типы ошибок
         let errorMessage = "";
         if (e.response?.status === 403) {
             errorMessage =

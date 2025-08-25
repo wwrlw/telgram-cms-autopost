@@ -42,48 +42,18 @@ export class ChannelStatsService {
 
       let participantsCount = null;
       
-      if ((entity as any).participantsCount !== undefined && (entity as any).participantsCount !== null) {
-        participantsCount = (entity as any).participantsCount;
-        console.log(`👥 Способ 1 - participantsCount: ${participantsCount}`);
-      }
+      // Получаем количество подписчиков через GetFullChannel
+      try {
+        const fullChannel = await this.client.invoke(new Api.channels.GetFullChannel({
+          channel: entity
+        }));
         
-      else if ((entity as any).membersCount !== undefined && (entity as any).membersCount !== null) {
-        participantsCount = (entity as any).membersCount;
-        console.log(`👥 Способ 2 - membersCount: ${participantsCount}`);
-      }
-      
-      if (participantsCount === null) {
-        try {
-          const fullChannel = await this.client.invoke(new Api.channels.GetFullChannel({
-            channel: entity
-          }));
-          
-          if (fullChannel.fullChat && (fullChannel.fullChat as any).participantsCount !== undefined) {
-            participantsCount = (fullChannel.fullChat as any).participantsCount;
-            console.log(`👥 Способ 3 - GetFullChannel: ${participantsCount}`);
-          }
-        } catch (fullChannelError: any) {
-          console.log(`⚠️ Не удалось получить полную информацию о канале: ${fullChannelError?.message || fullChannelError}`);
+        if (fullChannel.fullChat && (fullChannel.fullChat as any).participantsCount !== undefined) {
+          participantsCount = (fullChannel.fullChat as any).participantsCount;
+          console.log(`👥 GetFullChannel: ${participantsCount}`);
         }
-      }
-      
-      if (participantsCount === null && !channelConfig.is_private && channelConfig.username) {
-        try {
-          const searchResult = await this.client.invoke(new Api.contacts.Search({
-            q: channelConfig.username.replace('@', ''),
-            limit: 1
-          }));
-          
-          if (searchResult.chats && searchResult.chats.length > 0) {
-            const foundChat = searchResult.chats[0];
-            if ((foundChat as any).participantsCount !== undefined) {
-              participantsCount = (foundChat as any).participantsCount;
-              console.log(`👥 Способ 4 - Search: ${participantsCount}`);
-            }
-          }
-        } catch (searchError: any) {
-          console.log(`⚠️ Поиск канала не дал результатов: ${searchError?.message || searchError}`);
-        }
+      } catch (fullChannelError: any) {
+        console.log(`⚠️ Не удалось получить полную информацию о канале: ${fullChannelError?.message || fullChannelError}`);
       }
       
       if (participantsCount !== null && participantsCount !== undefined && participantsCount > 0) {
@@ -114,7 +84,6 @@ export class ChannelStatsService {
         const subscribersCount = await this.getChannelSubscribersCount(channelConfig);
         
         if (subscribersCount !== null) {
-          // Получаем идентификатор канала для поиска
           const sourceChannel = await this.getChannelIdentifier(channelConfig);
           
           const channelStats: ChannelStats = {
@@ -132,7 +101,6 @@ export class ChannelStatsService {
           skippedCount++;
         }
 
-        // Добавляем задержку между запросами
         await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
@@ -144,9 +112,7 @@ export class ChannelStatsService {
     console.log(`✅ Обновление статистики каналов завершено. Обновлено: ${updatedCount}, Пропущено: ${skippedCount}`);
   }
 
-  /**
-   * Получает количество подписчиков канала из базы данных
-   */
+
   async getChannelSubscribersFromDB(channelId: number): Promise<number> {
     try {
       const channelStats = await this.mongoService.getChannelStats(channelId);

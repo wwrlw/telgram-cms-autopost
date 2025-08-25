@@ -89,7 +89,6 @@
                     <LoadingSpinner size="medium" text="Загружаем логи..." />
                 </div>
 
-                <!-- Empty state -->
                 <div
                     v-else-if="!loading && logs.length === 0"
                     class="flex justify-center py-8"
@@ -183,14 +182,12 @@
                     </table>
                 </div>
 
-                <!-- Infinite Scroll Trigger -->
                 <div
                     v-if="hasMore && !loading"
                     ref="infiniteScrollTrigger"
                     class="h-20 flex items-center justify-center"
                 ></div>
 
-                <!-- Infinite Scroll Loading -->
                 <div
                     v-if="infiniteScrollLoading"
                     class="flex justify-center py-8"
@@ -204,7 +201,6 @@
         </div>
     </div>
 
-    <!-- Log Details Modal -->
     <div
         v-if="showDetailsModal"
         class="fixed inset-0 bg-white/30 backdrop-blur-sm overflow-y-auto h-full w-full z-50"
@@ -289,17 +285,15 @@ import {
     inject,
 } from "vue";
 import { useRoute } from "vue-router";
-import Sidebar from "@/components/Sidebar.vue";
 import http from "@/js/http";
 import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
-import { useApiCache } from "@/composables/useApiCache";
 import LoadingSpinner from "@/components/Shared/LoadingSpinner.vue";
 
 const route = useRoute();
 const logs = ref([]);
 const users = ref([]);
 const selectedUserId = ref("");
-const sortOrder = ref("desc"); // desc - новые сначала, asc - старые сначала
+const sortOrder = ref("desc");
 const loading = ref(false);
 const usersLoading = ref(false);
 const infiniteScrollLoading = ref(false);
@@ -307,12 +301,9 @@ const hasMore = ref(true);
 const showDetailsModal = ref(false);
 const selectedLog = ref(null);
 
-// Глобальное состояние загрузки
 const setLoading = inject("setLoading", null);
 
-// Infinite scroll
 const { createObserver, destroy } = useInfiniteScroll();
-const { optimizedRequest } = useApiCache();
 const infiniteScrollTrigger = ref(null);
 
 const formatDate = (dateString) => {
@@ -367,11 +358,7 @@ const loadUsers = () => {
     });
 };
 
-const logsService = async (
-    params = {},
-    isInfiniteScroll = false,
-    options = {}
-) => {
+const logsService = async (params = {}, isInfiniteScroll = false) => {
     if (isInfiniteScroll) {
         infiniteScrollLoading.value = true;
     } else {
@@ -380,7 +367,6 @@ const logsService = async (
     }
 
     try {
-        // Проверяем, доступен ли новый endpoint
         if (
             http.logsInfiniteScroll &&
             typeof http.logsInfiniteScroll === "function"
@@ -398,7 +384,6 @@ const logsService = async (
                 }
             });
 
-            // Используем Promise-based подход для logsInfiniteScroll
             const response = await new Promise((resolve, reject) => {
                 http.logsInfiniteScroll(
                     requestParams,
@@ -428,10 +413,7 @@ const logsService = async (
                 hasMore.value = response.params?.hasMore || false;
             }
         } else {
-            // Fallback на старый метод загрузки логов
-
             if (selectedUserId.value && selectedUserId.value !== "undefined") {
-                // Загружаем логи пользователя
                 return new Promise((resolve, reject) => {
                     http.getUserLogs(
                         selectedUserId.value,
@@ -441,7 +423,7 @@ const logsService = async (
                         (response) => {
                             if (response.success) {
                                 logs.value = response.data || [];
-                                hasMore.value = false; // Старый метод не поддерживает infinite scroll
+                                hasMore.value = false;
                                 resolve(response.data);
                             } else {
                                 logs.value = [];
@@ -461,7 +443,6 @@ const logsService = async (
                     );
                 });
             } else {
-                // Загружаем все логи
                 return new Promise((resolve, reject) => {
                     http.getLogs(
                         1,
@@ -470,7 +451,7 @@ const logsService = async (
                         (response) => {
                             if (response.success) {
                                 logs.value = response.data || [];
-                                hasMore.value = false; // Старый метод не поддерживает infinite scroll
+                                hasMore.value = false;
                                 resolve(response.data);
                             } else {
                                 logs.value = [];
@@ -533,7 +514,6 @@ const loadMoreLogs = async () => {
     } catch (error) {
         console.error("Error loading more logs:", error);
 
-        // Показываем уведомление об ошибке
         if (window.$toast) {
             window.$toast.error(
                 "Ошибка загрузки дополнительных логов: " +
@@ -541,7 +521,6 @@ const loadMoreLogs = async () => {
             );
         }
 
-        // Сбрасываем состояние загрузки
         infiniteScrollLoading.value = false;
     }
 };
@@ -554,7 +533,6 @@ const loadLogs = async () => {
         logs.value = [];
         hasMore.value = false;
 
-        // Показываем уведомление об ошибке
         if (window.$toast) {
             window.$toast.error(
                 "Ошибка загрузки логов: " +
@@ -564,11 +542,10 @@ const loadLogs = async () => {
     }
 };
 
-// Функция для сброса фильтра
 const clearFilter = async () => {
     try {
         selectedUserId.value = "";
-        sortOrder.value = "desc"; // Сбрасываем к сортировке по умолчанию
+        sortOrder.value = "desc";
         logs.value = [];
         hasMore.value = true;
         await loadLogs();
@@ -605,12 +582,9 @@ const initializeInfiniteScroll = () => {
 };
 
 const sortedLogs = computed(() => {
-    // Всегда возвращаем логи в том порядке, в котором они пришли с сервера
-    // Сервер уже сортирует их по времени (timestamp: -1)
     return logs.value;
 });
 
-// Watch for route query changes
 watch(
     () => route.query.userId,
     async (newUserId) => {
@@ -632,7 +606,6 @@ watch(
     }
 );
 
-// Watch for sort order changes
 watch(sortOrder, async () => {
     try {
         logs.value = [];
@@ -643,7 +616,6 @@ watch(sortOrder, async () => {
     }
 });
 
-// Обработчик обновления логов из Header
 const refreshLogsHandler = async () => {
     logs.value = [];
     hasMore.value = true;
@@ -657,7 +629,6 @@ const refreshLogsHandler = async () => {
     } catch (error) {
         console.error("Error refreshing logs:", error);
 
-        // Показываем уведомление об ошибке
         if (window.$toast) {
             window.$toast.error(
                 "Ошибка обновления логов: " +
@@ -665,7 +636,6 @@ const refreshLogsHandler = async () => {
             );
         }
 
-        // Сбрасываем состояние загрузки
         logs.value = [];
         hasMore.value = false;
     } finally {
@@ -675,17 +645,14 @@ const refreshLogsHandler = async () => {
 };
 
 onMounted(async () => {
-    // Check if specific user ID is provided in query
     if (route.query.userId && route.query.userId !== "undefined") {
         selectedUserId.value = route.query.userId;
     } else {
         selectedUserId.value = "";
     }
 
-    // Загружаем пользователей и логи
     try {
         await loadUsers();
-        // Загружаем логи после небольшой задержки, чтобы убедиться, что selectedUserId установлен
         setTimeout(async () => {
             await loadLogs();
             await nextTick();
@@ -695,16 +662,13 @@ onMounted(async () => {
         console.error("Error in onMounted:", error);
     }
 
-    // Слушаем событие обновления логов из Header
     window.addEventListener("refreshLogs", refreshLogsHandler);
 });
 
 onUnmounted(() => {
-    // Очищаем event listener
     window.removeEventListener("refreshLogs", refreshLogsHandler);
 });
 
-// Watch for loading changes to reinitialize infinite scroll
 watch(loading, async (val) => {
     try {
         if (!val && hasMore.value) {

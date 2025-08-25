@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, inject, watch } from "vue";
+import { ref, onMounted, onUnmounted, inject } from "vue";
 import http from "@/js/http";
 import StatsCards from "@/components/StatsCards.vue";
 import Search from "@/components/Shared/Search.vue";
@@ -66,7 +66,6 @@ import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 
 const CategoryTableSkeleton = PostTableSkeleton;
 
-const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading", null);
 
 const categories = ref([]);
@@ -110,7 +109,6 @@ const categoriesService = async () => {
                     if (res.success) {
                         let filteredCategories = res.data || [];
 
-                        // Фильтрация по поисковому запросу
                         if (searchQuery.value) {
                             filteredCategories = filteredCategories.filter(
                                 (category) =>
@@ -155,7 +153,6 @@ const categoriesService = async () => {
     }
 };
 
-// Добавляем debounce для поиска
 let searchTimeout;
 const handleSearchChange = (query) => {
     searchQuery.value = query;
@@ -182,7 +179,6 @@ const editCategory = (category) => {
 
 const submitCategory = (formData) => {
     if (editingCategory.value) {
-        // Редактирование существующей категории
         http.updateCategory(formData, (res) => {
             if (res.success) {
                 window.$toast.success("Категория успешно обновлена!");
@@ -192,7 +188,6 @@ const submitCategory = (formData) => {
             }
         });
     } else {
-        // Создание новой категории
         http.createCategory(formData, (res) => {
             if (res.success) {
                 window.$toast.success("Категория успешно создана!");
@@ -245,14 +240,6 @@ const clearSelection = () => {
     selectedCategories.value = [];
 };
 
-// Убираем дублирующий watch, так как обновление теперь происходит через события
-// watch(refreshTrigger, () => {
-//     if (refreshTrigger && refreshTrigger.value > 0) {
-//         categoriesService();
-//     }
-// });
-
-// Обработчик обновления категорий из Header
 const refreshCategoriesHandler = async () => {
     console.log("Refresh categories event received");
     loading.value = true;
@@ -270,13 +257,10 @@ const refreshCategoriesHandler = async () => {
 
 onMounted(() => {
     categoriesService();
-
-    // Слушаем событие обновления категорий из Header
     window.addEventListener("refreshCategories", refreshCategoriesHandler);
 });
 
 onUnmounted(() => {
-    // Очищаем event listener
     window.removeEventListener("refreshCategories", refreshCategoriesHandler);
 });
 </script>

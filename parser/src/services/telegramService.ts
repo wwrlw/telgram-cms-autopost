@@ -242,6 +242,12 @@ export class TelegramService {
           
           if (messages && messages.length > 0) {
             const message = messages[0];
+            
+            if (!message) {
+              console.log(`⚠️ Сообщение ${messageId} не найдено или недоступно`);
+              continue;
+            }
+            
             const updatedStats = this.getPostStatsFromMessage(message);
             
             if (updatedStats) {
@@ -364,6 +370,11 @@ export class TelegramService {
 
   private getPostStatsFromMessage(message: any): PostStats | undefined {
     try {
+      if (!message || !message.id) {
+        console.log('⚠️ Некорректное сообщение для извлечения статистики');
+        return undefined;
+      }
+      
       console.log(`📊 Извлекаем статистику из сообщения ${message.id}`);
       
       const stats: PostStats = {};
@@ -467,7 +478,6 @@ export class TelegramService {
   private getFullChannelId(peer: any): number {
     const rawChannelId = Number(peer.channelId || peer.userId || peer.chatId || 0);
     
-    // Если это канал (channelId существует), восстанавливаем полный ID с префиксом -100
     if (peer.channelId) {
       return -100 * 10000000000 - rawChannelId;
     }

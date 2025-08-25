@@ -107,7 +107,7 @@ const statsConfig = {
             iconPath:
                 "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
             iconBg: "bg-indigo-500",
-            getValue: (totalCount, data) => totalCount,
+            getValue: (totalCount) => totalCount,
         },
         {
             key: "unique",
@@ -132,7 +132,7 @@ const statsConfig = {
             iconPath:
                 "M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V3a1 1 0 011 1v10.586l2.707 2.707A1 1 0 0119 19H5a1 1 0 01-.707-1.707L7 14.586V4z",
             iconColor: "text-gray-400",
-            getValue: (totalCount, data) => totalCount,
+            getValue: (totalCount) => totalCount,
         },
         {
             key: "active",
@@ -161,7 +161,7 @@ const statsConfig = {
             iconPath:
                 "M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V3a1 1 0 011 1v10.586l2.707 2.707A1 1 0 0119 19H5a1 1 0 01-.707-1.707L7 14.586V4z",
             iconColor: "text-gray-400",
-            getValue: (totalCount, data) => totalCount,
+            getValue: (totalCount) => totalCount,
         },
         {
             key: "active",
