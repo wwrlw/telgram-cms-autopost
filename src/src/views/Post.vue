@@ -246,12 +246,7 @@ async function savePost() {
     }
 
     const markdown = turndownService.turndown(editorHtml.value || "");
-
-    if (
-        !markdown.trim() &&
-        files.value.length === 0 &&
-        (!postData.value.media || postData.value.media.length === 0)
-    ) {
+    if (!markdown.trim() && files.value.length === 0) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
     }
@@ -303,7 +298,6 @@ async function savePost() {
             isSubmitting.value = false;
             if (response.success) {
                 window?.$toast?.success("Пост успешно сохранён");
-                router.push("/");
             } else {
                 window?.$toast?.error(
                     "Ошибка сохранения: " + (response.message || "")

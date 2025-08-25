@@ -120,7 +120,7 @@
                 </button>
                 <button
                     v-if="!postSaved"
-                    @click="savePost"
+                    @click="savePostToDatabase"
                     class="px-4 py-2 rounded bg-green-600 text-white"
                     :disabled="isSubmitting"
                 >
@@ -382,10 +382,6 @@ const send = async (publishLater) => {
     }
 };
 
-function savePost() {
-    savePostToDatabase();
-}
-
 const savePostToDatabase = async () => {
     if (isSubmitting.value) return;
 
@@ -448,8 +444,6 @@ const savePostToDatabase = async () => {
                     window?.$toast?.success("Пост сохранен в базе данных!");
                     emitEvent(EVENTS.POST_CREATED, response.data);
                     postSaved.value = true;
-                    // Убираем автоматическое перенаправление на главную страницу
-                    // router.push("/");
                 } else {
                     window?.$toast?.error(
                         response.message || "Ошибка сохранения поста"
