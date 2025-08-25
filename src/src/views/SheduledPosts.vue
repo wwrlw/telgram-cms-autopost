@@ -43,12 +43,11 @@
             </div>
 
             <div v-show="activeTab === 'scheduled'">
-                <ScheduledPostsGrid
+                <Thumbs
                     :posts="scheduledPosts"
                     :categories="categories"
                     :channels="channels"
                     :loading="loading"
-                    @edit="editSchedule"
                     @cancel="cancelSchedule"
                 />
             </div>
@@ -57,106 +56,13 @@
                 v-show="activeTab === 'published'"
                 class="bg-white shadow overflow-hidden sm:rounded-md"
             >
-                <div v-if="loadingPublished" class="p-8 text-center">
-                    <div
-                        class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"
-                    ></div>
-                    <p class="mt-2 text-sm text-gray-500">
-                        Загружаем опубликованные посты...
-                    </p>
-                </div>
-
-                <div
-                    v-else-if="publishedPosts.length === 0"
-                    class="p-8 text-center text-gray-500"
-                >
-                    <svg
-                        class="mx-auto h-12 w-12 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">
-                        Нет опубликованных постов
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Автоматически опубликованные посты появятся здесь.
-                    </p>
-                </div>
-
-                <ul v-else class="divide-y divide-gray-200">
-                    <li
-                        v-for="post in publishedPosts"
-                        :key="post._id"
-                        class="px-6 py-4"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0">
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                                        >
-                                            ✅ Опубликовано
-                                        </span>
-                                    </div>
-                                    <div class="ml-4 flex-1 min-w-0">
-                                        <p
-                                            class="text-sm font-medium text-gray-900 truncate"
-                                        >
-                                            {{ getPreviewText(post.text) }}
-                                        </p>
-                                        <div class="mt-1 text-sm text-gray-500">
-                                            <p>
-                                                ✅ Опубликовано:
-                                                {{
-                                                    formatDate(
-                                                        post.published_at
-                                                    )
-                                                }}
-                                            </p>
-                                            <p v-if="post.scheduled_at">
-                                                📅 Было запланировано на:
-                                                {{
-                                                    formatDate(
-                                                        post.scheduled_at
-                                                    )
-                                                }}
-                                            </p>
-                                            <p>
-                                                📺 Канал:
-                                                {{
-                                                    getChannelName(
-                                                        post.scheduled_channel_id
-                                                    )
-                                                }}
-                                            </p>
-                                            <p v-if="post.url">
-                                                🔗 Ссылка: {{ post.url }}
-                                            </p>
-                                            <p v-if="post.media?.length">
-                                                📎 Медиафайлов:
-                                                {{ post.media.length }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2 ml-4">
-                                <span class="text-sm text-green-600 font-medium"
-                                    >Успешно опубликовано</span
-                                >
-                            </div>
-                        </div>
-                    </li>
-                </ul>
+                <Thumbs
+                    :posts="publishedPosts"
+                    :categories="categories"
+                    :channels="channels"
+                    :loading="loading"
+                    @cancel="cancelSchedule"
+                />
             </div>
         </div>
 
@@ -171,14 +77,11 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import http from "../js/http.js";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
-import ScheduledPostsGrid from "@/components/ScheduledPostsGrid.vue";
-import { formatDate } from "@/js/utils.js";
+import Thumbs from "@/components/Thumb/Thumbs.vue";
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
 
-const router = useRouter();
 const { on: onEvent, emit: emitEvent } = useEventBus();
 const scheduledPosts = ref([]);
 const publishedPosts = ref([]);
@@ -263,23 +166,6 @@ const loadChannels = () => {
 const getPreviewText = (text) => {
     if (!text) return "Текст отсутствует";
     return text.length > 80 ? text.substring(0, 80) + "..." : text;
-};
-
-const getChannelName = (channelId) => {
-    const channel = channels.value.find((ch) => ch.channel_id === channelId);
-    return channel ? channel.name : `ID: ${channelId}`;
-};
-
-const editSchedule = (post) => {
-    const query = {
-        channelId: post.scheduled_channel_id,
-        scheduledAt: post.scheduled_at,
-    };
-    router.push({
-        name: "edit-scheduled-post",
-        params: { id: post._id },
-        query: query,
-    });
 };
 
 const cancelSchedule = (post) => {

@@ -171,6 +171,7 @@
                     </button>
 
                     <button
+                        v-if="!post.scheduled_at && !post.is_published"
                         @click.prevent.stop="$emit('delete', post)"
                         class="p-1.5 bg-black bg-opacity-60 text-white rounded-full hover:bg-red-600 transition-colors backdrop-blur-sm action-button"
                         title="Удалить"
@@ -189,6 +190,27 @@
                             />
                         </svg>
                     </button>
+
+                    <!-- <button
+                        v-if="post.scheduled_at"
+                        @click.prevent.stop="$emit('cancel', post)"
+                        class="p-1.5 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors backdrop-blur-sm action-button"
+                        title="Отменить публикацию"
+                    >
+                        <svg
+                            class="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button> -->
                 </div>
             </div>
         </div>
@@ -345,6 +367,18 @@
                     </span>
                 </div>
             </div>
+
+            <div
+                v-if="post.scheduled_at"
+                class="mt-3 pt-3 border-t border-gray-100"
+            >
+                <button
+                    @click.prevent="$emit('cancel', post)"
+                    class="w-full bg-orange-500 text-white text-xs font-medium py-2 px-3 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
+                >
+                    Отменить публикацию
+                </button>
+            </div>
         </div>
     </div>
 </template>
@@ -386,6 +420,7 @@ const emit = defineEmits([
     "delete",
     "quickview",
     "remove-from-favorites",
+    "cancel",
 ]);
 
 const displayText = computed(() => {

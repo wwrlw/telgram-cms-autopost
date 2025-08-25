@@ -9,6 +9,7 @@
                 @publish="$emit('publish', $event)"
                 @delete="$emit('delete', $event)"
                 @quickview="handleQuickview"
+                @cancel="$emit('cancel', $event)"
             />
         </div>
 
@@ -90,7 +91,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["publish", "delete"]);
+const emit = defineEmits(["publish", "delete", "cancel"]);
 
 const showQuickviewer = ref(false);
 const currentQuickviewMedia = ref(null);
