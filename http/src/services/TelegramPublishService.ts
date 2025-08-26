@@ -1,13 +1,14 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import { ITelegramPublishService } from '../interfaces/services/ITelegramPublishService';
 import { Post } from '../models/Post';
 import { PostedChannel } from '../types/PostedChannel';
-
 export class TelegramPublishService implements ITelegramPublishService {
-  private botToken: string;
+  private botToken: any;
   private baseUrl: string;
 
   constructor() {
-    this.botToken = process.env.TELEGRAM_BOT_TOKEN || '';
+    this.botToken = process.env.TELEGRAM_BOT_TOKEN;
     this.baseUrl = `https://api.telegram.org/bot${this.botToken}`;
   }
 
@@ -125,7 +126,7 @@ export class TelegramPublishService implements ITelegramPublishService {
       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
       .replace(/\*(.*?)\*/g, '<i>$1</i>')
       .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')
-      .replace(/\r\n|\r|\n/g, '\n'); // только \n для Telegram
+      .replace(/\r\n|\r|\n/g, '\n');
 
     let result = text;
     if (channel.signature) {
@@ -133,10 +134,8 @@ export class TelegramPublishService implements ITelegramPublishService {
       result += channel.signature;
     }
 
-    // Удаляем все теги кроме поддерживаемых Telegram
     result = result.replace(/<(?!\/?(b|i|a|code|pre)\b)[^>]*>/gi, '');
 
-    // Удаляем все <br>, <br/>, <br /> из результата (включая сигнатуру)
     result = result.replace(/<br\s*\/?>/gi, '\n');
 
     console.log('ИТОГОВОЕ СООБЩЕНИЕ В TELEGRAM:', result);
@@ -161,7 +160,6 @@ export class TelegramPublishService implements ITelegramPublishService {
     try {
       console.log(`🔄 Начинаем отправку медиа. Всего файлов: ${post.media.length}`);
       
-      // Если медиафайл один, отправляем его с подписью
       if (post.media.length === 1) {
         const media = post.media[0];
         console.log(`📎 Отправляем одиночный медиафайл:`, {
@@ -220,7 +218,6 @@ export class TelegramPublishService implements ITelegramPublishService {
           return { success: false, message: `Неизвестный тип медиа: ${mediaType}` };
         }
       } 
-      // Если медиафайлов несколько, отправляем их как группу
       else if (post.media.length > 1) {
         console.log(`📎 Отправляем группу из ${post.media.length} медиафайлов`);
         
@@ -409,7 +406,6 @@ export class TelegramPublishService implements ITelegramPublishService {
     try {
       console.log('Получаем статистику постов для канала:', channelId);
       
-      // Получаем последние сообщения канала
       const response = await fetch(`${this.baseUrl}/getUpdates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -428,7 +424,6 @@ export class TelegramPublishService implements ITelegramPublishService {
         return this.getMockPostsStats();
       }
 
-      // Фильтруем сообщения только для нужного канала
       const messages = result.result.filter((update: any) => 
         update.channel_post && 
         update.channel_post.chat && 
@@ -443,7 +438,6 @@ export class TelegramPublishService implements ITelegramPublishService {
       );
       const avgReach = totalPosts > 0 ? Math.round(totalViews / totalPosts) : 0;
 
-      // Группируем по дням для активности
       const activityData = this.groupMessagesByDate(messages);
       
       // Топ постов по просмотрам
@@ -574,8 +568,6 @@ export class TelegramPublishService implements ITelegramPublishService {
   }
 
   private async getSubscribersGrowth(channelId: string): Promise<any[]> {
-    // В реальном API Telegram нет прямого доступа к истории роста подписчиков
-    // Возвращаем моковые данные
     return [
       { date: '2024-01-01', count: 12000 },
       { date: '2024-02-01', count: 12500 },
@@ -588,7 +580,6 @@ export class TelegramPublishService implements ITelegramPublishService {
   }
 
   private async getViewsData(channelId: string): Promise<any[]> {
-    // Моковые данные для просмотров
     return [
       { date: '2024-07-01', views: 45000 },
       { date: '2024-07-02', views: 38000 },
@@ -601,7 +592,6 @@ export class TelegramPublishService implements ITelegramPublishService {
   }
 
   private async getEngagementData(channelId: string): Promise<any[]> {
-    // Моковые данные для вовлеченности
     return [
       { date: '2024-07-01', engagement: 4.2 },
       { date: '2024-07-02', engagement: 3.8 },
