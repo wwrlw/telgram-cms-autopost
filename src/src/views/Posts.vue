@@ -274,11 +274,13 @@ const handleCategoryFilterChange = async (categoryId) => {
 const handleDateFiltersChange = async (dateFilters) => {
     dateFromFilter.value = dateFilters.dateFrom;
     dateToFilter.value = dateFilters.dateTo;
-    currentPage.value = 1;
-    hasMore.value = true;
-    await postsService({ page: 1 });
-    const el = getScroller();
-    if (el) el.scrollTop = 0;
+    debouncedSearch(async () => {
+        currentPage.value = 1;
+        hasMore.value = true;
+        await postsService({ page: 1 });
+        const el = getScroller();
+        if (el) el.scrollTop = 0;
+    }, 3000);
 };
 
 const handleSortOptionsChange = async (sortOptions) => {

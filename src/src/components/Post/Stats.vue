@@ -65,25 +65,7 @@
                     class="bg-blue-50 p-3 rounded-lg"
                 >
                     <div class="flex items-center gap-2">
-                        <svg
-                            class="w-4 h-4 text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                            />
-                        </svg>
+                        <LucideEye class="w-4 h-4 text-blue-600" />
                         <span class="text-xs text-blue-600 font-medium"
                             >Просмотры</span
                         >
@@ -98,19 +80,7 @@
                     class="bg-green-50 p-3 rounded-lg"
                 >
                     <div class="flex items-center gap-2">
-                        <svg
-                            class="w-4 h-4 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
+                        <LucideThumbsUp class="w-4 h-4 text-green-600" />
                         <span class="text-xs text-green-600 font-medium"
                             >Реакции</span
                         >
@@ -127,19 +97,7 @@
                     class="bg-purple-50 p-3 rounded-lg"
                 >
                     <div class="flex items-center gap-2">
-                        <svg
-                            class="w-4 h-4 text-purple-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                            />
-                        </svg>
+                        <LucideMessageCircle class="w-4 h-4 text-purple-600" />
                         <span class="text-xs text-purple-600 font-medium"
                             >Комментарии</span
                         >
@@ -154,19 +112,7 @@
                     class="bg-orange-50 p-3 rounded-lg"
                 >
                     <div class="flex items-center gap-2">
-                        <svg
-                            class="w-4 h-4 text-orange-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                            />
-                        </svg>
+                        <LucideShare2 class="w-4 h-4 text-orange-600" />
                         <span class="text-xs text-orange-600 font-medium"
                             >Пересылки</span
                         >
@@ -228,38 +174,14 @@
 
         <div class="space-y-3 mt-6 pt-4 border-t">
             <div v-if="postData?.is_unique" class="flex items-center gap-2">
-                <svg
-                    class="w-4 h-4 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                </svg>
+                <LucideCheckCircle class="w-4 h-4 text-green-600" />
                 <span class="text-sm text-green-700 font-medium"
                     >Уникальный контент</span
                 >
             </div>
 
             <div v-if="postData?.is_published" class="flex items-center gap-2">
-                <svg
-                    class="w-4 h-4 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                    />
-                </svg>
+                <LucideCheckCircle class="w-4 h-4 text-blue-600" />
                 <span class="text-sm text-blue-700 font-medium"
                     >Опубликован</span
                 >
@@ -269,19 +191,7 @@
                 v-if="postData?.media && postData.media.length > 0"
                 class="flex items-center gap-2"
             >
-                <svg
-                    class="w-4 h-4 text-purple-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                </svg>
+                <LucideImage class="w-4 h-4 text-purple-600" />
                 <span class="text-sm text-purple-700 font-medium">
                     {{ postData.media.length }}
                     {{ getMediaCountText(postData.media.length) }}
@@ -294,6 +204,14 @@
 <script setup>
 import { computed } from "vue";
 import { formatDate, formatNumber } from "@/js/utils";
+import {
+    LucideEye,
+    LucideMessageCircle,
+    LucideShare2,
+    LucideThumbsUp,
+    LucideImage,
+    LucideCheckCircle,
+} from "lucide-vue-next";
 
 const props = defineProps({
     postData: {

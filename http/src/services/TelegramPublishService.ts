@@ -160,6 +160,89 @@ export class TelegramPublishService implements ITelegramPublishService {
     try {
       console.log(`🔄 Начинаем отправку медиа. Всего файлов: ${post.media.length}`);
       
+      // Кандидаты для альбома: только фото/видео
+      const albumCandidates = post.media.filter(m => m.type === 'photo' || m.type === 'video');
+      const otherMedia = post.media.filter(m => !(m.type === 'photo' || m.type === 'video'));
+
+      // Если фото/видео больше двух — отправляем одним альбомом
+      if (albumCandidates.length > 2) {
+        console.log(`🗂 Отправляем альбом (sendMediaGroup) из ${albumCandidates.length} элементов`);
+
+        const mediaItems = albumCandidates.map((m, idx) => {
+          const mediaUrl = getMediaUrl(m.file_path);
+          const item: any = {
+            type: m.type === 'photo' ? 'photo' : 'video',
+            media: mediaUrl
+          };
+          if (idx === 0 && caption) {
+            item.caption = caption.substring(0, 1024);
+            item.parse_mode = 'HTML';
+          }
+          return item;
+        });
+
+        const albumRequestBody = {
+          chat_id: channel.channel_id,
+          media: mediaItems
+        };
+
+        console.log('📤 Запрос к Telegram API (sendMediaGroup):', JSON.stringify(albumRequestBody, null, 2));
+
+        const albumResponse = await fetch(`${this.baseUrl}/sendMediaGroup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(albumRequestBody)
+        });
+
+        const albumResult = await albumResponse.json();
+        console.log('📥 Ответ от Telegram API (sendMediaGroup):', JSON.stringify(albumResult, null, 2));
+
+        if (!albumResult.ok) {
+          console.error('❌ Ошибка отправки альбома:', albumResult.description);
+          return { success: false, message: `Ошибка отправки альбома: ${albumResult.description}` };
+        }
+
+        // По спецификации, возвращается массив сообщений; берем id первого
+        const firstMessageId = albumResult.result?.[0]?.message_id;
+        console.log(`✅ Альбом отправлен успешно, первый message_id: ${firstMessageId}`);
+
+        // После альбома отправим оставшиеся (не фото/видео) медиа по одному, без подписи
+        for (let i = 0; i < otherMedia.length; i++) {
+          const media = otherMedia[i];
+          const method = this.getMediaMethod(media.type);
+          console.log(`🔄 Отправляем дополнительный медиафайл (${media.type}) после альбома: метод=${method}`);
+
+          if (!method) {
+            console.warn(`⚠️ Пропускаем неподдерживаемый тип медиа: ${media.type}`);
+            continue;
+          }
+
+          const mediaUrl = getMediaUrl(media.file_path);
+          const mediaRequestBody = {
+            chat_id: channel.channel_id,
+            [media.type]: mediaUrl
+          };
+
+          try {
+            const extraResp = await fetch(`${this.baseUrl}/${method}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(mediaRequestBody)
+            });
+            const extraRes = await extraResp.json();
+            if (extraRes.ok) {
+              console.log(`✅ Доп. медиа (${media.type}) отправлено успешно`);
+            } else {
+              console.error(`❌ Ошибка отправки доп. медиа (${media.type}):`, extraRes.description);
+            }
+          } catch (e) {
+            console.error(`❌ Ошибка сети при отправке доп. медиа (${media.type}):`, e);
+          }
+        }
+
+        return { success: true, message: 'Альбом отправлен успешно', messageId: firstMessageId?.toString() };
+      }
+      
       if (post.media.length === 1) {
         const media = post.media[0];
         console.log(`📎 Отправляем одиночный медиафайл:`, {
@@ -219,9 +302,8 @@ export class TelegramPublishService implements ITelegramPublishService {
         }
       } 
       else if (post.media.length > 1) {
-        console.log(`📎 Отправляем группу из ${post.media.length} медиафайлов`);
+        console.log(`📎 Отправляем группу из ${post.media.length} медиафайлов (без альбома, т.к. <= 2 фото/видео или смешанные типы)`);
         
-        // Отправляем первый файл с подписью
         const firstMedia = post.media[0];
         const firstMediaType = firstMedia.type;
         const firstMethod = this.getMediaMethod(firstMediaType);
@@ -260,7 +342,6 @@ export class TelegramPublishService implements ITelegramPublishService {
         const firstMessageId = firstMediaResult.result.message_id;
         console.log(`✅ Первый медиафайл отправлен успешно, ID: ${firstMessageId}`);
         
-        // Отправляем остальные файлы без подписи
         for (let i = 1; i < post.media.length; i++) {
           const media = post.media[i];
           const mediaType = media.type;
@@ -322,14 +403,6 @@ export class TelegramPublishService implements ITelegramPublishService {
     console.log(`🔧 Найден метод: ${method}`);
     
     return method;
-  }
-
-  private markdownToHtml(text: string): string {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')  // **жирный** -> <b>жирный</b>
-      .replace(/\*(.*?)\*/g, '<i>$1</i>')      // *курсив* -> <i>курсив</i>
-      .replace(/`(.*?)`/g, '<code>$1</code>')  // `код` -> <code>код</code>
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>'); // [текст](ссылка) -> <a href="ссылка">текст</a>
   }
 
   async getChannelAnalytics(channelId: string): Promise<any> {

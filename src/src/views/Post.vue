@@ -1,9 +1,16 @@
 <template>
     <div class="min-h-screen bg-white flex flex-col">
+        <div>
+            <Stats v-if="postData !== null" :post-data="postData" />
+        </div>
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
             <div class="flex items-center gap-3 justify-start mb-4">
                 <h2 class="text-lg font-semibold">
-                    {{ route.name === "create-post" ? "Создать пост" : "Редактировать пост" }}
+                    {{
+                        route.name === "create-post"
+                            ? "Создать пост"
+                            : "Редактировать пост"
+                    }}
                 </h2>
                 <div
                     v-if="postData && postData.category_name"
@@ -22,10 +29,9 @@
                 </div>
             </div>
 
-            <div class="flex mb-4 gap-2">
-                <TextEditor v-model="editorHtml" />
-                <Stats v-if="postData !== null" :post-data="postData" />
-            </div>
+            <!-- <div class="flex mb-4 gap-2"> -->
+            <TextEditor v-model="editorHtml" />
+            <!-- </div> -->
 
             <div class="space-y-4 mb-4">
                 <ExistingMediaGrid
