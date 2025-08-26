@@ -8,8 +8,8 @@ dotenv.config();
 
 const mongoUsername = process.env.MONGO_USERNAME;
 const mongoPassword = process.env.MONGO_PASSWORD;
-const mongoHost = process.env.MONGO_HOST || 'localhost';
-const mongoPort = process.env.MONGO_PORT || '27019';
+const mongoHost = process.env.MONGO_HOST;
+const mongoPort = process.env.MONGO_PORT;
 const MONGO_DB = process.env.MONGO_DB_NAME || 'parse-news';
 
 let mongoUri = `mongodb://${mongoHost}:${mongoPort}/${MONGO_DB}`;

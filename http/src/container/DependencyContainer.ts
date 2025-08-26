@@ -92,7 +92,7 @@ export class DependencyContainer {
   }
 
   getAuthService(): AuthService {
-    const jwtSecret = process.env.JWT_SECRET || 'supersecretkey';
+    const jwtSecret = process.env.JWT_SECRET || '';
     return new AuthService(jwtSecret);
   }
 

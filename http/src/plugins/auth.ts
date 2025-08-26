@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify';
 
 async function authPlugin(fastify: FastifyInstance) {
   fastify.register(require('@fastify/jwt'), {
-    secret: process.env.JWT_SECRET || 'supersecretkey',
+    secret: process.env.JWT_SECRET || '',
   });
 
   fastify.decorate(

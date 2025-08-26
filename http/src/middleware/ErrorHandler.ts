@@ -32,7 +32,6 @@ export function errorHandler(
     });
   }
 
-  // MongoDB errors
   if (error.message.includes('Invalid post ID') || error.message.includes('Invalid user ID')) {
     return reply.status(400).send({
       success: false,
@@ -47,7 +46,6 @@ export function errorHandler(
     });
   }
 
-  // Default error
   return reply.status(500).send({
     success: false,
     message: 'Something went wrong',
