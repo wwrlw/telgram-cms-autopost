@@ -407,6 +407,7 @@ const loadCategories = async () => {
         if (response.success && response.data) {
             categories.value = response.data;
         }
+        console.log(categories.value);
     } catch (error) {
         console.error("Error loading categories:", error);
     }

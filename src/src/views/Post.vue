@@ -9,21 +9,6 @@
                             : "Редактировать пост"
                     }}
                 </h2>
-                <div
-                    v-if="postData && postData.category_name"
-                    class="flex items-center gap-2"
-                >
-                    <span class="text-sm text-gray-500">Категория:</span>
-                    <span
-                        class="px-2 py-1 text-xs rounded-full text-white"
-                        :style="{
-                            backgroundColor:
-                                postData.category_color || '#6b7280',
-                        }"
-                    >
-                        {{ postData.category_name }}
-                    </span>
-                </div>
             </div>
 
             <TextEditor v-model="editorHtml" />
@@ -64,7 +49,7 @@
 
             <div class="space-y-4 mb-4">
                 <ChannelSelector
-                    v-model="selectedChannel"
+                    v-model="selectorSelectChannels"
                     :channels="channels"
                 />
                 <ScheduleControls
@@ -166,6 +151,7 @@ const files = ref([]);
 const schedule = ref(false);
 const scheduledAt = ref("");
 const selectedChannel = ref("");
+const selectorSelectChannels = ref("");
 const channels = ref([]);
 const loadingPost = ref(false);
 const postData = ref(null);
@@ -277,9 +263,9 @@ async function savePost() {
             media: allMedia,
         };
 
-        if (selectedChannel.value) {
-            updateData.channel_id = selectedChannel.value;
-        }
+        // if (selectedChannel.value) {
+        //     updateData.channel_id = selectedChannel.value;
+        // }
 
         http.updatePost(updateData, (response) => {
             isSubmitting.value = false;

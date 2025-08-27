@@ -7,10 +7,9 @@
         <select
             v-model="innerValue"
             class="border rounded p-2 text-sm w-full"
-            :disabled="loading || disabled"
         >
-            <option disabled value="">
-                {{ loading ? "Загрузка каналов..." : "Выберите канал" }}
+            <option value="">
+                Выберите канал
             </option>
 
             <option
@@ -30,8 +29,6 @@ import { computed } from "vue";
 const props = defineProps({
     modelValue: { type: String, default: "" },
     channels: { type: Array, default: () => [] },
-    loading: { type: Boolean, default: false },
-    disabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:modelValue"]);

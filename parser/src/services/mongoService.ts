@@ -28,6 +28,9 @@ export class MongoService {
       await this.postsCollection.createIndex({ channel_id: 1 });
       await this.postsCollection.createIndex({ timestamp: -1 });
       await this.postsCollection.createIndex({ created_at: -1 });
+      await this.postsCollection.createIndex({ created_at: -1, 'channel_id': 1 });
+      await this.postsCollection.createIndex({ source_channel: 1, text: 1 });
+      await this.postsCollection.createIndex({ channel_id: 1, created_at: -1 });
       
       // Индексы для проверки дубликатов
       await this.postsCollection.createIndex({ text: 1 });
