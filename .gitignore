@@ -2,3 +2,4 @@
 node_modules/
 media
 mongo_data
+mongocompose.yml
