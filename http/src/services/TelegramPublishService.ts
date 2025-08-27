@@ -160,13 +160,11 @@ export class TelegramPublishService implements ITelegramPublishService {
     try {
       console.log(`🔄 Начинаем отправку медиа. Всего файлов: ${post.media.length}`);
       
-      // Кандидаты для альбома: только фото/видео
       const albumCandidates = post.media.filter(m => m.type === 'photo' || m.type === 'video');
       const otherMedia = post.media.filter(m => !(m.type === 'photo' || m.type === 'video'));
 
-      // Если фото/видео больше двух — отправляем одним альбомом
       if (albumCandidates.length > 2) {
-        console.log(`🗂 Отправляем альбом (sendMediaGroup) из ${albumCandidates.length} элементов`);
+        console.log(`Отправляем альбом (sendMediaGroup) из ${albumCandidates.length} элементов`);
 
         const mediaItems = albumCandidates.map((m, idx) => {
           const mediaUrl = getMediaUrl(m.file_path);
@@ -202,11 +200,9 @@ export class TelegramPublishService implements ITelegramPublishService {
           return { success: false, message: `Ошибка отправки альбома: ${albumResult.description}` };
         }
 
-        // По спецификации, возвращается массив сообщений; берем id первого
         const firstMessageId = albumResult.result?.[0]?.message_id;
         console.log(`✅ Альбом отправлен успешно, первый message_id: ${firstMessageId}`);
 
-        // После альбома отправим оставшиеся (не фото/видео) медиа по одному, без подписи
         for (let i = 0; i < otherMedia.length; i++) {
           const media = otherMedia[i];
           const method = this.getMediaMethod(media.type);
@@ -524,10 +520,8 @@ export class TelegramPublishService implements ITelegramPublishService {
         .sort((a: any, b: any) => b.views - a.views)
         .slice(0, 5);
 
-      // Лучшее время для публикаций
       const bestTimes = this.analyzeBestPostingTimes(messages);
 
-      // Типы контента
       const contentTypes = this.analyzeContentTypes(messages);
 
       const stats = {

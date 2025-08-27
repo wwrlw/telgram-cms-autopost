@@ -401,7 +401,6 @@ export class TelegramService {
         console.log(`💬 Комментарии: ${stats.comments}`);
       }
 
-      // Reactions
       if (message.reactions && message.reactions.results && Array.isArray(message.reactions.results)) {
         const totalReactions = message.reactions.results.reduce((total: number, reaction: any) => {
           return total + (Number(reaction.count) || 0);
@@ -426,9 +425,7 @@ export class TelegramService {
         }
       }
 
-      // Return stats only if we have at least one meaningful statistic
       if (hasStats) {
-        // Ensure we have at least views and forwards with default values
         if (stats.views === undefined) stats.views = 0;
         if (stats.forwards === undefined) stats.forwards = 0;
         
@@ -543,19 +540,29 @@ export class TelegramService {
 
       this.albumTimers[groupId] = setTimeout(async () => {
         const albumMsgs = this.albumBuffer[groupId];
-        let allMedia: any[] = [];
-        let text = '';
+
+        const meidaToProcces: any[] = albumMsgs.map(m => m.media).filter(Boolean);
+        let text = albumMsgs.find(m => m.message)?.message || '';
         
-        for (const m of albumMsgs) {
-          const media = await this.mediaService.processMedia(
-            this.client,
-            m,
-            Number(peer.channelId || peer.userId || peer.chatId || 0),
-            m.id
-          );
-          allMedia = allMedia.concat(media);
-          if (m.message && !text) text = m.message;
-        }
+        const allMedia = await this.mediaService.processMedia(
+          this.client,
+          { media: meidaToProcces },
+          Number(peer.channelId || peer.userId || peer.chatId || 0),
+          albumMsgs[0].id
+        )
+        // let allMedia: any[] = [];
+        // let text = '';
+        
+        // for (const m of albumMsgs) {
+        //   const media = await this.mediaService.processMedia(
+        //     this.client,
+        //     m,
+        //     Number(peer.channelId || peer.userId || peer.chatId || 0),
+        //     m.id
+        //   );
+        //   allMedia = allMedia.concat(media);
+        //   if (m.message && !text) text = m.message;
+        // }
         
         const channelConfig = this.config.targetChannels.find(c => normalizeId(c.id) === normalizedIncomingId);
         const sourceChannel = await this.getChannelIdentifier(peer, channelConfig);

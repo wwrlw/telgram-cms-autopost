@@ -308,7 +308,7 @@
 <script setup>
 import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import http from "@/js/http";
+// import http from "@/js/http";
 import {
     Plus,
     Settings,
@@ -382,21 +382,21 @@ const loadUserData = () => {
     }
 };
 
-const checkUserRole = async () => {
-    try {
-        const response = await http.instance.get("/auth/check");
-        if (response.data.success) {
-            const newRole = response.data.data.role;
-            if (newRole !== userRole.value) {
-                userRole.value = newRole;
-                localStorage.setItem("role", newRole);
-                console.log("Role updated to:", newRole);
-            }
-        }
-    } catch (error) {
-        console.error("Error checking user role:", error);
-    }
-};
+// const checkUserRole = async () => {
+//     try {
+//         const response = await http.instance.get("/auth/check");
+//         if (response.data.success) {
+//             const newRole = response.data.data.role;
+//             if (newRole !== userRole.value) {
+//                 userRole.value = newRole;
+//                 localStorage.setItem("role", newRole);
+//                 console.log("Role updated to:", newRole);
+//             }
+//         }
+//     } catch (error) {
+//         console.error("Error checking user role:", error);
+//     }
+// };
 
 onMounted(() => {
     const savedState = localStorage.getItem("sidebarCollapsed");
@@ -406,17 +406,12 @@ onMounted(() => {
         isCollapsed.value = true;
     }
     loadUserData();
-    const roleCheckInterval = setInterval(checkUserRole, 30000);
     window.addEventListener("storage", (e) => {
         if (e.key === "user" || e.key === "role") {
             loadUserData();
         }
     });
     window.addEventListener("resize", handleResize);
-
-    onUnmounted(() => {
-        clearInterval(roleCheckInterval);
-    });
 });
 
 const handleResize = () => {

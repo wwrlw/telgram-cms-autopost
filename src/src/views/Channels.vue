@@ -66,8 +66,10 @@ import Search from "@/components/Shared/Search.vue";
 import CreateChannelModal from "@/components/Modal/CreateChannelModal.vue";
 import PostTableSkeleton from "@/components/PostTableSkeleton.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
+import { useApiCache } from "@/composables/useApiCache";
 
 const ChannelTableSkeleton = PostTableSkeleton;
+const { debouncedSearch } = useApiCache();
 
 const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading", null);
@@ -167,12 +169,9 @@ const changeItemsPerPage = (limit) => {
     channelsService({ page: 1, limit });
 };
 
-// Добавляем debounce для поиска
-let searchTimeout;
-const handleSearchChange = (query) => {
+const handleSearchChange = async (query) => {
     searchQuery.value = query;
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
+    await debouncedSearch(async () => {
         pagination.value.page = 1;
         channelsService({ page: 1 });
     }, 500);
@@ -272,7 +271,6 @@ const clearSelection = () => {
     selectedChannels.value = [];
 };
 
-// Обработчик обновления каналов из Header
 const refreshChannelsHandler = async () => {
     console.log("Refresh channels event received");
     loading.value = true;
@@ -297,12 +295,10 @@ watch(refreshTrigger, () => {
 onMounted(() => {
     channelsService();
 
-    // Слушаем событие обновления каналов из Header
     window.addEventListener("refreshChannels", refreshChannelsHandler);
 });
 
 onUnmounted(() => {
-    // Очищаем event listener
     window.removeEventListener("refreshChannels", refreshChannelsHandler);
 });
 </script>

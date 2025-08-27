@@ -85,16 +85,16 @@ export class MediaService {
     let thumbnailPath: string | undefined = undefined;
 
     try {
-      // Скачиваем основной файл
       const filePath = await client.downloadMedia(media, {
         outputFile: path.join(this.mediaPath, mediaType, fullFileName)
       });
+
+      const relativeFilePath = path.relative(process.cwd(), filePath as string);
 
       if (!filePath || typeof filePath !== 'string') {
         throw new Error('Не удалось получить путь к файлу');
       }
 
-      // Обрабатываем изображения
       if (mediaType === 'photos') {
         await this.processImage(filePath);
       }
@@ -133,8 +133,8 @@ export class MediaService {
         type: mediaType === 'photos' ? 'photo' : 
               mediaType === 'videos' ? 'video' : 
               mediaType === 'documents' ? 'document' : 'document',
-        file_path: filePath,
-        thumbnail_path: thumbnailPath
+        file_path: relativeFilePath.replace(/\\/g, '/'),
+        thumbnail_path: thumbnailPath?.replace(/\\/g, '/')
       };
 
     } catch (error) {

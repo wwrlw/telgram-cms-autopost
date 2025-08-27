@@ -1,8 +1,5 @@
 <template>
-    <div class="min-h-screen bg-white flex flex-col">
-        <div>
-            <Stats v-if="postData !== null" :post-data="postData" />
-        </div>
+    <div class="min-h-screen bg-white flex">
         <div class="flex-1 w-full p-4 lg:p-6 flex flex-col">
             <div class="flex items-center gap-3 justify-start mb-4">
                 <h2 class="text-lg font-semibold">
@@ -29,9 +26,7 @@
                 </div>
             </div>
 
-            <!-- <div class="flex mb-4 gap-2"> -->
             <TextEditor v-model="editorHtml" />
-            <!-- </div> -->
 
             <div class="space-y-4 mb-4">
                 <ExistingMediaGrid
@@ -71,7 +66,6 @@
                 <ChannelSelector
                     v-model="selectedChannel"
                     :channels="channels"
-                    :category-name="postData?.category_name || ''"
                 />
                 <ScheduleControls
                     v-model:schedule="schedule"
@@ -140,6 +134,9 @@
                 </button>
             </div>
         </div>
+        <div class="p-4 lg:p-6">
+            <Stats v-if="postData !== null" :post-data="postData" />
+        </div>
     </div>
 </template>
 
@@ -198,29 +195,8 @@ const loadChannels = () => {
     http.getActivePublicationChannels((response) => {
         if (response.success) {
             channels.value = response.data || [];
-            if (postData.value && postData.value.category_name) {
-                autoSelectChannelByCategory();
-            }
         }
     });
-};
-
-const autoSelectChannelByCategory = () => {
-    if (
-        !postData.value ||
-        !postData.value.category_name ||
-        channels.value.length === 0
-    )
-        return;
-    const matchingChannel = channels.value.find(
-        (channel) => channel.name === postData.value.category_name
-    );
-    if (matchingChannel) {
-        selectedChannel.value = matchingChannel.channel_id;
-        console.log(
-            `Автовыбор канала "${matchingChannel.name}" для категории "${postData.value.category_name}"`
-        );
-    }
 };
 
 const hasText = computed(() => {
@@ -398,7 +374,6 @@ async function publishNow() {
                                 "Пост успешно опубликован в Telegram!"
                             );
                             emitEvent(EVENTS.POST_PUBLISHED, response.data);
-                            router.push("/");
                         } else {
                             window?.$toast?.error(
                                 "Ошибка публикации: " +
@@ -539,13 +514,10 @@ function loadPost() {
         if (res && res.success) {
             postData.value = res.data;
             initializeEditorContent(res.data);
-            await preloadMedia(res.data);
 
             if (res.data.channel_id) {
                 selectedChannel.value = res.data.channel_id;
             }
-
-            autoSelectChannelByCategory();
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
         }
@@ -567,24 +539,6 @@ function toggleTextMode() {
     initializeEditorContent(postData.value);
 }
 
-async function preloadMedia(post) {
-    if (!post || !post.media || !post.media.length) return;
-    try {
-        const mediaUrls = post.media
-            .filter((m) => m && m.file_path)
-            .map((m) => m.file_path);
-        if (mediaUrls.length > 0) {
-            console.log(
-                "Preloading media for post:",
-                mediaUrls.length,
-                "files"
-            );
-        }
-    } catch (error) {
-        console.warn("Failed to preload media:", error);
-    }
-}
-
 const showMediaViewer = ref(false);
 const currentMediaIndex = ref(0);
 const currentMedia = ref(null);
@@ -598,22 +552,6 @@ function openMediaViewer(media, index) {
 function closeMediaViewer() {
     showMediaViewer.value = false;
     currentMedia.value = null;
-}
-
-function previousMedia() {
-    currentMediaIndex.value--;
-    if (currentMediaIndex.value < 0) {
-        currentMediaIndex.value = postData.value.media.length - 1;
-    }
-    currentMedia.value = postData.value.media[currentMediaIndex.value];
-}
-
-function nextMedia() {
-    currentMediaIndex.value++;
-    if (currentMediaIndex.value >= postData.value.media.length) {
-        currentMediaIndex.value = 0;
-    }
-    currentMedia.value = postData.value.media[currentMediaIndex.value];
 }
 
 async function uniquizePost() {
@@ -640,23 +578,7 @@ async function uniquizePost() {
         }
     } catch (error) {
         console.error("Error uniquizing post:", error);
-
-        let errorMessage = "Ошибка уникализации";
-
-        if (error.response) {
-            const statusCode = error.response.status;
-            const serverMessage =
-                error.response.data?.message ||
-                error.response.data?.error ||
-                "Неизвестная ошибка сервера";
-            errorMessage = `Ошибка ${statusCode}: ${serverMessage}`;
-        } else if (error.request) {
-            errorMessage = "Ошибка сети. Проверьте подключение к интернету";
-        } else {
-            errorMessage = error.message || "Неизвестная ошибка";
-        }
-
-        window?.$toast?.error(errorMessage);
+        window?.$toast?.error("Ошибка уникализации");
     } finally {
         uniquizing.value = false;
     }
@@ -664,11 +586,9 @@ async function uniquizePost() {
 
 onMounted(() => {
     loadChannels();
+    loadPost();
     const futureTime = new Date(Date.now() + 60 * 60 * 1000);
     scheduledAt.value = futureTime.toISOString().slice(0, 16);
-    if (postId) {
-        loadPost();
-    }
 });
 </script>
 

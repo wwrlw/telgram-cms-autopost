@@ -1,7 +1,6 @@
 <template>
     <div class="min-h-screen bg-gray-50" data-settings-component>
         <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <!-- Отображение ошибок -->
             <div
                 v-if="error"
                 class="mb-6 p-4 bg-red-50 border border-red-200 rounded"
@@ -37,7 +36,6 @@
                 </div>
             </div>
 
-            <!-- Настройки доступны всем пользователям -->
             <div class="mb-6 p-4 bg-white shadow rounded">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-lg font-semibold">Настройки</h3>
@@ -96,10 +94,8 @@
                 </div>
             </div>
 
-            <!-- Компонент очистки БД доступен только супер администраторам -->
             <ClearDb v-if="userRole === 'super_admin'" />
 
-            <!-- Сообщение для пользователей без доступа к расширенным настройкам -->
             <div
                 v-if="userRole && userRole !== 'super_admin'"
                 class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded"
@@ -126,7 +122,6 @@
             </div>
         </main>
 
-        <!-- Модальное окно для подтверждения сохранения настроек -->
         <ConfirmModal
             :show="showConfirmModal"
             :message="confirmMessage"
@@ -154,7 +149,6 @@ const showConfirmModal = ref(false);
 const confirmMessage = ref("");
 const error = ref("");
 
-// Предоставляем функцию для отображения ошибок дочерним компонентам
 const showError = (errorMessage) => {
     error.value = errorMessage;
 };
@@ -163,7 +157,6 @@ provide("showError", showError);
 
 const loadUserData = async () => {
     try {
-        // Очищаем предыдущие ошибки
         error.value = "";
 
         const userData = localStorage.getItem("user");
@@ -178,7 +171,6 @@ const loadUserData = async () => {
             }
         }
 
-        // Проверяем доступ к странице настроек
         try {
             await http.instance.get("/auth/check");
         } catch (err) {
@@ -201,22 +193,16 @@ const loadUserData = async () => {
 };
 
 const saveSettings = () => {
-    // Показываем модальное окно для подтверждения
     confirmMessage.value = `Сохранить настройки?\n\nТема: ${settings.value.theme === "light" ? "Светлая" : "Тёмная"}\nЯзык: ${settings.value.language === "en" ? "Английский" : "Русский"}`;
     showConfirmModal.value = true;
 };
 
 const confirmSaveSettings = async () => {
     try {
-        // Здесь можно добавить логику сохранения настроек
-        // Например, отправка запроса на сервер
-
-        // Показываем уведомление об успешном сохранении
         if (window?.$toast) {
             window.$toast.success("Настройки сохранены");
         }
 
-        // Скрываем модальное окно
         showConfirmModal.value = false;
     } catch (err) {
         if (err.response?.status === 403) {
@@ -234,7 +220,6 @@ const confirmSaveSettings = async () => {
             }
         }
 
-        // Скрываем модальное окно
         showConfirmModal.value = false;
     }
 };
@@ -242,7 +227,6 @@ const confirmSaveSettings = async () => {
 onMounted(() => {
     loadUserData();
 
-    // Слушаем изменения в localStorage
     window.addEventListener("storage", (e) => {
         if (e.key === "user" || e.key === "role") {
             loadUserData();
