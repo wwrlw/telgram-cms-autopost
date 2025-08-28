@@ -582,7 +582,7 @@ function selectDefaultChannelByCategory() {
     const post = postData.value;
     if (!post || !channels.value || channels.value.length === 0) return;
 
-    const categoryName = (post.category_name || '').trim().toLowerCase();
+    const categoryName = (post.category_name || "").trim().toLowerCase();
     if (!categoryName) return;
 
     const matched = channels.value.find((ch) => {

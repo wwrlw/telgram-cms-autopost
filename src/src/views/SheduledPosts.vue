@@ -157,16 +157,16 @@ const loadPublishedPosts = () => {
     });
 };
 
-const loadCategories = () => {
-    http.categories((response) => {
-        if (response.success) {
-            categories.value = response.data || [];
-            console.log(categories);
-        } else {
-            console.error("Ошибка загрузки категорий:", response.message);
-        }
-    });
-};
+// const loadCategories = () => {
+//     http.categories((response) => {
+//         if (response.success) {
+//             categories.value = response.data || [];
+//             console.log(categories);
+//         } else {
+//             console.error("Ошибка загрузки категорий:", response.message);
+//         }
+//     });
+// };
 
 const getPreviewText = (text) => {
     if (!text) return "Текст отсутствует";
@@ -196,7 +196,7 @@ const cancelSchedule = (post) => {
 onMounted(() => {
     loadScheduledPosts();
     loadPublishedPosts();
-    loadCategories();
+    // loadCategories();
     // loadChannels();
 
     onEvent(EVENTS.SCHEDULED_POST_CREATED, () => {

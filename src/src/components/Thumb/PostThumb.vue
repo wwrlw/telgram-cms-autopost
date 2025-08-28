@@ -371,11 +371,21 @@
                     <span
                         v-if="
                             post.published_channel_id !== undefined &&
-                            post.published_channel_id !== null
+                            route.name !== 'index'
                         "
                         class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700"
                     >
-                        {{ post.published_channel_name }}
+                        {{ post.published_channel_name || "Неизвестный канал" }}
+                    </span>
+
+                    <span
+                        v-if="
+                            !post.published_channel_id && route.name !== 'index'
+                        "
+                        class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-700"
+                    >
+                        📅
+                        {{ post.scheduled_channel_name || "Неизвестный канал" }}
                     </span>
                 </div>
             </div>

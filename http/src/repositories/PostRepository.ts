@@ -568,6 +568,25 @@ export class PostRepository implements IPostRepository {
           channel_username: '$channel.username',
           timestamp: '$timestamp'
         }
+      },
+      {
+        $lookup: {
+          from: 'posted_channels',
+          localField: 'scheduled_channel_id',
+          foreignField: 'channel_id',
+          as: 'scheduled_channel'
+        }
+      },
+      {
+        $unwind: {
+          path: '$scheduled_channel',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          scheduled_channel_name: '$scheduled_channel.name'
+        }
       }
     ];
 
@@ -636,6 +655,31 @@ export class PostRepository implements IPostRepository {
           category_color: '$category.color',
           channel_username: '$channel.username',
           timestamp: '$timestamp'
+        }
+      },
+      {
+        $lookup: {
+          from: 'posted_channels',
+          let: { published_channel_id: '$published_channel_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$channel_id', '$$published_channel_id'] }
+              }
+            }
+          ],
+          as: 'published_channel'
+        }
+      },
+      {
+        $unwind: {
+          path: '$published_channel',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          published_channel_name: '$published_channel.name'
         }
       }
     ];
