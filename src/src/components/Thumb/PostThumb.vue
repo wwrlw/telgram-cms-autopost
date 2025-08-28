@@ -253,9 +253,9 @@
             <div class="mb-2">
                 <span
                     class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium text-black"
-                    :style="{ 'background-color': post.category_color }"
+                    :style="{ 'background-color': categoryColor }"
                 >
-                    {{ post.category_name || "Без категории" }}
+                    {{ categoryName }}
                 </span>
             </div>
 
@@ -368,6 +368,15 @@
                     >
                         ERR: {{ post.conversion_metrics.err }}%
                     </span>
+                    <span
+                        v-if="
+                            post.published_channel_id !== undefined &&
+                            post.published_channel_id !== null
+                        "
+                        class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700"
+                    >
+                        {{ post.published_channel_name }}
+                    </span>
                 </div>
             </div>
         </div>
@@ -405,6 +414,20 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+});
+
+const category = computed(() => {
+    const id = props.post?.category_id;
+    if (!id || !Array.isArray(props.categories)) return null;
+    return props.categories.find((c) => c?._id === id || c?.id === id) || null;
+});
+
+const categoryName = computed(() => {
+    return props.post?.category_name || category.value?.name || "Без категории";
+});
+
+const categoryColor = computed(() => {
+    return props.post?.category_color || category.value?.color || "#e5e7eb";
 });
 
 const emit = defineEmits([

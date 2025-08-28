@@ -13,7 +13,8 @@ export class PostService implements IPostService {
   ) {}
 
   async getPost(id: string): Promise<Post> {
-    const post = await this.postRepository.findById(id);
+    // const post = await this.postRepository.findById(id);
+    const post = await this.postRepository.findByIdWithCategory(id);
     if (!post) {
       throw new NotFoundError('Post not found');
     }

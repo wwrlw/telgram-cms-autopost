@@ -49,7 +49,7 @@
 
             <div class="space-y-4 mb-4">
                 <ChannelSelector
-                    v-model="selectorSelectChannels"
+                    v-model="selectedChannel"
                     :channels="channels"
                 />
                 <ScheduleControls
@@ -151,7 +151,6 @@ const files = ref([]);
 const schedule = ref(false);
 const scheduledAt = ref("");
 const selectedChannel = ref("");
-const selectorSelectChannels = ref("");
 const channels = ref([]);
 const loadingPost = ref(false);
 const postData = ref(null);
@@ -181,6 +180,8 @@ const loadChannels = () => {
     http.getActivePublicationChannels((response) => {
         if (response.success) {
             channels.value = response.data || [];
+            // Попробуем автоподставить канал по категории, когда каналы загружены
+            selectDefaultChannelByCategory();
         }
     });
 };
@@ -500,10 +501,9 @@ function loadPost() {
         if (res && res.success) {
             postData.value = res.data;
             initializeEditorContent(res.data);
-
-            if (res.data.channel_id) {
-                selectedChannel.value = res.data.channel_id;
-            }
+            // Автоподстановка канала для публикации будет произведена отдельно,
+            // чтобы не подставлять канал-источник парсинга
+            selectDefaultChannelByCategory();
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
         }
@@ -576,6 +576,24 @@ onMounted(() => {
     const futureTime = new Date(Date.now() + 60 * 60 * 1000);
     scheduledAt.value = futureTime.toISOString().slice(0, 16);
 });
+
+function selectDefaultChannelByCategory() {
+    if (selectedChannel.value) return;
+    const post = postData.value;
+    if (!post || !channels.value || channels.value.length === 0) return;
+
+    const categoryName = (post.category_name || '').trim().toLowerCase();
+    if (!categoryName) return;
+
+    const matched = channels.value.find((ch) => {
+        const name = (ch.name || "").trim().toLowerCase();
+        return name === categoryName;
+    });
+
+    if (matched && matched.channel_id) {
+        selectedChannel.value = String(matched.channel_id);
+    }
+}
 </script>
 
 <style scoped>

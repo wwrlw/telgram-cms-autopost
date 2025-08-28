@@ -306,9 +306,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from "vue";
+import { ref, onMounted, computed, onUnmounted, onUpdated } from "vue";
 import { useRouter } from "vue-router";
-// import http from "@/js/http";
+import http from "@/js/http";
 import {
     Plus,
     Settings,
@@ -382,21 +382,21 @@ const loadUserData = () => {
     }
 };
 
-// const checkUserRole = async () => {
-//     try {
-//         const response = await http.instance.get("/auth/check");
-//         if (response.data.success) {
-//             const newRole = response.data.data.role;
-//             if (newRole !== userRole.value) {
-//                 userRole.value = newRole;
-//                 localStorage.setItem("role", newRole);
-//                 console.log("Role updated to:", newRole);
-//             }
-//         }
-//     } catch (error) {
-//         console.error("Error checking user role:", error);
-//     }
-// };
+const checkUserRole = async () => {
+    try {
+        const response = await http.instance.get("/auth/check");
+        if (response.data.success) {
+            const newRole = response.data.data.role;
+            if (newRole !== userRole.value) {
+                userRole.value = newRole;
+                localStorage.setItem("role", newRole);
+                console.log("Role updated to:", newRole);
+            }
+        }
+    } catch (error) {
+        console.error("Error checking user role:", error);
+    }
+};
 
 onMounted(() => {
     const savedState = localStorage.getItem("sidebarCollapsed");
@@ -412,6 +412,10 @@ onMounted(() => {
         }
     });
     window.addEventListener("resize", handleResize);
+});
+
+onUpdated(() => {
+    checkUserRole();
 });
 
 const handleResize = () => {

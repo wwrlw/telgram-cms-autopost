@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col">
         <div class="relative">
             <div class="flex flex-wrap gap-1 p-2">
                 <button
@@ -50,7 +50,7 @@
 
         <EditorContent
             :editor="editor"
-            class="p-3 min-h-64 custom-editor-content"
+            class="p-3 min-h-64 custom-editor-content mb-2"
             @click="focusEditor"
         />
     </div>

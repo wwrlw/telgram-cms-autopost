@@ -3,6 +3,7 @@ import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollRespon
 
 export interface IPostRepository {
   findById(id: string): Promise<Post | null>;
+  findByIdWithCategory(id: string): Promise<Post | null>;
   findAll(): Promise<Post[]>;
   findAllWithCategories(): Promise<Post[]>;
   findWithQuery(query: PostQuery): Promise<PaginatedResponse<Post>>;

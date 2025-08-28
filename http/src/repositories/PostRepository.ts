@@ -21,6 +21,31 @@ export class PostRepository implements IPostRepository {
     return post as Post | null;
   }
 
+  async findByIdWithCategory(id: string): Promise<Post | null> {
+    if (!this.mongo.db) throw new Error("MongoDB is not connected");
+
+    if (!ObjectId.isValid(id)) {
+      throw new Error("Invalid post ID");
+    }
+
+    const pipeline = [
+      { $match: { _id: new ObjectId(id) } },
+      { $lookup: { from: 'channels', localField: 'channel_id', foreignField: 'channel_id', as: 'channel' } },
+      { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
+      { $addFields: { 'channel.category_id_obj': { $cond: { if: { $eq: [{ $type: '$channel.category_id' }, 'string'] }, then: { $toObjectId: '$channel.category_id' }, else: '$channel.category_id' } } } },
+      { $lookup: { from: 'categories', localField: 'channel.category_id_obj', foreignField: '_id', as: 'category' } },
+      { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
+      { $addFields: { category_id: '$category._id', category_name: '$category.name', category_color: '$category.color', channel_username: '$channel.username' } }
+    ];
+
+    const result = await this.mongo.db
+      .collection("posts")
+      .aggregate(pipeline, { allowDiskUse: true })
+      .toArray();
+
+    return (result?.[0] as Post) || null;
+  }
+
   async findAll(): Promise<Post[]> {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
@@ -488,13 +513,67 @@ export class PostRepository implements IPostRepository {
   async findScheduled(): Promise<Post[]> {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
+    const pipeline = [
+      {
+        $match: {
+          scheduled_at: { $exists: true, $ne: null },
+          is_published: { $ne: true }
+        }
+      },
+      { $sort: { scheduled_at: 1 } },
+      {
+        $lookup: {
+          from: 'channels',
+          localField: 'channel_id',
+          foreignField: 'channel_id',
+          as: 'channel'
+        }
+      },
+      {
+        $unwind: {
+          path: '$channel',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          'channel.category_id_obj': {
+            $cond: {
+              if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+              then: { $toObjectId: '$channel.category_id' },
+              else: '$channel.category_id'
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'channel.category_id_obj',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      {
+        $unwind: {
+          path: '$category',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          category_id: '$category._id',
+          category_name: '$category.name',
+          category_color: '$category.color',
+          channel_username: '$channel.username',
+          timestamp: '$timestamp'
+        }
+      }
+    ];
+
     const posts = await this.mongo.db
       .collection("posts")
-      .find({
-        scheduled_at: { $exists: true, $ne: null },
-        is_published: { $ne: true },
-      })
-      .sort({ scheduled_at: 1 })
+      .aggregate(pipeline, { allowDiskUse: true })
       .toArray();
 
     return posts as Post[];
@@ -503,14 +582,67 @@ export class PostRepository implements IPostRepository {
   async findPublished(): Promise<Post[]> {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
+    const pipeline = [
+      {
+        $match: {
+          published_at: { $exists: true, $ne: null },
+          is_published: true
+        }
+      },
+      { $sort: { published_at: -1 } },
+      {
+        $lookup: {
+          from: 'channels',
+          localField: 'channel_id',
+          foreignField: 'channel_id',
+          as: 'channel'
+        }
+      },
+      {
+        $unwind: {
+          path: '$channel',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          'channel.category_id_obj': {
+            $cond: {
+              if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+              then: { $toObjectId: '$channel.category_id' },
+              else: '$channel.category_id'
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'channel.category_id_obj',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      {
+        $unwind: {
+          path: '$category',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          category_id: '$category._id',
+          category_name: '$category.name',
+          category_color: '$category.color',
+          channel_username: '$channel.username',
+          timestamp: '$timestamp'
+        }
+      }
+    ];
+
     const posts = await this.mongo.db
       .collection("posts")
-      .find({
-        is_published: true,
-        published_at: { $exists: true, $ne: null },
-      })
-      .sort({ published_at: -1 })
-      .limit(50)
+      .aggregate(pipeline, { allowDiskUse: true })
       .toArray();
 
     return posts as Post[];

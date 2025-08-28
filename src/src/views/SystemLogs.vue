@@ -528,6 +528,7 @@ const loadMoreLogs = async () => {
 const loadLogs = async () => {
     try {
         const result = await logsService({}, false);
+        console.log(result);
     } catch (error) {
         console.error("Error in loadLogs:", error);
         logs.value = [];

@@ -42,6 +42,18 @@
                 </nav>
             </div>
 
+            <Filters
+                :loading="loading"
+                :posts="posts"
+                :categories="categories"
+                @update:searchQuery="handleSearchChange"
+                @update:statusFilter="handleStatusFilterChange"
+                @update:categoryFilter="handleCategoryFilterChange"
+                @update:dateFilters="handleDateFiltersChange"
+                @update:sortOptions="handleSortOptionsChange"
+                @clearFilters="handleClearFilters"
+            />
+
             <div v-show="activeTab === 'scheduled'">
                 <Thumbs
                     :posts="scheduledPosts"
@@ -80,6 +92,7 @@ import { ref, onMounted } from "vue";
 import http from "../js/http.js";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 import Thumbs from "@/components/Thumb/Thumbs.vue";
+import Filters from "@/components/Shared/Filters.vue";
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
 
 const { on: onEvent, emit: emitEvent } = useEventBus();
@@ -134,6 +147,7 @@ const loadPublishedPosts = () => {
         if (response.success) {
             publishedPosts.value = response.data || [];
             loadingPublished.value = false;
+            console.log(publishedPosts.value);
         } else {
             window.$toast.error(
                 "Ошибка загрузки опубликованных постов: " + response.message
@@ -147,18 +161,9 @@ const loadCategories = () => {
     http.categories((response) => {
         if (response.success) {
             categories.value = response.data || [];
+            console.log(categories);
         } else {
             console.error("Ошибка загрузки категорий:", response.message);
-        }
-    });
-};
-
-const loadChannels = () => {
-    http.channels({}, (response) => {
-        if (response.success) {
-            channels.value = response.data || [];
-        } else {
-            console.error("Ошибка загрузки каналов:", response.message);
         }
     });
 };
@@ -192,7 +197,7 @@ onMounted(() => {
     loadScheduledPosts();
     loadPublishedPosts();
     loadCategories();
-    loadChannels();
+    // loadChannels();
 
     onEvent(EVENTS.SCHEDULED_POST_CREATED, () => {
         loadScheduledPosts();

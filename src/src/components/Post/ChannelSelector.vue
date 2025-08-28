@@ -4,13 +4,8 @@
             Канал для публикации
         </label>
 
-        <select
-            v-model="innerValue"
-            class="border rounded p-2 text-sm w-full"
-        >
-            <option value="">
-                Выберите канал
-            </option>
+        <select v-model="innerValue" class="border rounded p-2 text-sm w-full">
+            <option value="">Выберите канал</option>
 
             <option
                 v-for="ch in channels"
