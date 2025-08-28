@@ -28,7 +28,7 @@ export class PostRepository implements IPostRepository {
       throw new Error("Invalid post ID");
     }
 
-    const pipeline = [
+    const pipeline: any[] = [
       { $match: { _id: new ObjectId(id) } },
       { $lookup: { from: 'channels', localField: 'channel_id', foreignField: 'channel_id', as: 'channel' } },
       { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
@@ -62,7 +62,7 @@ export class PostRepository implements IPostRepository {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
     const t0 = Date.now();
-    const pipeline = [
+    const pipeline: any[] = [
       {
         $sort: { created_at: -1 }
       },
@@ -510,10 +510,10 @@ export class PostRepository implements IPostRepository {
     return updatedPost as Post | null;
   }
 
-  async findScheduled(): Promise<Post[]> {
+  async findScheduled(channelId?: string): Promise<Post[]> {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
-    const pipeline = [
+    const pipeline: any[] = [
       {
         $match: {
           scheduled_at: { $exists: true, $ne: null },
@@ -590,6 +590,10 @@ export class PostRepository implements IPostRepository {
       }
     ];
 
+    if (channelId) {
+      pipeline.unshift({ $match: { scheduled_channel_id: channelId } });
+    }
+
     const posts = await this.mongo.db
       .collection("posts")
       .aggregate(pipeline, { allowDiskUse: true })
@@ -598,10 +602,10 @@ export class PostRepository implements IPostRepository {
     return posts as Post[];
   }
 
-  async findPublished(): Promise<Post[]> {
+  async findPublished(channelId?: string): Promise<Post[]> {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
-    const pipeline = [
+    const pipeline: any[] = [
       {
         $match: {
           published_at: { $exists: true, $ne: null },
@@ -683,6 +687,10 @@ export class PostRepository implements IPostRepository {
         }
       }
     ];
+
+    if (channelId) {
+      pipeline.unshift({ $match: { published_channel_id: channelId } });
+    }
 
     const posts = await this.mongo.db
       .collection("posts")

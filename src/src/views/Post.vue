@@ -180,7 +180,6 @@ const loadChannels = () => {
     http.getActivePublicationChannels((response) => {
         if (response.success) {
             channels.value = response.data || [];
-            // Попробуем автоподставить канал по категории, когда каналы загружены
             selectDefaultChannelByCategory();
         }
     });

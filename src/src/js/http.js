@@ -505,9 +505,12 @@ let http = {
             });
     },
 
-    getScheduledPosts: function (callback) {
+    getScheduledPosts: function (params = {}, callback) {
+        const queryParams = new URLSearchParams();
+        if (params.channel_id) queryParams.append("channel_id", params.channel_id);
+        const url = queryParams.toString() ? `/posts/scheduled?${queryParams.toString()}` : "/posts/scheduled";
         instance
-            .get("/posts/scheduled")
+            .get(url)
             .then((res) => {
                 callback(res.data);
             })
@@ -534,9 +537,12 @@ let http = {
             });
     },
 
-    getPublishedPosts: function (callback) {
+    getPublishedPosts: function (params = {}, callback) {
+        const queryParams = new URLSearchParams();
+        if (params.channel_id) queryParams.append("channel_id", params.channel_id);
+        const url = queryParams.toString() ? `/posts/published?${queryParams.toString()}` : "/posts/published";
         instance
-            .get("/posts/published")
+            .get(url)
             .then((res) => {
                 callback(res.data);
             })

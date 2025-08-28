@@ -19,6 +19,7 @@
                 :loading="loading"
                 :posts="posts"
                 :categories="categories"
+                :showChannelFilter="false"
                 @update:searchQuery="handleSearchChange"
                 @update:statusFilter="handleStatusFilterChange"
                 @update:categoryFilter="handleCategoryFilterChange"

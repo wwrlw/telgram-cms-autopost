@@ -5,6 +5,7 @@
     >
         <div class="space-y-4">
             <div
+                v-if="showStatusFilter"
                 class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4"
             >
                 <div class="flex space-x-3">
@@ -23,7 +24,7 @@
             <div
                 class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4"
             >
-                <div class="flex-1">
+                <div v-if="showCategoryFilter" class="flex-1">
                     <select
                         v-model="categoryFilter"
                         @change="updateCategoryFilter"
@@ -41,7 +42,25 @@
                         </option>
                     </select>
                 </div>
-                <div class="flex space-x-3">
+                <div v-if="showChannelFilter" class="flex-1">
+                    <select
+                        v-model="channelFilter"
+                        @change="updateChannelFilter"
+                        name="channel"
+                        id="channel"
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="">Все каналы</option>
+                        <option
+                            v-for="channel in channels"
+                            :key="channel._id || channel.id"
+                            :value="channel.channel_id"
+                        >
+                            {{ channel.name }}
+                        </option>
+                    </select>
+                </div>
+                <div v-if="showDateFilters" class="flex space-x-3">
                     <input
                         v-model="dateFromFilter"
                         @change="updateDateFilters"
@@ -62,6 +81,7 @@
             </div>
 
             <div
+                v-if="showSortOptions"
                 class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4"
             >
                 <div class="flex space-x-3">
@@ -70,10 +90,13 @@
                         @change="updateSortOptions"
                         class="block pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
                     >
-                        <option value="created_at">По дате создания</option>
-                        <option value="timestamp">По времени поста</option>
-                        <option value="source_channel">По каналу</option>
-                        <option value="err">По ERR</option>
+                        <option
+                            v-for="option in sortOrderOptions"
+                            :key="option.value"
+                            :value="option.value"
+                        >
+                            {{ option.label }}
+                        </option>
                     </select>
                     <select
                         v-model="sortOrder"
@@ -88,19 +111,7 @@
                     @click="clearAllFilters"
                     class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                    <svg
-                        class="h-4 w-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
+                    <X class="h-4 w-4 mr-2" />
                     Сбросить фильтры
                 </button>
             </div>
@@ -110,6 +121,7 @@
 
 <script setup>
 import { ref, watch } from "vue";
+import { X } from "lucide-vue-next";
 
 const props = defineProps({
     loading: {
@@ -124,12 +136,44 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    channels: {
+        type: Array,
+        default: () => [],
+    },
+    showChannelFilter: {
+        type: Boolean,
+        default: true,
+    },
+    showStatusFilter: {
+        type: Boolean,
+        default: true,
+    },
+    showCategoryFilter: {
+        type: Boolean,
+        default: true,
+    },
+    showDateFilters: {
+        type: Boolean,
+        default: true,
+    },
+    showSortOptions: {
+        type: Boolean,
+        default: true,
+    },
 });
+
+const sortOrderOptions = ref([
+    { label: "По дате создания", value: "created_at" },
+    { label: "По времени поста", value: "timestamp" },
+    { label: "По каналу", value: "source_channel" },
+    { label: "По ERR", value: "err" },
+]);
 
 const emit = defineEmits([
     "update:searchQuery",
     "update:statusFilter",
     "update:categoryFilter",
+    "update:channelFilter",
     "update:dateFilters",
     "update:sortOptions",
     "clearFilters",
@@ -138,6 +182,7 @@ const emit = defineEmits([
 const searchQuery = ref("");
 const statusFilter = ref("");
 const categoryFilter = ref("");
+const channelFilter = ref("");
 const dateFromFilter = ref("");
 const dateToFilter = ref("");
 const sortField = ref("created_at");
@@ -153,6 +198,10 @@ const updateStatusFilter = () => {
 
 const updateCategoryFilter = () => {
     emit("update:categoryFilter", categoryFilter.value);
+};
+
+const updateChannelFilter = () => {
+    emit("update:channelFilter", channelFilter.value);
 };
 
 const updateDateFilters = () => {
@@ -173,6 +222,7 @@ const clearAllFilters = () => {
     searchQuery.value = "";
     statusFilter.value = "";
     categoryFilter.value = "";
+    channelFilter.value = "";
     dateFromFilter.value = "";
     dateToFilter.value = "";
     sortField.value = "created_at";

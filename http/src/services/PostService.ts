@@ -79,8 +79,8 @@ export class PostService implements IPostService {
     };
   }
 
-  async getScheduledPosts(): Promise<Post[]> {
-    return await this.postRepository.findScheduled();
+  async getScheduledPosts(channelId?: string): Promise<Post[]> {
+    return await this.postRepository.findScheduled(channelId);
   }
 
   async cancelScheduledPost(id: string): Promise<Post> {
@@ -166,8 +166,8 @@ export class PostService implements IPostService {
     return updatedPost;
   }
 
-  async getPublishedPosts(): Promise<Post[]> {
-    return await this.postRepository.findPublished();
+  async getPublishedPosts(channelId?: string): Promise<Post[]> {
+    return await this.postRepository.findPublished(channelId);
   }
 
   async cleanupOldPosts(options?: { threshold?: number; removeCount?: number; dryRun?: boolean }): Promise<{ totalBefore: number; toDelete: number; deleted: number; errors: number }> {

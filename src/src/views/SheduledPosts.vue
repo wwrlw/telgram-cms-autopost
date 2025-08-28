@@ -44,14 +44,17 @@
 
             <Filters
                 :loading="loading"
-                :posts="posts"
+                :posts="
+                    activeTab === 'scheduled' ? scheduledPosts : publishedPosts
+                "
                 :categories="categories"
-                @update:searchQuery="handleSearchChange"
-                @update:statusFilter="handleStatusFilterChange"
-                @update:categoryFilter="handleCategoryFilterChange"
-                @update:dateFilters="handleDateFiltersChange"
-                @update:sortOptions="handleSortOptionsChange"
-                @clearFilters="handleClearFilters"
+                :channels="channels"
+                :showChannelFilter="true"
+                :showStatusFilter="false"
+                :showCategoryFilter="false"
+                :showDateFilters="false"
+                :showSortOptions="false"
+                @update:channelFilter="handleChannelFilterChange"
             />
 
             <div v-show="activeTab === 'scheduled'">
@@ -104,6 +107,9 @@ const channels = ref([]);
 const categories = ref([]);
 const activeTab = ref("scheduled");
 
+// сортировка в этом представлении не используется
+const channelFilter = ref("");
+
 const showConfirmModal = ref(false);
 const confirmMessage = ref("");
 let confirmAction = null;
@@ -128,45 +134,73 @@ function onCancelConfirm() {
 
 const loadScheduledPosts = () => {
     loading.value = true;
-    http.getScheduledPosts((response) => {
-        if (response.success) {
-            scheduledPosts.value = response.data || [];
-            loading.value = false;
-        } else {
-            window.$toast.error(
-                "Ошибка загрузки отложенных публикаций: " + response.message
-            );
-            loading.value = false;
+    http.getScheduledPosts(
+        { channel_id: channelFilter.value || undefined },
+        (response) => {
+            if (response.success) {
+                scheduledPosts.value = response.data || [];
+                loading.value = false;
+            } else {
+                window.$toast.error(
+                    "Ошибка загрузки отложенных публикаций: " + response.message
+                );
+                loading.value = false;
+            }
         }
-    });
+    );
 };
 
 const loadPublishedPosts = () => {
     loadingPublished.value = true;
-    http.getPublishedPosts((response) => {
+    http.getPublishedPosts(
+        { channel_id: channelFilter.value || undefined },
+        (response) => {
+            if (response.success) {
+                publishedPosts.value = response.data || [];
+                loadingPublished.value = false;
+                console.log(publishedPosts.value);
+            } else {
+                window.$toast.error(
+                    "Ошибка загрузки опубликованных постов: " + response.message
+                );
+                loadingPublished.value = false;
+            }
+        }
+    );
+};
+
+function handleChannelFilterChange(val) {
+    channelFilter.value = val || "";
+    if (activeTab.value === "scheduled") {
+        loadScheduledPosts();
+    } else {
+        loadPublishedPosts();
+    }
+}
+
+const loadCategories = () => {
+    http.categories((response) => {
         if (response.success) {
-            publishedPosts.value = response.data || [];
-            loadingPublished.value = false;
-            console.log(publishedPosts.value);
+            categories.value = response.data || [];
+            console.log(categories);
         } else {
             window.$toast.error(
-                "Ошибка загрузки опубликованных постов: " + response.message
+                "Ошибка загрузки категорий: " + response.message
             );
-            loadingPublished.value = false;
         }
     });
 };
 
-// const loadCategories = () => {
-//     http.categories((response) => {
-//         if (response.success) {
-//             categories.value = response.data || [];
-//             console.log(categories);
-//         } else {
-//             console.error("Ошибка загрузки категорий:", response.message);
-//         }
-//     });
-// };
+const loadChannels = () => {
+    http.getPostedChannels((response) => {
+        if (response.success) {
+            channels.value = response.data || [];
+        } else {
+            window.$toast.error("Ошибка загрузки каналов: " + response.message);
+            loadingPublished.value = false;
+        }
+    });
+};
 
 const getPreviewText = (text) => {
     if (!text) return "Текст отсутствует";
@@ -196,8 +230,8 @@ const cancelSchedule = (post) => {
 onMounted(() => {
     loadScheduledPosts();
     loadPublishedPosts();
-    // loadCategories();
-    // loadChannels();
+    loadCategories();
+    loadChannels();
 
     onEvent(EVENTS.SCHEDULED_POST_CREATED, () => {
         loadScheduledPosts();

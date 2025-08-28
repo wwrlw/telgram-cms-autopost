@@ -220,7 +220,8 @@ export async function postsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       try {
         const postService = container.getPostService();
-        const scheduledPosts = await postService.getScheduledPosts();
+        const { channel_id } = (request.query as any) || {};
+        const scheduledPosts = await postService.getScheduledPosts(channel_id);
         
         return {
           success: true,
@@ -259,7 +260,8 @@ export async function postsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       try {
         const postService = container.getPostService();
-        const publishedPosts = await postService.getPublishedPosts();
+        const { channel_id } = (request.query as any) || {};
+        const publishedPosts = await postService.getPublishedPosts(channel_id);
         
         return {
           success: true,

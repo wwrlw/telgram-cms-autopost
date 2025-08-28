@@ -17,8 +17,8 @@ export interface IPostRepository {
   deleteById(id: string): Promise<boolean>;
   count(filters?: any): Promise<number>;
   update(id: string, data: Partial<Post>): Promise<Post | null>;
-  findScheduled(): Promise<Post[]>;
-  findPublished(): Promise<Post[]>;
+  findScheduled(channelId?: string): Promise<Post[]>;
+  findPublished(channelId?: string): Promise<Post[]>;
   // Cleanup helpers
   countAll(): Promise<number>;
   findOldestWithMedia(limit: number): Promise<Post[]>;
