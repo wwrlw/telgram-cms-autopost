@@ -8,6 +8,8 @@ import { MediaService } from './mediaService.js';
 import { PublishService } from './publishService.js';
 import { ConversionService } from './conversionService.js';
 import { ChannelStatsService } from './channelStatsService.js';
+import { PostedChannel, ChannelAnalytics } from '../types/index.js';
+import { ChannelAnalyticsService } from './channelAnalyticsService.js';
 
 export class TelegramService {
   private client: TelegramClient;
@@ -16,9 +18,13 @@ export class TelegramService {
   private publishService: PublishService;
   private conversionService: ConversionService;
   private channelStatsService: ChannelStatsService;
+  private channelAnalyticsService: ChannelAnalyticsService; // Добавляем
 
   private albumBuffer: { [groupedId: string]: any[] } = {};
   private albumTimers: { [groupedId: string]: NodeJS.Timeout } = {};
+  
+  // Добавляем поле для каналов публикации
+  private postedChannels: PostedChannel[] = [];
 
   constructor(
     private config: {
@@ -26,6 +32,7 @@ export class TelegramService {
       apiHash: string;
       sessionString: string;
       targetChannels: ChannelConfig[];
+      postedChannels: PostedChannel[]; // Добавляем в конфиг
       mongoUri: string;
       MONGO_DB: string;
       mediaPath: string;
@@ -46,6 +53,8 @@ export class TelegramService {
     this.publishService = new PublishService();
     this.conversionService = new ConversionService();
     this.channelStatsService = new ChannelStatsService(this.client, this.mongoService);
+    this.postedChannels = config.postedChannels || [];
+    this.channelAnalyticsService = new ChannelAnalyticsService(this.client, this.mongoService);
   }
 
   async updateTargetChannels(newChannels: ChannelConfig[]): Promise<void> {
@@ -650,5 +659,37 @@ export class TelegramService {
 
   private async handleAllUpdates(update: any): Promise<void> {
     console.log('📨 Получено обновление:', update.className);
+  }
+
+  async updatePostedChannels(newPostedChannels: PostedChannel[]): Promise<void> {
+    console.log('🔄 Обновляем каналы публикации...');
+    console.log('📋 Старые каналы публикации:', this.postedChannels.map(c => c.name));
+    console.log('📋 Новые каналы публикации:', newPostedChannels.map(c => c.name));
+    
+    this.postedChannels = newPostedChannels;
+    
+    if (newPostedChannels.length > 0) {
+      console.log(`✅ Обновлено ${newPostedChannels.length} каналов публикации`);
+    } else {
+      console.log('⚠️ Список каналов публикации пуст');
+    }
+  }
+
+  getPostedChannels(): PostedChannel[] {
+    return this.postedChannels;
+  }
+
+
+  async collectPostedChannelsAnalytics(): Promise<void> {
+    try {
+      if (this.postedChannels.length === 0) {
+        console.log('⚠️ Нет каналов публикации для анализа');
+        return;
+      }
+      
+      await this.channelAnalyticsService.collectPostedChannelsAnalytics(this.postedChannels);
+    } catch (error) {
+      console.error('❌ Ошибка сбора аналитики по каналам публикации:', error);
+    }
   }
 } 

@@ -11,6 +11,7 @@ const CreatePost = () => import("@/views/CreatePost.vue");
 const page404 = () => import("@/views/Page404.vue");
 const ScheduledPosts = () => import("@/views/SheduledPosts.vue");
 const Analytics = () => import("@/views/Analytics.vue");
+const AnalyticsChannel = () => import("@/views/AnalyticsChannel.vue");
 const UserManagement = () => import("@/views/UserManagement.vue");
 const SystemLogs = () => import("@/views/SystemLogs.vue");
 const Settings = () => import("@/views/Settings.vue");
@@ -57,6 +58,12 @@ const routes = [
         path: "/analytics",
         name: "analytics",
         component: Analytics,
+        meta: { forbiddenRoles: [ROLES.EDITOR] },
+    },
+    {
+        path: "/analytics/:id",
+        name: "analytics-channel",
+        component: AnalyticsChannel,
         meta: { forbiddenRoles: [ROLES.EDITOR] },
     },
     {

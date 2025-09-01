@@ -42,7 +42,6 @@ export class ChannelStatsService {
 
       let participantsCount = null;
       
-      // Получаем количество подписчиков через GetFullChannel
       try {
         const fullChannel = await this.client.invoke(new Api.channels.GetFullChannel({
           channel: entity

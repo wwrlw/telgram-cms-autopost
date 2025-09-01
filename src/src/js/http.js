@@ -652,7 +652,7 @@ let http = {
 
     getChannelAnalytics: function (channelId, callback, errorCallback) {
         instance
-            .get(`/analytics?channelid=${channelId}`)
+            .get(`/analytics/${channelId}`)
             .then((res) => {
                 callback(res.data);
             })
@@ -663,6 +663,23 @@ let http = {
                     callback({
                         success: false,
                         message: "Failed to load channel analytics",
+                    });
+            });
+    },
+
+    getAnalyticsDaily: function (channelId, params, callback, errorCallback) {
+        instance
+            .get(`/analytics/${channelId}/daily`, { params })
+            .then((res) => {
+                callback(res.data);
+            })
+            .catch((err) => {
+                console.error("Analytics API error:", err);
+                if (errorCallback) errorCallback(err);
+                else
+                    callback({
+                        success: false,
+                        message: "Failed to load daily analytics",
                     });
             });
     },

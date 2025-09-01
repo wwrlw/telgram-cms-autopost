@@ -169,7 +169,6 @@ export default async function logsRoutes(fastify: FastifyInstance) {
       
       let findQuery: any = {};
       
-      // Если указан userId, фильтруем по пользователю
       if (query.userId && query.userId !== 'undefined' && query.userId !== 'null') {
         const { ObjectId } = await import('mongodb');
         if (ObjectId.isValid(query.userId)) {
@@ -177,15 +176,12 @@ export default async function logsRoutes(fastify: FastifyInstance) {
         }
       }
       
-      // Если указан lastId, используем курсорную пагинацию
       if (query.lastId && query.lastId !== 'undefined' && query.lastId !== 'null') {
         const { ObjectId } = await import('mongodb');
         if (ObjectId.isValid(query.lastId)) {
           if (sortOrder === -1) {
-            // Для сортировки по убыванию (новые сначала)
             findQuery._id = { $lt: new ObjectId(query.lastId) };
           } else {
-            // Для сортировки по возрастанию (старые сначала)
             findQuery._id = { $gt: new ObjectId(query.lastId) };
           }
         }
@@ -194,7 +190,7 @@ export default async function logsRoutes(fastify: FastifyInstance) {
       const logs = await collection
         .find(findQuery)
         .sort({ timestamp: sortOrder })
-        .limit(limitNum + 1) // Берем на один больше для проверки hasMore
+        .limit(limitNum + 1)
         .toArray();
       
       const hasMore = logs.length > limitNum;

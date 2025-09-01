@@ -1,37 +1,6 @@
 <template>
-    <div class="min-h-screen bg-gray-50 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Заголовок страницы -->
-            <div class="mb-8">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900">
-                            Аналитика каналов
-                        </h1>
-                        <p class="mt-2 text-sm text-gray-600">
-                            Подробная статистика по вашим каналам публикации
-                        </p>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <select
-                            v-model="selectedChannelId"
-                            @change="loadChannelAnalytics"
-                            class="block w-64 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        >
-                            <option value="">Выберите канал</option>
-                            <option
-                                v-for="channel in channels"
-                                :key="channel.id"
-                                :value="channel.channel_id"
-                            >
-                                {{ channel.name }} ({{ channel.channel_id }})
-                            </option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Загрузка -->
+    <div class="min-h-screen bg-white">
+        <div class="w-full h-full">
             <div v-if="loading" class="text-center py-12">
                 <div
                     class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"
@@ -39,33 +8,160 @@
                 <p class="mt-2 text-sm text-gray-500">Загружаем аналитику...</p>
             </div>
 
-            <!-- Сообщение о выборе канала -->
-            <div v-else-if="!selectedChannelId" class="text-center py-12">
-                <svg
-                    class="mx-auto h-12 w-12 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">
-                    Выберите канал
-                </h3>
-                <p class="mt-1 text-sm text-gray-500">
-                    Выберите канал из списка выше для просмотра аналитики
-                </p>
+            <div v-else-if="!selectedChannelId" class="py-12 px-8">
+                <div class="text-center max-w-4xl mx-auto">
+                    <div class="flex justify-center mb-6">
+                        <svg
+                            class="h-12 w-12 text-indigo-500"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 3v18h18M7 13l3 3 7-7"
+                            />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">
+                            Добро пожаловать в аналитику каналов
+                        </h3>
+                        <p class="mt-2 text-gray-600">
+                            Нажмите на один из быстрых вариантов ниже, чтобы
+                            увидеть показатели подписчиков, постов и просмотров.
+                        </p>
+                    </div>
+
+                    <div class="mt-6">
+                        <div class="text-sm text-gray-500 mb-4">
+                            Быстрый выбор канала
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div
+                                v-for="c in channels.slice(0, 8)"
+                                :key="c.channel_id"
+                                @click="
+                                    $router.push(`/analytics/${c.channel_id}`)
+                                "
+                                class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-4 hover:shadow-lg hover:border-indigo-300 hover:from-indigo-50 hover:to-white transition-all duration-200 transform hover:-translate-y-1"
+                            >
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div
+                                            class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:from-indigo-600 group-hover:to-purple-700 transition-all duration-200"
+                                        >
+                                            <svg
+                                                class="w-5 h-5 text-white"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2h-3l-4 4z"
+                                                />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p
+                                            class="text-sm font-medium text-gray-900 group-hover:text-indigo-700 transition-colors duration-200 truncate"
+                                        >
+                                            {{ c.name }}
+                                        </p>
+                                        <p
+                                            class="text-xs text-gray-500 group-hover:text-indigo-600 transition-colors duration-200"
+                                        >
+                                            ID: {{ c.channel_id }}
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                    >
+                                        <svg
+                                            class="w-4 h-4 text-indigo-500"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M9 5l7 7-7 7"
+                                            />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                v-if="channels.length === 0"
+                                class="col-span-full text-center py-8"
+                            >
+                                <svg
+                                    class="mx-auto h-12 w-12 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                                    />
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-500">
+                                    Каналов пока нет
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-md bg-indigo-50">
+                            <div class="text-sm font-medium text-indigo-700">
+                                Шаг 1
+                            </div>
+                            <div class="text-sm text-indigo-900 mt-1">
+                                Выберите канал публикации для просмотра
+                                статистики.
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-md bg-green-50">
+                            <div class="text-sm font-medium text-green-700">
+                                Шаг 2
+                            </div>
+                            <div class="text-sm text-green-900 mt-1">
+                                Снимок аналитики делается ежедневно в
+                                <span class="font-semibold">{{
+                                    settings.analytics_daily_time
+                                }}</span
+                                >. Изменить можно в настройках.
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-md bg-yellow-50">
+                            <div class="text-sm font-medium text-yellow-700">
+                                Совет
+                            </div>
+                            <div class="text-sm text-yellow-900 mt-1">
+                                Нажмите «Обновить» в шапке, чтобы перезагрузить
+                                данные после изменений.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Аналитика канала -->
-            <div v-else-if="analytics" class="space-y-8">
+            <div v-else-if="analytics" class="space-y-8 px-8 py-8">
                 <!-- Основная информация о канале -->
-                <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="overflow-hidden">
                     <div class="px-4 py-5 sm:p-6">
                         <h3
                             class="text-lg leading-6 font-medium text-gray-900 mb-4"
@@ -80,7 +176,7 @@
                                 <div class="text-2xl font-bold text-blue-900">
                                     {{
                                         formatNumber(
-                                            analytics.subscribers_count
+                                            analytics?.subscribers_count || 0
                                         )
                                     }}
                                 </div>
@@ -90,7 +186,11 @@
                                     Постов
                                 </div>
                                 <div class="text-2xl font-bold text-green-900">
-                                    {{ formatNumber(analytics.posts_count) }}
+                                    {{
+                                        formatNumber(
+                                            analytics?.posts_count || 0
+                                        )
+                                    }}
                                 </div>
                             </div>
                             <div class="bg-yellow-50 p-4 rounded-lg">
@@ -100,7 +200,11 @@
                                     Просмотров
                                 </div>
                                 <div class="text-2xl font-bold text-yellow-900">
-                                    {{ formatNumber(analytics.views_count) }}
+                                    {{
+                                        formatNumber(
+                                            analytics?.views_count || 0
+                                        )
+                                    }}
                                 </div>
                             </div>
                             <div class="bg-purple-50 p-4 rounded-lg">
@@ -110,156 +214,83 @@
                                     Средний охват
                                 </div>
                                 <div class="text-2xl font-bold text-purple-900">
-                                    {{ formatNumber(analytics.avg_reach) }}
+                                    {{
+                                        formatNumber(analytics?.avg_reach || 0)
+                                    }}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Графики -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- График подписчиков по времени -->
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
-                        <div class="px-4 py-5 sm:p-6">
-                            <h3
-                                class="text-lg leading-6 font-medium text-gray-900 mb-4"
-                            >
-                                Рост подписчиков
-                            </h3>
-                            <div class="h-64">
-                                <canvas ref="subscribersChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- График активности постов -->
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
-                        <div class="px-4 py-5 sm:p-6">
-                            <h3
-                                class="text-lg leading-6 font-medium text-gray-900 mb-4"
-                            >
-                                Активность постов
-                            </h3>
-                            <div class="h-64">
-                                <canvas ref="postsChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- График просмотров -->
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
-                        <div class="px-4 py-5 sm:p-6">
-                            <h3
-                                class="text-lg leading-6 font-medium text-gray-900 mb-4"
-                            >
-                                Просмотры по дням
-                            </h3>
-                            <div class="h-64">
-                                <canvas ref="viewsChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- График вовлеченности -->
-                    <div class="bg-white overflow-hidden shadow rounded-lg">
-                        <div class="px-4 py-5 sm:p-6">
-                            <h3
-                                class="text-lg leading-6 font-medium text-gray-900 mb-4"
-                            >
-                                Вовлеченность
-                            </h3>
-                            <div class="h-64">
-                                <canvas ref="engagementChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Детальная статистика -->
-                <div class="bg-white overflow-hidden shadow rounded-lg">
+                <!-- Табличный вид, объединяющий метрики по датам -->
+                <div class="overflow-hidden">
                     <div class="px-4 py-5 sm:p-6">
                         <h3
                             class="text-lg leading-6 font-medium text-gray-900 mb-4"
                         >
-                            Детальная статистика
+                            Таблица по датам
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
-                                <h4
-                                    class="text-sm font-medium text-gray-500 uppercase tracking-wide"
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Дата
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Подписчики
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Просмотры
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            ER%
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody
+                                    class="bg-white divide-y divide-gray-200"
                                 >
-                                    Топ постов
-                                </h4>
-                                <div class="mt-2 space-y-2">
-                                    <div
-                                        v-for="post in analytics.top_posts"
-                                        :key="post.id"
-                                        class="flex justify-between items-center"
+                                    <tr
+                                        v-for="row in tableRows"
+                                        :key="row.date"
                                     >
-                                        <span
-                                            class="text-sm text-gray-900 truncate"
-                                            >{{
-                                                post.title || "Пост #" + post.id
-                                            }}</span
+                                        <td
+                                            class="px-4 py-2 whitespace-nowrap text-sm text-gray-900"
                                         >
-                                        <span
-                                            class="text-sm font-medium text-gray-900"
-                                            >{{
-                                                formatNumber(post.views)
-                                            }}</span
+                                            {{
+                                                new Date(
+                                                    row.date
+                                                ).toLocaleDateString("ru-RU")
+                                            }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-2 whitespace-nowrap text-sm text-gray-900"
                                         >
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <h4
-                                    class="text-sm font-medium text-gray-500 uppercase tracking-wide"
-                                >
-                                    Время публикаций
-                                </h4>
-                                <div class="mt-2 space-y-2">
-                                    <div
-                                        v-for="time in analytics.best_posting_times"
-                                        :key="time.hour"
-                                        class="flex justify-between items-center"
-                                    >
-                                        <span class="text-sm text-gray-900"
-                                            >{{ time.hour }}:00</span
+                                            {{ formatNumber(row.subscribers) }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-2 whitespace-nowrap text-sm text-gray-900"
                                         >
-                                        <span
-                                            class="text-sm font-medium text-gray-900"
-                                            >{{
-                                                formatNumber(time.engagement)
-                                            }}%</span
+                                            {{ formatNumber(row.views) }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-2 whitespace-nowrap text-sm text-gray-900"
                                         >
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <h4
-                                    class="text-sm font-medium text-gray-500 uppercase tracking-wide"
-                                >
-                                    Типы контента
-                                </h4>
-                                <div class="mt-2 space-y-2">
-                                    <div
-                                        v-for="type in analytics.content_types"
-                                        :key="type.type"
-                                        class="flex justify-between items-center"
-                                    >
-                                        <span class="text-sm text-gray-900">{{
-                                            getContentTypeName(type.type)
-                                        }}</span>
-                                        <span
-                                            class="text-sm font-medium text-gray-900"
-                                            >{{
-                                                formatNumber(type.count)
-                                            }}</span
-                                        >
-                                    </div>
-                                </div>
-                            </div>
+                                            {{ (row.er || 0).toFixed(2) }}%
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -269,11 +300,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, inject, watch, nextTick } from "vue";
-import http from "../js/http.js";
-import { Chart, registerables } from "chart.js";
-
-Chart.register(...registerables);
+import { ref, onMounted, onUnmounted, inject, watch } from "vue";
+import http from "@/js/http";
+import { formatNumber } from "@/js/utils";
 
 const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading");
@@ -281,20 +310,16 @@ const setLoading = inject("setLoading");
 const channels = ref([]);
 const selectedChannelId = ref("");
 const selectedChannel = ref(null);
-const analytics = ref(null);
+const analytics = ref({
+    subscribers_count: 0,
+    posts_count: 0,
+    views_count: 0,
+    avg_reach: 0,
+});
 const loading = ref(false);
+const settings = ref({ analytics_daily_time: "10:00" });
 
-// Ссылки на canvas для графиков
-const subscribersChart = ref(null);
-const postsChart = ref(null);
-const viewsChart = ref(null);
-const engagementChart = ref(null);
-
-// Экземпляры графиков
-let subscribersChartInstance = null;
-let postsChartInstance = null;
-let viewsChartInstance = null;
-let engagementChartInstance = null;
+const tableRows = ref([]);
 
 const loadChannels = () => {
     if (setLoading) setLoading(true);
@@ -304,14 +329,29 @@ const loadChannels = () => {
             channels.value = response.data || [];
         } else {
             window.$toast.error("Ошибка загрузки каналов: " + response.message);
+            channels.value = [];
         }
         if (setLoading) setLoading(false);
     });
 };
 
+const loadSettings = () => {
+    if (!http.getSettings) return;
+    http.getSettings((res) => {
+        if (res.success) {
+            settings.value = res.data || settings.value;
+        }
+    });
+};
+
 const loadChannelAnalytics = async () => {
     if (!selectedChannelId.value) {
-        analytics.value = null;
+        analytics.value = {
+            subscribers_count: 0,
+            posts_count: 0,
+            views_count: 0,
+            avg_reach: 0,
+        };
         selectedChannel.value = null;
         return;
     }
@@ -327,221 +367,51 @@ const loadChannelAnalytics = async () => {
             (response) => {
                 if (response.success) {
                     analytics.value = response.data;
-                    nextTick(() => {
-                        createCharts();
-                    });
                 } else {
                     window.$toast.error(
                         "Ошибка загрузки аналитики: " + response.message
                     );
                 }
-                loading.value = false;
             },
             (error) => {
                 console.error("Analytics API error:", error);
                 window.$toast.error("Ошибка загрузки аналитики");
+            }
+        );
+
+        http.getAnalyticsDaily(
+            selectedChannelId.value,
+            {},
+            (res) => {
+                if (res.success) {
+                    buildTableRowsFromDaily(res.data || []);
+                }
                 loading.value = false;
+            },
+            (err) => {
+                console.error("Analytics daily error:", err);
+                loading.value = false;
+                tableRows.value = [];
             }
         );
     } catch (error) {
         console.error("Analytics error:", error);
         window.$toast.error("Ошибка загрузки аналитики: " + error.message);
         loading.value = false;
+        tableRows.value = [];
     }
 };
 
-const createCharts = () => {
-    // График роста подписчиков
-    if (subscribersChart.value) {
-        if (subscribersChartInstance) {
-            subscribersChartInstance.destroy();
-        }
-
-        const ctx = subscribersChart.value.getContext("2d");
-        subscribersChartInstance = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: analytics.value.subscribers_growth.map((item) =>
-                    new Date(item.date).toLocaleDateString("ru-RU")
-                ),
-                datasets: [
-                    {
-                        label: "Подписчики",
-                        data: analytics.value.subscribers_growth.map(
-                            (item) => item.count
-                        ),
-                        borderColor: "rgb(59, 130, 246)",
-                        backgroundColor: "rgba(59, 130, 246, 0.1)",
-                        tension: 0.4,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                    },
-                },
-            },
-        });
-    }
-
-    // График активности постов
-    if (postsChart.value) {
-        if (postsChartInstance) {
-            postsChartInstance.destroy();
-        }
-
-        const ctx = postsChart.value.getContext("2d");
-        postsChartInstance = new Chart(ctx, {
-            type: "bar",
-            data: {
-                labels: analytics.value.posts_activity.map((item) =>
-                    new Date(item.date).toLocaleDateString("ru-RU")
-                ),
-                datasets: [
-                    {
-                        label: "Посты",
-                        data: analytics.value.posts_activity.map(
-                            (item) => item.count
-                        ),
-                        backgroundColor: "rgba(34, 197, 94, 0.8)",
-                        borderColor: "rgb(34, 197, 94)",
-                        borderWidth: 1,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                    },
-                },
-            },
-        });
-    }
-
-    // График просмотров
-    if (viewsChart.value) {
-        if (viewsChartInstance) {
-            viewsChartInstance.destroy();
-        }
-
-        const ctx = viewsChart.value.getContext("2d");
-        viewsChartInstance = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: analytics.value.views_data.map((item) =>
-                    new Date(item.date).toLocaleDateString("ru-RU")
-                ),
-                datasets: [
-                    {
-                        label: "Просмотры",
-                        data: analytics.value.views_data.map(
-                            (item) => item.views
-                        ),
-                        borderColor: "rgb(245, 158, 11)",
-                        backgroundColor: "rgba(245, 158, 11, 0.1)",
-                        tension: 0.4,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                    },
-                },
-            },
-        });
-    }
-
-    // График вовлеченности
-    if (engagementChart.value) {
-        if (engagementChartInstance) {
-            engagementChartInstance.destroy();
-        }
-
-        const ctx = engagementChart.value.getContext("2d");
-        engagementChartInstance = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: analytics.value.engagement_data.map((item) =>
-                    new Date(item.date).toLocaleDateString("ru-RU")
-                ),
-                datasets: [
-                    {
-                        label: "Вовлеченность (%)",
-                        data: analytics.value.engagement_data.map(
-                            (item) => item.engagement
-                        ),
-                        borderColor: "rgb(147, 51, 234)",
-                        backgroundColor: "rgba(147, 51, 234, 0.1)",
-                        tension: 0.4,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 10,
-                    },
-                },
-            },
-        });
-    }
+const buildTableRowsFromDaily = (docs) => {
+    const rows = (docs || []).map((d) => ({
+        date: d.date,
+        subscribers: d.subscribers_count || 0,
+        views: d.views_sum || 0,
+        er: d.engagement_avg || 0,
+    }));
+    tableRows.value = rows.sort((a, b) => new Date(a.date) - new Date(b.date));
 };
 
-const formatNumber = (num) => {
-    if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + "M";
-    } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + "K";
-    }
-    return num.toString();
-};
-
-const getContentTypeName = (type) => {
-    const types = {
-        text: "Текст",
-        photo: "Фото",
-        video: "Видео",
-        document: "Документ",
-        audio: "Аудио",
-    };
-    return types[type] || type;
-};
-
-// Обработчик обновления аналитики из Header
 const refreshAnalyticsHandler = async () => {
     console.log("Refresh analytics event received");
     loading.value = true;
@@ -549,11 +419,19 @@ const refreshAnalyticsHandler = async () => {
 
     try {
         loadChannels();
+        loadSettings();
         if (selectedChannelId.value) {
             await loadChannelAnalytics();
         }
     } catch (error) {
         console.error("Error refreshing analytics:", error);
+        analytics.value = {
+            subscribers_count: 0,
+            posts_count: 0,
+            views_count: 0,
+            avg_reach: 0,
+        };
+        tableRows.value = [];
     } finally {
         loading.value = false;
         if (setLoading) setLoading(false);
@@ -566,13 +444,11 @@ watch(refreshTrigger, () => {
 
 onMounted(() => {
     loadChannels();
-
-    // Слушаем событие обновления аналитики из Header
+    loadSettings();
     window.addEventListener("refreshAnalytics", refreshAnalyticsHandler);
 });
 
 onUnmounted(() => {
-    // Очищаем event listener
     window.removeEventListener("refreshAnalytics", refreshAnalyticsHandler);
 });
 </script>
