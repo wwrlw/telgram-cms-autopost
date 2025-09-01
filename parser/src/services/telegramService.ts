@@ -150,7 +150,7 @@ export class TelegramService {
     try {
       console.log('🔄 Начинаем обновление статистики постов с конверсией...');
       
-      const statsLimit = Number(process.env.STATS_UPDATE_LIMIT) || 50;
+      const statsLimit = Number(process.env.STATS_UPDATE_LIMIT) || 150;
       const recentPosts = await this.mongoService.getRecentPostsForStats(statsLimit);
       console.log(`📊 Найдено ${recentPosts.length} постов для обновления статистики (ограничение: ${statsLimit})`);
       
@@ -172,7 +172,6 @@ export class TelegramService {
           let entity;
           
           try {
-            // Try to find channel config by matching the source channel
             const channelConfig = this.config.targetChannels.find(c => {
               if (c.username && c.username.replace('@', '') === channelIdentifier) {
                 return true;
@@ -181,16 +180,13 @@ export class TelegramService {
             });
             
             if (channelConfig) {
-              // Use channel configuration to determine how to get entity
               if (channelConfig.is_private) {
-                // For private channels, use channel ID
                 let telegramChannelId = Math.abs(channelConfig.id);
                 
                 if (telegramChannelId < 1_000_000_000_000) {
                   telegramChannelId = 1_000_000_000_000 + telegramChannelId;
                 }
                 
-                // Try multiple approaches to get the entity
                 try {
                   entity = await this.client.getEntity(telegramChannelId);
                 } catch (firstError) {
@@ -201,11 +197,9 @@ export class TelegramService {
                   }
                 }
               } else {
-                // For public channels, use username
                 entity = await this.client.getEntity(channelIdentifier);
               }
             } else {
-              // Fallback to original logic
               if (!/^\d+$/.test(channelIdentifier)) {
                 entity = await this.client.getEntity(channelIdentifier);
               } else {

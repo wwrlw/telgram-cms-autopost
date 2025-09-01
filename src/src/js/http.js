@@ -507,8 +507,11 @@ let http = {
 
     getScheduledPosts: function (params = {}, callback) {
         const queryParams = new URLSearchParams();
-        if (params.channel_id) queryParams.append("channel_id", params.channel_id);
-        const url = queryParams.toString() ? `/posts/scheduled?${queryParams.toString()}` : "/posts/scheduled";
+        if (params.channel_id)
+            queryParams.append("channel_id", params.channel_id);
+        const url = queryParams.toString()
+            ? `/posts/scheduled?${queryParams.toString()}`
+            : "/posts/scheduled";
         instance
             .get(url)
             .then((res) => {
@@ -539,8 +542,11 @@ let http = {
 
     getPublishedPosts: function (params = {}, callback) {
         const queryParams = new URLSearchParams();
-        if (params.channel_id) queryParams.append("channel_id", params.channel_id);
-        const url = queryParams.toString() ? `/posts/published?${queryParams.toString()}` : "/posts/published";
+        if (params.channel_id)
+            queryParams.append("channel_id", params.channel_id);
+        const url = queryParams.toString()
+            ? `/posts/published?${queryParams.toString()}`
+            : "/posts/published";
         instance
             .get(url)
             .then((res) => {

@@ -3,6 +3,8 @@ import sharp from 'sharp';
 import fs from 'fs-extra';
 import path from 'path';
 import { Media } from '../types/index.js';
+import { execFile } from 'child_process';
+import ffmpegPath from 'ffmpeg-static';
 
 export class MediaService {
   constructor(private mediaPath: string) {
@@ -69,6 +71,79 @@ export class MediaService {
     return mediaArray;
   }
 
+  private async downloadThumbnail(
+    client: TelegramClient,
+    fileName: string,
+    doc: Api.Document
+  ): Promise<string | undefined> {
+    if (!doc || !doc.thumbs || doc.thumbs.length === 0) return undefined;
+  
+    const largestThumb = doc.thumbs.reduce((prev: any, curr: any) => {
+      const prevArea = (prev.w || 0) * (prev.h || 0);
+      const currArea = (curr.w || 0) * (curr.h || 0);
+      return prevArea > currArea ? prev : curr;
+    });
+  
+    if (!largestThumb) return undefined;
+  
+    const thumbFileName = `${fileName}_tg.jpg`; // приводим к jpg
+    const fullThumbnailPath = path.join(this.mediaPath, 'thumbnails', thumbFileName);
+  
+    try {
+      const downloaded = await client.downloadFile(
+        new Api.InputDocumentFileLocation({
+          id: doc.id,
+          accessHash: doc.accessHash,
+          fileReference: doc.fileReference,
+          thumbSize: largestThumb.type,
+        }),
+        { outputFile: fullThumbnailPath }
+      );
+  
+      if (typeof downloaded === 'string') {
+        return downloaded;
+      }
+    } catch (err) {
+      console.warn('⚠️ Ошибка при скачивании превью из Telegram:', err);
+    }
+    return undefined;
+  }
+
+  private async extractVideoThumbnailFFmpeg(
+    inputPath: string,
+    outputPath: string,
+    seekSeconds = 2
+  ): Promise<string> {
+    const bin = (ffmpegPath as unknown as string) || 'ffmpeg';
+  
+    return new Promise((resolve, reject) => {
+      const args = [
+        '-y',               
+        '-ss', String(seekSeconds),
+        '-i', inputPath,     
+        '-frames:v', '1',    
+        '-q:v', '2',         
+        '-vf', 'thumbnail,scale=640:-2', 
+        outputPath
+      ];
+  
+      execFile(bin, args, (err) => {
+        if (err) {
+          const fallbackArgs = [
+            '-y', '-ss', '0.1', '-i', inputPath, '-frames:v', '1',
+            '-q:v', '2', '-vf', 'thumbnail,scale=640:-2', outputPath
+          ];
+          execFile(bin, fallbackArgs, (err2) => {
+            if (err2) return reject(err2);
+            resolve(outputPath);
+          });
+          return;
+        }
+        resolve(outputPath);
+      });
+    });
+  }
+
   private async processSingleMedia(
     client: TelegramClient,
     media: any,
@@ -100,32 +175,13 @@ export class MediaService {
       }
 
       if (mediaType === 'videos') {
-        const mediaContent = media instanceof Api.MessageMediaDocument ? media.document : media.video;
-        if (mediaContent && mediaContent  && mediaContent.thumbs.length > 0) {
-          const largestThumbnail  = mediaContent.thumbs.reduce((prev: any, current: any) => {
-            return (prev.bytes || 0) > (current.bytes || 0) ? prev : current;
-          });
-          if (largestThumbnail && largestThumbnail.location) {
-            const thumbExt = largestThumbnail.className === 'PhotoSize' || largestThumbnail.className === 'PhotoStrippedSize' ? 'jpg' : 'webp'; // Уточняем расширение для превью
-            const thumbFileName = `${fileName}_thumb.${thumbExt}`;
-            const fullThumbnailPath = path.join(this.mediaPath, 'thumbnails', thumbFileName);
-
-            try {
-              const downloadedThumb = await client.downloadMedia(largestThumbnail.location, {
-                  outputFile: fullThumbnailPath
-              });
-
-              if (downloadedThumb && typeof downloadedThumb === 'string') {
-                thumbnailPath = downloadedThumb;
-                console.log(`🖼️ Превью для ${mediaType} сохранено: ${thumbnailPath}`);
-
-              } else {
-                console.warn(`⚠️ Не удалось скачать превью для ${fileName} из-за ошибки в downloadMedia.`);
-              }
-            } catch (thumbError) {
-              console.warn(`⚠️ Ошибка при скачивании превью для ${fileName}:`, thumbError);
-            }
-          }
+        const thumbOut = path.join(this.mediaPath, 'thumbnails', `${fileName}.jpg`);
+        try {
+          await this.extractVideoThumbnailFFmpeg(filePath, thumbOut);
+          thumbnailPath = thumbOut;
+        } catch (err) {
+          console.error('❌ Ошибка при создании превью видео:', err);
+          thumbnailPath = await this.downloadThumbnail(client, fileName, media.video);
         }
       }
 
@@ -134,7 +190,7 @@ export class MediaService {
               mediaType === 'videos' ? 'video' : 
               mediaType === 'documents' ? 'document' : 'document',
         file_path: relativeFilePath.replace(/\\/g, '/'),
-        thumbnail_path: thumbnailPath?.replace(/\\/g, '/')
+        thumbnail_path: thumbnailPath
       };
 
     } catch (error) {
