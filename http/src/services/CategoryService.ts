@@ -24,7 +24,10 @@ export class CategoryService implements ICategoryService {
       throw new ValidationError('Category with this name already exists');
     }
 
-    // Validate color format if provided
+    // Normalize and validate color if provided
+    if (categoryData.color) {
+      categoryData.color = categoryData.color.toUpperCase();
+    }
     if (categoryData.color && !this.isValidHexColor(categoryData.color)) {
       throw new ValidationError('Invalid color format. Use hex format like #3B82F6');
     }
@@ -98,7 +101,10 @@ export class CategoryService implements ICategoryService {
       }
     }
 
-    // Validate color format if provided
+    // Normalize and validate color if provided
+    if (categoryData.color) {
+      categoryData.color = categoryData.color.toUpperCase();
+    }
     if (categoryData.color && !this.isValidHexColor(categoryData.color)) {
       throw new ValidationError('Invalid color format. Use hex format like #3B82F6');
     }
