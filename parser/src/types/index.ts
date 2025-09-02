@@ -64,6 +64,26 @@ export interface ChannelConfig {
   is_private: boolean;
 }
 
+export interface PostedChannel {
+  _id?: string;
+  name: string;
+  channel_id: string;
+  is_private: boolean;
+  is_active: boolean;
+  signature: string;
+}
+
+export interface ChannelAnalytics {
+  channel_id: string;
+  channel_name: string;
+  subscribers_count: number;
+  avg_views: number;
+  avg_er: number;
+  posts_count: number;
+  last_updated: Date;
+  created_at: Date;
+}
+
 export interface ParserConfig {
   apiId: number;
   apiHash: string;

@@ -490,9 +490,7 @@ export class MongoService {
     }
   }
 
-  /**
-   * Получает статистику всех каналов
-   */
+
   async getAllChannelStats(): Promise<ChannelStats[]> {
     if (!this.channelStatsCollection) {
       throw new Error('MongoDB не подключена');
@@ -508,6 +506,54 @@ export class MongoService {
     } catch (error) {
       console.error('❌ Ошибка получения статистики каналов:', error);
       return [];
+    }
+  }
+
+  async getChannelAnalytics(channelId: string): Promise<any | null> {
+    try {
+      if (!this.db) throw new Error('MongoDB is not connected');
+      
+      const analytics = await this.db.collection('channel_analytics')
+        .findOne({ channel_id: channelId });
+      
+      return analytics as any || null;
+    } catch (error) {
+      console.error('❌ Ошибка получения аналитики канала:', error);
+      return null;
+    }
+  }
+
+
+  async createChannelAnalytics(analytics: any): Promise<void> {
+    try {
+      if (!this.db) throw new Error('MongoDB is not connected');
+      
+      await this.db.collection('channel_analytics').insertOne(analytics);
+      console.log(`✅ Создана аналитика для канала: ${analytics.channel_name}`);
+    } catch (error) {
+      console.error('❌ Ошибка создания аналитики канала:', error);
+      throw error;
+    }
+  }
+
+  async updateChannelAnalytics(channelId: string, updateData: Partial<any>): Promise<void> {
+    try {
+      if (!this.db) throw new Error('MongoDB is not connected');
+      
+      await this.db.collection('channel_analytics').updateOne(
+        { channel_id: channelId },
+        { 
+          $set: {
+            ...updateData,
+            last_updated: new Date()
+          }
+        }
+      );
+      
+      console.log(`✅ Обновлена аналитика для канала: ${channelId}`);
+    } catch (error) {
+      console.error('❌ Ошибка обновления аналитики канала:', error);
+      throw error;
     }
   }
 } 

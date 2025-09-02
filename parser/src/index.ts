@@ -47,7 +47,7 @@ let telegramService: TelegramService;
 
 async function initializeParser() {
   try {
-    console.log('🔍 Получаем каналы из API...');
+    console.log('🔍 Получаем каналы для парсинга из API...');
     
     const channelConfigs = await apiService.getChannelConfigs();
     
@@ -65,21 +65,29 @@ async function initializeParser() {
       console.log(`  - ${channel.username} (ID: ${channel.id}) [${privacyStatus}]`);
     });
 
+    console.log('🔍 Получаем каналы для публикации из API...');
+    const postedChannels = await apiService.getActivePostedChannels();
+    
+    if (postedChannels.length > 0) {
+      console.log('🎯 Posted channels:', postedChannels.map(c => `${c.name} (${c.channel_id})`));
+    } else {
+      console.warn('⚠️ Не найдено каналов для публикации');
+    }
+
     telegramService = new TelegramService({
       ...config,
-      targetChannels: channelConfigs
+      targetChannels: channelConfigs,
+      postedChannels: postedChannels
     });
 
     await telegramService.start();
     schedulerService.start();
 
-    // Обновляем статистику каналов при запуске для корректного расчета конверсии
     console.log('📊 Обновляем статистику каналов при запуске...');
     await updateChannelsStats();
     
     console.log('✅ Система конверсии активна - будет рассчитывать ER и ERR для всех постов');
 
-    
   } catch (error) {
     console.error('❌ Ошибка инициализации парсера:', error);
     console.log('🔄 Повторная попытка через 30 секунд...');
@@ -135,6 +143,32 @@ async function cleanupDuplicates() {
   }
 }
 
+async function updatePostedChannels() {
+  try {
+    console.log('🔄 Обновляем список каналов публикации...');
+    const postedChannels = await apiService.getActivePostedChannels();
+    
+    if (telegramService) {
+      await telegramService.updatePostedChannels(postedChannels);
+    }
+    
+    console.log('✅ Список каналов публикации обновлен:', postedChannels.map(c => `${c.name} (${c.channel_id})`));
+  } catch (error) {
+    console.error('❌ Ошибка обновления каналов публикации:', error);
+  }
+}
+
+async function collectPostedChannelsAnalytics() {
+  try {
+    if (telegramService) {
+      console.log('📊 Запускаем сбор аналитики по каналам публикации...');
+      await telegramService.collectPostedChannelsAnalytics();
+    }
+  } catch (error) {
+    console.error('❌ Ошибка сбора аналитики по каналам публикации:', error);
+  }
+}
+
 process.on('SIGINT', async () => {
   console.log('\n🛑 Получен сигнал SIGINT, останавливаем сервис...');
   schedulerService.stop();
@@ -159,10 +193,16 @@ process.on('SIGTERM', async () => {
     
     // Периодические задачи
     setInterval(updateChannels, 10 * 60 * 1000); // Обновление списка каналов каждые 10 минут
+    setInterval(updatePostedChannels, 10 * 60 * 1000); // Обновление каналов публикации каждые 10 минут
     
-    setInterval(updatePostsStats, 5 * 60 * 1000); // Обновление статистики постов каждые 5 минут (включает расчет конверсии)
-    
+    setInterval(updatePostsStats, 5 * 60 * 1000); // Обновление статистики постов каждые 5 минут
     setInterval(updateChannelsStats, 30 * 60 * 1000); // Обновление статистики каналов каждые 30 минут
+    
+    // Аналитика по каналам публикации - раз в 24 часа
+    setInterval(collectPostedChannelsAnalytics, 24 * 60 * 60 * 1000);
+    
+    // Запускаем первую сборку аналитики через 1 час после старта
+    setTimeout(collectPostedChannelsAnalytics, 60 * 60 * 1000);
     
     setInterval(cleanupDuplicates, 60 * 60 * 1000); // Очистка дубликатов каждый час
     
