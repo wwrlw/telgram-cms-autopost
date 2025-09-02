@@ -174,7 +174,6 @@ const postsService = async (
             }
         });
 
-        // Используем новый endpoint для infinite scroll
         const apiMethod = isInfiniteScroll
             ? http.postsInfiniteScroll
             : http.posts;
@@ -189,7 +188,6 @@ const postsService = async (
             posts.value = [...posts.value, ...newPosts];
             currentPage.value++;
 
-            // Обновляем hasMore из ответа API
             hasMore.value = response.params?.hasMore || false;
         } else {
             posts.value = response.data || [];
@@ -226,7 +224,6 @@ const loadMorePosts = async () => {
     }
 
     try {
-        // Получаем ID последнего поста для курсорной пагинации
         const lastPost = posts.value[posts.value.length - 1];
         const lastId = lastPost?._id;
 
@@ -242,7 +239,6 @@ const loadMorePosts = async () => {
     }
 };
 
-// Debounced search
 const handleSearchChange = async (query) => {
     searchQuery.value = query;
     await debouncedSearch(async () => {
@@ -425,28 +421,22 @@ const initializeInfiniteScroll = () => {
 watch(
     refreshTrigger,
     async () => {
-        if (refreshTrigger && refreshTrigger.value > 0) {
-            currentPage.value = 1;
-            hasMore.value = true;
-            await postsService({ page: 1 }, false, {
-                forceRefresh: true,
-                useCache: false,
-            });
-            await loadTodayCount();
-            initializeInfiniteScroll();
-        }
+        currentPage.value = 1;
+        hasMore.value = true;
+        await postsService({ page: 1 }, false, {
+            forceRefresh: refreshTrigger.value > 0,
+            useCache: refreshTrigger.value === 0,
+        });
+        await loadTodayCount();
+        initializeInfiniteScroll();
     },
     { immediate: true }
 );
 
 onMounted(async () => {
     await initializeFavorites();
-    await postsService({ page: 1 });
     await loadCategories();
-    await loadTodayCount();
-
     await nextTick();
-    initializeInfiniteScroll();
 
     const autoRefreshInterval = setInterval(async () => {
         try {

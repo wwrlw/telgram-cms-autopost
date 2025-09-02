@@ -39,7 +39,8 @@ export const infiniteScrollResponseSchema = {
               type: 'object',
               properties: {
                 type: { type: 'string' },
-                file_path: { type: 'string' }
+                file_path: { type: 'string' },
+                thumbnail_path: { type: 'string' }
               }
             }
           },
