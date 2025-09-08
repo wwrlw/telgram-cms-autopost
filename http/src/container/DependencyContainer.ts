@@ -11,6 +11,8 @@ import { PublicationChannelService } from '../services/PublicationChannelService
 import { CategoryService } from '../services/CategoryService';
 import { AuthService } from '../services/AuthService';
 import { YandexGPTService } from '../services/YandexGPTService';
+import { ChannelProfileService } from '../services/ChannelProfileService';
+import { PromptService } from '../services/PromptService';
 import { UserPermissionService } from '../services/UserPermissionService';
 import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
@@ -101,6 +103,7 @@ export class DependencyContainer {
   }
 
   getYandexGPTService(): YandexGPTService {
+    // PromptService создаётся внутри YandexGPTService, но оставляем возможность DI при необходимости
     return new YandexGPTService();
   }
 

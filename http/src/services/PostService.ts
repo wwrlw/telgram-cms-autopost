@@ -5,6 +5,7 @@ import { Post, CreatePostDto } from '../models/Post';
 import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse } from '../types/PostQuery';
 import { NotFoundError } from '../exceptions/NotFoundError';
 import { YandexGPTService } from './YandexGPTService';
+import { ChannelProfileService } from './ChannelProfileService';
 
 export class PostService implements IPostService {
   constructor(
@@ -302,7 +303,12 @@ export class PostService implements IPostService {
       throw new NotFoundError('Post has no text to uniquize');
     }
 
-    const uniquizedText = await this.yandexGPTService.uniquizeText(post.text);
+    // Определяем исходный канал для профиля
+    const sourceHandle = post.channel_username || post.source_channel;
+    const profileService = new ChannelProfileService();
+    const profile = profileService.getProfileByHandle(sourceHandle);
+
+    const uniquizedText = await this.yandexGPTService.rewriteWithProfile(post.text, profile);
     
     const updatedPost = await this.postRepository.update(id, {
       unique_text: uniquizedText,
