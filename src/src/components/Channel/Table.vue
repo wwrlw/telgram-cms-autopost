@@ -25,7 +25,7 @@
                         </svg>
                         Добавить канал
                     </button>
-                    <div class="flex items-center space-x-2">
+                    <div v-if="showPagination" class="flex items-center space-x-2">
                         <label class="text-sm text-gray-500">Показать:</label>
                         <select
                             v-model="itemsPerPage"
@@ -197,6 +197,7 @@
             </div>
 
             <Pagination
+                v-if="showPagination"
                 :pagination="pagination"
                 @page-change="changePage"
                 @items-per-page-change="changeItemsPerPage"
@@ -218,6 +219,10 @@ const props = defineProps({
     pagination: {
         type: Object,
         required: true,
+    },
+    showPagination: {
+        type: Boolean,
+        default: true,
     },
     loading: {
         type: Boolean,

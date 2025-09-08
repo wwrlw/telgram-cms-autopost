@@ -54,6 +54,26 @@
             </div>
         </div>
 
+        <div class="space-y-3 mb-6">
+            <div v-if="originalUrl || isPrivate" class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Оригинал поста:</span>
+                <template v-if="isPrivate">
+                    <span class="text-sm font-medium text-gray-900">Приватный канал</span>
+                </template>
+                <template v-else>
+                    <a
+                        :href="originalUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-sm font-medium text-blue-600 hover:underline truncate max-w-40 text-right"
+                        title="Открыть оригинал поста"
+                    >
+                        {{ originalUrl }}
+                    </a>
+                </template>
+            </div>
+        </div>
+
         <div v-if="hasConversionMetrics" class="space-y-4">
             <h4 class="text-sm font-semibold text-gray-700 border-t pt-4">
                 Метрики конверсии
@@ -238,4 +258,38 @@ const getMediaCountText = (count) => {
     if (count >= 2 && count <= 4) return "медиафайла";
     return "медиафайлов";
 };
+
+// Ссылка на оригинал из поля posts.url, если канал публичный
+const originalUrl = computed(() => {
+    const url = props.postData?.url || "";
+    if (!url) return "";
+    // Если url уже полноценная ссылка — возвращаем как есть
+    if (/^https?:\/\//i.test(url)) return url;
+    // Если у поста есть username канала — формируем ссылку на t.me
+    const username = props.postData?.channel_username || props.postData?.source_channel || "";
+    if (username && /^@?\w+$/i.test(username)) {
+        const clean = username.replace(/^@/,'');
+        // Если url похож на message_id — формируем ссылку t.me/<channel>/<id>
+        if (/^\d+$/.test(url)) {
+            return `https://t.me/${clean}/${url}`;
+        }
+    }
+    // Иначе показываем как есть (мог быть сохранён относительный или внешний путь)
+    return url;
+});
+
+// Признак приватного канала: ссылки вида t.me/c/<id>/... или отсутствие username при числовом message_id
+const isPrivate = computed(() => {
+    const url = props.postData?.url || "";
+    if (!url) return false;
+    // Явные признаки приватного:
+    // 1) t.me/c/<channelId>/...
+    if (/^https?:\/\/t\.me\/c\//i.test(url)) return true;
+    // 2) t.me/<numericChannelId>/<message_id>
+    if (/^https?:\/\/t\.me\/\d+\/\d+/i.test(url)) return true;
+    // Если url — число (message_id), но нет username/source_channel — считаем приватным
+    const hasUsername = !!(props.postData?.channel_username || props.postData?.source_channel);
+    if (!hasUsername && /^\d+$/.test(url)) return true;
+    return false;
+});
 </script>

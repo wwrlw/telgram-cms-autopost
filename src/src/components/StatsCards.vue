@@ -83,6 +83,10 @@ const props = defineProps({
         type: Number,
         default: 0,
     },
+    activeCount: {
+        type: Number,
+        default: 0,
+    },
 });
 
 const gridClasses = computed(() => {
@@ -139,7 +143,7 @@ const statsConfig = {
             label: "Активных каналов",
             iconPath: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
             iconColor: "text-green-400",
-            getValue: (totalCount, data) => data.length,
+            getValue: (totalCount, data, activeCount) => activeCount,
         },
         {
             key: "recent",
@@ -197,9 +201,10 @@ const statsConfig = {
 
 const computedStats = computed(() => {
     const config = statsConfig[props.type] || [];
+    const thirdArg = props.type === 'posts' ? props.todayCount : props.activeCount;
     return config.map((stat) => ({
         ...stat,
-        value: stat.getValue(props.totalCount, props.data, props.todayCount),
+        value: stat.getValue(props.totalCount, props.data, thirdArg),
     }));
 });
 </script>

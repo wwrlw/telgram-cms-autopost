@@ -58,7 +58,7 @@ export async function categoriesRoutes(fastify: FastifyInstance) {
             description: { type: 'string' },
             color: { 
               type: 'string', 
-              pattern: '^#[0-9A-F]{6}$' 
+              pattern: '^#[0-9a-fA-F]{6}$' 
             },
             is_active: { type: 'boolean' }
           }
@@ -93,7 +93,7 @@ export async function categoriesRoutes(fastify: FastifyInstance) {
             description: { type: 'string' },
             color: { 
               type: 'string', 
-              pattern: '^#[0-9A-F]{6}$' 
+              pattern: '^#[0-9a-fA-F]{6}$' 
             },
             is_active: { type: 'boolean' }
           }
