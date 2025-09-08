@@ -650,26 +650,11 @@ let http = {
             });
     },
 
-    getChannelAnalytics: function (channelId, callback, errorCallback) {
-        instance
-            .get(`/analytics/${channelId}`)
-            .then((res) => {
-                callback(res.data);
-            })
-            .catch((err) => {
-                console.error("Analytics API error:", err);
-                if (errorCallback) errorCallback(err);
-                else
-                    callback({
-                        success: false,
-                        message: "Failed to load channel analytics",
-                    });
-            });
-    },
-
     getAnalyticsDaily: function (channelId, params, callback, errorCallback) {
         instance
-            .get(`/analytics/${channelId}/daily`, { params })
+            .get(`/analytics/daily`, {
+                params: { channelid: channelId, ...(params || {}) },
+            })
             .then((res) => {
                 callback(res.data);
             })

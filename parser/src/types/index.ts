@@ -84,6 +84,19 @@ export interface ChannelAnalytics {
   created_at: Date;
 }
 
+export interface DailyChannelAnalytics {
+  date: string;
+  channel_id: string;
+  channel_name: string;
+  subscribers_count: number;
+  views: number;
+  er: number;
+  views_day: number;
+  er_day: number;
+  posts_day: number;
+  created_at: Date;
+}
+
 export interface ParserConfig {
   apiId: number;
   apiHash: string;

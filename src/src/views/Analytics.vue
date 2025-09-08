@@ -301,8 +301,11 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, inject, watch } from "vue";
+import { useRoute } from "vue-router";
 import http from "@/js/http";
 import { formatNumber } from "@/js/utils";
+
+const route = useRoute();
 
 const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading");
@@ -406,8 +409,8 @@ const buildTableRowsFromDaily = (docs) => {
     const rows = (docs || []).map((d) => ({
         date: d.date,
         subscribers: d.subscribers_count || 0,
-        views: d.views_sum || 0,
-        er: d.engagement_avg || 0,
+        views: d.views_day ?? d.views ?? 0,
+        er: d.er_day ?? d.er ?? 0,
     }));
     tableRows.value = rows.sort((a, b) => new Date(a.date) - new Date(b.date));
 };
@@ -438,6 +441,13 @@ const refreshAnalyticsHandler = async () => {
     }
 };
 
+const initFromRoute = () => {
+    const id = route.params && route.params.id ? String(route.params.id) : "";
+    if (id) {
+        selectedChannelId.value = id;
+    }
+};
+
 watch(refreshTrigger, () => {
     loadChannels();
 });
@@ -445,8 +455,22 @@ watch(refreshTrigger, () => {
 onMounted(() => {
     loadChannels();
     loadSettings();
+    initFromRoute();
+    if (selectedChannelId.value) {
+        loadChannelAnalytics();
+    }
     window.addEventListener("refreshAnalytics", refreshAnalyticsHandler);
 });
+
+watch(
+    () => route.params.id,
+    (newId) => {
+        if (newId && String(newId) !== selectedChannelId.value) {
+            selectedChannelId.value = String(newId);
+            loadChannelAnalytics();
+        }
+    }
+);
 
 onUnmounted(() => {
     window.removeEventListener("refreshAnalytics", refreshAnalyticsHandler);

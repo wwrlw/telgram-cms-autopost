@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import cron from 'node-cron';
 import { TelegramService } from './services/telegramService.js';
 import { ApiService } from './services/apiService.js';
 import { SchedulerService } from './services/SchedulerService.js';
@@ -87,6 +88,7 @@ async function initializeParser() {
     await updateChannelsStats();
     
     console.log('✅ Система конверсии активна - будет рассчитывать ER и ERR для всех постов');
+
 
   } catch (error) {
     console.error('❌ Ошибка инициализации парсера:', error);
@@ -191,20 +193,14 @@ process.on('SIGTERM', async () => {
   try {
     await initializeParser();
     
-    // Периодические задачи
-    setInterval(updateChannels, 10 * 60 * 1000); // Обновление списка каналов каждые 10 минут
-    setInterval(updatePostedChannels, 10 * 60 * 1000); // Обновление каналов публикации каждые 10 минут
-    
-    setInterval(updatePostsStats, 5 * 60 * 1000); // Обновление статистики постов каждые 5 минут
-    setInterval(updateChannelsStats, 30 * 60 * 1000); // Обновление статистики каналов каждые 30 минут
-    
-    // Аналитика по каналам публикации - раз в 24 часа
-    setInterval(collectPostedChannelsAnalytics, 24 * 60 * 60 * 1000);
-    
-    // Запускаем первую сборку аналитики через 1 час после старта
-    setTimeout(collectPostedChannelsAnalytics, 60 * 60 * 1000);
-    
-    setInterval(cleanupDuplicates, 60 * 60 * 1000); // Очистка дубликатов каждый час
+    // Периодические задачи через cron
+    cron.schedule('*/10 * * * *', updateChannels); // каждые 10 минут
+    cron.schedule('*/10 * * * *', updatePostedChannels); // каждые 10 минут
+    cron.schedule('*/5 * * * *', updatePostsStats); // каждые 5 минут
+    cron.schedule('*/30 * * * *', updateChannelsStats); // каждые 30 минут
+    cron.schedule('0 3 * * *', collectPostedChannelsAnalytics); // каждый день в 03:00
+    cron.schedule('15 3 * * *', async () => { if (telegramService) await telegramService.collectDailyChannelSnapshots(); }); // дневные срезы в 03:15
+    cron.schedule('0 * * * *', cleanupDuplicates); // каждый час
     
   } catch (error) {
     console.error('❌ Критическая ошибка:', error);

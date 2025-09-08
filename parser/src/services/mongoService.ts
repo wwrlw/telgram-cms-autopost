@@ -1,5 +1,5 @@
 import { MongoClient, Db, Collection } from 'mongodb';
-import { Post, CreatePostDto, ConversionMetrics, ChannelStats } from '../types/index.js';
+import { Post, CreatePostDto, ConversionMetrics, ChannelStats, DailyChannelAnalytics } from '../types/index.js';
 
 export class MongoService {
   private client: MongoClient;
@@ -8,6 +8,7 @@ export class MongoService {
   private channelsCollection: Collection | null = null;
   private categoriesCollection: Collection | null = null;
   private channelStatsCollection: Collection<ChannelStats> | null = null;
+  private dailyAnalyticsCollection: Collection<DailyChannelAnalytics> | null = null;
 
   constructor(private mongoUri: string, private dbName: string) {
     this.client = new MongoClient(mongoUri);
@@ -21,6 +22,7 @@ export class MongoService {
       this.channelsCollection = this.db.collection('channels');
       this.categoriesCollection = this.db.collection('categories');
       this.channelStatsCollection = this.db.collection<ChannelStats>('channel_stats');
+      this.dailyAnalyticsCollection = this.db.collection<DailyChannelAnalytics>('channel_analytics_daily');
       
       // Создаем индексы для существующей коллекции
       await this.postsCollection.createIndex({ url: 1 }, { unique: true });
@@ -44,6 +46,10 @@ export class MongoService {
       await this.channelStatsCollection.createIndex({ channel_id: 1 }, { unique: true });
       await this.channelStatsCollection.createIndex({ source_channel: 1 });
       await this.channelStatsCollection.createIndex({ last_updated: -1 });
+
+      // Индексы для дневной аналитики каналов
+      await this.dailyAnalyticsCollection.createIndex({ date: 1, channel_id: 1 }, { unique: true });
+      await this.dailyAnalyticsCollection.createIndex({ channel_id: 1, date: -1 });
       
       console.log('✅ Подключение к MongoDB установлено');
     } catch (error) {
@@ -555,5 +561,30 @@ export class MongoService {
       console.error('❌ Ошибка обновления аналитики канала:', error);
       throw error;
     }
+  }
+
+  // ===== Дневные срезы аналитики каналов =====
+  async upsertDailyChannelAnalytics(doc: DailyChannelAnalytics): Promise<void> {
+    if (!this.dailyAnalyticsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    await this.dailyAnalyticsCollection.updateOne(
+      { date: doc.date, channel_id: doc.channel_id },
+      { $set: { ...doc } },
+      { upsert: true }
+    );
+  }
+
+  async getDailyAnalyticsByChannel(channelId: string, limit: number = 60): Promise<DailyChannelAnalytics[]> {
+    if (!this.dailyAnalyticsCollection) {
+      throw new Error('MongoDB не подключена');
+    }
+
+    return await this.dailyAnalyticsCollection
+      .find({ channel_id: channelId })
+      .sort({ date: -1 })
+      .limit(limit)
+      .toArray();
   }
 } 

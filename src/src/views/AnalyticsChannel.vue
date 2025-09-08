@@ -17,58 +17,26 @@
                 </div>
             </div>
 
-            <!-- <div v-if="loading" class="text-center py-12">
-                <div
-                    class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"
-                ></div>
-                <p class="mt-2 text-sm text-gray-500">Загружаем аналитику...</p>
-            </div>
-
-            <div v-else-if="!analytics" class="py-12 px-8 text-center">
-                <AlertCircle class="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p class="text-gray-500">Данные аналитики не найдены</p>
-            </div> -->
-
             <div class="space-y-8 px-8 py-8">
                 <div class="overflow-hidden">
                     <div class="px-4 py-5 sm:p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="bg-blue-50 p-4 rounded-lg">
                                 <div class="text-sm font-medium text-blue-600">
                                     Подписчиков
                                 </div>
                                 <div class="text-2xl font-bold text-blue-900">
-                                    {{
-                                        formatNumber(
-                                            analytics?.subscribers_count || 0
-                                        )
-                                    }}
-                                </div>
-                            </div>
-                            <div class="bg-green-50 p-4 rounded-lg">
-                                <div class="text-sm font-medium text-green-600">
-                                    Постов
-                                </div>
-                                <div class="text-2xl font-bold text-green-900">
-                                    {{
-                                        formatNumber(
-                                            analytics?.posts_count || 0
-                                        )
-                                    }}
+                                    {{ analytics?.subscribers_count || 0 }}
                                 </div>
                             </div>
                             <div class="bg-yellow-50 p-4 rounded-lg">
                                 <div
                                     class="text-sm font-medium text-yellow-600"
                                 >
-                                    Просмотров
+                                    Средние просмотры
                                 </div>
                                 <div class="text-2xl font-bold text-yellow-900">
-                                    {{
-                                        formatNumber(
-                                            analytics?.views_count || 0
-                                        )
-                                    }}
+                                    {{ (analytics?.views_count || 0) }}
                                 </div>
                             </div>
                             <div class="bg-purple-50 p-4 rounded-lg">
@@ -78,7 +46,7 @@
                                     Средний ER%
                                 </div>
                                 <div class="text-2xl font-bold text-purple-900">
-                                    {{ (analytics?.avg_er || 0).toFixed(2) }}%
+                                    {{ (analytics?.er || 0).toFixed(2) }}%
                                 </div>
                             </div>
                         </div>
@@ -163,7 +131,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, inject, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ChevronLeft, AlertCircle } from "lucide-vue-next";
+import { ChevronLeft } from "lucide-vue-next";
 import http from "@/js/http";
 import { formatNumber } from "@/js/utils";
 
@@ -206,29 +174,19 @@ const loadChannelAnalytics = async () => {
     if (setLoading) setLoading(true);
 
     try {
-        http.getChannelAnalytics(
-            channelId.value,
-            (response) => {
-                if (response.success) {
-                    analytics.value = response.data;
-                } else {
-                    window.$toast.error(
-                        "Ошибка загрузки аналитики: " + response.message
-                    );
-                }
-            },
-            (error) => {
-                console.error("Analytics API error:", error);
-                window.$toast.error("Ошибка загрузки аналитики");
-            }
-        );
-
         http.getAnalyticsDaily(
             channelId.value,
-            {},
+            { limit: 60 },
             (res) => {
                 if (res.success) {
-                    buildTableRowsFromDaily(res.data || []);
+                    const docs = res.data || [];
+                    buildTableRowsFromDaily(docs);
+                    const d = docs[0] || {};
+                    analytics.value = {
+                        subscribers_count: d.subscribers_count || 0,
+                        views_count: (d.views_day || d.views || 0),
+                        er: (d.er_day || d.er || 0),
+                    };
                 }
                 loading.value = false;
                 if (setLoading) setLoading(false);
@@ -253,8 +211,8 @@ const buildTableRowsFromDaily = (docs) => {
     const rows = (docs || []).map((d) => ({
         date: d.date,
         subscribers: d.subscribers_count || 0,
-        views: d.views_sum || 0,
-        er: d.engagement_avg || 0,
+        views: (d.views_day || d.views || 0),
+        er: (d.er_day || d.er || 0),
     }));
     tableRows.value = rows.sort((a, b) => new Date(a.date) - new Date(b.date));
 };
@@ -264,28 +222,28 @@ const refreshAnalyticsHandler = async () => {
     await loadChannelAnalytics();
 };
 
-// watch(refreshTrigger, () => {
-//     loadChannelInfo();
-// });
+watch(refreshTrigger, () => {
+    loadChannelInfo();
+});
 
 watch(
     () => route.params.id,
     (newId) => {
         if (newId) {
             channelId.value = newId;
-            // loadChannelInfo();
-            // loadChannelAnalytics();
+            loadChannelInfo();
+            loadChannelAnalytics();
         }
     }
 );
 
 onMounted(() => {
-    // loadChannelInfo();
-    // loadChannelAnalytics();
-    // window.addEventListener("refreshAnalytics", refreshAnalyticsHandler);
+    loadChannelInfo();
+    loadChannelAnalytics();
+    window.addEventListener("refreshAnalytics", refreshAnalyticsHandler);
 });
 
 onUnmounted(() => {
-    // window.removeEventListener("refreshAnalytics", refreshAnalyticsHandler);
+    window.removeEventListener("refreshAnalytics", refreshAnalyticsHandler);
 });
 </script>
