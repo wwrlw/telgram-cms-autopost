@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 export interface Media {
   type: string;
   file_path: string;
+  thumbnail_path?: string;
 }
 
 export interface PostStats {

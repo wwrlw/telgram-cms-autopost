@@ -1,5 +1,3 @@
-version: '3.0'
-
 services:
   backend:
     build: ./http
@@ -37,7 +35,7 @@ services:
       - API_ID=${API_ID}
       - API_HASH=${API_HASH}
       - MEDIA_PATH=${MEDIA_PATH}
-      - MONGO_DB_NAME=${MONGO_DB}
+      - MONGO_DB_NAME=${MONGODB_DB}
       - API_BASE_URL=${API_BASE_URL}
       - API_USERNAME=${API_USERNAME}
       - API_PASSWORD=${API_PASSWORD}

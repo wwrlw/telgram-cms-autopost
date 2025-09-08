@@ -36,7 +36,7 @@
                                     Средние просмотры
                                 </div>
                                 <div class="text-2xl font-bold text-yellow-900">
-                                    {{ (analytics?.views_count || 0) }}
+                                    {{ (analytics?.views_count || 0).toFixed(0) }}
                                 </div>
                             </div>
                             <div class="bg-purple-50 p-4 rounded-lg">
@@ -148,7 +148,6 @@ const tableRows = ref([]);
 
 const loadChannelInfo = async () => {
     if (!channelId.value) return;
-
     try {
         http.getPublicationChannels((response) => {
             if (response.success) {
@@ -214,7 +213,7 @@ const buildTableRowsFromDaily = (docs) => {
         views: (d.views_day || d.views || 0),
         er: (d.er_day || d.er || 0),
     }));
-    tableRows.value = rows.sort((a, b) => new Date(a.date) - new Date(b.date));
+    tableRows.value = rows.sort((a, b) => new Date(b.date) - new Date(a.date));
 };
 
 const refreshAnalyticsHandler = async () => {

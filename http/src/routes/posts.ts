@@ -324,8 +324,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
             const mediaObj = {
               type: mediaItem.type || 'photo',
               file_path: mediaItem.file_path,
-              original_name: mediaItem.original_name,
-              mime_type: mediaItem.mime_type
+              thumbnail_path: mediaItem.thumbnail_path
             };
             media.push(mediaObj);
             fastify.log.info(`Added media: ${JSON.stringify(mediaObj)}`);
@@ -394,8 +393,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
           media.push({
             type: mediaItem.type || 'photo',
             file_path: mediaItem.file_path,
-            original_name: mediaItem.original_name,
-            mime_type: mediaItem.mime_type
+            thumbnail_path: mediaItem.thumbnail_path,
           });
         });
       }
