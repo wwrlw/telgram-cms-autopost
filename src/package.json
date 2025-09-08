@@ -11,6 +11,13 @@
     "lint:fix": "eslint . --ext .js,.vue --fix"
   },
   "dependencies": {
+    "@editorjs/editorjs": "^2.31.0",
+    "@editorjs/header": "^2.8.8",
+    "@editorjs/inline-code": "^1.5.2",
+    "@editorjs/link": "^2.6.2",
+    "@editorjs/list": "^1.10.0",
+    "@editorjs/paragraph": "^2.11.7",
+    "@editorjs/quote": "^2.7.6",
     "@tailwindcss/vite": "^4.1.8",
     "@tiptap/extension-link": "^2.3.0",
     "@tiptap/extension-underline": "^2.3.0",
