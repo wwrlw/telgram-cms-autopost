@@ -1,5 +1,5 @@
 import { MongoService } from './mongoService.js';
-import { PostedChannel, ChannelAnalytics } from '../types/index.js';
+import { PostedChannel, ChannelAnalytics, DailyChannelAnalytics } from '../types/index.js';
 import { TelegramClient } from 'telegram';
 import { Api } from 'telegram';
 
@@ -37,6 +37,111 @@ export class ChannelAnalyticsService {
       console.log('✅ Сбор аналитики по каналам публикации завершен');
     } catch (error) {
       console.error('❌ Ошибка сбора аналитики по каналам:', error);
+    }
+  }
+
+  /**
+   * Сохраняет дневной срез по всем каналам публикации
+   */
+  async collectDailySnapshots(postedChannels: PostedChannel[]): Promise<void> {
+    const now = new Date();
+    const yyyy = now.getUTCFullYear();
+    const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(now.getUTCDate()).padStart(2, '0');
+    const dateKey = `${yyyy}-${mm}-${dd}`;
+
+    const dayStartUtc = new Date(Date.UTC(yyyy, now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+    const dayEndUtc = new Date(Date.UTC(yyyy, now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+
+    for (const channel of postedChannels) {
+      try {
+        const analytics = await this.collectChannelAnalytics(channel);
+        if (!analytics) continue;
+
+        const dayStats = await this.calculateDailyMetricsForEntity(channel, analytics.channel_id, analytics.subscribers_count, dayStartUtc, dayEndUtc);
+
+        const doc: DailyChannelAnalytics = {
+          date: dateKey,
+          channel_id: analytics.channel_id,
+          channel_name: analytics.channel_name,
+          subscribers_count: analytics.subscribers_count,
+          views: Number(analytics.avg_views) || 0,
+          er: Number(analytics.avg_er) || 0,
+          views_day: dayStats.views_day,
+          er_day: dayStats.er_day,
+          posts_day: dayStats.posts_day,
+          created_at: new Date()
+        };
+
+        await this.mongoService.upsertDailyChannelAnalytics(doc);
+      } catch (e) {
+        console.error(`❌ Ошибка сохранения дневного среза для ${channel.name}:`, e);
+      }
+      await new Promise(r => setTimeout(r, 1500));
+    }
+  }
+
+  private async calculateDailyMetricsForEntity(channel: PostedChannel, channelId: string, subscribersCount: number, start: Date, end: Date): Promise<{ views_day: number; er_day: number; posts_day: number; }> {
+    try {
+      const parsedId = parseInt(channel.channel_id);
+      let telegramChannelId = Math.abs(parsedId);
+      if (telegramChannelId < 1_000_000_000_000) {
+        telegramChannelId = 1_000_000_000_000 + telegramChannelId;
+      }
+
+      let entity: any;
+      try {
+        entity = await this.client.getEntity(telegramChannelId);
+      } catch {}
+      if (!entity) {
+        try { entity = await this.client.getEntity(-telegramChannelId); } catch {}
+      }
+      if (!entity) {
+        try { entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any })); } catch {}
+      }
+      if (!entity) {
+        return { views_day: 0, er_day: 0, posts_day: 0 };
+      }
+
+      let offsetId = 0;
+      const batchSize = 100;
+      let posts: any[] = [];
+      for (let i = 0; i < 10; i++) {
+        const messages: any[] = await this.client.getMessages(entity, { limit: batchSize, offsetId });
+        if (!messages || messages.length === 0) break;
+        for (const msg of messages) {
+          const msgDate = msg.date instanceof Date ? msg.date : new Date(msg.date);
+          const msgUtc = new Date(msgDate.getTime());
+          if (msgUtc >= start && msgUtc <= end) {
+            posts.push(msg);
+          }
+        }
+        offsetId = messages[messages.length - 1].id;
+        const oldestDate = messages[messages.length - 1]?.date;
+        if (oldestDate && new Date(oldestDate) < start) break;
+      }
+
+      let totalViews = 0;
+      let totalReactions = 0;
+      let postsWithStats = 0;
+      for (const message of posts) {
+        if (message.views !== undefined && message.views !== null) {
+          totalViews += Number(message.views);
+          postsWithStats++;
+        }
+        if (message.reactions && message.reactions.results && Array.isArray(message.reactions.results)) {
+          const messageReactions = message.reactions.results.reduce((total: number, reaction: any) => total + (Number(reaction.count) || 0), 0);
+          totalReactions += messageReactions;
+        }
+      }
+
+      const views_day = postsWithStats > 0 ? Math.round((totalViews / postsWithStats) * 100) / 100 : 0;
+      const er_day = postsWithStats > 0 ? Math.round(((totalReactions / postsWithStats) / Math.max(1, subscribersCount)) * 10000) / 100 : 0;
+
+      return { views_day, er_day, posts_day: postsWithStats };
+    } catch (e) {
+      console.error('❌ Ошибка расчёта дневных метрик:', e);
+      return { views_day: 0, er_day: 0, posts_day: 0 };
     }
   }
 

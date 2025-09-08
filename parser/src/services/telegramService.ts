@@ -692,4 +692,19 @@ export class TelegramService {
       console.error('❌ Ошибка сбора аналитики по каналам публикации:', error);
     }
   }
+
+  async collectDailyChannelSnapshots(): Promise<void> {
+    try {
+      if (this.postedChannels.length === 0) {
+        console.log('⚠️ Нет каналов публикации для дневных срезов');
+        return;
+      }
+
+      console.log('📅 Снимаем дневные срезы аналитики по каналам публикации...');
+      await this.channelAnalyticsService.collectDailySnapshots(this.postedChannels);
+      console.log('✅ Дневные срезы сохранены');
+    } catch (error) {
+      console.error('❌ Ошибка дневных срезов по каналам публикации:', error);
+    }
+  }
 } 
