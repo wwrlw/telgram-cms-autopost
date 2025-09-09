@@ -160,6 +160,35 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    // Значения фильтров из URL
+    statusFilterValue: {
+        type: String,
+        default: "",
+    },
+    categoryFilterValue: {
+        type: String,
+        default: "",
+    },
+    channelFilterValue: {
+        type: String,
+        default: "",
+    },
+    dateFromFilterValue: {
+        type: String,
+        default: "",
+    },
+    dateToFilterValue: {
+        type: String,
+        default: "",
+    },
+    sortFieldValue: {
+        type: String,
+        default: "created_at",
+    },
+    sortOrderValue: {
+        type: String,
+        default: "desc",
+    },
 });
 
 const sortOrderOptions = ref([
@@ -180,13 +209,13 @@ const emit = defineEmits([
 ]);
 
 const searchQuery = ref("");
-const statusFilter = ref("");
-const categoryFilter = ref("");
-const channelFilter = ref("");
-const dateFromFilter = ref("");
-const dateToFilter = ref("");
-const sortField = ref("created_at");
-const sortOrder = ref("desc");
+const statusFilter = ref(props.statusFilterValue);
+const categoryFilter = ref(props.categoryFilterValue);
+const channelFilter = ref(props.channelFilterValue);
+const dateFromFilter = ref(props.dateFromFilterValue);
+const dateToFilter = ref(props.dateToFilterValue);
+const sortField = ref(props.sortFieldValue);
+const sortOrder = ref(props.sortOrderValue);
 
 // const updateSearch = () => {
 //     emit("update:searchQuery", searchQuery.value);
@@ -229,6 +258,35 @@ const clearAllFilters = () => {
     sortOrder.value = "desc";
     emit("clearFilters");
 };
+
+// Синхронизация с внешними значениями
+watch(() => props.statusFilterValue, (newValue) => {
+    statusFilter.value = newValue;
+});
+
+watch(() => props.categoryFilterValue, (newValue) => {
+    categoryFilter.value = newValue;
+});
+
+watch(() => props.channelFilterValue, (newValue) => {
+    channelFilter.value = newValue;
+});
+
+watch(() => props.dateFromFilterValue, (newValue) => {
+    dateFromFilter.value = newValue;
+});
+
+watch(() => props.dateToFilterValue, (newValue) => {
+    dateToFilter.value = newValue;
+});
+
+watch(() => props.sortFieldValue, (newValue) => {
+    sortField.value = newValue;
+});
+
+watch(() => props.sortOrderValue, (newValue) => {
+    sortOrder.value = newValue;
+});
 
 watch(
     () => props.posts,

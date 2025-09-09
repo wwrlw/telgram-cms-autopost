@@ -181,9 +181,16 @@ watch(
     () => props.modelValue,
     (newValue) => {
         if (newValue) {
-            const date = new Date(newValue);
-            selectedDate.value = date.toISOString().split("T")[0];
-            selectedTime.value = date.toTimeString().slice(0, 5);
+            try {
+                const date = new Date(newValue);
+                // Проверяем, что дата валидна
+                if (!isNaN(date.getTime())) {
+                    selectedDate.value = date.toISOString().split("T")[0];
+                    selectedTime.value = date.toTimeString().slice(0, 5);
+                }
+            } catch (error) {
+                console.warn("Ошибка парсинга даты:", error);
+            }
         }
     },
     { immediate: true }
@@ -198,6 +205,9 @@ onMounted(() => {
 
         selectedDate.value = defaultTime.toISOString().split("T")[0];
         selectedTime.value = defaultTime.toTimeString().slice(0, 5);
+        
+        // Эмитим начальное значение
+        emit("update:modelValue", `${selectedDate.value}T${selectedTime.value}`);
     }
 });
 </script>

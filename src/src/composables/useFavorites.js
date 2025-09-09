@@ -121,31 +121,9 @@ const initializeFavorites = async () => {
 };
 
 const removePublishedFromFavorites = async (posts) => {
-    if (!userId.value || !posts || !Array.isArray(posts)) return;
-
-    const publishedPostIds = posts
-        .filter((post) => post.is_published && post.telegram_message_id)
-        .map((post) => post._id);
-
-    if (publishedPostIds.length === 0) return;
-
-    for (const postId of publishedPostIds) {
-        if (isFavorite(postId)) {
-            await removeFromFavorites(postId);
-        }
-    }
-
-    if (publishedPostIds.length > 0) {
-        const count = publishedPostIds.length;
-        const message =
-            count === 1
-                ? "1 опубликованный пост автоматически удален из избранного"
-                : `${count} опубликованных постов автоматически удалены из избранного`;
-
-        if (window._notify) {
-            window._notify("info", message);
-        }
-    }
+    // Убрана автоматическая логика удаления опубликованных постов из избранного
+    // Теперь пользователи могут сами решать, когда убирать посты из избранного
+    return;
 };
 
 export function useFavorites() {

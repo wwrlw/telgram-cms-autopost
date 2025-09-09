@@ -573,7 +573,13 @@ onMounted(() => {
     loadChannels();
     loadPost();
     const futureTime = new Date(Date.now() + 60 * 60 * 1000);
-    scheduledAt.value = futureTime.toISOString().slice(0, 16);
+    // Устанавливаем время в формате YYYY-MM-DDTHH:MM для совместимости с DateTimePicker
+    const year = futureTime.getFullYear();
+    const month = String(futureTime.getMonth() + 1).padStart(2, '0');
+    const day = String(futureTime.getDate()).padStart(2, '0');
+    const hours = String(futureTime.getHours()).padStart(2, '0');
+    const minutes = String(futureTime.getMinutes()).padStart(2, '0');
+    scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 });
 
 function selectDefaultChannelByCategory() {
