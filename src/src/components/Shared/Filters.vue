@@ -35,8 +35,8 @@
                         <option value="">Все категории</option>
                         <option
                             v-for="category in categories"
-                            :key="category.id"
-                            :value="category.id"
+                            :key="category.id || category._id || category.name"
+                            :value="category.name"
                         >
                             {{ category.name }}
                         </option>
@@ -241,6 +241,10 @@ const updateDateFilters = () => {
 };
 
 const updateSortOptions = () => {
+    console.log('Filters: updateSortOptions called with:', {
+        sortField: sortField.value,
+        sortOrder: sortOrder.value,
+    });
     emit("update:sortOptions", {
         sortField: sortField.value,
         sortOrder: sortOrder.value,
@@ -281,11 +285,17 @@ watch(() => props.dateToFilterValue, (newValue) => {
 });
 
 watch(() => props.sortFieldValue, (newValue) => {
-    sortField.value = newValue;
+    if (sortField.value !== newValue) {
+        sortField.value = newValue;
+        updateSortOptions();
+    }
 });
 
 watch(() => props.sortOrderValue, (newValue) => {
-    sortOrder.value = newValue;
+    if (sortOrder.value !== newValue) {
+        sortOrder.value = newValue;
+        updateSortOptions();
+    }
 });
 
 watch(

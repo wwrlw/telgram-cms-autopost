@@ -13,6 +13,7 @@ export function useUrlParams() {
     const dateFromFilter = ref('');
     const dateToFilter = ref('');
     const sortField = ref('created_at');
+    // Направление больше не используется — всегда desc на сервере
     const sortOrder = ref('desc');
     const page = ref(1);
 
@@ -50,8 +51,9 @@ export function useUrlParams() {
         channelFilter.value = query.channel || '';
         dateFromFilter.value = query.date_from || '';
         dateToFilter.value = query.date_to || '';
-        sortField.value = query.sort_field || 'created_at';
-        sortOrder.value = query.sort_order || 'desc';
+        // Читаем новое поле filter, далее алиасы
+        sortField.value = query.filter || query.sort || query.sort_field || 'created_at';
+        sortOrder.value = query.order || query.sort_order || 'desc';
         page.value = parseInt(query.page) || 1;
     };
 
@@ -82,6 +84,7 @@ export function useUrlParams() {
 
     // Функция для обновления конкретного параметра
     const updateParam = (key, value) => {
+        console.log('updateParam called:', { key, value });
         switch (key) {
             case 'search':
                 searchQuery.value = value;
@@ -101,10 +104,15 @@ export function useUrlParams() {
             case 'date_to':
                 dateToFilter.value = value;
                 break;
+            case 'filter':
+            case 'sort':
+            case 'sortBy':
             case 'sort_field':
                 sortField.value = value;
                 break;
+            case 'order':
             case 'sort_order':
+            case 'dir':
                 sortOrder.value = value;
                 break;
             case 'page':
@@ -118,15 +126,24 @@ export function useUrlParams() {
     // Функция для получения всех параметров в формате для API
     const getApiParams = () => {
         const params = {
+            // 1. search
+            text: searchQuery.value || undefined,
+            // 2. категория
+            category: categoryFilter.value || undefined,
+            // 3. все остальное сортировки
+            filter: sortField.value,
+            order: sortOrder.value,
+            sort: sortField.value,
+            sort_field: sortField.value,
+            sort_order: sortOrder.value,
+            // остальные параметры
             page: page.value,
             limit: 24,
-            text: searchQuery.value || undefined,
             is_unique: statusFilter.value
                 ? statusFilter.value === "unique"
                     ? true
                     : false
                 : undefined,
-            category_id: categoryFilter.value || undefined,
             channel_id: channelFilter.value || undefined,
             date_from: dateFromFilter.value
                 ? new Date(dateFromFilter.value).toISOString()
@@ -134,8 +151,6 @@ export function useUrlParams() {
             date_to: dateToFilter.value
                 ? new Date(dateToFilter.value + "T23:59:59").toISOString()
                 : undefined,
-            sort_field: sortField.value,
-            sort_order: sortOrder.value,
         };
 
         // Удаляем undefined значения

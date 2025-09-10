@@ -330,6 +330,8 @@ export class PostRepository implements IPostRepository {
       if (ObjectId.isValid(filters.category_id)) {
         const objectId = new ObjectId(filters.category_id);
         mongoFilters['category._id'] = objectId;
+      } else {
+        mongoFilters['category.name'] = { $regex: filters.category_id, $options: 'i' };
       }
     }
 
@@ -366,8 +368,12 @@ export class PostRepository implements IPostRepository {
       if (filters.date_from) postMatch.created_at.$gte = filters.date_from;
       if (filters.date_to) postMatch.created_at.$lte = filters.date_to;
     }
-    if (filters.category_id && ObjectId.isValid(filters.category_id)) {
-      categoryMatch['category._id'] = new ObjectId(filters.category_id);
+    if (filters.category_id) {
+      if (ObjectId.isValid(filters.category_id)) {
+        categoryMatch['category._id'] = new ObjectId(filters.category_id);
+      } else {
+        categoryMatch['category.name'] = { $regex: filters.category_id, $options: 'i' };
+      }
     }
 
     return { postMatch, categoryMatch };
@@ -405,6 +411,9 @@ export class PostRepository implements IPostRepository {
     if (filters.category_id) {
       if (ObjectId.isValid(filters.category_id)) {
         mongoFilters.category_id = new ObjectId(filters.category_id);
+      } else {
+        // В простом find путь по имени категории недоступен без $lookup,
+        // поэтому оставляем фильтр пустым; основная выборка с категориями использует агрегирование
       }
     }
 

@@ -38,9 +38,14 @@ function parseFilters(query: any): PostFilters | undefined {
     hasFilters = true;
   }
 
-  if (query.category_id) {
-    filters.category_id = query.category_id;
-    hasFilters = true;
+  // Поддержка фильтра по категории: можно передавать как ObjectId, так и имя
+  if (query.category_id || query.category_name || query.category) {
+    const category = query.category_id || query.category_name || query.category;
+    if (typeof category === 'string' && category.trim() !== '') {
+      // Если это строка длиной 24 символа hex — оставим как id, иначе считаем именем
+      filters.category_id = category.trim();
+      hasFilters = true;
+    }
   }
 
   if (query.date_from) {
@@ -63,13 +68,16 @@ function parseFilters(query: any): PostFilters | undefined {
 }
 
 function parseSort(query: any): SortParams | undefined {
-  if (!query.sort_field) {
-    return undefined;
-  }
+  // Алиасы: filter (из UI), sort, sortBy, sort_field
+  const rawField = query.filter || query.sort || query.sortBy || query.sort_field || query.orderBy;
+  if (!rawField) return undefined;
 
   const validFields = ['timestamp', 'created_at', 'source_channel', 'err'];
-  const field = validFields.includes(query.sort_field) ? query.sort_field : 'created_at';
-  const order = query.sort_order === 'asc' ? 'asc' : 'desc';
+  const field = validFields.includes(rawField) ? rawField : 'created_at';
 
-  return { field, order };
-} 
+  // Алиасы: order, sort_order, dir
+  const rawOrder = query.order || query.sort_order || query.dir;
+  const order: any = rawOrder === 'asc' ? 'asc' : 'desc';
+
+  return { field: field as any, order };
+}

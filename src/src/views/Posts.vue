@@ -268,8 +268,9 @@ const handleStatusFilterChange = async (status) => {
     if (el) el.scrollTop = 0;
 };
 
-const handleCategoryFilterChange = async (categoryId) => {
-    updateParam('category', categoryId);
+const handleCategoryFilterChange = async (categoryValue) => {
+    // Передаём в URL человекочитаемое имя категории
+    updateParam('category', categoryValue);
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
@@ -299,8 +300,14 @@ const handleDateFiltersChange = async (dateFilters) => {
 };
 
 const handleSortOptionsChange = async (sortOptions) => {
+    console.log('Sort options changed:', sortOptions);
+    // Пишем новый параметр filter + алиасы для совместимости
+    updateParam('filter', sortOptions.sortField);
+    updateParam('order', sortOptions.sortOrder);
+    updateParam('sort', sortOptions.sortField);
     updateParam('sort_field', sortOptions.sortField);
     updateParam('sort_order', sortOptions.sortOrder);
+    console.log('URL params updated:', { filter: sortOptions.sortField, order: sortOptions.sortOrder });
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
