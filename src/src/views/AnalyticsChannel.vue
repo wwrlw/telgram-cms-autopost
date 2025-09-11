@@ -43,10 +43,10 @@
                                 <div
                                     class="text-sm font-medium text-purple-600"
                                 >
-                                    Средний ER%
+                                    Средний ERR%
                                 </div>
                                 <div class="text-2xl font-bold text-purple-900">
-                                    {{ (analytics?.er || 0).toFixed(2) }}%
+                                    {{ (analytics?.err || 0).toFixed(2) }}%
                                 </div>
                             </div>
                         </div>
@@ -82,7 +82,7 @@
                                         <th
                                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                         >
-                                            ER%
+                                            ERR%
                                         </th>
                                     </tr>
                                 </thead>
@@ -115,7 +115,7 @@
                                         <td
                                             class="px-4 py-2 whitespace-nowrap text-sm text-gray-900"
                                         >
-                                            {{ (row.er || 0).toFixed(2) }}%
+                                            {{ (row.err || 0).toFixed(2) }}%
                                         </td>
                                     </tr>
                                 </tbody>
@@ -185,7 +185,8 @@ const loadChannelAnalytics = async () => {
                     analytics.value = {
                         subscribers_count: d.subscribers_count || 0,
                         views_count: (d.views_day || d.views || 0),
-                        er: (d.er_day || d.er || 0),
+                        // Поддерживаем старые поля er/er_day для обратной совместимости
+                        err: (d.err_day || d.err || d.er_day || d.er || 0),
                     };
                 }
                 loading.value = false;
@@ -212,7 +213,8 @@ const buildTableRowsFromDaily = (docs) => {
         date: d.date,
         subscribers: d.subscribers_count || 0,
         views: (d.views_day || d.views || 0),
-        er: (d.er_day || d.er || 0),
+        // Поддерживаем старые поля er/er_day
+        err: (d.err_day || d.err || d.er_day || d.er || 0),
     }));
     tableRows.value = rows.sort((a, b) => new Date(a.date) - new Date(b.date));
 };

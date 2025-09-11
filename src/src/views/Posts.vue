@@ -105,6 +105,7 @@ const {
     sortOrder,
     page,
     updateParam,
+    updateParams,
     clearAllFilters,
     getApiParams,
     hasActiveFilters
@@ -301,13 +302,16 @@ const handleDateFiltersChange = async (dateFilters) => {
 
 const handleSortOptionsChange = async (sortOptions) => {
     console.log('Sort options changed:', sortOptions);
-    // Пишем новый параметр filter + алиасы для совместимости
-    updateParam('filter', sortOptions.sortField);
-    updateParam('order', sortOptions.sortOrder);
-    updateParam('sort', sortOptions.sortField);
-    updateParam('sort_field', sortOptions.sortField);
-    updateParam('sort_order', sortOptions.sortOrder);
-    console.log('URL params updated:', { filter: sortOptions.sortField, order: sortOptions.sortOrder });
+    // Обновляем все связанные параметры одним replace, чтобы исключить гонки
+    updateParams({
+        filter: sortOptions.sortField,
+        order: sortOptions.sortOrder,
+        sort: sortOptions.sortField,
+        sort_field: sortOptions.sortField,
+        sort_order: sortOptions.sortOrder,
+        page: 1,
+    });
+    console.log('URL params updated (batch):', { filter: sortOptions.sortField, order: sortOptions.sortOrder });
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });

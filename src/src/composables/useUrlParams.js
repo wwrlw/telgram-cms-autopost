@@ -5,6 +5,21 @@ export function useUrlParams() {
     const route = useRoute();
     const router = useRouter();
 
+    // Нормализация значения категории для URL: убираем символы '+' и лишние пробелы
+    const sanitizeCategoryParam = (value) => {
+        if (typeof value !== 'string') return value;
+        return value.replace(/\+/g, '').trim();
+    };
+
+    // Восстановление значения категории из URL для отображения в селекте:
+    // если в конце стоит число и нет '+', добавим '+' (например, "Тиски 18" -> "Тиски 18+")
+    const restoreCategoryFromQuery = (value) => {
+        if (typeof value !== 'string') return value;
+        const trimmed = value.trim();
+        if (trimmed.includes('+')) return trimmed;
+        return /\d+$/.test(trimmed) ? `${trimmed}+` : trimmed;
+    };
+
     // Реактивные ссылки на параметры поиска
     const searchQuery = ref('');
     const statusFilter = ref('');
@@ -47,7 +62,7 @@ export function useUrlParams() {
         
         searchQuery.value = query.search || '';
         statusFilter.value = query.status || '';
-        categoryFilter.value = query.category || '';
+        categoryFilter.value = restoreCategoryFromQuery(query.category || '');
         channelFilter.value = query.channel || '';
         dateFromFilter.value = query.date_from || '';
         dateToFilter.value = query.date_to || '';
@@ -119,8 +134,58 @@ export function useUrlParams() {
                 page.value = parseInt(value) || 1;
                 break;
         }
-        
-        updateUrl({ [key]: value });
+
+        // Для категории удаляем символы '+' из значения перед записью в URL
+        const nextValue = key === 'category' ? sanitizeCategoryParam(value) : value;
+        updateUrl({ [key]: nextValue });
+    };
+
+    // Пакетное обновление нескольких параметров за один replace
+    const updateParams = (params = {}) => {
+        const normalizedParams = { ...params };
+
+        // Обновляем локальные значения так же, как в updateParam
+        Object.entries(params).forEach(([key, value]) => {
+            switch (key) {
+                case 'search':
+                    searchQuery.value = value;
+                    break;
+                case 'status':
+                    statusFilter.value = value;
+                    break;
+                case 'category':
+                    categoryFilter.value = value;
+                    normalizedParams[key] = sanitizeCategoryParam(value);
+                    break;
+                case 'channel':
+                    channelFilter.value = value;
+                    break;
+                case 'date_from':
+                    dateFromFilter.value = value;
+                    break;
+                case 'date_to':
+                    dateToFilter.value = value;
+                    break;
+                case 'filter':
+                case 'sort':
+                case 'sortBy':
+                case 'sort_field':
+                    sortField.value = value;
+                    break;
+                case 'order':
+                case 'sort_order':
+                case 'dir':
+                    sortOrder.value = value;
+                    break;
+                case 'page':
+                    page.value = parseInt(value) || 1;
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        updateUrl(normalizedParams);
     };
 
     // Функция для получения всех параметров в формате для API
@@ -202,6 +267,7 @@ export function useUrlParams() {
         updateParam,
         clearAllFilters,
         getApiParams,
+        updateParams,
         hasActiveFilters,
         readFromUrl
     };

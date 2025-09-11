@@ -38,7 +38,7 @@ export interface ChannelAnalytics {
   channel_name: string;
   subscribers_count: number;
   avg_views: number;
-  avg_er: number;
+  avg_err: number;
   posts_count: number;
   last_updated: Date;
   created_at: Date;

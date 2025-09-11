@@ -211,12 +211,10 @@
                                 <div
                                     class="text-sm font-medium text-purple-600"
                                 >
-                                    Средний охват
+                                    Средний ERR%
                                 </div>
                                 <div class="text-2xl font-bold text-purple-900">
-                                    {{
-                                        formatNumber(analytics?.avg_reach || 0)
-                                    }}
+                                    {{ (analytics?.avg_err || 0).toFixed(2) }}%
                                 </div>
                             </div>
                         </div>
@@ -253,7 +251,7 @@
                                         <th
                                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                         >
-                                            ER%
+                                            ERR%
                                         </th>
                                     </tr>
                                 </thead>
@@ -286,7 +284,7 @@
                                         <td
                                             class="px-4 py-2 whitespace-nowrap text-sm text-gray-900"
                                         >
-                                            {{ (row.er || 0).toFixed(2) }}%
+                                            {{ ((row.err ?? row.er ?? 0)).toFixed(2) }}%
                                         </td>
                                     </tr>
                                 </tbody>
@@ -353,7 +351,7 @@ const loadChannelAnalytics = async () => {
             subscribers_count: 0,
             posts_count: 0,
             views_count: 0,
-            avg_reach: 0,
+            avg_err: 0,
         };
         selectedChannel.value = null;
         return;
@@ -410,7 +408,7 @@ const buildTableRowsFromDaily = (docs) => {
         date: d.date,
         subscribers: d.subscribers_count || 0,
         views: d.views_day ?? d.views ?? 0,
-        er: d.er_day ?? d.er ?? 0,
+        err: d.err_day ?? d.err ?? 0,
     }));
     tableRows.value = rows.sort((a, b) => new Date(a.date) - new Date(b.date));
 };

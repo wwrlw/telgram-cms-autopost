@@ -66,9 +66,9 @@ export class ChannelAnalyticsService {
           channel_name: analytics.channel_name,
           subscribers_count: analytics.subscribers_count,
           views: Number(analytics.avg_views) || 0,
-          er: Number(analytics.avg_er) || 0,
+          err: Number(analytics.avg_err) || 0,
           views_day: dayStats.views_day,
-          er_day: dayStats.er_day,
+          err_day: dayStats.err_day,
           posts_day: dayStats.posts_day,
           created_at: new Date()
         };
@@ -81,7 +81,7 @@ export class ChannelAnalyticsService {
     }
   }
 
-  private async calculateDailyMetricsForEntity(channel: PostedChannel, channelId: string, subscribersCount: number, start: Date, end: Date): Promise<{ views_day: number; er_day: number; posts_day: number; }> {
+  private async calculateDailyMetricsForEntity(channel: PostedChannel, channelId: string, subscribersCount: number, start: Date, end: Date): Promise<{ views_day: number; err_day: number; posts_day: number; }> {
     try {
       const parsedId = parseInt(channel.channel_id);
       let telegramChannelId = Math.abs(parsedId);
@@ -100,7 +100,7 @@ export class ChannelAnalyticsService {
         try { entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any })); } catch {}
       }
       if (!entity) {
-        return { views_day: 0, er_day: 0, posts_day: 0 };
+        return { views_day: 0, err_day: 0, posts_day: 0 };
       }
 
       let offsetId = 0;
@@ -136,12 +136,13 @@ export class ChannelAnalyticsService {
       }
 
       const views_day = postsWithStats > 0 ? Math.round((totalViews / postsWithStats) * 100) / 100 : 0;
-      const er_day = postsWithStats > 0 ? Math.round(((totalReactions / postsWithStats) / Math.max(1, subscribersCount)) * 10000) / 100 : 0;
+      // ERR% = (средние просмотры на пост / подписчики) * 100
+      const err_day = subscribersCount > 0 ? Math.round(((views_day / subscribersCount) * 100) * 100) / 100 : 0;
 
-      return { views_day, er_day, posts_day: postsWithStats };
+      return { views_day, err_day, posts_day: postsWithStats };
     } catch (e) {
       console.error('❌ Ошибка расчёта дневных метрик:', e);
-      return { views_day: 0, er_day: 0, posts_day: 0 };
+      return { views_day: 0, err_day: 0, posts_day: 0 };
     }
   }
 
@@ -253,14 +254,15 @@ export class ChannelAnalyticsService {
       }
 
       const avgViews = postsWithStats > 0 ? totalViews / postsWithStats : 0;
-      const avgER = subscribersCount > 0 ? (totalReactions / postsWithStats / subscribersCount) * 100 : 0;
+      // Средний ERR% = (средние просмотры на пост / подписчики) * 100
+      const avgERR = subscribersCount > 0 ? (avgViews / subscribersCount) * 100 : 0;
 
       const analytics: ChannelAnalytics = {
         channel_id: channel.channel_id,
         channel_name: channel.name,
         subscribers_count: subscribersCount,
         avg_views: Math.round(avgViews * 100) / 100,
-        avg_er: Math.round(avgER * 100) / 100,
+        avg_err: Math.round(avgERR * 100) / 100,
         posts_count: postsWithStats,
         last_updated: new Date(),
         created_at: new Date()
@@ -269,7 +271,7 @@ export class ChannelAnalyticsService {
       console.log(`📊 Аналитика для канала ${channel.name}:`, {
         subscribers: subscribersCount,
         avg_views: analytics.avg_views,
-        avg_er: analytics.avg_er,
+        avg_err: analytics.avg_err,
         posts_analyzed: postsWithStats
       });
 
@@ -292,7 +294,7 @@ export class ChannelAnalyticsService {
         await this.mongoService.updateChannelAnalytics(analytics.channel_id, {
           subscribers_count: analytics.subscribers_count,
           avg_views: analytics.avg_views,
-          avg_er: analytics.avg_er,
+          avg_err: analytics.avg_err,
           posts_count: analytics.posts_count,
           last_updated: analytics.last_updated
         });
