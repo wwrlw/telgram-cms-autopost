@@ -183,34 +183,57 @@ export class PostRepository implements IPostRepository {
 
     const t0 = Date.now();
 
-    // Build count pipeline (accurate total with category filter applied when present)
-    const countPipeline: any[] = [];
-    if (Object.keys(postMatch).length > 0) countPipeline.push({ $match: postMatch });
-    countPipeline.push(
-      {
-        $lookup: {
-          from: 'channels',
-          localField: 'channel_id',
-          foreignField: 'channel_id',
-          as: 'channel'
-        }
-      },
-      { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: 'categories',
-          localField: 'channel.category_id',
-          foreignField: '_id',
-          as: 'category'
-        }
-      },
-      { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } }
-    );
-    if (Object.keys(categoryMatch).length > 0) countPipeline.push({ $match: categoryMatch });
-    countPipeline.push({ $count: 'total' });
+    // Подсчёт total: быстрый путь без категории → countDocuments; с категорией → $lookup (pipeline) по channels
+    let total = 0;
 
-    const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline, { allowDiskUse: true }).toArray();
-    const total = countResult.length > 0 ? countResult[0].total : 0;
+    const hasCategoryFilter = !!(filters?.category_id && ObjectId.isValid(filters.category_id));
+    if (!hasCategoryFilter) {
+      total = await this.mongo.db.collection("posts").countDocuments(Object.keys(postMatch).length ? postMatch : {});
+    } else {
+      const categoryIdObj = new ObjectId(filters!.category_id!);
+      const categoryIdStr = String(filters!.category_id!);
+
+      const countPipeline: any[] = [];
+      if (Object.keys(postMatch).length > 0) countPipeline.push({ $match: postMatch });
+
+      countPipeline.push(
+        {
+          $lookup: {
+            from: 'channels',
+            let: { post_channel_id: '$channel_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$channel_id', '$$post_channel_id'] },
+                      // Фильтрация по категории: поддерживаем оба типа в channels.category_id (ObjectId или string)
+                      {
+                        $or: [
+                          { $eq: ['$category_id', categoryIdObj] },
+                          { $eq: ['$category_id', categoryIdStr] }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            as: 'channel'
+          }
+        },
+        { $unwind: { path: '$channel', preserveNullAndEmptyArrays: false } },
+        { $count: 'total' }
+      );
+
+      const countResult = await this.mongo.db.collection("posts").aggregate(countPipeline, { allowDiskUse: true }).toArray();
+      total = countResult.length > 0 ? countResult[0].total : 0;
+
+      if (process.env.MONGO_EXPLAIN === '1') {
+        const plan: any = await this.mongo.db.collection("posts").aggregate(countPipeline, { allowDiskUse: true }).explain('executionStats');
+        console.log('findWithQueryAndCategories COUNT explain:', JSON.stringify(plan, null, 2));
+      }
+    }
 
     if (total === 0 && pagination.page === 1) {
       return {
