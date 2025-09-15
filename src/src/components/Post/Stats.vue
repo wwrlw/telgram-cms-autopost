@@ -55,10 +55,15 @@
         </div>
 
         <div class="space-y-3 mb-6">
-            <div v-if="originalUrl || isPrivate" class="flex items-center justify-between">
+            <div
+                v-if="originalUrl || isPrivate"
+                class="flex items-center justify-between"
+            >
                 <span class="text-sm text-gray-600">Оригинал поста:</span>
                 <template v-if="isPrivate">
-                    <span class="text-sm font-medium text-gray-900">Приватный канал</span>
+                    <span class="text-sm font-medium text-gray-900"
+                        >Приватный канал</span
+                    >
                 </template>
                 <template v-else>
                     <a
@@ -266,9 +271,12 @@ const originalUrl = computed(() => {
     // Если url уже полноценная ссылка — возвращаем как есть
     if (/^https?:\/\//i.test(url)) return url;
     // Если у поста есть username канала — формируем ссылку на t.me
-    const username = props.postData?.channel_username || props.postData?.source_channel || "";
+    const username =
+        props.postData?.channel_username ||
+        props.postData?.source_channel ||
+        "";
     if (username && /^@?\w+$/i.test(username)) {
-        const clean = username.replace(/^@/,'');
+        const clean = username.replace(/^@/, "");
         // Если url похож на message_id — формируем ссылку t.me/<channel>/<id>
         if (/^\d+$/.test(url)) {
             return `https://t.me/${clean}/${url}`;
@@ -288,7 +296,9 @@ const isPrivate = computed(() => {
     // 2) t.me/<numericChannelId>/<message_id>
     if (/^https?:\/\/t\.me\/\d+\/\d+/i.test(url)) return true;
     // Если url — число (message_id), но нет username/source_channel — считаем приватным
-    const hasUsername = !!(props.postData?.channel_username || props.postData?.source_channel);
+    const hasUsername = !!(
+        props.postData?.channel_username || props.postData?.source_channel
+    );
     if (!hasUsername && /^\d+$/.test(url)) return true;
     return false;
 });

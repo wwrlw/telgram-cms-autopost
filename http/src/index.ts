@@ -18,6 +18,7 @@ import { DependencyContainer } from './container/DependencyContainer';
 import { errorHandler } from './middleware/ErrorHandler';
 // @ts-ignore – нет типов для fastify v4
 import multipart from '@fastify/multipart'
+import cookie from '@fastify/cookie'
 
 dotenv.config();
 
@@ -29,6 +30,9 @@ async function start() {
             origin: true,
             credentials: true,
           });
+        await fastify.register(cookie, {
+            hook: 'onRequest'
+        });
         await fastify.register(mongoConnector);
         const container = DependencyContainer.getInstance();
         container.setMongo(fastify.mongo);

@@ -10,16 +10,13 @@ import { DependencyContainer } from '../container/DependencyContainer';
 export default async function authRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
 
-  // Login endpoint (public)
   fastify.post('/login', async (request, reply) => {
     try {
       const loginData = request.body as LoginDto;
       
-      // Сначала проверяем, существует ли пользователь
       const userService = container.getUserService();
       const user = await userService.findByUsername(loginData.username);
       
-      // Если пользователь не найден
       if (!user) {
         return reply.status(404).send({ 
           success: false, 
@@ -28,7 +25,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
         });
       }
       
-      // Если пользователь заблокирован
       if (user.role === ROLES.BANNED) {
         return reply.status(403).send({ 
           success: false, 
@@ -37,15 +33,24 @@ export default async function authRoutes(fastify: FastifyInstance) {
         });
       }
       
-      // Теперь пробуем залогинить пользователя
       try {
         const loginUseCase = container.getLoginUseCase();
         const result = await loginUseCase.execute(loginData);
         
-        reply.send({ 
-          success: true, 
-          data: result 
-        });
+        // Устанавливаем refreshToken в HttpOnly cookie
+        const { refreshToken, accessToken, ...rest } = result as any;
+        reply
+          .setCookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            sameSite: 'none',
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30
+          })
+          .send({ 
+            success: true, 
+            data: { accessToken, ...rest } 
+          });
       } catch (loginError: any) {
         // Если ошибка логина, значит пароль неправильный
         if (loginError.message === 'Invalid username or password') {
@@ -72,7 +77,52 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Create user endpoint (super_admin only)
+  // Refresh token endpoint (public)
+  fastify.post('/refresh', async (request, reply) => {
+    try {
+      const cookieRt = (request as any).cookies?.refreshToken;
+      const bodyRt = (request.body as any)?.refreshToken;
+      const refreshToken = cookieRt || bodyRt;
+      if (!refreshToken) {
+        return reply.status(400).send({ success: false, message: 'refreshToken is required' });
+      }
+
+      const authService = container.getAuthService();
+      let payload: any;
+      try {
+        payload = authService.verifyRefreshToken(refreshToken);
+      } catch (err) {
+        return reply.status(401).send({ success: false, message: 'Invalid refresh token' });
+      }
+
+      const userService = container.getUserService();
+      const user = await userService.findByUsername(payload.username);
+      if (!user) {
+        return reply.status(404).send({ success: false, message: 'User not found' });
+      }
+
+      const accessToken = authService.generateAccessToken(user);
+      const newRefreshToken = authService.generateRefreshToken(user);
+
+      reply
+        .setCookie('refreshToken', newRefreshToken, {
+          httpOnly: true,
+          sameSite: 'none',
+          secure: process.env.NODE_ENV === 'production',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 30
+        })
+        .send({
+          success: true,
+          data: {
+            accessToken
+          }
+        });
+    } catch (error: any) {
+      reply.status(400).send({ success: false, message: error.message });
+    }
+  });
+
   fastify.post('/register', {
     preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
   }, async (request, reply) => {
@@ -93,7 +143,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Get all users (super_admin only)
   fastify.get('/users', {
     preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS)]
   }, async (request, reply) => {
@@ -114,7 +163,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Update user role (super_admin only)
   fastify.put('/users/:id/role', {
     preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
   }, async (request, reply) => {
@@ -136,7 +184,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Ban user (super_admin only)
   fastify.post('/users/:id/ban', {
     preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
   }, async (request, reply) => {
@@ -158,7 +205,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Unban user (super_admin only)
   fastify.post('/users/:id/unban', {
     preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
   }, async (request, reply) => {
@@ -188,7 +234,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Add favorite post
   fastify.post('/favorites/add', {
     preHandler: [requireAuth, logAction]
   }, async (request, reply) => {
@@ -209,7 +254,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Remove favorite post
   fastify.post('/favorites/remove', {
     preHandler: [requireAuth, logAction]
   }, async (request, reply) => {
@@ -230,7 +274,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Get favorite posts
   fastify.get('/favorites/:userId', {
     preHandler: [requireAuth]
   }, async (request, reply) => {
@@ -251,68 +294,66 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Check current user role from database
-  fastify.get('/check', async (request, reply) => {
-    try {
-      // Проверяем JWT токен вручную
-      let tokenUser;
-      try {
-        await (request as any).jwtVerify();
-        tokenUser = (request as any).user;
-      } catch (jwtError) {
-        return reply.status(401).send({ 
-          success: false, 
-          message: 'Invalid token',
-          code: 'INVALID_TOKEN'
-        });
-      }
+  // fastify.get('/check', async (request, reply) => {
+  //   try {
+  //     let tokenUser;
+  //     try {
+  //       await (request as any).jwtVerify();
+  //       tokenUser = (request as any).user;
+  //     } catch (jwtError) {
+  //       return reply.status(401).send({ 
+  //         success: false, 
+  //         message: 'Invalid token',
+  //         code: 'INVALID_TOKEN'
+  //       });
+  //     }
 
-      if (!tokenUser || !tokenUser.userId) {
-        return reply.status(401).send({ 
-          success: false, 
-          message: 'Invalid user data in token',
-          code: 'INVALID_TOKEN'
-        });
-      }
+  //     if (!tokenUser || !tokenUser.userId) {
+  //       return reply.status(401).send({ 
+  //         success: false, 
+  //         message: 'Invalid user data in token',
+  //         code: 'INVALID_TOKEN'
+  //       });
+  //     }
 
-      const mongo = (request.server as any).mongo;
-      const db = mongo.db;
-      const usersCollection = db.collection('users');
+  //     const mongo = (request.server as any).mongo;
+  //     const db = mongo.db;
+  //     const usersCollection = db.collection('users');
       
-      const { ObjectId } = await import('mongodb');
-      const dbUser = await usersCollection.findOne({ _id: new ObjectId(tokenUser.userId) });
+  //     const { ObjectId } = await import('mongodb');
+  //     const dbUser = await usersCollection.findOne({ _id: new ObjectId(tokenUser.userId) });
       
-      // Проверяем, что пользователь существует в БД
-      if (!dbUser) {
-        return reply.status(404).send({ 
-          success: false, 
-          message: 'User not found in database',
-          code: 'USER_NOT_FOUND'
-        });
-      }
+  //     // Проверяем, что пользователь существует в БД
+  //     if (!dbUser) {
+  //       return reply.status(404).send({ 
+  //         success: false, 
+  //         message: 'User not found in database',
+  //         code: 'USER_NOT_FOUND'
+  //       });
+  //     }
       
-      // Проверяем, не заблокирован ли пользователь
-      if (dbUser.role === ROLES.BANNED) {
-        return reply.status(403).send({ 
-          success: false, 
-          message: 'User account is banned',
-          code: 'USER_BANNED'
-        });
-      }
+  //     // Проверяем, не заблокирован ли пользователь
+  //     if (dbUser.role === ROLES.BANNED) {
+  //       return reply.status(403).send({ 
+  //         success: false, 
+  //         message: 'User account is banned',
+  //         code: 'USER_BANNED'
+  //       });
+  //     }
       
-      reply.send({
-        success: true,
-        data: {
-          role: dbUser.role,
-          username: dbUser.username
-        }
-      });
-    } catch (error: any) {
-      console.error('Error in /check endpoint:', error);
-      reply.status(500).send({ 
-        success: false, 
-        message: 'Internal server error' 
-      });
-    }
-  });
+  //     reply.send({
+  //       success: true,
+  //       data: {
+  //         role: dbUser.role,
+  //         username: dbUser.username
+  //       }
+  //     });
+  //   } catch (error: any) {
+  //     console.error('Error in /check endpoint:', error);
+  //     reply.status(500).send({ 
+  //       success: false, 
+  //       message: 'Internal server error' 
+  //     });
+  //   }
+  // });
 }

@@ -1,4 +1,12 @@
 import 'fastify';
+
+declare module 'fastify' {
+  interface FastifyReply {
+    setCookie: (name: string, value: string, options?: any) => this;
+  }
+}
+
+import 'fastify';
 import { JWT } from '@fastify/jwt';
 
 declare module 'fastify' {

@@ -53,9 +53,11 @@ export class UserService implements IUserService {
       throw new AuthenticationError('Invalid username or password');
     }
 
-    const token = this.authService.generateToken(user);
+    const accessToken = this.authService.generateAccessToken(user);
+    const refreshToken = this.authService.generateRefreshToken(user);
     const response = { 
-      token,
+      accessToken,
+      refreshToken,
       userId: user._id?.toString() || '',
       role: user.role
     };

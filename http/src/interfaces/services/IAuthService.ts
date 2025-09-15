@@ -1,8 +1,10 @@
 import { User } from '../../models/User';
 
 export interface IAuthService {
-  generateToken(user: User): string;
-  verifyToken(token: string): any;
+  generateAccessToken(user: User): string;
+  generateRefreshToken(user: User): string;
+  verifyAccessToken(token: string): any;
+  verifyRefreshToken(token: string): any;
   hashPassword(password: string): Promise<string>;
   comparePassword(password: string, hash: string): Promise<boolean>;
 } 

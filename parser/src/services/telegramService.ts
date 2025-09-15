@@ -160,6 +160,7 @@ export class TelegramService {
       console.log('🔄 Начинаем обновление статистики постов с конверсией...');
       
       const statsLimit = Number(process.env.STATS_UPDATE_LIMIT) || 150;
+      const cutoffDate = new Date();
       const recentPosts = await this.mongoService.getRecentPostsForStats(statsLimit);
       console.log(`📊 Найдено ${recentPosts.length} постов для обновления статистики (ограничение: ${statsLimit})`);
       

@@ -4,7 +4,21 @@ const apiUrl = import.meta.env.VITE_API_URL || "https://tg.chiorio.com/api";
 
 const instance = axios.create({
     baseURL: apiUrl,
+    withCredentials: true,
 });
+
+let accessTokenMemory = null; // храним access в памяти
+
+export function setAccessToken(token) {
+    accessTokenMemory = token || null;
+    if (token) {
+        localStorage.setItem("token", token);
+        console.log("Ставим токен", token);
+    } else {
+        localStorage.removeItem("token");
+        console.log("удаляем токен");
+    }
+}
 
 instance.interceptors.response.use(
     (response) => {
@@ -22,6 +36,42 @@ instance.interceptors.response.use(
         return response;
     },
     (error) => {
+        const originalRequest = error.config || {};
+        const isRefreshCall = (originalRequest.url || "")
+            .toString()
+            .includes("/auth/refresh");
+        if (
+            error.response &&
+            error.response.status === 401 &&
+            !originalRequest._retry &&
+            !isRefreshCall
+        ) {
+            originalRequest._retry = true;
+            return instance
+                .post("/auth/refresh")
+                .then((res) => {
+                    const newAccess = res.data?.accessToken;
+                    if (newAccess) {
+                        setAccessToken(newAccess);
+                        originalRequest.headers = originalRequest.headers || {};
+                        console.log(originalRequest);
+                        originalRequest.headers["Authorization"] =
+                            `Bearer ${newAccess}`;
+                        return instance(originalRequest);
+                    }
+                    throw error;
+                })
+                .catch((err) => {
+                    setAccessToken(newAccess);
+                    localStorage.removeItem("role");
+                    sessionStorage.removeItem("role");
+                    if (window.location.pathname !== "login") {
+                        window.location.href = "login";
+                    }
+                    return Promise.reject(error);
+                });
+        }
+
         if (
             error.response &&
             error.response.status === 403 &&
@@ -106,7 +156,7 @@ instance.interceptors.response.use(
 
 instance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("token");
+        const token = accessTokenMemory || localStorage.getItem("token");
         if (token) {
             config.headers["Authorization"] = `Bearer ${token}`;
         }

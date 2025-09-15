@@ -9,7 +9,8 @@ export interface Channel {
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   userId: string;
 }
 
@@ -47,6 +48,7 @@ export interface ChannelAnalytics {
 export class ApiService {
   private baseUrl: string;
   private token: string | null = null;
+  private refreshToken: string | null = null;
   private username: string;
   private password: string;
 
@@ -74,8 +76,9 @@ export class ApiService {
       }
 
       const data = await response.json() as { success: boolean; data: AuthResponse };
-      if (data.success && data.data.token) {
-        this.token = data.data.token;
+      if (data.success && data.data.accessToken) {
+        this.token = data.data.accessToken;
+        this.refreshToken = data.data.refreshToken;
         console.log('🔐 Successfully authenticated with API');
       } else {
         throw new Error('Login failed: invalid response');
@@ -83,6 +86,34 @@ export class ApiService {
     } catch (error) {
       console.error('❌ API login error:', error);
       throw error;
+    }
+  }
+
+  private async refresh(): Promise<void> {
+    if (!this.refreshToken) {
+      this.token = null;
+      await this.login();
+      return;
+    }
+    const response = await fetch(`${this.baseUrl}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: this.refreshToken })
+    });
+    if (!response.ok) {
+      this.token = null;
+      this.refreshToken = null;
+      await this.login();
+      return;
+    }
+    const data = await response.json() as { success: boolean; data: { accessToken: string; refreshToken: string } };
+    if (data.success) {
+      this.token = data.data.accessToken;
+      this.refreshToken = data.data.refreshToken;
+    } else {
+      this.token = null;
+      this.refreshToken = null;
+      await this.login();
     }
   }
 
@@ -105,9 +136,8 @@ export class ApiService {
       });
 
       if (response.status === 401) {
-        // Token expired, try to login again
-        this.token = null;
-        await this.ensureAuthenticated();
+        // Token expired, try refresh
+        await this.refresh();
         
         const retryResponse = await fetch(`${this.baseUrl}/channels/parser/ids`, {
           method: 'GET',
@@ -150,8 +180,7 @@ export class ApiService {
       });
 
       if (response.status === 401) {
-        this.token = null;
-        await this.ensureAuthenticated();
+        await this.refresh();
       }
 
       const retryResponse = await fetch(`${this.baseUrl}/posted-channels/active`, {
@@ -286,8 +315,7 @@ export class ApiService {
       });
 
       if (response.status === 401) {
-        this.token = null;
-        await this.ensureAuthenticated();
+        await this.refresh();
         
         const retryResponse = await fetch(`${this.baseUrl}/posts/scheduled`, {
           method: 'GET',
@@ -329,8 +357,7 @@ export class ApiService {
       });
 
       if (response.status === 401) {
-        this.token = null;
-        await this.ensureAuthenticated();
+        await this.refresh();
         
         const retryResponse = await fetch(`${this.baseUrl}/publish/${postId}/${channelId}`, {
           method: 'POST',
@@ -374,8 +401,7 @@ export class ApiService {
       });
 
       if (response.status === 401) {
-        this.token = null;
-        await this.ensureAuthenticated();
+        await this.refresh();
         
         const retryResponse = await fetch(`${this.baseUrl}/posted-channels/active`, {
           method: 'GET',

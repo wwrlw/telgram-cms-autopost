@@ -201,7 +201,8 @@ const statsConfig = {
 
 const computedStats = computed(() => {
     const config = statsConfig[props.type] || [];
-    const thirdArg = props.type === 'posts' ? props.todayCount : props.activeCount;
+    const thirdArg =
+        props.type === "posts" ? props.todayCount : props.activeCount;
     return config.map((stat) => ({
         ...stat,
         value: stat.getValue(props.totalCount, props.data, thirdArg),
