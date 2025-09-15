@@ -302,14 +302,10 @@ const handleDateFiltersChange = async (dateFilters) => {
 
 const handleSortOptionsChange = async (sortOptions) => {
     console.log('Sort options changed:', sortOptions);
-    // Обновляем все связанные параметры одним replace, чтобы исключить гонки
+    // Обновляем только основные параметры сортировки без дублирования
     updateParams({
         filter: sortOptions.sortField,
         order: sortOptions.sortOrder,
-        sort: sortOptions.sortField,
-        sort_field: sortOptions.sortField,
-        sort_order: sortOptions.sortOrder,
-        page: 1,
     });
     console.log('URL params updated (batch):', { filter: sortOptions.sortField, order: sortOptions.sortOrder });
     currentPage.value = 1;

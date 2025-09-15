@@ -5,6 +5,7 @@ export interface Channel {
   username: string;
   channel_id: number;
   is_private: boolean;
+  prompt?: string;
   created_at: string;
 }
 
@@ -269,7 +270,8 @@ export class ApiService {
       id: channel.channel_id,
       username: channel.username,
       title: undefined, // Will be fetched from Telegram
-      is_private: channel.is_private
+      is_private: channel.is_private,
+      prompt: channel.prompt
     }));
   }
 

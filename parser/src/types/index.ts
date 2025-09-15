@@ -62,6 +62,7 @@ export interface ChannelConfig {
   username?: string;
   title?: string;
   is_private: boolean;
+  prompt?: string;
 }
 
 export interface PostedChannel {

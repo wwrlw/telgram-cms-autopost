@@ -91,9 +91,8 @@ export function useUrlParams() {
             channel: '',
             date_from: '',
             date_to: '',
-            sort_field: '',
-            sort_order: '',
-            page: ''
+            filter: '',
+            order: ''
         });
     };
 
@@ -132,7 +131,8 @@ export function useUrlParams() {
                 break;
             case 'page':
                 page.value = parseInt(value) || 1;
-                break;
+                // Не добавляем page в URL
+                return;
         }
 
         // Для категории удаляем символы '+' из значения перед записью в URL
@@ -179,6 +179,8 @@ export function useUrlParams() {
                     break;
                 case 'page':
                     page.value = parseInt(value) || 1;
+                    // Удаляем page из параметров URL
+                    delete normalizedParams[key];
                     break;
                 default:
                     break;
@@ -195,12 +197,9 @@ export function useUrlParams() {
             text: searchQuery.value || undefined,
             // 2. категория
             category: categoryFilter.value || undefined,
-            // 3. все остальное сортировки
+            // 3. сортировка (только основные параметры)
             filter: sortField.value,
             order: sortOrder.value,
-            sort: sortField.value,
-            sort_field: sortField.value,
-            sort_order: sortOrder.value,
             // остальные параметры
             page: page.value,
             limit: 24,

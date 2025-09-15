@@ -53,7 +53,8 @@ export async function channelsRoutes(fastify: FastifyInstance) {
           properties: {
             username: { type: 'string' },
             channel_id: { type: 'number' },
-            is_private: { type: 'boolean' }
+            is_private: { type: 'boolean' },
+            prompt: { type: 'string' }
           }
         }
       }
@@ -109,7 +110,21 @@ export async function channelsRoutes(fastify: FastifyInstance) {
   );
   fastify.put(
     "/channels/:id",
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CHANNELS), logAction] },
+    { 
+      preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CHANNELS), logAction],
+      schema: {
+        body: {
+          type: 'object',
+          properties: {
+            username: { type: 'string' },
+            channel_id: { type: 'number' },
+            is_private: { type: 'boolean' },
+            prompt: { type: 'string' },
+            category_id: { type: 'string' }
+          }
+        }
+      }
+    },
     async (request, reply) => {
       try {
         const id = (request.params as any).id;
