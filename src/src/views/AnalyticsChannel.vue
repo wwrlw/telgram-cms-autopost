@@ -62,7 +62,9 @@
                                     Средние просмотры
                                 </div>
                                 <div class="text-2xl font-bold text-yellow-900">
-                                    {{ (analytics?.views_count || 0) }}
+                                    {{
+                                        (analytics?.views_count || 0).toFixed(0)
+                                    }}
                                 </div>
                             </div>
                             <div class="bg-purple-50 p-4 rounded-lg">
@@ -404,7 +406,6 @@ const tableRows = ref([]);
 
 const loadChannelInfo = async () => {
     if (!channelId.value) return;
-
     try {
         http.getPublicationChannels((response) => {
             if (response.success) {

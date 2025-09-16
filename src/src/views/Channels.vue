@@ -35,12 +35,32 @@
                 @items-per-page-change="changeItemsPerPage"
             />
 
-            <div v-if="hasMore && !loading" ref="infiniteScrollTrigger" class="h-12"></div>
+            <div
+                v-if="hasMore && !loading"
+                ref="infiniteScrollTrigger"
+                class="h-12"
+            ></div>
 
             <div v-if="infiniteScrollLoading" class="flex justify-center py-6">
-                <svg class="animate-spin h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                <svg
+                    class="animate-spin h-6 w-6 text-indigo-600"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                >
+                    <circle
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"
+                    ></circle>
+                    <path
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    ></path>
                 </svg>
             </div>
 
@@ -136,7 +156,9 @@ const channelsService = async (params = {}) => {
                 requestParams,
                 (res) => {
                     allChannels.value = res.data || [];
-                    activeCount.value = (res.data || []).filter(ch => !ch.is_private || ch.channel_id).length;
+                    activeCount.value = (res.data || []).filter(
+                        (ch) => !ch.is_private || ch.channel_id
+                    ).length;
                     totalCount.value = allChannels.value.length;
 
                     channels.value = allChannels.value.slice(0, loadSize.value);

@@ -94,8 +94,11 @@ export class DependencyContainer {
   }
 
   getAuthService(): AuthService {
-    const jwtSecret = process.env.JWT_SECRET || '';
-    return new AuthService(jwtSecret);
+    const accessSecret = process.env.JWT_SECRET || '';
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || '';
+    const accessTtl = process.env.JWT_ACCESS_TTL || '24h';
+    const refreshTtl = process.env.JWT_REFRESH_TTL || '30d';
+    return new AuthService(accessSecret, refreshSecret, accessTtl, refreshTtl);
   }
 
   getUserPermissionService(): UserPermissionService {
