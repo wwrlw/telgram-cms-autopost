@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { Search } from "lucide-vue-next";
 
 const props = defineProps({
@@ -49,11 +49,15 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    modelValue: {
+        type: String,
+        default: "",
+    },
 });
 
-const emit = defineEmits(["update:searchQuery", "clearFilters"]);
+const emit = defineEmits(["update:searchQuery", "clearFilters", "update:modelValue"]);
 
-const searchQuery = ref("");
+const searchQuery = ref(props.modelValue || "");
 
 const hasData = computed(() => {
     return (
@@ -65,5 +69,16 @@ const hasData = computed(() => {
 
 const updateSearch = () => {
     emit("update:searchQuery", searchQuery.value);
+    emit("update:modelValue", searchQuery.value);
 };
+
+// Синхронизация с внешним значением
+watch(() => props.modelValue, (newValue) => {
+    searchQuery.value = newValue || "";
+});
+
+// Синхронизация изменений с родительским компонентом
+watch(searchQuery, (newValue) => {
+    emit("update:modelValue", newValue);
+});
 </script>

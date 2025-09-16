@@ -23,11 +23,13 @@ export const postQuerySchema = {
     is_unique: {
       type: 'boolean'
     },
+    // Теперь можно передавать либо ObjectId, либо имя категории (в т.ч. на русском)
     category_id: {
       type: 'string',
-      minLength: 24,
-      maxLength: 24
+      minLength: 1
     },
+    category_name: { type: 'string', minLength: 1 },
+    category: { type: 'string', minLength: 1 },
     date_from: {
       type: 'string',
       format: 'date-time'
@@ -36,15 +38,15 @@ export const postQuerySchema = {
       type: 'string',
       format: 'date-time'
     },
-    sort_field: {
-      type: 'string',
-      enum: ['timestamp', 'created_at', 'source_channel', 'err']
-    },
-    sort_order: {
-      type: 'string',
-      enum: ['asc', 'desc'],
-      default: 'desc'
-    }
+    // Новый параметр фильтра-сортировки из UI
+    filter: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel', 'err'] },
+    // Направление сортировки
+    order: { type: 'string', enum: ['asc', 'desc'], default: 'desc' },
+    // Алиасы сортировки
+    sort: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel', 'err'] },
+    sortBy: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel', 'err'] },
+    sort_field: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel', 'err'] },
+    sort_order: { type: 'string', enum: ['asc', 'desc'] }
   },
   additionalProperties: false
 };

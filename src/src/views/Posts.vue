@@ -12,6 +12,7 @@
             <Search
                 :loading="loading"
                 :posts="posts"
+                :model-value="searchQuery"
                 @update:searchQuery="handleSearchChange"
             />
 
@@ -20,9 +21,17 @@
                 :posts="posts"
                 :categories="categories"
                 :showChannelFilter="false"
+                :status-filter-value="statusFilter"
+                :category-filter-value="categoryFilter"
+                :channel-filter-value="channelFilter"
+                :date-from-filter-value="dateFromFilter"
+                :date-to-filter-value="dateToFilter"
+                :sort-field-value="sortField"
+                :sort-order-value="sortOrder"
                 @update:searchQuery="handleSearchChange"
                 @update:statusFilter="handleStatusFilterChange"
                 @update:categoryFilter="handleCategoryFilterChange"
+                @update:channelFilter="handleChannelFilterChange"
                 @update:dateFilters="handleDateFiltersChange"
                 @update:sortOptions="handleSortOptionsChange"
                 @clearFilters="handleClearFilters"
@@ -77,20 +86,32 @@ import { useInfiniteScroll } from "@/composables/useInfiniteScroll";
 import { useApiCache } from "@/composables/useApiCache";
 import { useFavorites } from "@/composables/useFavorites.js";
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
+import { useUrlParams } from "@/composables/useUrlParams.js";
 
 const refreshTrigger = inject("refreshTrigger", ref(0));
 const setLoading = inject("setLoading");
 const { removePublishedFromFavorites, initializeFavorites } = useFavorites();
 const { on: onEvent, emit: emitEvent } = useEventBus();
 
+// Используем URL параметры
+const {
+    searchQuery,
+    statusFilter,
+    categoryFilter,
+    channelFilter,
+    dateFromFilter,
+    dateToFilter,
+    sortField,
+    sortOrder,
+    page,
+    updateParam,
+    updateParams,
+    clearAllFilters,
+    getApiParams,
+    hasActiveFilters
+} = useUrlParams();
+
 const posts = ref([]);
-const searchQuery = ref("");
-const statusFilter = ref("");
-const categoryFilter = ref("");
-const dateFromFilter = ref("");
-const dateToFilter = ref("");
-const sortField = ref("created_at");
-const sortOrder = ref("desc");
 const showPublishModal = ref(false);
 const selectedPostForPublish = ref(null);
 const loading = ref(false);
@@ -147,25 +168,14 @@ const postsService = async (
     }
 
     try {
+        // Получаем параметры из URL
+        const urlParams = getApiParams();
+        
         const requestParams = {
-            page: params.page || currentPage.value,
+            ...urlParams,
+            page: params.page || urlParams.page || currentPage.value,
             limit: params.limit || pageSize,
             lastId: params.lastId || undefined,
-            text: searchQuery.value || undefined,
-            is_unique: statusFilter.value
-                ? statusFilter.value === "unique"
-                    ? true
-                    : false
-                : undefined,
-            category_id: categoryFilter.value || undefined,
-            date_from: dateFromFilter.value
-                ? new Date(dateFromFilter.value).toISOString()
-                : undefined,
-            date_to: dateToFilter.value
-                ? new Date(dateToFilter.value + "T23:59:59").toISOString()
-                : undefined,
-            sort_field: sortField.value,
-            sort_order: sortOrder.value,
         };
 
         Object.keys(requestParams).forEach((key) => {
@@ -240,7 +250,7 @@ const loadMorePosts = async () => {
 };
 
 const handleSearchChange = async (query) => {
-    searchQuery.value = query;
+    updateParam('search', query);
     await debouncedSearch(async () => {
         currentPage.value = 1;
         hasMore.value = true;
@@ -251,7 +261,7 @@ const handleSearchChange = async (query) => {
 };
 
 const handleStatusFilterChange = async (status) => {
-    statusFilter.value = status;
+    updateParam('status', status);
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
@@ -259,8 +269,18 @@ const handleStatusFilterChange = async (status) => {
     if (el) el.scrollTop = 0;
 };
 
-const handleCategoryFilterChange = async (categoryId) => {
-    categoryFilter.value = categoryId;
+const handleCategoryFilterChange = async (categoryValue) => {
+    // Передаём в URL человекочитаемое имя категории
+    updateParam('category', categoryValue);
+    currentPage.value = 1;
+    hasMore.value = true;
+    await postsService({ page: 1 });
+    const el = getScroller();
+    if (el) el.scrollTop = 0;
+};
+
+const handleChannelFilterChange = async (channelId) => {
+    updateParam('channel', channelId);
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
@@ -269,8 +289,8 @@ const handleCategoryFilterChange = async (categoryId) => {
 };
 
 const handleDateFiltersChange = async (dateFilters) => {
-    dateFromFilter.value = dateFilters.dateFrom;
-    dateToFilter.value = dateFilters.dateTo;
+    updateParam('date_from', dateFilters.dateFrom);
+    updateParam('date_to', dateFilters.dateTo);
     debouncedSearch(async () => {
         currentPage.value = 1;
         hasMore.value = true;
@@ -281,8 +301,13 @@ const handleDateFiltersChange = async (dateFilters) => {
 };
 
 const handleSortOptionsChange = async (sortOptions) => {
-    sortField.value = sortOptions.sortField;
-    sortOrder.value = sortOptions.sortOrder;
+    console.log('Sort options changed:', sortOptions);
+    // Обновляем только основные параметры сортировки без дублирования
+    updateParams({
+        filter: sortOptions.sortField,
+        order: sortOptions.sortOrder,
+    });
+    console.log('URL params updated (batch):', { filter: sortOptions.sortField, order: sortOptions.sortOrder });
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
@@ -291,13 +316,7 @@ const handleSortOptionsChange = async (sortOptions) => {
 };
 
 const handleClearFilters = async () => {
-    searchQuery.value = "";
-    statusFilter.value = "";
-    categoryFilter.value = "";
-    dateFromFilter.value = "";
-    dateToFilter.value = "";
-    sortField.value = "created_at";
-    sortOrder.value = "desc";
+    clearAllFilters();
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
