@@ -73,6 +73,12 @@
                                 scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                             >
+                                Промпт
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
                                 Дата создания
                             </th>
                             <th
@@ -140,6 +146,17 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900 font-mono">
                                     {{ channel.channel_id }}
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900 max-w-xs">
+                                    <div v-if="channel.prompt" class="truncate" :title="channel.prompt">
+                                        {{ channel.prompt }}
+                                    </div>
+                                    <div v-else class="text-gray-400 italic">
+                                        Не указан
+                                    </div>
                                 </div>
                             </td>
 

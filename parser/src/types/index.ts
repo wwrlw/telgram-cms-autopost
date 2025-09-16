@@ -62,6 +62,7 @@ export interface ChannelConfig {
   username?: string;
   title?: string;
   is_private: boolean;
+  prompt?: string;
 }
 
 export interface PostedChannel {
@@ -78,7 +79,7 @@ export interface ChannelAnalytics {
   channel_name: string;
   subscribers_count: number;
   avg_views: number;
-  avg_er: number;
+  avg_err: number;
   posts_count: number;
   last_updated: Date;
   created_at: Date;
@@ -90,9 +91,9 @@ export interface DailyChannelAnalytics {
   channel_name: string;
   subscribers_count: number;
   views: number;
-  er: number;
+  err: number;
   views_day: number;
-  er_day: number;
+  err_day: number;
   posts_day: number;
   created_at: Date;
 }

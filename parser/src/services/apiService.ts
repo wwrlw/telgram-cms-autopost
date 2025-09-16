@@ -5,6 +5,7 @@ export interface Channel {
   username: string;
   channel_id: number;
   is_private: boolean;
+  prompt?: string;
   created_at: string;
 }
 
@@ -39,7 +40,7 @@ export interface ChannelAnalytics {
   channel_name: string;
   subscribers_count: number;
   avg_views: number;
-  avg_er: number;
+  avg_err: number;
   posts_count: number;
   last_updated: Date;
   created_at: Date;
@@ -298,7 +299,8 @@ export class ApiService {
       id: channel.channel_id,
       username: channel.username,
       title: undefined, // Will be fetched from Telegram
-      is_private: channel.is_private
+      is_private: channel.is_private,
+      prompt: channel.prompt
     }));
   }
 

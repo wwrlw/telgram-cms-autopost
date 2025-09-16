@@ -35,8 +35,8 @@
                         <option value="">Все категории</option>
                         <option
                             v-for="category in categories"
-                            :key="category.id"
-                            :value="category.id"
+                            :key="category.id || category._id || category.name"
+                            :value="category.name"
                         >
                             {{ category.name }}
                         </option>
@@ -160,6 +160,35 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    // Значения фильтров из URL
+    statusFilterValue: {
+        type: String,
+        default: "",
+    },
+    categoryFilterValue: {
+        type: String,
+        default: "",
+    },
+    channelFilterValue: {
+        type: String,
+        default: "",
+    },
+    dateFromFilterValue: {
+        type: String,
+        default: "",
+    },
+    dateToFilterValue: {
+        type: String,
+        default: "",
+    },
+    sortFieldValue: {
+        type: String,
+        default: "created_at",
+    },
+    sortOrderValue: {
+        type: String,
+        default: "desc",
+    },
 });
 
 const sortOrderOptions = ref([
@@ -180,13 +209,13 @@ const emit = defineEmits([
 ]);
 
 const searchQuery = ref("");
-const statusFilter = ref("");
-const categoryFilter = ref("");
-const channelFilter = ref("");
-const dateFromFilter = ref("");
-const dateToFilter = ref("");
-const sortField = ref("created_at");
-const sortOrder = ref("desc");
+const statusFilter = ref(props.statusFilterValue);
+const categoryFilter = ref(props.categoryFilterValue);
+const channelFilter = ref(props.channelFilterValue);
+const dateFromFilter = ref(props.dateFromFilterValue);
+const dateToFilter = ref(props.dateToFilterValue);
+const sortField = ref(props.sortFieldValue);
+const sortOrder = ref(props.sortOrderValue);
 
 // const updateSearch = () => {
 //     emit("update:searchQuery", searchQuery.value);
@@ -212,6 +241,10 @@ const updateDateFilters = () => {
 };
 
 const updateSortOptions = () => {
+    console.log('Filters: updateSortOptions called with:', {
+        sortField: sortField.value,
+        sortOrder: sortOrder.value,
+    });
     emit("update:sortOptions", {
         sortField: sortField.value,
         sortOrder: sortOrder.value,
@@ -229,6 +262,41 @@ const clearAllFilters = () => {
     sortOrder.value = "desc";
     emit("clearFilters");
 };
+
+// Синхронизация с внешними значениями
+watch(() => props.statusFilterValue, (newValue) => {
+    statusFilter.value = newValue;
+});
+
+watch(() => props.categoryFilterValue, (newValue) => {
+    categoryFilter.value = newValue;
+});
+
+watch(() => props.channelFilterValue, (newValue) => {
+    channelFilter.value = newValue;
+});
+
+watch(() => props.dateFromFilterValue, (newValue) => {
+    dateFromFilter.value = newValue;
+});
+
+watch(() => props.dateToFilterValue, (newValue) => {
+    dateToFilter.value = newValue;
+});
+
+watch(() => props.sortFieldValue, (newValue) => {
+    if (sortField.value !== newValue) {
+        sortField.value = newValue;
+        updateSortOptions();
+    }
+});
+
+watch(() => props.sortOrderValue, (newValue) => {
+    if (sortOrder.value !== newValue) {
+        sortOrder.value = newValue;
+        updateSortOptions();
+    }
+});
 
 watch(
     () => props.posts,
