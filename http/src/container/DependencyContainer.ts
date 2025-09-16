@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import { FastifyMongoObject } from '@fastify/mongodb';
 import { PostRepository } from '../repositories/PostRepository';
 import { UserRepository } from '../repositories/UserRepository';
@@ -98,6 +100,10 @@ export class DependencyContainer {
     const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || '';
     const accessTtl = process.env.JWT_ACCESS_TTL || '24h';
     const refreshTtl = process.env.JWT_REFRESH_TTL || '30d';
+    if (!refreshTtl || !accessTtl || !accessSecret || !refreshSecret) {
+      throw new Error('JWT_SECRET or JWT_REFRESH_SECRET or JWT_ACCESS_TTL or JWT_REFRESH_TTL is not set in .env');
+    }
+    
     return new AuthService(accessSecret, refreshSecret, accessTtl, refreshTtl);
   }
 

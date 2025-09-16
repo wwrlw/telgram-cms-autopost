@@ -7,16 +7,14 @@ const instance = axios.create({
     withCredentials: true,
 });
 
-let accessTokenMemory = null; // храним access в памяти
+let accessTokenMemory = null;
 
 export function setAccessToken(token) {
     accessTokenMemory = token || null;
     if (token) {
-        localStorage.setItem("token", token);
-        console.log("Ставим токен", token);
+        sessionStorage.setItem("token", token);
     } else {
-        localStorage.removeItem("token");
-        console.log("удаляем токен");
+        sessionStorage.removeItem("token");
     }
 }
 
@@ -50,7 +48,8 @@ instance.interceptors.response.use(
             return instance
                 .post("/auth/refresh")
                 .then((res) => {
-                    const newAccess = res.data?.accessToken;
+                    const data = res?.data?.data || res?.data || {};
+                    const newAccess = data.accessToken;
                     if (newAccess) {
                         setAccessToken(newAccess);
                         originalRequest.headers = originalRequest.headers || {};
@@ -61,12 +60,12 @@ instance.interceptors.response.use(
                     }
                     throw error;
                 })
-                .catch((err) => {
-                    setAccessToken(newAccess);
+                .catch(() => {
+                    setAccessToken(null);
                     localStorage.removeItem("role");
                     sessionStorage.removeItem("role");
-                    if (window.location.pathname !== "login") {
-                        window.location.href = "login";
+                    if (window.location.pathname !== "/login") {
+                        window.location.href = "/login";
                     }
                     return Promise.reject(error);
                 });
@@ -156,7 +155,7 @@ instance.interceptors.response.use(
 
 instance.interceptors.request.use(
     (config) => {
-        const token = accessTokenMemory || localStorage.getItem("token");
+        const token = accessTokenMemory || sessionStorage.getItem("token");
         if (token) {
             config.headers["Authorization"] = `Bearer ${token}`;
         }
@@ -236,6 +235,9 @@ let http = {
         instance
             .post("/auth/login", params)
             .then((res) => {
+                // сохраняем access токен (refresh не трогаем – он в HttpOnly куке)
+                const access = res.data?.data?.accessToken;
+                if (access) setAccessToken(access);
                 callback(res.data);
             })
             .catch((err) => {
@@ -919,7 +921,7 @@ let http = {
 };
 
 export function getToken() {
-    return localStorage.getItem("token") || sessionStorage.getItem("token");
+    return accessTokenMemory || sessionStorage.getItem("token");
 }
 
 export default http;

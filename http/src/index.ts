@@ -26,6 +26,8 @@ const fastify = Fastify({ logger: true });
 
 async function start() {
     try {
+        // Доверяем заголовкам прокси (X-Forwarded-Proto и т.д.), чтобы корректно определялся HTTPS
+        (fastify as any).trustProxy = true;
         await fastify.register(cors, {
             origin: true,
             credentials: true,

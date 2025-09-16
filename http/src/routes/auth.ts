@@ -43,13 +43,14 @@ export default async function authRoutes(fastify: FastifyInstance) {
           .setCookie('refreshToken', refreshToken, {
             httpOnly: true,
             sameSite: 'none',
-            secure: process.env.NODE_ENV === 'production',
+            secure: (process.env.COOKIE_SECURE ?? 'true') === 'true',
+            domain: process.env.COOKIE_DOMAIN || 'tg.chiorio.com',
             path: '/',
             maxAge: 60 * 60 * 24 * 30
           })
           .send({ 
             success: true, 
-            data: { accessToken, ...rest } 
+            data: { accessToken, refreshToken, ...rest } 
           });
       } catch (loginError: any) {
         // Если ошибка логина, значит пароль неправильный
@@ -115,7 +116,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
         .send({
           success: true,
           data: {
-            accessToken
+            accessToken,
+            refreshToken: newRefreshToken
           }
         });
     } catch (error: any) {

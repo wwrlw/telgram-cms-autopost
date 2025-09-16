@@ -307,7 +307,8 @@
 
 <script setup>
 import { ref, onMounted, computed, onUnmounted } from "vue";
-// import { useRouter } from "vue-router";
+import { useRouter } from "vue-router";
+const router = useRouter();
 // import http from "@/js/http";
 import {
     Plus,
@@ -346,7 +347,7 @@ const userRoleDisplay = computed(() => {
 const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    // router.push("/login");
+    router.push("/login");
 };
 const toggleCollapse = () => {
     isCollapsed.value = !isCollapsed.value;
