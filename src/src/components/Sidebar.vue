@@ -284,7 +284,7 @@
                 </div>
 
                 <div v-else class="flex flex-col">
-                    <div class="font-semibold">{{ username }}</div>
+                    <div class="font-semibold text-xs">{{ username }}</div>
                     <div class="text-xs text-gray-400">
                         {{ userRoleDisplay }}
                     </div>

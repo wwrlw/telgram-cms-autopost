@@ -226,7 +226,9 @@
                                             {{ errors.prompt }}
                                         </p>
                                         <p class="mt-1 text-sm text-gray-500">
-                                            Промпт для AI обработки текста постов. Если не указан, будет использован стандартный промпт.
+                                            Промпт для AI обработки текста
+                                            постов. Если не указан, будет
+                                            использован стандартный промпт.
                                         </p>
                                     </div>
                                 </div>
@@ -382,7 +384,6 @@ watch(
     () => props.show,
     (newValue) => {
         if (newValue && props.channel) {
-            // Editing mode
             formData.value = {
                 username: props.channel.username,
                 channel_id: props.channel.channel_id,
@@ -391,7 +392,6 @@ watch(
                 prompt: props.channel.prompt || "",
             };
         } else if (newValue) {
-            // Create mode
             resetForm();
         }
     }

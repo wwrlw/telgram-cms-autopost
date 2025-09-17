@@ -500,8 +500,6 @@ function loadPost() {
         if (res && res.success) {
             postData.value = res.data;
             initializeEditorContent(res.data);
-            // Автоподстановка канала для публикации будет произведена отдельно,
-            // чтобы не подставлять канал-источник парсинга
             selectDefaultChannelByCategory();
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
@@ -573,12 +571,11 @@ onMounted(() => {
     loadChannels();
     loadPost();
     const futureTime = new Date(Date.now() + 60 * 60 * 1000);
-    // Устанавливаем время в формате YYYY-MM-DDTHH:MM для совместимости с DateTimePicker
     const year = futureTime.getFullYear();
-    const month = String(futureTime.getMonth() + 1).padStart(2, '0');
-    const day = String(futureTime.getDate()).padStart(2, '0');
-    const hours = String(futureTime.getHours()).padStart(2, '0');
-    const minutes = String(futureTime.getMinutes()).padStart(2, '0');
+    const month = String(futureTime.getMonth() + 1).padStart(2, "0");
+    const day = String(futureTime.getDate()).padStart(2, "0");
+    const hours = String(futureTime.getHours()).padStart(2, "0");
+    const minutes = String(futureTime.getMinutes()).padStart(2, "0");
     scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 });
 

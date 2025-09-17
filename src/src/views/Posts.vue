@@ -93,7 +93,6 @@ const setLoading = inject("setLoading");
 const { removePublishedFromFavorites, initializeFavorites } = useFavorites();
 const { on: onEvent, emit: emitEvent } = useEventBus();
 
-// Используем URL параметры
 const {
     searchQuery,
     statusFilter,
@@ -103,12 +102,10 @@ const {
     dateToFilter,
     sortField,
     sortOrder,
-    page,
     updateParam,
     updateParams,
     clearAllFilters,
     getApiParams,
-    hasActiveFilters
 } = useUrlParams();
 
 const posts = ref([]);
@@ -168,9 +165,8 @@ const postsService = async (
     }
 
     try {
-        // Получаем параметры из URL
         const urlParams = getApiParams();
-        
+
         const requestParams = {
             ...urlParams,
             page: params.page || urlParams.page || currentPage.value,
@@ -250,7 +246,7 @@ const loadMorePosts = async () => {
 };
 
 const handleSearchChange = async (query) => {
-    updateParam('search', query);
+    updateParam("search", query);
     await debouncedSearch(async () => {
         currentPage.value = 1;
         hasMore.value = true;
@@ -261,7 +257,7 @@ const handleSearchChange = async (query) => {
 };
 
 const handleStatusFilterChange = async (status) => {
-    updateParam('status', status);
+    updateParam("status", status);
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
@@ -270,8 +266,7 @@ const handleStatusFilterChange = async (status) => {
 };
 
 const handleCategoryFilterChange = async (categoryValue) => {
-    // Передаём в URL человекочитаемое имя категории
-    updateParam('category', categoryValue);
+    updateParam("category", categoryValue);
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
@@ -280,7 +275,7 @@ const handleCategoryFilterChange = async (categoryValue) => {
 };
 
 const handleChannelFilterChange = async (channelId) => {
-    updateParam('channel', channelId);
+    updateParam("channel", channelId);
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });
@@ -289,8 +284,8 @@ const handleChannelFilterChange = async (channelId) => {
 };
 
 const handleDateFiltersChange = async (dateFilters) => {
-    updateParam('date_from', dateFilters.dateFrom);
-    updateParam('date_to', dateFilters.dateTo);
+    updateParam("date_from", dateFilters.dateFrom);
+    updateParam("date_to", dateFilters.dateTo);
     debouncedSearch(async () => {
         currentPage.value = 1;
         hasMore.value = true;
@@ -301,13 +296,10 @@ const handleDateFiltersChange = async (dateFilters) => {
 };
 
 const handleSortOptionsChange = async (sortOptions) => {
-    console.log('Sort options changed:', sortOptions);
-    // Обновляем только основные параметры сортировки без дублирования
     updateParams({
         filter: sortOptions.sortField,
         order: sortOptions.sortOrder,
     });
-    console.log('URL params updated (batch):', { filter: sortOptions.sortField, order: sortOptions.sortOrder });
     currentPage.value = 1;
     hasMore.value = true;
     await postsService({ page: 1 });

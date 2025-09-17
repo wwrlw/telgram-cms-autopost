@@ -2,7 +2,6 @@
     <div class="telegraph-wrapper">
         <div ref="holder" class="telegraph-editor" />
     </div>
-    
 </template>
 
 <script setup>
@@ -33,9 +32,15 @@ function blocksToHtml(data) {
                 case "paragraph": {
                     let text = block.data?.text || "";
                     // поддержка спойлеров
-                    text = text.replace(/<span class=\"tg-spoiler\">([\s\S]*?)<\/span>/g, "<span class=\"tg-spoiler\">$1<\/span>");
+                    text = text.replace(
+                        /<span class=\"tg-spoiler\">([\s\S]*?)<\/span>/g,
+                        '<span class="tg-spoiler">$1<\/span>'
+                    );
                     // поддержка кастомных эмодзи
-                    text = text.replace(/<img([^>]*class=\"tg-emoji\"[^>]*)>/g, "<img$1>");
+                    text = text.replace(
+                        /<img([^>]*class=\"tg-emoji\"[^>]*)>/g,
+                        "<img$1>"
+                    );
                     return `<p>${esc(text)}</p>`;
                 }
                 case "header": {
@@ -52,7 +57,9 @@ function blocksToHtml(data) {
                 }
                 case "quote": {
                     const text = block.data?.text || "";
-                    const caption = block.data?.caption ? `<cite>${esc(block.data.caption)}</cite>` : "";
+                    const caption = block.data?.caption
+                        ? `<cite>${esc(block.data.caption)}</cite>`
+                        : "";
                     return `<blockquote>${esc(text)}${caption}</blockquote>`;
                 }
                 default:
@@ -80,7 +87,8 @@ function htmlToInitialBlocks(html) {
             blocks.push({ type: "paragraph", data: { text } });
         }
     }
-    if (blocks.length === 0) blocks.push({ type: "paragraph", data: { text: "" } });
+    if (blocks.length === 0)
+        blocks.push({ type: "paragraph", data: { text: "" } });
     return { time: Date.now(), blocks };
 }
 
@@ -471,7 +479,10 @@ defineExpose({ getHTML });
     font-size: 12px;
     opacity: 0.9;
 }
-.bubble-menu button.active { opacity: 1; text-decoration: underline; }
+.bubble-menu button.active {
+    opacity: 1;
+    text-decoration: underline;
+}
 
 .floating-menu {
     display: flex;
