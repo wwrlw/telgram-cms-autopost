@@ -9,36 +9,36 @@
         >
             <button class="tg-menu-item" @click="applyCtx('bold')">
                 <span>Жирный</span>
-                <kbd>Ctrl+B</kbd>
+                <!-- <kbd>Ctrl+B</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('italic')">
                 <span>Курсив</span>
-                <kbd>Ctrl+I</kbd>
+                <!-- <kbd>Ctrl+I</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('underline')">
                 <span>Подчёркнутый</span>
-                <kbd>Ctrl+U</kbd>
+                <!-- <kbd>Ctrl+U</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('strike')">
                 <span>Зачёркнутый</span>
-                <kbd>Ctrl+Shift+X</kbd>
+                <!-- <kbd>Ctrl+Shift+X</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('quote')">
                 <span>Цитата</span>
-                <kbd>Ctrl+Shift+.</kbd>
+                <!-- <kbd>Ctrl+Shift+.</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('mono')">
                 <span>Моноширинный</span>
-                <kbd>Ctrl+Shift+M</kbd>
+                <!-- <kbd>Ctrl+Shift+M</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('spoiler')">
                 <span>Скрытый</span>
-                <kbd>Ctrl+Shift+P</kbd>
+                <!-- <kbd>Ctrl+Shift+P</kbd> -->
             </button>
             <div class="tg-menu-sep"></div>
             <button class="tg-menu-item" @click="applyCtx('link')">
                 <span>Добавить ссылку</span>
-                <kbd>Ctrl+K</kbd>
+                <!-- <kbd>Ctrl+K</kbd> -->
             </button>
         </div>
     </div>
@@ -649,7 +649,10 @@ defineExpose({ getHTML });
 ::v-deep(.ce-popover__container) {
     display: none !important;
 }
-::v-deep(.ce-popover__content) {
+::v-deep(.ce-toolbar__actions) {
+    display: none !important;
+}
+/* ::v-deep(.ce-popover__content) {
     display: none !important;
 }
 ::v-deep(.ce-popover__content) {
@@ -657,7 +660,7 @@ defineExpose({ getHTML });
 }
 ::v-deep(.ce-popover__content) {
     display: none !important;
-}
+} */
 
 .telegraph-wrapper {
     max-width: 100%;
@@ -675,11 +678,12 @@ defineExpose({ getHTML });
 
 .tg-context-menu {
     position: fixed;
-    min-width: 240px;
-    background: #111827;
-    color: #e5e7eb;
+    min-width: 160px;
+    background: #fff;
+    color: #111827;
     border-radius: 8px;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    border: 1px solid #e5e7eb;
     padding: 6px 0;
     z-index: 1000;
 }
@@ -695,6 +699,9 @@ defineExpose({ getHTML });
     color: inherit;
     cursor: pointer;
     font-size: 14px;
+}
+.tg-menu-item:not(:last-child) {
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .tg-menu-item:hover {
@@ -888,5 +895,24 @@ defineExpose({ getHTML });
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 6px 8px;
+}
+
+::v-deep(span.tg-spoiler) {
+    background: rgba(0, 0, 0, 0.15);
+    box-shadow:
+        inset 0 0 0 1px rgba(245, 158, 11, 0.35),
+        0 1px 2px rgba(0, 0, 0, 0.06);
+    border-radius: 4px;
+    padding: 0 2px;
+    transition:
+        box-shadow 0.15s ease,
+        background 0.15s ease;
+}
+
+::v-deep(span.tg-spoiler:hover) {
+    background: rgba(0, 0, 0, 0.15);
+    box-shadow:
+        inset 0 0 0 1px rgba(245, 158, 11, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.08);
 }
 </style>
