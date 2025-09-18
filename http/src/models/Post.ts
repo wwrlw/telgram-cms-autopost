@@ -41,6 +41,7 @@ export interface Post {
   url: string;
   media: Media[];
   is_unique: boolean;
+  format?: 'html' | 'markdown';
   conversion_metrics?: ConversionMetrics; // Только метрики конверсии
   category_id?: ObjectId;
   category_name?: string;
@@ -64,6 +65,7 @@ export interface CreatePostDto {
   url: string;
   media?: Media[];
   is_unique?: boolean;
+  format?: 'html' | 'markdown';
   conversion_metrics?: ConversionMetrics; // Только метрики конверсии
   category_id?: ObjectId;
 } 

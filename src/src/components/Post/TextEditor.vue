@@ -1,6 +1,46 @@
 <template>
     <div class="telegraph-wrapper">
         <div ref="holder" class="telegraph-editor" />
+
+        <div
+            v-if="ctxMenu.visible"
+            class="tg-context-menu"
+            :style="{ top: ctxMenu.y + 'px', left: ctxMenu.x + 'px' }"
+        >
+            <button class="tg-menu-item" @click="applyCtx('bold')">
+                <span>Жирный</span>
+                <kbd>Ctrl+B</kbd>
+            </button>
+            <button class="tg-menu-item" @click="applyCtx('italic')">
+                <span>Курсив</span>
+                <kbd>Ctrl+I</kbd>
+            </button>
+            <button class="tg-menu-item" @click="applyCtx('underline')">
+                <span>Подчёркнутый</span>
+                <kbd>Ctrl+U</kbd>
+            </button>
+            <button class="tg-menu-item" @click="applyCtx('strike')">
+                <span>Зачёркнутый</span>
+                <kbd>Ctrl+Shift+X</kbd>
+            </button>
+            <button class="tg-menu-item" @click="applyCtx('quote')">
+                <span>Цитата</span>
+                <kbd>Ctrl+Shift+.</kbd>
+            </button>
+            <button class="tg-menu-item" @click="applyCtx('mono')">
+                <span>Моноширинный</span>
+                <kbd>Ctrl+Shift+M</kbd>
+            </button>
+            <button class="tg-menu-item" @click="applyCtx('spoiler')">
+                <span>Скрытый</span>
+                <kbd>Ctrl+Shift+P</kbd>
+            </button>
+            <div class="tg-menu-sep"></div>
+            <button class="tg-menu-item" @click="applyCtx('link')">
+                <span>Добавить ссылку</span>
+                <kbd>Ctrl+K</kbd>
+            </button>
+        </div>
     </div>
 </template>
 
@@ -22,6 +62,216 @@ const emit = defineEmits(["update:modelValue"]);
 const holder = ref(null);
 let editorInstance = null;
 let isInternalUpdate = false;
+const ctxMenu = ref({ visible: false, x: 0, y: 0 });
+
+// InlineTools для EditorJS: underline, strike, spoiler
+class UnderlineTool {
+    static get isInline() {
+        return true;
+    }
+    static get sanitize() {
+        return { u: true };
+    }
+    constructor({ api }) {
+        this.api = api;
+        this.button = document.createElement("button");
+        this.button.type = "button";
+        this.button.classList.add(this.api.styles.inlineToolButton);
+        this.button.innerHTML = "<u>U</u>";
+    }
+    render() {
+        return this.button;
+    }
+    surround(range) {
+        if (!range) return;
+        const u = this.api.selection.findParentTag("U");
+        if (u) {
+            this.unwrap(u);
+        } else {
+            this.wrap(range);
+        }
+    }
+    wrap(range) {
+        const u = document.createElement("u");
+        range.surroundContents(u);
+    }
+    unwrap(tag) {
+        this.api.selection.expandToTag(tag);
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0);
+        const frag = range.extractContents();
+        tag.parentNode.replaceChild(frag, tag);
+    }
+    checkState() {
+        const u = this.api.selection.findParentTag("U");
+        this.button.classList.toggle(
+            this.api.styles.inlineToolButtonActive,
+            !!u
+        );
+    }
+}
+
+class StrikeTool {
+    static get isInline() {
+        return true;
+    }
+    static get sanitize() {
+        return { s: true, del: true, strike: true };
+    }
+    constructor({ api }) {
+        this.api = api;
+        this.button = document.createElement("button");
+        this.button.type = "button";
+        this.button.classList.add(this.api.styles.inlineToolButton);
+        this.button.innerHTML = "<s>S</s>";
+    }
+    render() {
+        return this.button;
+    }
+    surround(range) {
+        if (!range) return;
+        const s =
+            this.api.selection.findParentTag("S") ||
+            this.api.selection.findParentTag("DEL") ||
+            this.api.selection.findParentTag("STRIKE");
+        if (s) {
+            this.unwrap(s);
+        } else {
+            this.wrap(range);
+        }
+    }
+    wrap(range) {
+        const s = document.createElement("s");
+        range.surroundContents(s);
+    }
+    unwrap(tag) {
+        this.api.selection.expandToTag(tag);
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0);
+        const frag = range.extractContents();
+        tag.parentNode.replaceChild(frag, tag);
+    }
+    checkState() {
+        const s =
+            this.api.selection.findParentTag("S") ||
+            this.api.selection.findParentTag("DEL") ||
+            this.api.selection.findParentTag("STRIKE");
+        this.button.classList.toggle(
+            this.api.styles.inlineToolButtonActive,
+            !!s
+        );
+    }
+}
+
+class SpoilerTool {
+    static get isInline() {
+        return true;
+    }
+    static get sanitize() {
+        return { span: { class: "tg-spoiler" } };
+    }
+    constructor({ api }) {
+        this.api = api;
+        this.button = document.createElement("button");
+        this.button.type = "button";
+        this.button.classList.add(this.api.styles.inlineToolButton);
+        this.button.textContent = "SP";
+        this.wrapperClass = "tg-spoiler";
+    }
+    render() {
+        return this.button;
+    }
+    surround(range) {
+        if (!range) return;
+        const span = this.findWrapper();
+        if (span) {
+            this.unwrap(span);
+        } else {
+            this.wrap(range);
+        }
+    }
+    findWrapper() {
+        const parent = this.api.selection.findParentTag("SPAN");
+        if (parent && parent.classList.contains(this.wrapperClass))
+            return parent;
+        return null;
+    }
+    wrap(range) {
+        const span = document.createElement("span");
+        span.className = this.wrapperClass;
+        range.surroundContents(span);
+    }
+    unwrap(tag) {
+        this.api.selection.expandToTag(tag);
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0);
+        const frag = range.extractContents();
+        tag.parentNode.replaceChild(frag, tag);
+    }
+    checkState() {
+        const span = this.findWrapper();
+        this.button.classList.toggle(
+            this.api.styles.inlineToolButtonActive,
+            !!span
+        );
+    }
+}
+
+function openCtxMenu(e) {
+    e.preventDefault();
+    ctxMenu.value = { visible: true, x: e.clientX, y: e.clientY };
+    window.addEventListener("click", closeCtxMenu, { once: true });
+    window.addEventListener("scroll", closeCtxMenu, { once: true });
+    const onEsc = (ev) => {
+        if (ev.key === "Escape") closeCtxMenu();
+        window.removeEventListener("keydown", onEsc);
+    };
+    window.addEventListener("keydown", onEsc);
+}
+
+function closeCtxMenu() {
+    ctxMenu.value.visible = false;
+}
+
+function applyCtx(action) {
+    closeCtxMenu();
+    switch (action) {
+        case "bold":
+            document.execCommand("bold");
+            break;
+        case "italic":
+            document.execCommand("italic");
+            break;
+        case "underline":
+            wrapSelectionWithTag("u");
+            break;
+        case "strike":
+            wrapSelectionWithTag("s");
+            break;
+        case "quote":
+            wrapSelectionWithBlockquote();
+            break;
+        case "mono":
+            insertInlineCode();
+            break;
+        case "spoiler":
+            wrapSelectionWithSpoiler();
+            break;
+        case "link": {
+            const url = window.prompt("Ссылка (пусто — удалить)", "https://");
+            if (url === null) break;
+            if (url === "" || url === "https://") {
+                document.execCommand("unlink");
+            } else {
+                document.execCommand("createLink", false, url);
+            }
+            break;
+        }
+    }
+}
 
 function blocksToHtml(data) {
     if (!data || !Array.isArray(data.blocks)) return "";
@@ -31,16 +281,19 @@ function blocksToHtml(data) {
             switch (block.type) {
                 case "paragraph": {
                     let text = block.data?.text || "";
-                    // поддержка спойлеров
                     text = text.replace(
-                        /<span class=\"tg-spoiler\">([\s\S]*?)<\/span>/g,
-                        '<span class="tg-spoiler">$1<\/span>'
+                        /<span class="tg-spoiler">([\s\S]*?)<\/span>/g,
+                        '<span class="tg-spoiler">$1</span>'
                     );
                     // поддержка кастомных эмодзи
                     text = text.replace(
-                        /<img([^>]*class=\"tg-emoji\"[^>]*)>/g,
+                        /<img([^>]*class="tg-emoji"[^>]*)>/g,
                         "<img$1>"
                     );
+                    // если внутри есть блочная цитата, не заворачиваем в <p>
+                    if (/<blockquote[\s>]/i.test(text)) {
+                        return `${esc(text)}`;
+                    }
                     return `<p>${esc(text)}</p>`;
                 }
                 case "header": {
@@ -71,11 +324,9 @@ function blocksToHtml(data) {
 }
 
 function htmlToInitialBlocks(html) {
-    // Конвертация HTML -> набор блоков параграфов по <br> и пустым строкам
     const container = document.createElement("div");
     container.innerHTML = html || "";
     const blocks = [];
-    // Разбиваем по блочным элементам и <br>
     const raw = container.innerHTML
         .replace(/\r/g, "")
         .split(/<br\s*\/?>(?:\s*<br\s*\/?>)?/i);
@@ -96,7 +347,26 @@ onMounted(() => {
     editorInstance = new EditorJS({
         holder: holder.value,
         placeholder: "Начните писать…",
-        inlineToolbar: ["bold", "italic", "link", "inlineCode"],
+        inlineToolbar: [
+            "bold",
+            "italic",
+            "link",
+            "inlineCode",
+            "underlineTool",
+            "strikeTool",
+            "spoilerTool",
+        ],
+        // Глобальный санитайзер: гарантируем сохранение нужных инлайновых тегов
+        sanitizer: {
+            blockquote: true,
+            u: true,
+            s: true,
+            strike: true,
+            del: true,
+            span: {
+                class: "tg-spoiler",
+            },
+        },
         tools: {
             paragraph: {
                 class: Paragraph,
@@ -105,9 +375,12 @@ onMounted(() => {
                     preserveBlank: true,
                 },
                 sanitize: {
+                    blockquote: true,
                     b: true,
                     i: true,
                     s: true,
+                    strike: true,
+                    del: true,
                     u: true,
                     em: true,
                     strong: true,
@@ -136,6 +409,8 @@ onMounted(() => {
                     b: true,
                     i: true,
                     s: true,
+                    strike: true,
+                    del: true,
                     u: true,
                     em: true,
                     strong: true,
@@ -150,6 +425,8 @@ onMounted(() => {
                     b: true,
                     i: true,
                     s: true,
+                    strike: true,
+                    del: true,
                     u: true,
                     em: true,
                     strong: true,
@@ -163,6 +440,8 @@ onMounted(() => {
                     b: true,
                     i: true,
                     s: true,
+                    strike: true,
+                    del: true,
                     u: true,
                     em: true,
                     strong: true,
@@ -171,6 +450,9 @@ onMounted(() => {
             },
             linkTool: LinkTool,
             inlineCode: InlineCode,
+            underlineTool: UnderlineTool,
+            strikeTool: StrikeTool,
+            spoilerTool: SpoilerTool,
         },
         data: htmlToInitialBlocks(props.modelValue),
         onChange: async () => {
@@ -179,59 +461,62 @@ onMounted(() => {
                 const html = blocksToHtml(data);
                 isInternalUpdate = true;
                 emit("update:modelValue", html);
-                // флаг сбросим в следующем тике, чтобы watcher не перерисовывал редактор
                 queueMicrotask(() => {
                     isInternalUpdate = false;
                 });
-            } catch (_) {}
+            } catch {
+                // ignore
+            }
         },
     });
 
-    // Горячие клавиши для форматирования + спойлер и ссылка
     holder.value?.addEventListener("keydown", handleHotkeys);
+    holder.value?.addEventListener("contextmenu", openCtxMenu);
 });
 
 watch(
     () => props.modelValue,
     async (val) => {
         if (!editorInstance || isInternalUpdate) return;
-        // Если внешнее значение изменилось (например, переключение текста),
-        // переинициализируем содержимое.
         try {
             const data = htmlToInitialBlocks(val || "");
             await editorInstance.isReady;
             await editorInstance.render(data);
-        } catch (_) {}
+        } catch {
+            // ignore
+        }
     }
 );
 
-function focusEditor() {}
+// function focusEditor() {}
 
 onBeforeUnmount(() => {
     if (editorInstance?.destroy) editorInstance.destroy();
+    holder.value?.removeEventListener("contextmenu", openCtxMenu);
 });
 
 function getHTML() {
-    // Возвращаем текущее v-model значение через DOM, если нужно
     return props.modelValue || "";
 }
 
 function handleHotkeys(e) {
     const meta = e.metaKey || e.ctrlKey;
     if (!meta) return;
-    // курсив
     if (e.key.toLowerCase() === "i") {
         document.execCommand("italic");
         e.preventDefault();
     }
-    // жирный
     if (e.key.toLowerCase() === "b") {
         document.execCommand("bold");
         e.preventDefault();
     }
-    // подчёркивание
     if (e.key.toLowerCase() === "u") {
-        document.execCommand("underline");
+        wrapSelectionWithTag("u");
+        e.preventDefault();
+    }
+    // зачёркнутый Ctrl/Cmd+Shift+X
+    if (e.key.toLowerCase() === "x" && e.shiftKey) {
+        wrapSelectionWithTag("s");
         e.preventDefault();
     }
     // вставка/удаление ссылки
@@ -245,12 +530,10 @@ function handleHotkeys(e) {
         }
         e.preventDefault();
     }
-    // спойлер: Cmd/Ctrl+Shift+S
     if (e.key.toLowerCase() === "s" && e.shiftKey) {
         wrapSelectionWithSpoiler();
         e.preventDefault();
     }
-    // кастомный эмодзи: Cmd/Ctrl+E — вставка по id
     if (e.key.toLowerCase() === "e") {
         const id = window.prompt("ID кастомного эмодзи", "");
         if (!id) return;
@@ -269,10 +552,26 @@ function wrapSelectionWithSpoiler() {
     try {
         range.surroundContents(span);
     } catch {
-        // если пересекает несколько блоков — просто вставим wrapper
         const contents = range.extractContents();
         span.appendChild(contents);
         range.insertNode(span);
+    }
+    sel.removeAllRanges();
+}
+
+// Оборачивание выделения произвольным тегом (u, s)
+function wrapSelectionWithTag(tagName) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (range.collapsed) return;
+    const el = document.createElement(tagName);
+    try {
+        range.surroundContents(el);
+    } catch {
+        const contents = range.extractContents();
+        el.appendChild(contents);
+        range.insertNode(el);
     }
     sel.removeAllRanges();
 }
@@ -282,7 +581,6 @@ function insertCustomEmoji(id) {
     img.className = "tg-emoji";
     img.setAttribute("data-custom-emoji-id", id);
     img.alt = ":emoji:";
-    // src опционально — можно подставлять превью, если есть
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
     const range = sel.getRangeAt(0);
@@ -291,15 +589,80 @@ function insertCustomEmoji(id) {
     range.collapse(true);
 }
 
+function wrapSelectionWithBlockquote() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (range.collapsed) return;
+    const selectedText = sel.toString();
+    sel.removeAllRanges();
+    try {
+        const blocksApi = editorInstance?.blocks;
+        const insertIndex =
+            blocksApi?.getCurrentBlockIndex &&
+            typeof blocksApi.getCurrentBlockIndex === "function"
+                ? blocksApi.getCurrentBlockIndex() + 1
+                : undefined;
+        if (blocksApi?.insert) {
+            blocksApi.insert("quote", { text: selectedText }, {}, insertIndex);
+        } else {
+            document.execCommand(
+                "insertHTML",
+                false,
+                `<blockquote>${selectedText}</blockquote>`
+            );
+        }
+    } catch {
+        // ignore
+    }
+}
+
+function insertInlineCode() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    if (sel.isCollapsed) {
+        document.execCommand("insertHTML", false, "<code></code>");
+        return;
+    }
+    const range = sel.getRangeAt(0);
+    const code = document.createElement("code");
+    try {
+        range.surroundContents(code);
+    } catch {
+        const contents = range.extractContents();
+        code.appendChild(contents);
+        range.insertNode(code);
+    }
+    sel.removeAllRanges();
+}
+
 defineExpose({ getHTML });
 </script>
 
 <style scoped>
-/* Минималистичный стиль в духе Telegraph */
+::v-deep(.codex-editor__redactor) {
+    padding-bottom: 0 !important;
+}
+::v-deep(.codex-editor__redactor--empty) {
+    width: 100% !important;
+}
+::v-deep(.ce-popover__container) {
+    display: none !important;
+}
+::v-deep(.ce-popover__content) {
+    display: none !important;
+}
+::v-deep(.ce-popover__content) {
+    display: none !important;
+}
+::v-deep(.ce-popover__content) {
+    display: none !important;
+}
+
 .telegraph-wrapper {
-    max-width: 820px; /* ширина зоны письма (чуть шире) */
-    width: 100%;
-    margin: 0 auto; /* по центру */
+    max-width: 100%;
+    /* width: 100%; */
+    /* margin: 0 auto; */
 }
 
 .telegraph-editor {
@@ -308,6 +671,48 @@ defineExpose({ getHTML });
     background: #fff;
     padding: 20px 24px;
     min-height: 280px;
+}
+
+.tg-context-menu {
+    position: fixed;
+    min-width: 240px;
+    background: #111827;
+    color: #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    padding: 6px 0;
+    z-index: 1000;
+}
+
+.tg-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 14px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.tg-menu-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.tg-menu-item kbd {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 12px;
+}
+
+.tg-menu-sep {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 0;
 }
 
 .telegraph-editor .ProseMirror {
@@ -325,7 +730,6 @@ defineExpose({ getHTML });
     pointer-events: none;
 }
 
-/* Убираем все синие рамки и outline для всех элементов внутри редактора */
 .telegraph-editor .ProseMirror * {
     outline: none !important;
     box-shadow: none !important;
@@ -344,26 +748,25 @@ defineExpose({ getHTML });
 }
 
 /* Убираем синие рамки для всех интерактивных элементов */
-.telegraph-editor .ProseMirror button,
+/* .telegraph-editor .ProseMirror button,
 .telegraph-editor .ProseMirror input,
 .telegraph-editor .ProseMirror textarea,
 .telegraph-editor .ProseMirror [contenteditable] {
     outline: none !important;
     box-shadow: none !important;
     border: none !important;
-}
+} */
 
-.telegraph-editor .ProseMirror button:focus,
+/* .telegraph-editor .ProseMirror button:focus,
 .telegraph-editor .ProseMirror input:focus,
 .telegraph-editor .ProseMirror textarea:focus,
 .telegraph-editor .ProseMirror [contenteditable]:focus {
     outline: none !important;
     box-shadow: none !important;
     border: none !important;
-}
+} */
 
-/* Убираем синие рамки для параграфов и других блоков */
-.telegraph-editor .ProseMirror p,
+/* .telegraph-editor .ProseMirror p,
 .telegraph-editor .ProseMirror div,
 .telegraph-editor .ProseMirror h1,
 .telegraph-editor .ProseMirror h2,
@@ -382,7 +785,7 @@ defineExpose({ getHTML });
     border: none !important;
     margin: 0;
     padding: 0;
-}
+} */
 
 .telegraph-editor .ProseMirror p {
     margin: 0;
@@ -399,7 +802,6 @@ defineExpose({ getHTML });
     border: none !important;
 }
 
-/* Убираем синие рамки для всех состояний активного элемента */
 .telegraph-editor .ProseMirror *:active,
 .telegraph-editor .ProseMirror *:hover {
     outline: none !important;
@@ -407,7 +809,6 @@ defineExpose({ getHTML });
     border: none !important;
 }
 
-/* Дополнительные правила для полного удаления outline */
 .telegraph-editor *,
 .telegraph-editor *:before,
 .telegraph-editor *:after {
@@ -421,7 +822,6 @@ defineExpose({ getHTML });
     box-shadow: none !important;
 }
 
-/* Дополнительные правила для полной кликабельности */
 .telegraph-editor {
     user-select: text;
     -webkit-user-select: text;
@@ -437,7 +837,6 @@ defineExpose({ getHTML });
     cursor: text;
 }
 
-/* Убираем все возможные синие рамки для всех браузеров */
 .telegraph-editor *::-moz-focus-inner,
 .telegraph-editor *::-moz-focus-outer {
     outline: none !important;
@@ -448,12 +847,10 @@ defineExpose({ getHTML });
     outline: none !important;
 }
 
-/* Дополнительные правила для Safari */
 .telegraph-editor *::-webkit-tap-highlight-color {
     background: transparent !important;
 }
 
-/* Убираем синие рамки для всех состояний фокуса в разных браузерах */
 .telegraph-editor *:focus-visible {
     outline: none !important;
     box-shadow: none !important;

@@ -160,10 +160,16 @@ const showingUniqueText = ref(false);
 const isSubmitting = ref(false);
 
 const editorHtml = ref("");
+// Включаем отправку HTML в Telegram (вместо Markdown)
+const USE_HTML_FORMAT = true;
 
 const turndownService = new TurndownService({
     headingStyle: "atx",
     codeBlockStyle: "fenced",
+    emDelimiter: "*",
+    strongDelimiter: "**",
+    bulletListMarker: "-",
+    linkStyle: "inlined",
 });
 
 turndownService.addRule("underline", {
@@ -175,6 +181,106 @@ turndownService.addRule("strikethrough", {
     filter: ["s", "strike", "del"],
     replacement: (content) => `~~${content}~~`,
 });
+
+// Цитаты: <blockquote> → строки с "> "
+turndownService.addRule("blockquote", {
+    filter: (node) => node.nodeName === "BLOCKQUOTE",
+    replacement: (content) => {
+        const lines = content
+            .trim()
+            .split(/\r?\n/)
+            .map((l) => `> ${l.trim()}`)
+            .join("\n");
+        return `\n${lines}\n`;
+    },
+});
+
+turndownService.addRule("tgSpoiler", {
+    filter: (node) =>
+        node.nodeName === "SPAN" &&
+        typeof node.getAttribute === "function" &&
+        (node.getAttribute("class") || "").split(/\s+/).includes("tg-spoiler"),
+    replacement: (content) => `||${content}||`,
+});
+
+turndownService.addRule("tgEmoji", {
+    filter: (node) =>
+        node.nodeName === "IMG" &&
+        typeof node.getAttribute === "function" &&
+        (node.getAttribute("class") || "").split(/\s+/).includes("tg-emoji"),
+    replacement: (_content, node) => node.getAttribute("alt") || "",
+});
+
+function escapeTelegramMarkdown(text, mode = "legacy") {
+    if (!text) return "";
+
+    const codeSpans = [];
+    let tmp = text.replace(/`([^`]+?)`/g, (_m, p1) => {
+        codeSpans.push(p1);
+        return `\uE000C${codeSpans.length - 1}\uE001`;
+    });
+
+    const links = [];
+    tmp = tmp.replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, (_m, label, url) => {
+        links.push({ label, url });
+        return `\uE000L${links.length - 1}\uE001`;
+    });
+
+    const specialsV2 = /([_*\[\]()~`>#+=|{}!])/g; // eslint-disable-line no-useless-escape
+    const specialsLegacy = /([_*`\[\]()])/g; // eslint-disable-line no-useless-escape
+    const specials = mode === "v2" ? specialsV2 : specialsLegacy;
+
+    tmp = tmp
+        .split(/\r?\n/)
+        .map((line) => {
+            if (/^>\s?/.test(line)) {
+                const head = line.match(/^>\s?/)[0];
+                let body = line.slice(head.length);
+                // Внутри цитаты экранируем, но позволяем вложенные цитаты
+                if (/^>\s?/.test(body)) return line; // уже вложенная — оставим как есть
+                body = body.replace(specials, "\\$1");
+                return `${head}${body}`;
+            }
+            return line.replace(specials, "\\$1");
+        })
+        .join("\n");
+
+    tmp = tmp.replace(/\uE000L(\d+)\uE001/g, (_m, idx) => {
+        const { label, url } = links[Number(idx)];
+        const safeLabel = label.replace(specials, "\\$1");
+        return `[${safeLabel}](${url})`;
+    });
+
+    tmp = tmp.replace(/\uE000C(\d+)\uE001/g, (_m, idx) => {
+        return "`" + codeSpans[Number(idx)] + "`";
+    });
+
+    return tmp;
+}
+
+function buildTelegramHtml(rawHtml) {
+    let html = String(rawHtml || "").trim();
+    if (!html) return "";
+    html = html.replace(
+        /<img[^>]*class=["']?tg-emoji["']?[^>]*data-custom-emoji-id=["']([^"']+)["'][^>]*>/g,
+        '<tg-emoji emoji-id="$1"></tg-emoji>'
+    );
+    html = html.replace(/<\/p>/g, "<br>").replace(/<p>/g, "");
+    html = html.replace(
+        /<a\s+([^>]*href=["'][^"']+["'][^>]*)>/g,
+        (m, attrs) => `<a ${attrs} rel="noopener noreferrer">`
+    );
+    return html;
+}
+
+function buildOutgoingText() {
+    if (USE_HTML_FORMAT) {
+        return { text: buildTelegramHtml(editorHtml.value), format: "html" };
+    }
+    let markdown = turndownService.turndown(editorHtml.value || "");
+    markdown = escapeTelegramMarkdown(markdown, "legacy");
+    return { text: markdown, format: "markdown" };
+}
 
 const loadChannels = () => {
     http.getActivePublicationChannels((response) => {
@@ -218,8 +324,8 @@ async function savePost() {
         return;
     }
 
-    const markdown = turndownService.turndown(editorHtml.value || "");
-    if (!markdown.trim() && files.value.length === 0) {
+    const { text, format } = buildOutgoingText();
+    if (!text.trim() && files.value.length === 0) {
         window?.$toast?.error("Добавьте текст или медиа");
         return;
     }
@@ -259,7 +365,8 @@ async function savePost() {
 
         const updateData = {
             id: postData.value._id,
-            text: markdown,
+            text,
+            format,
             media: allMedia,
         };
 
@@ -297,10 +404,10 @@ async function publishNow() {
         return;
     }
 
-    const markdown = turndownService.turndown(editorHtml.value || "");
+    const { text, format } = buildOutgoingText();
 
     if (
-        !markdown.trim() &&
+        !text.trim() &&
         files.value.length === 0 &&
         (!postData.value.media || postData.value.media.length === 0)
     ) {
@@ -343,7 +450,8 @@ async function publishNow() {
 
         const updateData = {
             id: postData.value._id,
-            text: markdown,
+            text,
+            format,
             channel_id: selectedChannel.value,
             media: allMedia,
         };
@@ -400,10 +508,10 @@ async function publishLater() {
         return;
     }
 
-    const markdown = turndownService.turndown(editorHtml.value || "");
+    const { text, format } = buildOutgoingText();
 
     if (
-        !markdown.trim() &&
+        !text.trim() &&
         files.value.length === 0 &&
         (!postData.value.media || postData.value.media.length === 0)
     ) {
@@ -446,7 +554,8 @@ async function publishLater() {
 
         const updateData = {
             id: postData.value._id,
-            text: markdown,
+            text,
+            format,
             channel_id: selectedChannel.value,
             media: allMedia,
         };

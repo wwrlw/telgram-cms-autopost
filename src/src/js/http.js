@@ -631,6 +631,9 @@ let http = {
         if (updateData.channel_id !== undefined) {
             formData.append("channel_id", updateData.channel_id);
         }
+        if (updateData.format !== undefined) {
+            formData.append("format", updateData.format);
+        }
 
         // Добавляем медиафайлы
         if (updateData.media && Array.isArray(updateData.media)) {

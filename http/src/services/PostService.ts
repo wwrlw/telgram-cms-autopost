@@ -246,7 +246,7 @@ export class PostService implements IPostService {
       throw new NotFoundError('Post not found');
     }
 
-    const allowedFields: (keyof Post)[] = ['text', 'url', 'source_channel', 'is_unique', 'media', 'channel_id'];
+    const allowedFields: (keyof Post)[] = ['text', 'url', 'source_channel', 'is_unique', 'media', 'channel_id', 'format'];
     const filteredUpdateData: Partial<Post> = {};
     
     for (const field of allowedFields) {
