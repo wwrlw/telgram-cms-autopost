@@ -76,7 +76,7 @@ export class ChannelAnalyticsService {
         };
 
         await this.mongoService.upsertDailyChannelAnalytics(doc);
-        console.log(`✅ Дневной срез сохранен для ${channel.name}: posts_day=${dayStats.posts_day}, views_day=${dayStats.views_day}, er_day=${dayStats.er_day}`);
+        console.log(`✅ Дневной срез сохранен для ${channel.name}: posts_day=${dayStats.posts_day}, views_day=${dayStats.views_day}, er_day=${dayStats.err_day}`);
       } catch (e) {
         console.error(`❌ Ошибка сохранения дневного среза для ${channel.name}:`, e);
       }
