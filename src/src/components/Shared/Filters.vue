@@ -120,7 +120,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, computed } from "vue";
 import { X } from "lucide-vue-next";
 
 const props = defineProps({
@@ -160,7 +160,6 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
-    // Значения фильтров из URL
     statusFilterValue: {
         type: String,
         default: "",
@@ -209,50 +208,73 @@ const emit = defineEmits([
 ]);
 
 const searchQuery = ref("");
-const statusFilter = ref(props.statusFilterValue);
-const categoryFilter = ref(props.categoryFilterValue);
-const channelFilter = ref(props.channelFilterValue);
-const dateFromFilter = ref(props.dateFromFilterValue);
-const dateToFilter = ref(props.dateToFilterValue);
-const sortField = ref(props.sortFieldValue);
-const sortOrder = ref(props.sortOrderValue);
 
-// const updateSearch = () => {
-//     emit("update:searchQuery", searchQuery.value);
-// };
+const statusFilter = computed({
+    get: () => props.statusFilterValue,
+    set: (v) => emit("update:statusFilter", v),
+});
 
-const updateStatusFilter = () => {
+const categoryFilter = computed({
+    get: () => props.categoryFilterValue,
+    set: (v) => emit("update:categoryFilter", v),
+});
+
+const channelFilter = computed({
+    get: () => props.channelFilterValue,
+    set: (v) => emit("update:channelFilter", v),
+});
+
+const sortField = computed({
+    get: () => props.sortFieldValue,
+    set: (v) =>
+        emit("update:sortOptions", {
+            sortField: v,
+            sortOrder: sortOrder.value,
+        }),
+});
+
+const sortOrder = computed({
+    get: () => props.sortOrderValue,
+    set: (v) =>
+        emit("update:sortOptions", {
+            sortField: sortField.value,
+            sortOrder: v,
+        }),
+});
+
+const dateFromFilter = computed({
+    get: () => props.dateFromFilterValue,
+    set: (v) =>
+        emit("update:dateFilters", { dateFrom: v, dateTo: dateToFilter.value }),
+});
+
+const dateToFilter = computed({
+    get: () => props.dateToFilterValue,
+    set: (v) =>
+        emit("update:dateFilters", {
+            dateFrom: dateFromFilter.value,
+            dateTo: v,
+        }),
+});
+
+const updateStatusFilter = () =>
     emit("update:statusFilter", statusFilter.value);
-};
-
-const updateCategoryFilter = () => {
+const updateCategoryFilter = () =>
     emit("update:categoryFilter", categoryFilter.value);
-};
-
-const updateChannelFilter = () => {
+const updateChannelFilter = () =>
     emit("update:channelFilter", channelFilter.value);
-};
-
-const updateDateFilters = () => {
+const updateDateFilters = () =>
     emit("update:dateFilters", {
         dateFrom: dateFromFilter.value,
         dateTo: dateToFilter.value,
     });
-};
-
-const updateSortOptions = () => {
-    console.log('Filters: updateSortOptions called with:', {
-        sortField: sortField.value,
-        sortOrder: sortOrder.value,
-    });
+const updateSortOptions = () =>
     emit("update:sortOptions", {
         sortField: sortField.value,
         sortOrder: sortOrder.value,
     });
-};
 
 const clearAllFilters = () => {
-    searchQuery.value = "";
     statusFilter.value = "";
     categoryFilter.value = "";
     channelFilter.value = "";
@@ -260,47 +282,7 @@ const clearAllFilters = () => {
     dateToFilter.value = "";
     sortField.value = "created_at";
     sortOrder.value = "desc";
+    searchQuery.value = "";
     emit("clearFilters");
 };
-
-// Синхронизация с внешними значениями
-watch(() => props.statusFilterValue, (newValue) => {
-    statusFilter.value = newValue;
-});
-
-watch(() => props.categoryFilterValue, (newValue) => {
-    categoryFilter.value = newValue;
-});
-
-watch(() => props.channelFilterValue, (newValue) => {
-    channelFilter.value = newValue;
-});
-
-watch(() => props.dateFromFilterValue, (newValue) => {
-    dateFromFilter.value = newValue;
-});
-
-watch(() => props.dateToFilterValue, (newValue) => {
-    dateToFilter.value = newValue;
-});
-
-watch(() => props.sortFieldValue, (newValue) => {
-    if (sortField.value !== newValue) {
-        sortField.value = newValue;
-        updateSortOptions();
-    }
-});
-
-watch(() => props.sortOrderValue, (newValue) => {
-    if (sortOrder.value !== newValue) {
-        sortOrder.value = newValue;
-        updateSortOptions();
-    }
-});
-
-watch(
-    () => props.posts,
-    () => {},
-    { immediate: true }
-);
 </script>

@@ -102,7 +102,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import http from "@/js/http";
+import http, { setAccessToken } from "@/js/http";
 
 const router = useRouter();
 const errorMessage = ref("");
@@ -119,7 +119,10 @@ const LoginService = async () => {
     try {
         await http.login(loginForm.value, (res) => {
             if (res && res.success) {
-                localStorage.setItem("token", res.data.token);
+                // сохраняем accessToken и прокидываем в память для axios
+                if (res.data && res.data.accessToken) {
+                    setAccessToken(res.data.accessToken);
+                }
                 localStorage.setItem("userId", res.data.userId);
                 localStorage.setItem("role", res.data.role);
                 localStorage.setItem(

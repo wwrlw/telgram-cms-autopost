@@ -47,5 +47,16 @@
     "sass": "^1.89.2",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
+  },
+  "overrides": {
+    "debug": "<4.4.2 || 4.4.2>",
+    "ansi-styles": "<6.2.2",
+    "supports-color": "<10.2.1",
+    "ansi-regex": "<6.2.1",
+    "strip-ansi": "<7.1.1",
+    "has-ansi": "<6.0.1",
+    "color-name": "<2.0.1",
+    "color-convert": "<3.1.1",
+    "wrap-ansi": "<9.0.1"
   }
 }

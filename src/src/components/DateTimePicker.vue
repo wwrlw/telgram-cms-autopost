@@ -24,7 +24,6 @@
             </div>
         </div>
 
-        <!-- Быстрые варианты -->
         <div class="space-y-2">
             <label class="block text-sm font-medium text-gray-700">
                 Быстрые варианты
@@ -44,8 +43,6 @@
                 </button>
             </div>
         </div>
-
-        <!-- Предварительный просмотр -->
         <div v-if="selectedDateTime" class="p-3 bg-gray-50 rounded text-sm">
             <div class="flex items-center gap-2">
                 <svg
@@ -85,13 +82,11 @@ const emit = defineEmits(["update:modelValue"]);
 const selectedDate = ref("");
 const selectedTime = ref("");
 
-// Минимальная дата - сегодня
 const minDate = computed(() => {
     const today = new Date();
     return today.toISOString().split("T")[0];
 });
 
-// Быстрые варианты
 const quickOptions = [
     { label: "Через 1 час", hours: 1 },
     { label: "Через 2 часа", hours: 2 },
@@ -102,13 +97,11 @@ const quickOptions = [
     { label: "Через неделю", days: 7 },
 ];
 
-// Вычисляемое значение для datetime-local
 const selectedDateTime = computed(() => {
     if (!selectedDate.value || !selectedTime.value) return "";
     return `${selectedDate.value}T${selectedTime.value}`;
 });
 
-// Функции для быстрых вариантов
 function getTomorrowAt(hour) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -172,7 +165,6 @@ function formatDateTime(dateTime) {
     });
 }
 
-// Синхронизация с v-model
 watch(selectedDateTime, (newValue) => {
     emit("update:modelValue", newValue);
 });
@@ -183,7 +175,6 @@ watch(
         if (newValue) {
             try {
                 const date = new Date(newValue);
-                // Проверяем, что дата валидна
                 if (!isNaN(date.getTime())) {
                     selectedDate.value = date.toISOString().split("T")[0];
                     selectedTime.value = date.toTimeString().slice(0, 5);
@@ -196,7 +187,6 @@ watch(
     { immediate: true }
 );
 
-// Инициализация с текущим временем + 1 час
 onMounted(() => {
     if (!props.modelValue) {
         const defaultTime = new Date();
@@ -205,9 +195,11 @@ onMounted(() => {
 
         selectedDate.value = defaultTime.toISOString().split("T")[0];
         selectedTime.value = defaultTime.toTimeString().slice(0, 5);
-        
-        // Эмитим начальное значение
-        emit("update:modelValue", `${selectedDate.value}T${selectedTime.value}`);
+
+        emit(
+            "update:modelValue",
+            `${selectedDate.value}T${selectedTime.value}`
+        );
     }
 });
 </script>

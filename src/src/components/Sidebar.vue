@@ -284,7 +284,7 @@
                 </div>
 
                 <div v-else class="flex flex-col">
-                    <div class="font-semibold">{{ username }}</div>
+                    <div class="font-semibold text-xs">{{ username }}</div>
                     <div class="text-xs text-gray-400">
                         {{ userRoleDisplay }}
                     </div>
@@ -306,9 +306,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted, onUpdated } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import http from "@/js/http";
+const router = useRouter();
+// import http from "@/js/http";
 import {
     Plus,
     Settings,
@@ -325,7 +326,7 @@ import {
     ImageUp,
 } from "lucide-vue-next";
 
-const router = useRouter();
+// const router = useRouter();
 const username = ref("");
 const userRole = ref("");
 const isCollapsed = ref(false);
@@ -382,21 +383,21 @@ const loadUserData = () => {
     }
 };
 
-const checkUserRole = async () => {
-    try {
-        const response = await http.instance.get("/auth/check");
-        if (response.data.success) {
-            const newRole = response.data.data.role;
-            if (newRole !== userRole.value) {
-                userRole.value = newRole;
-                localStorage.setItem("role", newRole);
-                console.log("Role updated to:", newRole);
-            }
-        }
-    } catch (error) {
-        console.error("Error checking user role:", error);
-    }
-};
+// const checkUserRole = async () => {
+//     try {
+//         const response = await http.instance.get("/auth/check");
+//         if (response.data.success) {
+//             const newRole = response.data.data.role;
+//             if (newRole !== userRole.value) {
+//                 userRole.value = newRole;
+//                 localStorage.setItem("role", newRole);
+//                 console.log("Role updated to:", newRole);
+//             }
+//         }
+//     } catch (error) {
+//         console.error("Error checking user role:", error);
+//     }
+// };
 
 onMounted(() => {
     const savedState = localStorage.getItem("sidebarCollapsed");
@@ -414,9 +415,9 @@ onMounted(() => {
     window.addEventListener("resize", handleResize);
 });
 
-onUpdated(() => {
-    checkUserRole();
-});
+// onUpdated(() => {
+//     checkUserRole();
+// });
 
 const handleResize = () => {
     if (window.innerWidth <= 640) {

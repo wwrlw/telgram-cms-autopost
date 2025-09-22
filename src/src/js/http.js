@@ -4,7 +4,19 @@ const apiUrl = import.meta.env.VITE_API_URL || "https://tg.chiorio.com/api";
 
 const instance = axios.create({
     baseURL: apiUrl,
+    withCredentials: true,
 });
+
+let accessTokenMemory = null;
+
+export function setAccessToken(token) {
+    accessTokenMemory = token || null;
+    if (token) {
+        sessionStorage.setItem("token", token);
+    } else {
+        sessionStorage.removeItem("token");
+    }
+}
 
 instance.interceptors.response.use(
     (response) => {
@@ -22,6 +34,43 @@ instance.interceptors.response.use(
         return response;
     },
     (error) => {
+        const originalRequest = error.config || {};
+        const isRefreshCall = (originalRequest.url || "")
+            .toString()
+            .includes("/auth/refresh");
+        if (
+            error.response &&
+            error.response.status === 401 &&
+            !originalRequest._retry &&
+            !isRefreshCall
+        ) {
+            originalRequest._retry = true;
+            return instance
+                .post("/auth/refresh")
+                .then((res) => {
+                    const data = res?.data?.data || res?.data || {};
+                    const newAccess = data.accessToken;
+                    if (newAccess) {
+                        setAccessToken(newAccess);
+                        originalRequest.headers = originalRequest.headers || {};
+                        console.log(originalRequest);
+                        originalRequest.headers["Authorization"] =
+                            `Bearer ${newAccess}`;
+                        return instance(originalRequest);
+                    }
+                    throw error;
+                })
+                .catch(() => {
+                    setAccessToken(null);
+                    localStorage.removeItem("role");
+                    sessionStorage.removeItem("role");
+                    if (window.location.pathname !== "/login") {
+                        window.location.href = "/login";
+                    }
+                    return Promise.reject(error);
+                });
+        }
+
         if (
             error.response &&
             error.response.status === 403 &&
@@ -106,7 +155,7 @@ instance.interceptors.response.use(
 
 instance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("token");
+        const token = accessTokenMemory || sessionStorage.getItem("token");
         if (token) {
             config.headers["Authorization"] = `Bearer ${token}`;
         }
@@ -186,6 +235,9 @@ let http = {
         instance
             .post("/auth/login", params)
             .then((res) => {
+                // сохраняем access токен (refresh не трогаем – он в HttpOnly куке)
+                const access = res.data?.data?.accessToken;
+                if (access) setAccessToken(access);
                 callback(res.data);
             })
             .catch((err) => {
@@ -579,6 +631,9 @@ let http = {
         if (updateData.channel_id !== undefined) {
             formData.append("channel_id", updateData.channel_id);
         }
+        if (updateData.format !== undefined) {
+            formData.append("format", updateData.format);
+        }
 
         // Добавляем медиафайлы
         if (updateData.media && Array.isArray(updateData.media)) {
@@ -869,7 +924,7 @@ let http = {
 };
 
 export function getToken() {
-    return localStorage.getItem("token") || sessionStorage.getItem("token");
+    return accessTokenMemory || sessionStorage.getItem("token");
 }
 
 export default http;

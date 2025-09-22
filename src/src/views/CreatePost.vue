@@ -27,7 +27,6 @@
             </div>
 
             <div class="flex justify-end gap-3 mt-4">
-                <!-- Показываем кнопки навигации после сохранения поста -->
                 <div v-if="postSaved" class="flex gap-3 mr-auto">
                     <button
                         @click="createNewPost"
@@ -221,7 +220,6 @@ const cancel = () => {
 };
 
 const createNewPost = () => {
-    // Сбрасываем форму для создания нового поста
     postSaved.value = false;
     editorHtml.value = "";
     files.value = [];
@@ -232,13 +230,12 @@ const createNewPost = () => {
     uniqueText.value = "";
     showingUniqueText.value = false;
 
-    // Устанавливаем время по умолчанию (через час)
     const futureTime = new Date(Date.now() + 60 * 60 * 1000);
     const year = futureTime.getFullYear();
-    const month = String(futureTime.getMonth() + 1).padStart(2, '0');
-    const day = String(futureTime.getDate()).padStart(2, '0');
-    const hours = String(futureTime.getHours()).padStart(2, '0');
-    const minutes = String(futureTime.getMinutes()).padStart(2, '0');
+    const month = String(futureTime.getMonth() + 1).padStart(2, "0");
+    const day = String(futureTime.getDate()).padStart(2, "0");
+    const hours = String(futureTime.getHours()).padStart(2, "0");
+    const minutes = String(futureTime.getMinutes()).padStart(2, "0");
     scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
@@ -567,10 +564,10 @@ onMounted(() => {
     loadChannels();
     const futureTime = new Date(Date.now() + 60 * 60 * 1000);
     const year = futureTime.getFullYear();
-    const month = String(futureTime.getMonth() + 1).padStart(2, '0');
-    const day = String(futureTime.getDate()).padStart(2, '0');
-    const hours = String(futureTime.getHours()).padStart(2, '0');
-    const minutes = String(futureTime.getMinutes()).padStart(2, '0');
+    const month = String(futureTime.getMonth() + 1).padStart(2, "0");
+    const day = String(futureTime.getDate()).padStart(2, "0");
+    const hours = String(futureTime.getHours()).padStart(2, "0");
+    const minutes = String(futureTime.getMinutes()).padStart(2, "0");
     scheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
     if (postId) {
         loadPost();

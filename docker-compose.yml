@@ -1,5 +1,3 @@
-version: '3.0'
-
 services:
   backend:
     build: ./http
@@ -14,6 +12,9 @@ services:
       - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017
       - MONGODB_DB=${MONGODB_DB}
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_ACCESS_TTL=${JWT_ACCESS_TTL}
+      - JWT_REFRESH_TTL=${JWT_REFRESH_TTL}
       - YANDEX_API_FOLDER=${YANDEX_API_FOLDER}
       - YANDEX_API_KEY=${YANDEX_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
@@ -37,7 +38,7 @@ services:
       - API_ID=${API_ID}
       - API_HASH=${API_HASH}
       - MEDIA_PATH=${MEDIA_PATH}
-      - MONGO_DB_NAME=${MONGO_DB}
+      - MONGO_DB_NAME=${MONGODB_DB}
       - API_BASE_URL=${API_BASE_URL}
       - API_USERNAME=${API_USERNAME}
       - API_PASSWORD=${API_PASSWORD}

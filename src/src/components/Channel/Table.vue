@@ -25,7 +25,10 @@
                         </svg>
                         Добавить канал
                     </button>
-                    <div v-if="showPagination" class="flex items-center space-x-2">
+                    <div
+                        v-if="showPagination"
+                        class="flex items-center space-x-2"
+                    >
                         <label class="text-sm text-gray-500">Показать:</label>
                         <select
                             v-model="itemsPerPage"
@@ -148,7 +151,11 @@
 
                             <td class="px-6 py-4">
                                 <div class="text-sm text-gray-900 max-w-xs">
-                                    <div v-if="channel.prompt" class="truncate" :title="channel.prompt">
+                                    <div
+                                        v-if="channel.prompt"
+                                        class="truncate"
+                                        :title="channel.prompt"
+                                    >
                                         {{ channel.prompt }}
                                     </div>
                                     <div v-else class="text-gray-400 italic">

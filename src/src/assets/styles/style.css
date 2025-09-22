@@ -9,7 +9,6 @@ body {
   }
   
   :root {
-    /* --surface-0: #f9f9fa; */
     --surface-0: #F8F4F3;
     --surface-1: #ffffff;
     --surface-2: #f4f4f4;
@@ -57,7 +56,6 @@ body {
     --smoke-4: var(--surface-4);
   }
   
-/* Lazy loading styles */
 .lazy-loading {
     opacity: 0.7;
     transition: opacity 0.3s ease;
@@ -68,12 +66,9 @@ body {
     filter: none !important;
 }
 
-/* Smooth transitions for images and videos */
 img, video {
     transition: opacity 0.3s ease, filter 0.3s ease;
 }
-
-/* Loading skeleton animation */
 @keyframes shimmer {
     0% {
         background-position: -200px 0;
@@ -89,7 +84,6 @@ img, video {
     animation: shimmer 1.5s infinite;
 }
 
-/* Infinite scroll loading animation */
 .infinite-scroll-loading {
     display: flex;
     justify-content: center;
@@ -110,8 +104,6 @@ img, video {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-
-/* Smooth fade in for new content */
 .fade-in {
     animation: fadeIn 0.5s ease-in;
 }
@@ -127,7 +119,6 @@ img, video {
     }
 }
 
-/* Optimized grid layout */
 .posts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -202,7 +193,6 @@ img {
     object-position: center;
 }
 
-/* Улучшение качества изображений в превью - квадратный формат */
 .post-thumb-component .media-area {
     aspect-ratio: 1/1;
     overflow: hidden;
@@ -273,7 +263,6 @@ video {
     transition: all 0.3s ease-in-out;
 }
 
-/* Улучшенные бейджи */
 .status-badge {
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -289,7 +278,6 @@ video {
     padding: 1rem;
 }
 
-/* Оптимизация для карточек без медиа */
 .post-card-no-media {
     border-radius: 0.75rem;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -308,7 +296,6 @@ video {
     transform: translateY(-2px);
 }
 
-/* Улучшенные тени */
 .card-shadow {
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
@@ -348,44 +335,6 @@ video {
     overflow: hidden;
 }
 
-/* Глобальные правила для удаления синих рамок из редактора */
-.custom-editor-content,
-.custom-editor-content *,
-.custom-editor-content *:before,
-.custom-editor-content *:after {
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-.custom-editor-content *:focus,
-.custom-editor-content *:focus-visible,
-.custom-editor-content *:focus-within,
-.custom-editor-content *:active,
-.custom-editor-content *:hover {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-}
-
-/* Дополнительные правила для TipTap редактора */
-.ProseMirror,
-.ProseMirror *,
-.ProseMirror *:before,
-.ProseMirror *:after {
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-.ProseMirror *:focus,
-.ProseMirror *:focus-visible,
-.ProseMirror *:focus-within,
-.ProseMirror *:active,
-.ProseMirror *:hover {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-}
-
 /* Убираем синие рамки для всех contenteditable элементов */
 [contenteditable],
 [contenteditable] *,
@@ -417,24 +366,3 @@ video {
 *:focus-within {
     outline: none !important;
 }
-
-/* Специальные правила для редактора и его содержимого */
-.editor-content,
-.editor-content *,
-.text-editor,
-.text-editor * {
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-.editor-content *:focus,
-.editor-content *:focus-visible,
-.editor-content *:focus-within,
-.text-editor *:focus,
-.text-editor *:focus-visible,
-.text-editor *:focus-within {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-}
-  

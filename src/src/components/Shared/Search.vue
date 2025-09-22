@@ -55,7 +55,11 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["update:searchQuery", "clearFilters", "update:modelValue"]);
+const emit = defineEmits([
+    "update:searchQuery",
+    "clearFilters",
+    "update:modelValue",
+]);
 
 const searchQuery = ref(props.modelValue || "");
 
@@ -72,12 +76,13 @@ const updateSearch = () => {
     emit("update:modelValue", searchQuery.value);
 };
 
-// Синхронизация с внешним значением
-watch(() => props.modelValue, (newValue) => {
-    searchQuery.value = newValue || "";
-});
+watch(
+    () => props.modelValue,
+    (newValue) => {
+        searchQuery.value = newValue || "";
+    }
+);
 
-// Синхронизация изменений с родительским компонентом
 watch(searchQuery, (newValue) => {
     emit("update:modelValue", newValue);
 });

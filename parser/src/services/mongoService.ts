@@ -176,9 +176,12 @@ export class MongoService {
     if (!this.postsCollection) {
       throw new Error('MongoDB не подключена');
     }
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 1);
 
     return await this.postsCollection.find({})
       .sort({ created_at: -1 })
+      .filter({ created_at: { $gte: cutoffDate } })
       .limit(limit)
       .toArray();
   }

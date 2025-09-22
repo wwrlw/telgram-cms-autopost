@@ -119,24 +119,41 @@ export class TelegramPublishService implements ITelegramPublishService {
   }
 
   private formatMessageText(post: Post, channel: PostedChannel): string {
-    const text = (post.text || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-      .replace(/\*(.*?)\*/g, '<i>$1</i>')
-      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')
-      .replace(/\r\n|\r|\n/g, '\n');
+    const isHtml = (post as any)?.format === 'html';
+    let result = post.text || '';
 
-    let result = text;
+    if (isHtml) {
+      result = result.replace(/<\/p>/gi, '\n').replace(/<p>/gi, '');
+      const allowed = '(?:b|strong|i|em|u|s|del|strike|a|code|pre|br|blockquote|tg-emoji|span)';
+      result = result.replace(new RegExp(`<(?!(?:\/?${allowed})\\b)[^>]*>`, 'gi'), '');
+      result = result.replace(/<span(?![^>]*class=["'][^"']*tg-spoiler[^"']*["'])[\s\S]*?>/gi, '');
+      result = result
+        .replace(/<strong>/gi, '<b>')
+        .replace(/<\/strong>/gi, '</b>')
+        .replace(/<em>/gi, '<i>')
+        .replace(/<\/em>/gi, '</i>');
+      result = result.replace(/<a\s+([^>]*href=["'][^"']+["'][^>]*)>/gi, (_m: string, attrs: string) => {
+        if (/\brel=/.test(attrs)) return `<a ${attrs}>`;
+        return `<a ${attrs} rel="noopener noreferrer">`;
+      });
+      result = result.replace(/<br\s*\/?>(?=\s*\n?)/gi, '\n');
+    } else {
+      result = (post.text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+        .replace(/\*(.*?)\*/g, '<i>$1</i>')
+        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')
+        .replace(/\r\n|\r|\n/g, '\n');
+      result = result.replace(/<(?!\/?(b|i|a|code|pre)\b)[^>]*>/gi, '');
+      result = result.replace(/<br\s*\/?>(?=\s*\n?)/gi, '\n');
+    }
+
     if (channel.signature) {
       if (result) result += '\n\n';
       result += channel.signature;
     }
-
-    result = result.replace(/<(?!\/?(b|i|a|code|pre)\b)[^>]*>/gi, '');
-
-    result = result.replace(/<br\s*\/?>/gi, '\n');
 
     console.log('ИТОГОВОЕ СООБЩЕНИЕ В TELEGRAM:', result);
     return result;

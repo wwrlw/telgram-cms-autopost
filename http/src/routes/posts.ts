@@ -324,8 +324,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
             const mediaObj = {
               type: mediaItem.type || 'photo',
               file_path: mediaItem.file_path,
-              original_name: mediaItem.original_name,
-              mime_type: mediaItem.mime_type
+              thumbnail_path: mediaItem.thumbnail_path
             };
             media.push(mediaObj);
             fastify.log.info(`Added media: ${JSON.stringify(mediaObj)}`);
@@ -336,7 +335,8 @@ export async function postsRoutes(fastify: FastifyInstance) {
           text: fields.text || '',
           media,
           is_unique: fields.is_unique === 'true',
-          url: fields.url || (Date.now().toString(36) + Math.random().toString(36).slice(2))
+          url: fields.url || (Date.now().toString(36) + Math.random().toString(36).slice(2)),
+          format: (fields.format === 'html' || fields.format === 'markdown') ? fields.format : undefined
         } as Partial<Post>;
         
         fastify.log.info(`Update data: ${JSON.stringify(updateData)}`);
@@ -394,8 +394,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
           media.push({
             type: mediaItem.type || 'photo',
             file_path: mediaItem.file_path,
-            original_name: mediaItem.original_name,
-            mime_type: mediaItem.mime_type
+            thumbnail_path: mediaItem.thumbnail_path,
           });
         });
       }
@@ -404,7 +403,8 @@ export async function postsRoutes(fastify: FastifyInstance) {
         text: fields.text || '',
         media,
         is_unique: fields.is_unique === 'true',
-        url: fields.url || (Date.now().toString(36) + Math.random().toString(36).slice(2))
+        url: fields.url || (Date.now().toString(36) + Math.random().toString(36).slice(2)),
+        format: (fields.format === 'html' || fields.format === 'markdown') ? fields.format : undefined
       } as any;
 
       const useCase = container.getCreateManualPostUseCase();
