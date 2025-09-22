@@ -237,7 +237,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
   });
 
   fastify.post('/favorites/add', {
-    preHandler: [requireAuth, logAction]
+    preHandler: [requireAuth]
   }, async (request, reply) => {
     try {
       const { userId, postId } = request.body as { userId: string; postId: string };
@@ -257,7 +257,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
   });
 
   fastify.post('/favorites/remove', {
-    preHandler: [requireAuth, logAction]
+    preHandler: [requireAuth]
   }, async (request, reply) => {
     try {
       const { userId, postId } = request.body as { userId: string; postId: string };
