@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { Log } from '../models/Log';
 import { enhancedRequireAuth } from './enhancedAuth';
+import { ObjectId } from 'mongodb';
 
 /**
  * Улучшенное логирование действий с проверкой прав
@@ -25,7 +26,7 @@ export const enhancedLogAction = async (request: FastifyRequest, reply: FastifyR
 
     // Создаем запись лога
     const logEntry: Partial<Log> = {
-      userId: userId,
+      userId: new ObjectId(userId),
       username: username,
       role: userRole,
       action: action,
@@ -80,7 +81,7 @@ export const enhancedLogActionWithMetadata = (metadata: Record<string, any>) => 
 
       // Создаем запись лога с дополнительными метаданными
       const logEntry: Partial<Log> = {
-        userId: userId,
+        userId: new ObjectId(userId),
         username: username,
         role: userRole,
         action: action,

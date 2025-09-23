@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import { Log } from '../models/Log';
 
 export const logAction = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -16,8 +16,9 @@ export const logAction = async (request: FastifyRequest, reply: FastifyReply) =>
     const db = client.db('parse-news');
     const logsCollection = db.collection<Log>('logs');
 
+    const userIdValue = user?._id || user?.userId;
     const log: Log = {
-      userId: user?._id || user?.userId || '',
+      userId: userIdValue ? new ObjectId(userIdValue) : new ObjectId(),
       username: user?.username || '',
       action: (request.method || '') + ' ' + (request.url || ''),
       method: request.method || '',

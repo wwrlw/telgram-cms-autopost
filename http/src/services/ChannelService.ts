@@ -23,6 +23,7 @@ export class ChannelService implements IChannelService {
       channel_id: channel.channel_id,
       category_id: channel.category_id?.toString(),
       is_private: channel.is_private,
+      prompt: channel.prompt,
       created_at: channel.created_at
     };
   }
@@ -40,6 +41,7 @@ export class ChannelService implements IChannelService {
       channel_id: channel.channel_id,
       category_id: channel.category_id?.toString(),
       is_private: channel.is_private,
+      prompt: channel.prompt,
       created_at: channel.created_at
     };
   }
@@ -53,6 +55,7 @@ export class ChannelService implements IChannelService {
       channel_id: channel.channel_id,
       category_id: channel.category_id?.toString(),
       is_private: channel.is_private,
+      prompt: channel.prompt,
       created_at: channel.created_at
     }));
   }
@@ -70,6 +73,7 @@ export class ChannelService implements IChannelService {
       channel_id: updatedChannel.channel_id,
       category_id: updatedChannel.category_id?.toString(),
       is_private: updatedChannel.is_private,
+      prompt: updatedChannel.prompt,
       created_at: updatedChannel.created_at
     };
   }
@@ -96,6 +100,7 @@ export class ChannelService implements IChannelService {
       channel_id: channel.channel_id,
       category_id: channel.category_id?.toString(),
       is_private: channel.is_private,
+      prompt: channel.prompt,
       created_at: channel.created_at
     }));
   }
@@ -115,6 +120,7 @@ export class ChannelService implements IChannelService {
       channel_id: updatedChannel.channel_id,
       category_id: updatedChannel.category_id?.toString(),
       is_private: updatedChannel.is_private,
+      prompt: updatedChannel.prompt,
       created_at: updatedChannel.created_at
     };
   }
