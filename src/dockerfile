@@ -2,8 +2,6 @@ FROM node:21-alpine AS base
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
-# Принудительно устанавливаем совместимую версию esbuild
-RUN npm install esbuild@0.25.5 --save-dev
 COPY . .
 
 FROM base AS dev
