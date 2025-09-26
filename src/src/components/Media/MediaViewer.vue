@@ -2,7 +2,6 @@
     <div
         v-if="show"
         class="fixed inset-0 z-50 flex w-full h-full items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm cursor-pointer"
-        @click="$emit('close')"
     >
         <div class="relative w-full h-full">
             <button
@@ -10,58 +9,22 @@
                 class="absolute top-4 right-4 z-10 bg-black bg-opacity-70 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-90 transition-all"
                 title="Закрыть (или кликните в любом месте)"
             >
-                <svg
-                    class="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                    />
-                </svg>
+                <XIcon class="w-5 h-5" />
             </button>
 
             <button
                 v-if="canGoPrevious"
                 @click="$emit('previous')"
-                class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-70 text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-90 transition-all"
+                class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 cursor-pointer bg-black bg-opacity-70 text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-90 transition-all"
             >
-                <svg
-                    class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15 19l-7-7 7-7"
-                    />
-                </svg>
+                <ChevronLeft w-5 h-5 />
             </button>
             <button
                 v-if="canGoNext"
                 @click="$emit('next')"
                 class="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-70 text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-opacity-90 transition-all"
             >
-                <svg
-                    class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 5l7 7-7 7"
-                    />
-                </svg>
+                <ChevronRight class="w-5 h-5" />
             </button>
 
             <div class="media-viewer-container shadow-2xl cursor-default">
@@ -106,8 +69,9 @@
 <script setup>
 import { getMediaUrl, getSquareMediaClasses } from "@/js/utils";
 import { onMounted, onUnmounted } from "vue";
+import { ChevronRight, ChevronLeft, XIcon } from "lucide-vue-next";
 
-const props = defineProps({
+defineProps({
     show: {
         type: Boolean,
         default: false,

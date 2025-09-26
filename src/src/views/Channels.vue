@@ -136,7 +136,7 @@ const infinitePagination = ref({
     hasPrev: false,
 });
 
-const channelsService = async (params = {}) => {
+const channelsService = async () => {
     loading.value = true;
     if (setLoading) setLoading(true);
 

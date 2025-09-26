@@ -120,12 +120,6 @@ const initializeFavorites = async () => {
     }
 };
 
-const removePublishedFromFavorites = async (posts) => {
-    // Убрана автоматическая логика удаления опубликованных постов из избранного
-    // Теперь пользователи могут сами решать, когда убирать посты из избранного
-    return;
-};
-
 export function useFavorites() {
     return {
         favoritePosts: computed(() => favoritePosts.value),
@@ -140,6 +134,5 @@ export function useFavorites() {
         removeFromFavorites,
         toggleFavorite,
         initializeFavorites,
-        removePublishedFromFavorites,
     };
 }

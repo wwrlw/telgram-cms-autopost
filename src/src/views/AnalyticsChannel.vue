@@ -27,9 +27,9 @@
                                 @click="setQuickFilter('7')"
                                 :class="[
                                     'px-3 py-1 text-sm rounded-md border transition-colors',
-                                    quickFilter === '7' 
-                                        ? 'bg-indigo-100 border-indigo-500 text-indigo-700' 
-                                        : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                                    quickFilter === '7'
+                                        ? 'bg-indigo-100 border-indigo-500 text-indigo-700'
+                                        : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100',
                                 ]"
                             >
                                 За 7 дней
@@ -38,9 +38,9 @@
                                 @click="setQuickFilter('30')"
                                 :class="[
                                     'px-3 py-1 text-sm rounded-md border transition-colors',
-                                    quickFilter === '30' 
-                                        ? 'bg-indigo-100 border-indigo-500 text-indigo-700' 
-                                        : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                                    quickFilter === '30'
+                                        ? 'bg-indigo-100 border-indigo-500 text-indigo-700'
+                                        : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100',
                                 ]"
                             >
                                 За 30 дней
@@ -49,17 +49,19 @@
                                 @click="setQuickFilter('custom')"
                                 :class="[
                                     'px-3 py-1 text-sm rounded-md border transition-colors',
-                                    quickFilter === 'custom' 
-                                        ? 'bg-indigo-100 border-indigo-500 text-indigo-700' 
-                                        : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                                    quickFilter === 'custom'
+                                        ? 'bg-indigo-100 border-indigo-500 text-indigo-700'
+                                        : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100',
                                 ]"
                             >
                                 Произвольный период
                             </button>
                         </div>
-                        
+
                         <!-- Поля выбора дат -->
-                        <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4"
+                        >
                             <div class="flex space-x-3">
                                 <input
                                     v-model="customStartDate"
@@ -83,7 +85,7 @@
                                 :disabled="loading"
                                 class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {{ loading ? 'Загрузка...' : 'Обновить' }}
+                                {{ loading ? "Загрузка..." : "Обновить" }}
                             </button>
                         </div>
                     </div>
@@ -413,11 +415,11 @@
                         Динамика показателей за
                         {{ Math.min(tableRows.length, 7) }} дней
                     </h3>
-                    
+
                     <!-- Простой график трендов -->
                     <div v-if="tableRows.length > 1" class="relative h-80">
-                        <svg 
-                            class="w-full h-full" 
+                        <svg
+                            class="w-full h-full"
                             viewBox="0 0 700 280"
                             preserveAspectRatio="xMidYMid meet"
                         >
@@ -445,15 +447,41 @@
 
                             <polyline
                                 v-if="tableRows.length > 1"
-                                :points="tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map((row, index) => {
-                                    const values = tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.subscribers || 0);
-                                    const maxVal = Math.max(...values);
-                                    const minVal = Math.min(...values);
-                                    const range = maxVal - minVal || 1;
-                                    const x = (index * 500) / (Math.max(tableRows.length - 1, 1)) + 80;
-                                    const y = 200 - ((((row.subscribers || 0) - minVal) / range) * 140);
-                                    return `${x},${y}`;
-                                }).join(' ')"
+                                :points="
+                                    tableRows
+                                        .slice(0, Math.min(tableRows.length, 7))
+                                        .reverse()
+                                        .map((row, index) => {
+                                            const values = tableRows
+                                                .slice(
+                                                    0,
+                                                    Math.min(
+                                                        tableRows.length,
+                                                        7
+                                                    )
+                                                )
+                                                .reverse()
+                                                .map((r) => r.subscribers || 0);
+                                            const maxVal = Math.max(...values);
+                                            const minVal = Math.min(...values);
+                                            const range = maxVal - minVal || 1;
+                                            const x =
+                                                (index * 500) /
+                                                    Math.max(
+                                                        tableRows.length - 1,
+                                                        1
+                                                    ) +
+                                                80;
+                                            const y =
+                                                200 -
+                                                (((row.subscribers || 0) -
+                                                    minVal) /
+                                                    range) *
+                                                    140;
+                                            return `${x},${y}`;
+                                        })
+                                        .join(' ')
+                                "
                                 fill="none"
                                 stroke="#3b82f6"
                                 stroke-width="3"
@@ -463,15 +491,40 @@
 
                             <polyline
                                 v-if="tableRows.length > 1"
-                                :points="tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map((row, index) => {
-                                    const values = tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.views || 0);
-                                    const maxVal = Math.max(...values);
-                                    const minVal = Math.min(...values);
-                                    const range = maxVal - minVal || 1;
-                                    const x = (index * 500) / (Math.max(tableRows.length - 1, 1)) + 80;
-                                    const y = 200 - ((((row.views || 0) - minVal) / range) * 140);
-                                    return `${x},${y}`;
-                                }).join(' ')"
+                                :points="
+                                    tableRows
+                                        .slice(0, Math.min(tableRows.length, 7))
+                                        .reverse()
+                                        .map((row, index) => {
+                                            const values = tableRows
+                                                .slice(
+                                                    0,
+                                                    Math.min(
+                                                        tableRows.length,
+                                                        7
+                                                    )
+                                                )
+                                                .reverse()
+                                                .map((r) => r.views || 0);
+                                            const maxVal = Math.max(...values);
+                                            const minVal = Math.min(...values);
+                                            const range = maxVal - minVal || 1;
+                                            const x =
+                                                (index * 500) /
+                                                    Math.max(
+                                                        tableRows.length - 1,
+                                                        1
+                                                    ) +
+                                                80;
+                                            const y =
+                                                200 -
+                                                (((row.views || 0) - minVal) /
+                                                    range) *
+                                                    140;
+                                            return `${x},${y}`;
+                                        })
+                                        .join(' ')
+                                "
                                 fill="none"
                                 stroke="#f59e0b"
                                 stroke-width="3"
@@ -487,15 +540,125 @@
                                 :key="'subs-' + index"
                             >
                                 <circle
-                                    :cx="(index * 500) / (Math.max(tableRows.length - 1, 1)) + 80"
-                                    :cy="200 - ((((row.subscribers || 0) - Math.min(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.subscribers || 0))) / (Math.max(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.subscribers || 0)) - Math.min(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.subscribers || 0)) || 1)) * 140)"
+                                    :cx="
+                                        (index * 500) /
+                                            Math.max(tableRows.length - 1, 1) +
+                                        80
+                                    "
+                                    :cy="
+                                        200 -
+                                        (((row.subscribers || 0) -
+                                            Math.min(
+                                                ...tableRows
+                                                    .slice(
+                                                        0,
+                                                        Math.min(
+                                                            tableRows.length,
+                                                            7
+                                                        )
+                                                    )
+                                                    .reverse()
+                                                    .map(
+                                                        (r) =>
+                                                            r.subscribers || 0
+                                                    )
+                                            )) /
+                                            (Math.max(
+                                                ...tableRows
+                                                    .slice(
+                                                        0,
+                                                        Math.min(
+                                                            tableRows.length,
+                                                            7
+                                                        )
+                                                    )
+                                                    .reverse()
+                                                    .map(
+                                                        (r) =>
+                                                            r.subscribers || 0
+                                                    )
+                                            ) -
+                                                Math.min(
+                                                    ...tableRows
+                                                        .slice(
+                                                            0,
+                                                            Math.min(
+                                                                tableRows.length,
+                                                                7
+                                                            )
+                                                        )
+                                                        .reverse()
+                                                        .map(
+                                                            (r) =>
+                                                                r.subscribers ||
+                                                                0
+                                                        )
+                                                ) || 1)) *
+                                            140
+                                    "
                                     r="4"
                                     fill="#3b82f6"
                                 />
                                 <!-- Значения подписчиков -->
                                 <text
-                                    :x="(index * 500) / (Math.max(tableRows.length - 1, 1)) + 80 - 40"
-                                    :y="200 - ((((row.subscribers || 0) - Math.min(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.subscribers || 0))) / (Math.max(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.subscribers || 0)) - Math.min(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.subscribers || 0)) || 1)) * 140) - 8"
+                                    :x="
+                                        (index * 500) /
+                                            Math.max(tableRows.length - 1, 1) +
+                                        80 -
+                                        40
+                                    "
+                                    :y="
+                                        200 -
+                                        (((row.subscribers || 0) -
+                                            Math.min(
+                                                ...tableRows
+                                                    .slice(
+                                                        0,
+                                                        Math.min(
+                                                            tableRows.length,
+                                                            7
+                                                        )
+                                                    )
+                                                    .reverse()
+                                                    .map(
+                                                        (r) =>
+                                                            r.subscribers || 0
+                                                    )
+                                            )) /
+                                            (Math.max(
+                                                ...tableRows
+                                                    .slice(
+                                                        0,
+                                                        Math.min(
+                                                            tableRows.length,
+                                                            7
+                                                        )
+                                                    )
+                                                    .reverse()
+                                                    .map(
+                                                        (r) =>
+                                                            r.subscribers || 0
+                                                    )
+                                            ) -
+                                                Math.min(
+                                                    ...tableRows
+                                                        .slice(
+                                                            0,
+                                                            Math.min(
+                                                                tableRows.length,
+                                                                7
+                                                            )
+                                                        )
+                                                        .reverse()
+                                                        .map(
+                                                            (r) =>
+                                                                r.subscribers ||
+                                                                0
+                                                        )
+                                                ) || 1)) *
+                                            140 -
+                                        8
+                                    "
                                     text-anchor="middle"
                                     class="text-xs fill-blue-600"
                                     font-size="10"
@@ -512,14 +675,108 @@
                                 :key="'views-' + index"
                             >
                                 <circle
-                                    :cx="(index * 500) / (Math.max(tableRows.length - 1, 1)) + 80"
-                                    :cy="200 - ((((row.views || 0) - Math.min(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.views || 0))) / (Math.max(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.views || 0)) - Math.min(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.views || 0)) || 1)) * 140)"
+                                    :cx="
+                                        (index * 500) /
+                                            Math.max(tableRows.length - 1, 1) +
+                                        80
+                                    "
+                                    :cy="
+                                        200 -
+                                        (((row.views || 0) -
+                                            Math.min(
+                                                ...tableRows
+                                                    .slice(
+                                                        0,
+                                                        Math.min(
+                                                            tableRows.length,
+                                                            7
+                                                        )
+                                                    )
+                                                    .reverse()
+                                                    .map((r) => r.views || 0)
+                                            )) /
+                                            (Math.max(
+                                                ...tableRows
+                                                    .slice(
+                                                        0,
+                                                        Math.min(
+                                                            tableRows.length,
+                                                            7
+                                                        )
+                                                    )
+                                                    .reverse()
+                                                    .map((r) => r.views || 0)
+                                            ) -
+                                                Math.min(
+                                                    ...tableRows
+                                                        .slice(
+                                                            0,
+                                                            Math.min(
+                                                                tableRows.length,
+                                                                7
+                                                            )
+                                                        )
+                                                        .reverse()
+                                                        .map(
+                                                            (r) => r.views || 0
+                                                        )
+                                                ) || 1)) *
+                                            140
+                                    "
                                     r="4"
                                     fill="#f59e0b"
                                 />
                                 <text
-                                    :x="(index * 500) / (Math.max(tableRows.length - 1, 1)) + 80 + 40"
-                                    :y="200 - ((((row.views || 0) - Math.min(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.views || 0))) / (Math.max(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.views || 0)) - Math.min(...tableRows.slice(0, Math.min(tableRows.length, 7)).reverse().map(r => r.views || 0)) || 1)) * 140) + 15"
+                                    :x="
+                                        (index * 500) /
+                                            Math.max(tableRows.length - 1, 1) +
+                                        80 +
+                                        40
+                                    "
+                                    :y="
+                                        200 -
+                                        (((row.views || 0) -
+                                            Math.min(
+                                                ...tableRows
+                                                    .slice(
+                                                        0,
+                                                        Math.min(
+                                                            tableRows.length,
+                                                            7
+                                                        )
+                                                    )
+                                                    .reverse()
+                                                    .map((r) => r.views || 0)
+                                            )) /
+                                            (Math.max(
+                                                ...tableRows
+                                                    .slice(
+                                                        0,
+                                                        Math.min(
+                                                            tableRows.length,
+                                                            7
+                                                        )
+                                                    )
+                                                    .reverse()
+                                                    .map((r) => r.views || 0)
+                                            ) -
+                                                Math.min(
+                                                    ...tableRows
+                                                        .slice(
+                                                            0,
+                                                            Math.min(
+                                                                tableRows.length,
+                                                                7
+                                                            )
+                                                        )
+                                                        .reverse()
+                                                        .map(
+                                                            (r) => r.views || 0
+                                                        )
+                                                ) || 1)) *
+                                            140 +
+                                        15
+                                    "
                                     text-anchor="middle"
                                     class="text-xs fill-orange-600"
                                     font-size="10"
@@ -536,7 +793,11 @@
                                 :key="'date-' + index"
                             >
                                 <text
-                                    :x="(index * 500) / (Math.max(tableRows.length - 1, 1)) + 80"
+                                    :x="
+                                        (index * 500) /
+                                            Math.max(tableRows.length - 1, 1) +
+                                        80
+                                    "
                                     y="240"
                                     text-anchor="middle"
                                     class="text-xs fill-gray-600"
@@ -613,15 +874,30 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Сообщение когда данных недостаточно для графика -->
                     <div v-else class="h-80 flex items-center justify-center">
                         <div class="text-center text-gray-500">
-                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            <svg
+                                class="mx-auto h-12 w-12 text-gray-400 mb-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                ></path>
                             </svg>
-                            <p class="text-lg font-medium text-gray-900">Недостаточно данных для графика</p>
-                            <p class="text-sm text-gray-500 mt-1">Для отображения графика необходимо минимум 2 дня данных</p>
+                            <p class="text-lg font-medium text-gray-900">
+                                Недостаточно данных для графика
+                            </p>
+                            <p class="text-sm text-gray-500 mt-1">
+                                Для отображения графика необходимо минимум 2 дня
+                                данных
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -675,9 +951,13 @@ const loadChannelInfo = async () => {
 
 const getAnalyticsParams = () => {
     const params = {};
-    
+
     // Для быстрых фильтров используем limit, для произвольного периода - даты
-    if (quickFilter.value === "custom" && customStartDate.value && customEndDate.value) {
+    if (
+        quickFilter.value === "custom" &&
+        customStartDate.value &&
+        customEndDate.value
+    ) {
         params.startDate = customStartDate.value;
         params.endDate = customEndDate.value;
     } else if (quickFilter.value === "7") {
@@ -687,7 +967,7 @@ const getAnalyticsParams = () => {
     } else {
         params.limit = 30; // По умолчанию 30 дней
     }
-    
+
     return params;
 };
 
@@ -698,22 +978,22 @@ const onDateRangeChange = () => {
 
 const setQuickFilter = (period) => {
     quickFilter.value = period;
-    
+
     const today = new Date();
-    
+
     if (period === "7") {
         const weekAgo = new Date(today);
         weekAgo.setDate(today.getDate() - 7);
-        customStartDate.value = weekAgo.toISOString().split('T')[0];
-        customEndDate.value = today.toISOString().split('T')[0];
+        customStartDate.value = weekAgo.toISOString().split("T")[0];
+        customEndDate.value = today.toISOString().split("T")[0];
     } else if (period === "30") {
         const monthAgo = new Date(today);
         monthAgo.setDate(today.getDate() - 30);
-        customStartDate.value = monthAgo.toISOString().split('T')[0];
-        customEndDate.value = today.toISOString().split('T')[0];
+        customStartDate.value = monthAgo.toISOString().split("T")[0];
+        customEndDate.value = today.toISOString().split("T")[0];
     }
     // Для "custom" не меняем даты, оставляем как есть
-    
+
     loadChannelAnalytics();
 };
 
@@ -909,10 +1189,10 @@ onMounted(() => {
     const today = new Date();
     const monthAgo = new Date(today);
     monthAgo.setDate(today.getDate() - 30);
-    
-    customEndDate.value = today.toISOString().split('T')[0];
-    customStartDate.value = monthAgo.toISOString().split('T')[0];
-    
+
+    customEndDate.value = today.toISOString().split("T")[0];
+    customStartDate.value = monthAgo.toISOString().split("T")[0];
+
     loadChannelInfo();
     loadChannelAnalytics();
     window.addEventListener("refreshAnalytics", refreshAnalyticsHandler);

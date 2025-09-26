@@ -163,7 +163,9 @@
                 <!-- Фильтры по датам -->
                 <div class="mb-3 bg-white p-4 rounded-lg shadow">
                     <div class="space-y-4">
-                        <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4"
+                        >
                             <div class="flex space-x-3">
                                 <input
                                     v-model="customStartDate"
@@ -187,7 +189,7 @@
                                 :disabled="loading"
                                 class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {{ loading ? 'Загрузка...' : 'Обновить' }}
+                                {{ loading ? "Загрузка..." : "Обновить" }}
                             </button>
                         </div>
                     </div>
@@ -245,7 +247,9 @@
                                             clip-rule="evenodd"
                                         />
                                     </svg>
-                                    {{ subscriberChange > 0 ? '+' : '' }}{{ formatNumber(subscriberChange) }} за {{ getPeriodDisplayText() }}
+                                    {{ subscriberChange > 0 ? "+" : ""
+                                    }}{{ formatNumber(subscriberChange) }} за
+                                    {{ getPeriodDisplayText() }}
                                 </div>
                             </div>
                             <div class="bg-green-50 p-4 rounded-lg">
@@ -568,15 +572,32 @@
 
                             <polyline
                                 v-if="tableRows.length > 1"
-                                :points="getChartData().map((row, index) => {
-                                    const values = getChartData().map(r => r.subscribers);
-                                    const maxVal = Math.max(...values);
-                                    const minVal = Math.min(...values);
-                                    const range = maxVal - minVal || 1;
-                                    const x = (index * 500) / (Math.max(getChartData().length - 1, 1)) + 80;
-                                    const y = 200 - (((row.subscribers - minVal) / range) * 140);
-                                    return `${x},${y}`;
-                                }).join(' ')"
+                                :points="
+                                    getChartData()
+                                        .map((row, index) => {
+                                            const values = getChartData().map(
+                                                (r) => r.subscribers
+                                            );
+                                            const maxVal = Math.max(...values);
+                                            const minVal = Math.min(...values);
+                                            const range = maxVal - minVal || 1;
+                                            const x =
+                                                (index * 500) /
+                                                    Math.max(
+                                                        getChartData().length -
+                                                            1,
+                                                        1
+                                                    ) +
+                                                80;
+                                            const y =
+                                                200 -
+                                                ((row.subscribers - minVal) /
+                                                    range) *
+                                                    140;
+                                            return `${x},${y}`;
+                                        })
+                                        .join(' ')
+                                "
                                 fill="none"
                                 stroke="#3b82f6"
                                 stroke-width="3"
@@ -586,33 +607,106 @@
 
                             <polyline
                                 v-if="tableRows.length > 1"
-                                :points="getChartData().map((row, index) => {
-                                    const values = getChartData().map(r => r.views);
-                                    const maxVal = Math.max(...values);
-                                    const minVal = Math.min(...values);
-                                    const range = maxVal - minVal || 1;
-                                    const x = (index * 500) / (Math.max(getChartData().length - 1, 1)) + 80;
-                                    const y = 200 - (((row.views - minVal) / range) * 140);
-                                    return `${x},${y}`;
-                                }).join(' ')"
+                                :points="
+                                    getChartData()
+                                        .map((row, index) => {
+                                            const values = getChartData().map(
+                                                (r) => r.views
+                                            );
+                                            const maxVal = Math.max(...values);
+                                            const minVal = Math.min(...values);
+                                            const range = maxVal - minVal || 1;
+                                            const x =
+                                                (index * 500) /
+                                                    Math.max(
+                                                        getChartData().length -
+                                                            1,
+                                                        1
+                                                    ) +
+                                                80;
+                                            const y =
+                                                200 -
+                                                ((row.views - minVal) / range) *
+                                                    140;
+                                            return `${x},${y}`;
+                                        })
+                                        .join(' ')
+                                "
                                 fill="none"
                                 stroke="#f59e0b"
                                 stroke-width="3"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                             />
-                            
+
                             <!-- Точки данных для подписчиков -->
-                            <g v-for="(row, index) in getChartData()" :key="'subs-' + index">
+                            <g
+                                v-for="(row, index) in getChartData()"
+                                :key="'subs-' + index"
+                            >
                                 <circle
-                                    :cx="(index * 500) / (Math.max(getChartData().length - 1, 1)) + 80"
-                                    :cy="200 - (((row.subscribers - Math.min(...getChartData().map(r => r.subscribers))) / (Math.max(...getChartData().map(r => r.subscribers)) - Math.min(...getChartData().map(r => r.subscribers)) || 1)) * 140)"
+                                    :cx="
+                                        (index * 500) /
+                                            Math.max(
+                                                getChartData().length - 1,
+                                                1
+                                            ) +
+                                        80
+                                    "
+                                    :cy="
+                                        200 -
+                                        ((row.subscribers -
+                                            Math.min(
+                                                ...getChartData().map(
+                                                    (r) => r.subscribers
+                                                )
+                                            )) /
+                                            (Math.max(
+                                                ...getChartData().map(
+                                                    (r) => r.subscribers
+                                                )
+                                            ) -
+                                                Math.min(
+                                                    ...getChartData().map(
+                                                        (r) => r.subscribers
+                                                    )
+                                                ) || 1)) *
+                                            140
+                                    "
                                     r="4"
                                     fill="#3b82f6"
                                 />
                                 <text
-                                    :x="(index * 500) / (Math.max(getChartData().length - 1, 1)) + 80 - 40"
-                                    :y="200 - (((row.subscribers - Math.min(...getChartData().map(r => r.subscribers))) / (Math.max(...getChartData().map(r => r.subscribers)) - Math.min(...getChartData().map(r => r.subscribers)) || 1)) * 140) - 8"
+                                    :x="
+                                        (index * 500) /
+                                            Math.max(
+                                                getChartData().length - 1,
+                                                1
+                                            ) +
+                                        80 -
+                                        40
+                                    "
+                                    :y="
+                                        200 -
+                                        ((row.subscribers -
+                                            Math.min(
+                                                ...getChartData().map(
+                                                    (r) => r.subscribers
+                                                )
+                                            )) /
+                                            (Math.max(
+                                                ...getChartData().map(
+                                                    (r) => r.subscribers
+                                                )
+                                            ) -
+                                                Math.min(
+                                                    ...getChartData().map(
+                                                        (r) => r.subscribers
+                                                    )
+                                                ) || 1)) *
+                                            140 -
+                                        8
+                                    "
                                     text-anchor="middle"
                                     class="text-xs fill-blue-600"
                                     font-size="10"
@@ -621,18 +715,75 @@
                                     {{ formatNumber(row.subscribers) }}
                                 </text>
                             </g>
-                            
+
                             <!-- Точки данных для просмотров -->
-                            <g v-for="(row, index) in getChartData()" :key="'views-' + index">
+                            <g
+                                v-for="(row, index) in getChartData()"
+                                :key="'views-' + index"
+                            >
                                 <circle
-                                    :cx="(index * 500) / (Math.max(getChartData().length - 1, 1)) + 80"
-                                    :cy="200 - (((row.views - Math.min(...getChartData().map(r => r.views))) / (Math.max(...getChartData().map(r => r.views)) - Math.min(...getChartData().map(r => r.views)) || 1)) * 140)"
+                                    :cx="
+                                        (index * 500) /
+                                            Math.max(
+                                                getChartData().length - 1,
+                                                1
+                                            ) +
+                                        80
+                                    "
+                                    :cy="
+                                        200 -
+                                        ((row.views -
+                                            Math.min(
+                                                ...getChartData().map(
+                                                    (r) => r.views
+                                                )
+                                            )) /
+                                            (Math.max(
+                                                ...getChartData().map(
+                                                    (r) => r.views
+                                                )
+                                            ) -
+                                                Math.min(
+                                                    ...getChartData().map(
+                                                        (r) => r.views
+                                                    )
+                                                ) || 1)) *
+                                            140
+                                    "
                                     r="4"
                                     fill="#f59e0b"
                                 />
                                 <text
-                                    :x="(index * 500) / (Math.max(getChartData().length - 1, 1)) + 80 + 40"
-                                    :y="200 - (((row.views - Math.min(...getChartData().map(r => r.views))) / (Math.max(...getChartData().map(r => r.views)) - Math.min(...getChartData().map(r => r.views)) || 1)) * 140) + 15"
+                                    :x="
+                                        (index * 500) /
+                                            Math.max(
+                                                getChartData().length - 1,
+                                                1
+                                            ) +
+                                        80 +
+                                        40
+                                    "
+                                    :y="
+                                        200 -
+                                        ((row.views -
+                                            Math.min(
+                                                ...getChartData().map(
+                                                    (r) => r.views
+                                                )
+                                            )) /
+                                            (Math.max(
+                                                ...getChartData().map(
+                                                    (r) => r.views
+                                                )
+                                            ) -
+                                                Math.min(
+                                                    ...getChartData().map(
+                                                        (r) => r.views
+                                                    )
+                                                ) || 1)) *
+                                            140 +
+                                        15
+                                    "
                                     text-anchor="middle"
                                     class="text-xs fill-orange-600"
                                     font-size="10"
@@ -641,11 +792,21 @@
                                     {{ formatNumber(row.views) }}
                                 </text>
                             </g>
-                            
+
                             <!-- Подписи дат -->
-                            <g v-for="(row, index) in getChartData()" :key="'date-' + index">
+                            <g
+                                v-for="(row, index) in getChartData()"
+                                :key="'date-' + index"
+                            >
                                 <text
-                                    :x="(index * 500) / (Math.max(getChartData().length - 1, 1)) + 80"
+                                    :x="
+                                        (index * 500) /
+                                            Math.max(
+                                                getChartData().length - 1,
+                                                1
+                                            ) +
+                                        80
+                                    "
                                     y="240"
                                     text-anchor="middle"
                                     class="text-xs fill-gray-600"
@@ -754,7 +915,6 @@ const settings = ref({ analytics_daily_time: "10:00" });
 
 const tableRows = ref([]);
 
-// Фильтры
 const selectedPeriod = ref("7");
 const customStartDate = ref("");
 const customEndDate = ref("");
@@ -817,7 +977,6 @@ const loadChannelAnalytics = async () => {
             }
         );
 
-        // Подготавливаем параметры для запроса дневной аналитики
         const params = getAnalyticsParams();
 
         http.getAnalyticsDaily(
@@ -827,8 +986,7 @@ const loadChannelAnalytics = async () => {
                 if (res.success) {
                     const docs = res.data || [];
                     buildTableRowsFromDaily(docs);
-                    
-                    // Обновляем средние значения за выбранный период
+
                     const periodDays = getPeriodDays();
                     const availableDays = Math.min(docs.length, periodDays);
                     const recentDocs = docs.slice(0, availableDays);
@@ -855,13 +1013,6 @@ const loadChannelAnalytics = async () => {
                         views_count: avgViews,
                         avg_err: avgErr,
                     };
-                    
-                    console.log('Period averages calculation:', {
-                        period: selectedPeriod.value,
-                        availableDays,
-                        avgViews,
-                        avgErr,
-                    });
                 }
                 loading.value = false;
             },
@@ -898,7 +1049,6 @@ const buildTableRowsFromDaily = (docs) => {
             viewsChange = currentViews - nextViews;
         }
 
-        // Рассчитываем ERR% как (просмотры / подписчики) * 100
         const currentErr =
             currentSubscribers > 0
                 ? (currentViews / currentSubscribers) * 100
@@ -976,7 +1126,7 @@ const subscriberChange = computed(() => {
 
 // Методы для работы с фильтрами
 const getPeriodDays = () => {
-    if (selectedPeriod.value === 'custom') {
+    if (selectedPeriod.value === "custom") {
         if (!customStartDate.value || !customEndDate.value) return 7;
         const start = new Date(customStartDate.value);
         const end = new Date(customEndDate.value);
@@ -987,38 +1137,39 @@ const getPeriodDays = () => {
 
 const getAnalyticsParams = () => {
     const params = {};
-    
+
     if (customStartDate.value && customEndDate.value) {
         params.startDate = customStartDate.value;
         params.endDate = customEndDate.value;
     } else {
         params.limit = 7; // По умолчанию 7 дней
     }
-    
+
     return params;
 };
 
 const getPeriodDisplayText = () => {
     if (customStartDate.value && customEndDate.value) {
-        const start = new Date(customStartDate.value).toLocaleDateString('ru-RU');
-        const end = new Date(customEndDate.value).toLocaleDateString('ru-RU');
+        const start = new Date(customStartDate.value).toLocaleDateString(
+            "ru-RU"
+        );
+        const end = new Date(customEndDate.value).toLocaleDateString("ru-RU");
         return `${start} - ${end}`;
     }
-    return '7 дней';
+    return "7 дней";
 };
 
-const onPeriodChange = () => {
-    if (selectedPeriod.value === 'custom') {
-        // Устанавливаем даты по умолчанию для произвольного периода
-        const today = new Date();
-        const weekAgo = new Date(today);
-        weekAgo.setDate(today.getDate() - 7);
-        
-        customEndDate.value = today.toISOString().split('T')[0];
-        customStartDate.value = weekAgo.toISOString().split('T')[0];
-    }
-    loadChannelAnalytics();
-};
+// const onPeriodChange = () => {
+//     if (selectedPeriod.value === "custom") {
+//         const today = new Date();
+//         const weekAgo = new Date(today);
+//         weekAgo.setDate(today.getDate() - 7);
+
+//         customEndDate.value = today.toISOString().split("T")[0];
+//         customStartDate.value = weekAgo.toISOString().split("T")[0];
+//     }
+//     loadChannelAnalytics();
+// };
 
 const onDateRangeChange = () => {
     loadChannelAnalytics();
@@ -1026,10 +1177,10 @@ const onDateRangeChange = () => {
 
 const getChartData = () => {
     const periodDays = getPeriodDays();
-    return tableRows.value.slice(0, Math.min(tableRows.value.length, periodDays)).reverse();
+    return tableRows.value
+        .slice(0, Math.min(tableRows.value.length, periodDays))
+        .reverse();
 };
-
-
 
 const refreshAnalyticsHandler = async () => {
     console.log("Refresh analytics event received");
@@ -1059,10 +1210,10 @@ const refreshAnalyticsHandler = async () => {
 
 const initFromRoute = () => {
     const id = route.params && route.params.id ? String(route.params.id) : "";
-    console.log('initFromRoute called with id:', id);
+    console.log("initFromRoute called with id:", id);
     if (id) {
         selectedChannelId.value = id;
-        console.log('selectedChannelId set to:', selectedChannelId.value);
+        console.log("selectedChannelId set to:", selectedChannelId.value);
     }
 };
 
@@ -1074,15 +1225,15 @@ onMounted(() => {
     loadChannels();
     loadSettings();
     initFromRoute();
-    
+
     // Инициализируем даты по умолчанию (последние 7 дней)
     const today = new Date();
     const weekAgo = new Date(today);
     weekAgo.setDate(today.getDate() - 7);
-    
-    customEndDate.value = today.toISOString().split('T')[0];
-    customStartDate.value = weekAgo.toISOString().split('T')[0];
-    
+
+    customEndDate.value = today.toISOString().split("T")[0];
+    customStartDate.value = weekAgo.toISOString().split("T")[0];
+
     if (selectedChannelId.value) {
         loadChannelAnalytics();
     }

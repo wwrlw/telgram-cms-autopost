@@ -1,41 +1,6 @@
 <template>
     <div class="min-h-screen bg-gray-50" data-settings-component>
         <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <div
-                v-if="error"
-                class="mb-6 p-4 bg-red-50 border border-red-200 rounded"
-            >
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <svg
-                            class="w-5 h-5 text-red-400 mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                        <div>
-                            <h3 class="text-sm font-medium text-red-800">
-                                Ошибка доступа
-                            </h3>
-                            <p class="text-sm text-red-700 mt-1">{{ error }}</p>
-                        </div>
-                    </div>
-                    <button
-                        @click="loadUserData"
-                        class="px-3 py-1 text-sm bg-red-100 hover:bg-red-200 text-red-800 rounded border border-red-300"
-                    >
-                        Повторить
-                    </button>
-                </div>
-            </div>
-
             <div class="mb-6 p-4 bg-white shadow rounded">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-lg font-semibold">Настройки</h3>

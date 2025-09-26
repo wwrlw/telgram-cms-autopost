@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-const props = defineProps({
+defineProps({
     show: Boolean,
     message: {
         type: String,
@@ -43,5 +43,4 @@ const props = defineProps({
         default: "Отмена",
     },
 });
-const emit = defineEmits(["confirm", "cancel"]);
 </script>

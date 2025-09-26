@@ -38,7 +38,7 @@
 import { useRoute } from "vue-router";
 const route = useRoute();
 const emit = defineEmits(["refreshPosts", "showPublishModal", "refreshData"]);
-const props = defineProps({
+defineProps({
     loading: {
         type: Boolean,
         default: false,

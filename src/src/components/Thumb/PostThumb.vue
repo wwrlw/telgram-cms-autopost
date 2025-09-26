@@ -359,7 +359,7 @@ const categoryColor = computed(() => {
     return props.post?.category_color || category.value?.color || "#e5e7eb";
 });
 
-const emit = defineEmits([
+defineEmits([
     "publish",
     "delete",
     "quickview",

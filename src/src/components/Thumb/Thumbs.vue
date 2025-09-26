@@ -67,7 +67,7 @@ import PostThumb from "@/components/Thumb/PostThumb.vue";
 import MediaViewer from "@/components/Media/MediaViewer.vue";
 import PostSkeleton from "@/components/PostSkeleton.vue";
 
-const props = defineProps({
+defineProps({
     posts: {
         type: Array,
         default: () => [],
@@ -91,7 +91,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["publish", "delete", "cancel"]);
+defineEmits(["publish", "delete", "cancel"]);
 
 const showQuickviewer = ref(false);
 const currentQuickviewMedia = ref(null);

@@ -52,7 +52,7 @@
 import { useRoute } from "vue-router";
 const route = useRoute();
 
-const props = defineProps({
+defineProps({
     selectedPosts: {
         type: Array,
         default: () => [],
@@ -67,5 +67,5 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["bulkPublish", "bulkDelete", "clearSelection"]);
+defineEmits(["bulkPublish", "bulkDelete", "clearSelection"]);
 </script>

@@ -158,10 +158,16 @@ const previews = ref([]);
 const uniquizing = ref(false);
 const showingUniqueText = ref(false);
 const isSubmitting = ref(false);
+const showMediaViewer = ref(false);
+const currentMediaIndex = ref(0);
 
 const editorHtml = ref("");
 // Включаем отправку HTML в Telegram (вместо Markdown)
 const USE_HTML_FORMAT = true;
+
+const currentMedia = computed(() => {
+    return postData.value?.media?.[currentMediaIndex.value] || null;
+});
 
 const turndownService = new TurndownService({
     headingStyle: "atx",
@@ -314,6 +320,29 @@ function removeExistingMedia(index) {
 function removeNewPreview(index) {
     const prev = previews.value.splice(index, 1)[0];
     if (prev?.url) URL.revokeObjectURL(prev.url);
+}
+
+const nextMedia = () => {
+    if (currentMediaIndex.value < (postData.value?.media?.length || 0) - 1) {
+        currentMediaIndex.value++;
+    }
+};
+
+const previousMedia = () => {
+    if (currentMediaIndex.value > 0) {
+        currentMediaIndex.value--;
+    }
+};
+
+function openMediaViewer(media, index) {
+    currentMediaIndex.value = index;
+    // currentMedia.value = media;
+    showMediaViewer.value = true;
+}
+
+function closeMediaViewer() {
+    showMediaViewer.value = false;
+    // currentMedia.value = null;
 }
 
 async function savePost() {
@@ -629,21 +658,6 @@ function initializeEditorContent(post) {
 function toggleTextMode() {
     showingUniqueText.value = !showingUniqueText.value;
     initializeEditorContent(postData.value);
-}
-
-const showMediaViewer = ref(false);
-const currentMediaIndex = ref(0);
-const currentMedia = ref(null);
-
-function openMediaViewer(media, index) {
-    currentMediaIndex.value = index;
-    currentMedia.value = media;
-    showMediaViewer.value = true;
-}
-
-function closeMediaViewer() {
-    showMediaViewer.value = false;
-    currentMedia.value = null;
 }
 
 async function uniquizePost() {
