@@ -524,7 +524,6 @@ export class TelegramService {
       return;
     }
 
-    // Проверяем дубликат по тексту на ранней стадии
     const messageText = (msg as any).message || '';
     if (messageText && await this.mongoService.checkTextDuplicate(messageText)) {
       console.log(`⏭️ Дубликат текста обнаружен на ранней стадии, пропускаем: ${messageText.substring(0, 50)}...`);
@@ -536,7 +535,9 @@ export class TelegramService {
       if (!this.albumBuffer[groupId]) {
         this.albumBuffer[groupId] = [];
       }
-      this.albumBuffer[groupId].push(msg);
+      if (!this.albumBuffer[groupId].some(m => m.id === msg.id)) {
+        this.albumBuffer[groupId].push(msg);
+      }
 
       if (this.albumTimers[groupId]) {
         clearTimeout(this.albumTimers[groupId]);
@@ -554,19 +555,6 @@ export class TelegramService {
           Number(peer.channelId || peer.userId || peer.chatId || 0),
           albumMsgs[0].id
         )
-        // let allMedia: any[] = [];
-        // let text = '';
-        
-        // for (const m of albumMsgs) {
-        //   const media = await this.mediaService.processMedia(
-        //     this.client,
-        //     m,
-        //     Number(peer.channelId || peer.userId || peer.chatId || 0),
-        //     m.id
-        //   );
-        //   allMedia = allMedia.concat(media);
-        //   if (m.message && !text) text = m.message;
-        // }
         
         const channelConfig = this.config.targetChannels.find(c => normalizeId(c.id) === normalizedIncomingId);
         const sourceChannel = await this.getChannelIdentifier(peer, channelConfig);
@@ -574,7 +562,6 @@ export class TelegramService {
         
         const stats = this.getPostStatsFromMessage(albumMsgs[0]);
         
-        // Получаем количество подписчиков для расчета конверсии
         const subscribersCount = await this.channelStatsService.getChannelSubscribersFromDB(this.getFullChannelId(peer));
         const conversionMetrics = this.conversionService.calculateConversionMetrics(stats, subscribersCount);
         
@@ -601,7 +588,7 @@ export class TelegramService {
         // Логируем конверсию
         this.conversionService.logConversionMetrics(conversionMetrics, postUrl);
         console.log(`📤 Сохранён альбом-пост из ${sourceChannel}:`, postData);
-      }, 1500);
+      }, 1000);
       return;
     }
 
