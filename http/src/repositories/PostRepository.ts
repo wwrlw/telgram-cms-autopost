@@ -183,7 +183,6 @@ export class PostRepository implements IPostRepository {
 
     const t0 = Date.now();
 
-    // Подсчёт total: быстрый путь без категории → countDocuments; с категорией → $lookup (pipeline) по channels
     let total = 0;
 
     const hasCategoryFilter = !!(filters?.category_id && ObjectId.isValid(filters.category_id));

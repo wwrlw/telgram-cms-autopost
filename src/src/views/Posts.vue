@@ -203,7 +203,13 @@ const postsService = async (
         await removePublishedFromFavorites(posts.value);
 
         const paginationData = response.pagination || response.params;
-        totalCount.value = paginationData.total || 0;
+        if (
+            paginationData &&
+            typeof paginationData.total === "number" &&
+            !Number.isNaN(paginationData.total)
+        ) {
+            totalCount.value = paginationData.total;
+        }
 
         if (isInfiniteScroll) {
             infiniteScrollLoading.value = false;
@@ -415,7 +421,6 @@ const loadCategories = async () => {
         if (response.success && response.data) {
             categories.value = response.data;
         }
-        console.log(categories.value);
     } catch (error) {
         console.error("Error loading categories:", error);
     }

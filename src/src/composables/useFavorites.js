@@ -120,6 +120,38 @@ const initializeFavorites = async () => {
     }
 };
 
+const removePublishedFromFavorites = async (posts = []) => {
+    if (!userId.value || !Array.isArray(posts) || posts.length === 0) return;
+
+    const idsToRemove = posts
+        .filter(
+            (p) =>
+                p &&
+                p._id &&
+                favoritePosts.value.includes(p._id) &&
+                (p.is_published === true || !!p.telegram_message_id)
+        )
+        .map((p) => p._id);
+
+    if (idsToRemove.length === 0) return;
+
+    await Promise.all(
+        idsToRemove.map(
+            (postId) =>
+                new Promise((resolve) => {
+                    http.removeFavoritePost(userId.value, postId, (res) => {
+                        if (res?.success) {
+                            favoritePosts.value = favoritePosts.value.filter(
+                                (id) => id !== postId
+                            );
+                        }
+                        resolve(true);
+                    });
+                })
+        )
+    );
+};
+
 export function useFavorites() {
     return {
         favoritePosts: computed(() => favoritePosts.value),
@@ -132,6 +164,7 @@ export function useFavorites() {
         isFavorite,
         addToFavorites,
         removeFromFavorites,
+        removePublishedFromFavorites,
         toggleFavorite,
         initializeFavorites,
     };
