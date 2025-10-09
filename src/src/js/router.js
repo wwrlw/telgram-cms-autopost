@@ -15,7 +15,7 @@ const AnalyticsChannel = () => import("@/views/AnalyticsChannel.vue");
 const UserManagement = () => import("@/views/UserManagement.vue");
 const SystemLogs = () => import("@/views/SystemLogs.vue");
 const Settings = () => import("@/views/Settings.vue");
-import { getToken } from "@/js/http";
+import http, { getToken, setAccessToken } from "@/js/http";
 
 const ROLES = {
     SUPER_ADMIN: "super_admin",
@@ -140,7 +140,20 @@ router.beforeEach(async (to) => {
     }
 
     if (!token) {
-        return "/login";
+        // Пытаемся обновить access токен через refresh куку (HttpOnly)
+        try {
+            const res = await http.instance.post("/auth/refresh");
+            const data = res?.data?.data || res?.data || {};
+            const newAccess = data.accessToken;
+            if (newAccess) {
+                setAccessToken(newAccess);
+                return; // продолжаем навигацию
+            }
+            return "/login";
+        } catch (e) {
+            console.log(e);
+            return "/login";
+        }
     }
 
     if (userRole === ROLES.BANNED) {

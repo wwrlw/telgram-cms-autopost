@@ -39,9 +39,12 @@ function parseFilters(query: any): PostFilters | undefined {
     hasFilters = true;
   }
 
-  if (query.category_id) {
-    filters.category_id = query.category_id;
-    hasFilters = true;
+  if (query.category_id || query.category_name || query.category) {
+    const category = query.category_id || query.category_name || query.category;
+    if (typeof category === 'string' && category.trim() !== '') {
+      filters.category_id = category.trim();
+      hasFilters = true;
+    }
   }
 
   if (query.date_from) {

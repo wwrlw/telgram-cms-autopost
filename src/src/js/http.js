@@ -12,9 +12,9 @@ let accessTokenMemory = null;
 export function setAccessToken(token) {
     accessTokenMemory = token || null;
     if (token) {
-        sessionStorage.setItem("token", token);
+        localStorage.setItem("token", token);
     } else {
-        sessionStorage.removeItem("token");
+        localStorage.removeItem("token");
     }
 }
 
@@ -155,7 +155,7 @@ instance.interceptors.response.use(
 
 instance.interceptors.request.use(
     (config) => {
-        const token = accessTokenMemory || sessionStorage.getItem("token");
+        const token = accessTokenMemory || localStorage.getItem("token");
         if (token) {
             config.headers["Authorization"] = `Bearer ${token}`;
         }
@@ -924,7 +924,7 @@ let http = {
 };
 
 export function getToken() {
-    return accessTokenMemory || sessionStorage.getItem("token");
+    return accessTokenMemory || localStorage.getItem("token");
 }
 
 export default http;
