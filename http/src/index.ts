@@ -9,6 +9,7 @@ import { postedChannelsRoutes } from './routes/posted-channels';
 import { categoriesRoutes } from './routes/categories';
 import { analyticsRoutes } from './routes/analytics';
 import publishRoutes from './routes/publish';
+import swagger from './plugins/swagger';
 import logsRoutes from './routes/logs';
 import { mediaRoutes } from './routes/media';
 import cors from '@fastify/cors'
@@ -47,7 +48,7 @@ async function start() {
             prefix: '/media/',
             decorateReply: false
         });
-        
+        await fastify.register(swagger);
         await fastify.register(authPlugin);
         await fastify.register(authRoutes, { prefix: '/auth' });
         await fastify.register(postsRoutes);

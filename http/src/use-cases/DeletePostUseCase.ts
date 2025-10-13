@@ -8,15 +8,7 @@ export class DeletePostUseCase {
     if (!id || id.trim() === '') {
       throw new ValidationError('Post ID is required');
     }
-
-    try {
-      await this.postService.deletePost(id);
-      return {
-        success: true,
-        message: 'Post deleted successfully'
-      };
-    } catch (error) {
-      throw error;
-    }
+    await this.postService.deletePost(id);
+    return { success: true, message: 'Post deleted successfully' };
   }
 } 

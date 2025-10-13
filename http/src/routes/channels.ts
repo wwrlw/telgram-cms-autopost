@@ -1,44 +1,27 @@
 import { FastifyInstance } from "fastify";
-import { DependencyContainer } from "../container/DependencyContainer";
+import { ChannelController } from "../controllers/ChannelController";
 import { requireAuth, requirePermission } from "../middleware/authRole";
 import { PERMISSIONS } from "../models/Category";
 import { logAction } from "../middleware/logging";
+import { createChannelBodySchema, updateChannelBodySchema } from "../schemas/channel";
 
 export async function channelsRoutes(fastify: FastifyInstance) {
-  const container = DependencyContainer.getInstance();
+  const controller = new ChannelController();
 
   fastify.get(
     "/channels",
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
-      try {
-        const getChannelsUseCase = container.getGetChannelsUseCase();
-        const channels = await getChannelsUseCase.execute();
-        return {
-          success: true,
-          data: channels
-        };
-      } catch (error) {
-        throw error;
-      }
+      const channels = await controller.list();
+      return { success: true, data: channels };
     }
   );
 
   fastify.get(
     "/channels/:id",
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
-      try {
-        const id = (request.params as any).id;
-        const getChannelUseCase = container.getGetChannelUseCase();
-        const channel = await getChannelUseCase.execute(id);
-        return {
-          success: true,
-          data: channel
-        };
-      } catch (error) {
-        throw error;
-      }
+      const id = (request.params as any).id;
+      const channel = await controller.get(id);
+      return { success: true, data: channel };
     }
   );
 
@@ -46,31 +29,12 @@ export async function channelsRoutes(fastify: FastifyInstance) {
     "/channels",
     { 
       preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CHANNELS), logAction],
-      schema: {
-        body: {
-          type: 'object',
-          required: ['username', 'channel_id'],
-          properties: {
-            username: { type: 'string' },
-            channel_id: { type: 'number' },
-            is_private: { type: 'boolean' },
-            prompt: { type: 'string' }
-          }
-        }
-      }
+      schema: { body: createChannelBodySchema }
     },
     async (request, reply) => {
-      try {
-        const channelData = request.body as any;
-        const createChannelUseCase = container.getCreateChannelUseCase();
-        const channel = await createChannelUseCase.execute(channelData);
-        return {
-          success: true,
-          data: channel
-        };
-      } catch (error) {
-        throw error;
-      }
+      const channelData = request.body as any;
+      const channel = await controller.create(channelData);
+      return { success: true, data: channel };
     }
   );
 
@@ -78,17 +42,9 @@ export async function channelsRoutes(fastify: FastifyInstance) {
     "/channels/:id",
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CHANNELS), logAction] },
     async (request, reply) => {
-      try {
-        const id = (request.params as any).id;
-        const deleteChannelUseCase = container.getDeleteChannelUseCase();
-        const deleted = await deleteChannelUseCase.execute(id);
-        return {
-          success: true,
-          data: { deleted }
-        };
-      } catch (error) {
-        throw error;
-      }
+      const id = (request.params as any).id;
+      const deleted = await controller.remove(id);
+      return { success: true, data: { deleted } };
     }
   );
 
@@ -96,48 +52,21 @@ export async function channelsRoutes(fastify: FastifyInstance) {
     "/channels/parser/ids",
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
-      try {
-        const getChannelIdsForParserUseCase = container.getGetChannelIdsForParserUseCase();
-        const channelIds = await getChannelIdsForParserUseCase.execute();
-        return {
-          success: true,
-          data: channelIds
-        };
-      } catch (error) {
-        throw error;
-      }
+      const channelIds = await controller.getParserIds();
+      return { success: true, data: channelIds };
     }
   );
   fastify.put(
     "/channels/:id",
     { 
       preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CHANNELS), logAction],
-      schema: {
-        body: {
-          type: 'object',
-          properties: {
-            username: { type: 'string' },
-            channel_id: { type: 'number' },
-            is_private: { type: 'boolean' },
-            prompt: { type: 'string' },
-            category_id: { type: 'string' }
-          }
-        }
-      }
+      schema: { body: updateChannelBodySchema }
     },
     async (request, reply) => {
-      try {
-        const id = (request.params as any).id;
-        const channelData = request.body as any;
-        const updateChannelUseCase = container.getUpdateChannelUseCase();
-        const updated = await updateChannelUseCase.execute(id, channelData);
-        return {
-          success: true,
-          data: { updated }
-        };
-      } catch (error) {
-        throw error;
-      }
+      const id = (request.params as any).id;
+      const channelData = request.body as any;
+      const updated = await controller.update(id, channelData);
+      return { success: true, data: { updated } };
     }
   );
 } 

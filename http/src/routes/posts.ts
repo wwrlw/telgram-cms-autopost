@@ -26,20 +26,9 @@ export async function postsRoutes(fastify: FastifyInstance) {
     "/posts/stats",
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
-      console.log('GET /posts/stats endpoint called');
-      try {
-        const getPostsStatsUseCase = container.getGetPostsStatsUseCase();
-        console.log('GetPostsStatsUseCase created');
-        const stats = await getPostsStatsUseCase.execute();
-        console.log('Stats received:', stats);
-        return {
-          success: true,
-          data: stats
-        };
-      } catch (error) {
-        console.error('Error in /posts/stats endpoint:', error);
-        throw error;
-      }
+      const getPostsStatsUseCase = container.getGetPostsStatsUseCase();
+      const stats = await getPostsStatsUseCase.execute();
+      return { success: true, data: stats };
     }
   );
 
@@ -55,17 +44,10 @@ export async function postsRoutes(fastify: FastifyInstance) {
       }
     },
     async (request, reply) => {
-      try {
-        const query = parsePostQuery(request.query);
-        const getPostsWithQueryUseCase = container.getGetPostsWithQueryUseCase();
-        const result = await getPostsWithQueryUseCase.execute(query);
-        return {
-          success: true,
-          ...result
-        };
-      } catch (error) {
-        throw error;
-      }
+      const query = parsePostQuery(request.query);
+      const getPostsWithQueryUseCase = container.getGetPostsWithQueryUseCase();
+      const result = await getPostsWithQueryUseCase.execute(query);
+      return { success: true, ...result };
     }
   );
 
@@ -78,32 +60,19 @@ export async function postsRoutes(fastify: FastifyInstance) {
       }
     },
     async (request, reply) => {
-      try {
-        // Всегда используем пагинацию; если нет параметров, применим дефолтные
-        const queryParams = request.query as any;
-        const hasParams = Object.keys(queryParams).length > 0;
-        const query = hasParams
-          ? parsePostQuery(queryParams)
-          : { pagination: { page: 1, limit: 24 } } as any;
+      const queryParams = request.query as any;
+      const hasParams = Object.keys(queryParams).length > 0;
+      const query = hasParams
+        ? parsePostQuery(queryParams)
+        : { pagination: { page: 1, limit: 24 } } as any;
 
-        const getPostsWithQueryUseCase = container.getGetPostsWithQueryUseCase();
-        const result = await getPostsWithQueryUseCase.execute(query);
+      const getPostsWithQueryUseCase = container.getGetPostsWithQueryUseCase();
+      const result = await getPostsWithQueryUseCase.execute(query);
 
-        if (hasParams) {
-          return {
-            success: true,
-            ...result
-          };
-        }
-
-        // Совместимость: когда нет параметров, возвращаем только массив данных
-        return {
-          success: true,
-          data: result.data
-        };
-      } catch (error) {
-        throw error;
+      if (hasParams) {
+        return { success: true, ...result };
       }
+      return { success: true, data: result.data };
     }
   );
 
@@ -120,18 +89,11 @@ export async function postsRoutes(fastify: FastifyInstance) {
       }
     },
     async (request, reply) => {
-      try {
-        const queryParams = request.query as any;
-        const query = parseInfiniteScrollQuery(queryParams);
-        const getPostsInfiniteScrollUseCase = container.getGetPostsInfiniteScrollUseCase();
-        const result = await getPostsInfiniteScrollUseCase.execute(query);
-        return {
-          success: true,
-          ...result
-        };
-      } catch (error) {
-        throw error;
-      }
+      const queryParams = request.query as any;
+      const query = parseInfiniteScrollQuery(queryParams);
+      const getPostsInfiniteScrollUseCase = container.getGetPostsInfiniteScrollUseCase();
+      const result = await getPostsInfiniteScrollUseCase.execute(query);
+      return { success: true, ...result };
     }
   );
 
@@ -139,17 +101,10 @@ export async function postsRoutes(fastify: FastifyInstance) {
     '/post/:id', 
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] }, 
     async (request, reply) => {
-      try {
-        const id = (request.params as any).id;
-        const getPostUseCase = container.getGetPostUseCase();
-        const post = await getPostUseCase.execute(id);
-        return {
-          success: true,
-          data: post
-        };
-      } catch (error) {
-        throw error;
-      }
+      const id = (request.params as any).id;
+      const getPostUseCase = container.getGetPostUseCase();
+      const post = await getPostUseCase.execute(id);
+      return { success: true, data: post };
     }
   );
 
@@ -159,35 +114,11 @@ export async function postsRoutes(fastify: FastifyInstance) {
       preHandler: [requireAuth, requirePermission(PERMISSIONS.DELETE_POSTS)]
     },
     async (request, reply) => {
-      try {
-        console.log('DELETE /post/:id called with params:', request.params);
-        const id = (request.params as any).id;
-        console.log('Deleting post with ID:', id);
-        
-        const deletePostUseCase = container.getDeletePostUseCase();
-        console.log('DeletePostUseCase created');
-        
-        const result = await deletePostUseCase.execute(id);
-        console.log('DeletePostUseCase result:', result);
-        
-        // Логируем удаление поста только после успешного удаления
-        try {
-          await logAction(request, reply);
-          console.log('Post deletion logged successfully');
-        } catch (logError) {
-          console.error('Error logging post deletion:', logError);
-          // Не прерываем выполнение, если логирование не удалось
-        }
-        
-        console.log('Returning success response');
-        return {
-          success: true,
-          message: result.message
-        };
-      } catch (error) {
-        console.error('Error deleting post:', error);
-        throw error;
-      }
+      const id = (request.params as any).id;
+      const deletePostUseCase = container.getDeletePostUseCase();
+      const result = await deletePostUseCase.execute(id);
+      try { await logAction(request, reply); } catch {}
+      return { success: true, message: result.message };
     }
   );
   // Запланировать пост
@@ -195,22 +126,12 @@ export async function postsRoutes(fastify: FastifyInstance) {
     '/posts/:id/schedule',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] },
     async (request, reply) => {
-      try {
-        const { id } = request.params as { id: string };
-        const { scheduled_at, channel_id } = request.body as { scheduled_at: string; channel_id: string };
-        
-        const postService = container.getPostService();
-        const result = await postService.schedulePost(id, new Date(scheduled_at), channel_id);
-        // Логируем добавление отложенного поста
-        await logAction(request, reply);
-        
-        return {
-          success: true,
-          data: result
-        };
-      } catch (error) {
-        throw error;
-      }
+      const { id } = request.params as { id: string };
+      const { scheduled_at, channel_id } = request.body as { scheduled_at: string; channel_id: string };
+      const postService = container.getPostService();
+      const result = await postService.schedulePost(id, new Date(scheduled_at), channel_id);
+      await logAction(request, reply);
+      return { success: true, data: result };
     }
   );
   // Получить запланированные посты
@@ -218,18 +139,10 @@ export async function postsRoutes(fastify: FastifyInstance) {
     '/posts/scheduled',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
-      try {
-        const postService = container.getPostService();
-        const { channel_id } = (request.query as any) || {};
-        const scheduledPosts = await postService.getScheduledPosts(channel_id);
-        
-        return {
-          success: true,
-          data: scheduledPosts
-        };
-      } catch (error) {
-        throw error;
-      }
+      const postService = container.getPostService();
+      const { channel_id } = (request.query as any) || {};
+      const scheduledPosts = await postService.getScheduledPosts(channel_id);
+      return { success: true, data: scheduledPosts };
     }
   );
   // Отменить отложенную публикацию
@@ -237,19 +150,10 @@ export async function postsRoutes(fastify: FastifyInstance) {
     '/posts/:id/schedule',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.DELETE_POSTS)] },
     async (request, reply) => {
-      try {
-        const { id } = request.params as { id: string };
-        
-        const postService = container.getPostService();
-        const result = await postService.cancelScheduledPost(id);
-        
-        return {
-          success: true,
-          data: result
-        };
-      } catch (error) {
-        throw error;
-      }
+      const { id } = request.params as { id: string };
+      const postService = container.getPostService();
+      const result = await postService.cancelScheduledPost(id);
+      return { success: true, data: result };
     }
   );
 
@@ -258,18 +162,10 @@ export async function postsRoutes(fastify: FastifyInstance) {
     '/posts/published',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
-      try {
-        const postService = container.getPostService();
-        const { channel_id } = (request.query as any) || {};
-        const publishedPosts = await postService.getPublishedPosts(channel_id);
-        
-        return {
-          success: true,
-          data: publishedPosts
-        };
-      } catch (error) {
-        throw error;
-      }
+      const postService = container.getPostService();
+      const { channel_id } = (request.query as any) || {};
+      const publishedPosts = await postService.getPublishedPosts(channel_id);
+      return { success: true, data: publishedPosts };
     }
   );
 
@@ -278,13 +174,10 @@ export async function postsRoutes(fastify: FastifyInstance) {
     '/posts/:id',
     { 
       preHandler: [requireAuth, requirePermission(PERMISSIONS.EDIT_POSTS)],
-      config: {
-        // Разрешаем multipart/form-data для PUT запросов
-        bodyLimit: 10485760, // 10MB
-      }
+      // Разрешаем multipart/form-data для PUT запросов
+      bodyLimit: 10485760 // 10MB
     },
     async (request: any, reply) => {
-      try {
         const { id } = request.params as { id: string };
         const container = DependencyContainer.getInstance();
         const parts = request.parts();
@@ -346,15 +239,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
         
         fastify.log.info(`Post updated successfully: ${updatedPost._id}`);
         
-        return {
-          success: true,
-          data: updatedPost,
-          message: 'Пост успешно обновлен'
-        };
-      } catch (error) {
-        fastify.log.error(`Error updating post: ${error}`);
-        throw error;
-      }
+        return { success: true, data: updatedPost, message: 'Пост успешно обновлен' };
     }
   );
 
@@ -461,18 +346,10 @@ export async function postsRoutes(fastify: FastifyInstance) {
       }
     },
     async (request, reply) => {
-      try {
-        const { id } = request.params as { id: string };
-        const uniquizePostUseCase = container.getUniquizePostUseCase();
-        const uniquizedPost = await uniquizePostUseCase.execute(id);
-        
-        return {
-          success: true,
-          data: uniquizedPost
-        };
-      } catch (error) {
-        throw error;
-      }
+      const { id } = request.params as { id: string };
+      const uniquizePostUseCase = container.getUniquizePostUseCase();
+      const uniquizedPost = await uniquizePostUseCase.execute(id);
+      return { success: true, data: uniquizedPost };
     }
   );
 
@@ -481,19 +358,15 @@ export async function postsRoutes(fastify: FastifyInstance) {
     "/posts/cleanup",
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.CLEANUP_POSTS)] },
     async (request: any, reply) => {
-      try {
-        const container = DependencyContainer.getInstance();
-        const postService = container.getPostService();
-        const { threshold, removeCount, dryRun } = (request.query || {}) as any;
-        const result = await postService.cleanupOldPosts({
-          threshold: threshold ? Number(threshold) : undefined,
-          removeCount: removeCount ? Number(removeCount) : undefined,
-          dryRun: dryRun === 'true' || dryRun === true,
-        });
-        return { success: true, data: result };
-      } catch (error) {
-        throw error;
-      }
+      const container = DependencyContainer.getInstance();
+      const postService = container.getPostService();
+      const { threshold, removeCount, dryRun } = (request.query || {}) as any;
+      const result = await postService.cleanupOldPosts({
+        threshold: threshold ? Number(threshold) : undefined,
+        removeCount: removeCount ? Number(removeCount) : undefined,
+        dryRun: dryRun === 'true' || dryRun === true,
+      });
+      return { success: true, data: result };
     }
   );
 }

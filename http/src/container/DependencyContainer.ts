@@ -13,8 +13,6 @@ import { PublicationChannelService } from '../services/PublicationChannelService
 import { CategoryService } from '../services/CategoryService';
 import { AuthService } from '../services/AuthService';
 import { YandexGPTService } from '../services/YandexGPTService';
-import { ChannelProfileService } from '../services/ChannelProfileService';
-import { PromptService } from '../services/PromptService';
 import { UserPermissionService } from '../services/UserPermissionService';
 import { GetPostUseCase } from '../use-cases/GetPostUseCase';
 import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
@@ -25,12 +23,6 @@ import { DeletePostUseCase } from '../use-cases/DeletePostUseCase';
 import { UniquizePostUseCase } from '../use-cases/UniquizePostUseCase';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
 import { LoginUseCase } from '../use-cases/LoginUseCase';
-import { CreateChannelUseCase } from '../use-cases/CreateChannelUseCase';
-import { UpdateChannelUseCase } from '../use-cases/UpdateChannelUseCase';
-import { GetChannelsUseCase } from '../use-cases/GetChannelsUseCase';
-import { GetChannelUseCase } from '../use-cases/GetChannelUseCase';
-import { DeleteChannelUseCase } from '../use-cases/DeleteChannelUseCase';
-import { GetChannelIdsForParserUseCase } from '../use-cases/GetChannelIdsForParserUseCase';
 import { CreatePublicationChannelUseCase } from '../use-cases/CreatePublicationChannelUseCase';
 import { GetPublicationChannelsUseCase } from '../use-cases/GetPublicationChannelsUseCase';
 import { GetActivePublicationChannelsUseCase } from '../use-cases/GetActivePublicationChannelsUseCase';
@@ -39,16 +31,28 @@ import { DeletePublicationChannelUseCase } from '../use-cases/DeletePublicationC
 import { TelegramPublishService } from '../services/TelegramPublishService';
 import { PublishPostUseCase } from '../use-cases/PublishPostUseCase';
 import { CreateManualPostUseCase } from '../use-cases/CreateManualPostUseCase';
-import { CreateCategoryUseCase } from '../use-cases/CreateCategoryUseCase';
-import { GetCategoriesUseCase } from '../use-cases/GetCategoriesUseCase';
-import { GetCategoryUseCase } from '../use-cases/GetCategoryUseCase';
-import { UpdateCategoryUseCase } from '../use-cases/UpdateCategoryUseCase';
-import { DeleteCategoryUseCase } from '../use-cases/DeleteCategoryUseCase';
 
 
 export class DependencyContainer {
   private static instance: DependencyContainer;
   private mongo: FastifyMongoObject | null = null;
+  // Кэш инстансов для избежания лишних аллокаций и единообразного жизненного цикла
+  private postRepository?: PostRepository;
+  private userRepository?: UserRepository;
+  private channelRepository?: ChannelRepository;
+  private publicationChannelRepository?: PublicationChannelRepository;
+  private categoryRepository?: CategoryRepository;
+
+  private authService?: AuthService;
+  private userPermissionService?: UserPermissionService;
+  private yandexGptService?: YandexGPTService;
+  private telegramPublishService?: TelegramPublishService;
+
+  private postService?: PostService;
+  private userService?: UserService;
+  private channelService?: ChannelService;
+  private publicationChannelService?: PublicationChannelService;
+  private categoryService?: CategoryService;
 
   private constructor() {}
 
@@ -65,10 +69,12 @@ export class DependencyContainer {
 
   getPostRepository(): PostRepository {
     if (!this.mongo) throw new Error('MongoDB not initialized');
-    return new PostRepository(this.mongo);
+    if (!this.postRepository) this.postRepository = new PostRepository(this.mongo);
+    return this.postRepository;
   }
   getTelegramPublishService(): TelegramPublishService {
-    return new TelegramPublishService();
+    if (!this.telegramPublishService) this.telegramPublishService = new TelegramPublishService();
+    return this.telegramPublishService;
   }
   
   getPublishPostUseCase(): PublishPostUseCase {
@@ -77,22 +83,26 @@ export class DependencyContainer {
 
   getUserRepository(): UserRepository {
     if (!this.mongo) throw new Error('MongoDB not initialized');
-    return new UserRepository(this.mongo);
+    if (!this.userRepository) this.userRepository = new UserRepository(this.mongo);
+    return this.userRepository;
   }
 
   getChannelRepository(): ChannelRepository {
     if (!this.mongo) throw new Error('MongoDB not initialized');
-    return new ChannelRepository(this.mongo);
+    if (!this.channelRepository) this.channelRepository = new ChannelRepository(this.mongo);
+    return this.channelRepository;
   }
 
   getPublicationChannelRepository(): PublicationChannelRepository {
     if (!this.mongo) throw new Error('MongoDB not initialized');
-    return new PublicationChannelRepository(this.mongo);
+    if (!this.publicationChannelRepository) this.publicationChannelRepository = new PublicationChannelRepository(this.mongo);
+    return this.publicationChannelRepository;
   }
 
   getCategoryRepository(): CategoryRepository {
     if (!this.mongo) throw new Error('MongoDB not initialized');
-    return new CategoryRepository(this.mongo);
+    if (!this.categoryRepository) this.categoryRepository = new CategoryRepository(this.mongo);
+    return this.categoryRepository;
   }
 
   getAuthService(): AuthService {
@@ -103,37 +113,43 @@ export class DependencyContainer {
     if (!refreshTtl || !accessTtl || !accessSecret || !refreshSecret) {
       throw new Error('JWT_SECRET or JWT_REFRESH_SECRET or JWT_ACCESS_TTL or JWT_REFRESH_TTL is not set in .env');
     }
-    
-    return new AuthService(accessSecret, refreshSecret, accessTtl, refreshTtl);
+    if (!this.authService) this.authService = new AuthService(accessSecret, refreshSecret, accessTtl, refreshTtl);
+    return this.authService;
   }
 
   getUserPermissionService(): UserPermissionService {
-    return new UserPermissionService(this.getUserRepository());
+    if (!this.userPermissionService) this.userPermissionService = new UserPermissionService(this.getUserRepository());
+    return this.userPermissionService;
   }
 
   getYandexGPTService(): YandexGPTService {
-    // PromptService создаётся внутри YandexGPTService, но оставляем возможность DI при необходимости
-    return new YandexGPTService();
+    if (!this.yandexGptService) this.yandexGptService = new YandexGPTService();
+    return this.yandexGptService;
   }
 
   getPostService(): PostService {
-    return new PostService(this.getPostRepository(), this.getYandexGPTService());
+    if (!this.postService) this.postService = new PostService(this.getPostRepository(), this.getYandexGPTService());
+    return this.postService;
   }
 
   getUserService(): UserService {
-    return new UserService(this.getUserRepository(), this.getAuthService());
+    if (!this.userService) this.userService = new UserService(this.getUserRepository(), this.getAuthService());
+    return this.userService;
   }
 
   getChannelService(): ChannelService {
-    return new ChannelService(this.getChannelRepository());
+    if (!this.channelService) this.channelService = new ChannelService(this.getChannelRepository());
+    return this.channelService;
   }
 
   getPublicationChannelService(): PublicationChannelService {
-    return new PublicationChannelService(this.getPublicationChannelRepository());
+    if (!this.publicationChannelService) this.publicationChannelService = new PublicationChannelService(this.getPublicationChannelRepository());
+    return this.publicationChannelService;
   }
 
   getCategoryService(): CategoryService {
-    return new CategoryService(this.getCategoryRepository());
+    if (!this.categoryService) this.categoryService = new CategoryService(this.getCategoryRepository());
+    return this.categoryService;
   }
 
   getGetPostUseCase(): GetPostUseCase {
@@ -168,29 +184,7 @@ export class DependencyContainer {
     return new LoginUseCase(this.getUserService());
   }
 
-  getCreateChannelUseCase(): CreateChannelUseCase {
-    return new CreateChannelUseCase(this.getChannelService());
-  }
-
-  getUpdateChannelUseCase(): UpdateChannelUseCase {
-    return new UpdateChannelUseCase(this.getChannelService());
-  }
-
-  getGetChannelsUseCase(): GetChannelsUseCase {
-    return new GetChannelsUseCase(this.getChannelService());
-  }
-
-  getGetChannelUseCase(): GetChannelUseCase {
-    return new GetChannelUseCase(this.getChannelService());
-  }
-
-  getDeleteChannelUseCase(): DeleteChannelUseCase {
-    return new DeleteChannelUseCase(this.getChannelService());
-  }
-
-  getGetChannelIdsForParserUseCase(): GetChannelIdsForParserUseCase {
-    return new GetChannelIdsForParserUseCase(this.getChannelService());
-  }
+  // CRUD каналов и вспомогательные методы теперь идут через ChannelController -> ChannelService
 
   getCreatePublicationChannelUseCase(): CreatePublicationChannelUseCase {
     return new CreatePublicationChannelUseCase(this.getPublicationChannelService());
@@ -216,26 +210,7 @@ export class DependencyContainer {
     return new CreateManualPostUseCase(this.getPostService());
   }
 
-  // Category Use Cases
-  getCreateCategoryUseCase(): CreateCategoryUseCase {
-    return new CreateCategoryUseCase(this.getCategoryService());
-  }
-
-  getGetCategoriesUseCase(): GetCategoriesUseCase {
-    return new GetCategoriesUseCase(this.getCategoryService());
-  }
-
-  getGetCategoryUseCase(): GetCategoryUseCase {
-    return new GetCategoryUseCase(this.getCategoryService());
-  }
-
-  getUpdateCategoryUseCase(): UpdateCategoryUseCase {
-    return new UpdateCategoryUseCase(this.getCategoryService());
-  }
-
-  getDeleteCategoryUseCase(): DeleteCategoryUseCase {
-    return new DeleteCategoryUseCase(this.getCategoryService());
-  }
+  // CRUD категорий теперь вызывается напрямую через CategoryService из контроллера
 
   getUniquizePostUseCase(): UniquizePostUseCase {
     return new UniquizePostUseCase(this.getPostService());

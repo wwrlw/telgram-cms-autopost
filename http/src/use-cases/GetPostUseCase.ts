@@ -9,11 +9,6 @@ export class GetPostUseCase {
     if (!id || id.trim() === '') {
       throw new ValidationError('Post ID is required');
     }
-
-    try {
-      return await this.postService.getPost(id);
-    } catch (error) {
-      throw error;
-    }
+    return this.postService.getPost(id);
   }
 } 

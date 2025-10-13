@@ -6,10 +6,6 @@ export class GetPostsInfiniteScrollUseCase {
   constructor(private postService: IPostService) {}
 
   async execute(query: PostQuery): Promise<InfiniteScrollResponse<Post>> {
-    try {
-      return await this.postService.getPostsInfiniteScroll(query);
-    } catch (error) {
-      throw error;
-    }
+    return this.postService.getPostsInfiniteScroll(query);
   }
 } 

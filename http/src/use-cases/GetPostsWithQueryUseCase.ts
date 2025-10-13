@@ -6,10 +6,6 @@ export class GetPostsWithQueryUseCase {
   constructor(private postService: IPostService) {}
 
   async execute(query: PostQuery): Promise<PaginatedResponse<Post>> {
-    try {
-      return await this.postService.getPostsWithQuery(query);
-    } catch (error) {
-      throw error;
-    }
+    return this.postService.getPostsWithQuery(query);
   }
 } 
