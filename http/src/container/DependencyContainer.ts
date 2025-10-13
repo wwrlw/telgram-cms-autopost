@@ -14,23 +14,12 @@ import { CategoryService } from '../services/CategoryService';
 import { AuthService } from '../services/AuthService';
 import { YandexGPTService } from '../services/YandexGPTService';
 import { UserPermissionService } from '../services/UserPermissionService';
-import { GetPostUseCase } from '../use-cases/GetPostUseCase';
-import { GetPostsUseCase } from '../use-cases/GetPostsUseCase';
-import { GetPostsWithQueryUseCase } from '../use-cases/GetPostsWithQueryUseCase';
-import { GetPostsInfiniteScrollUseCase } from '../use-cases/GetPostsInfiniteScrollUseCase';
-import { GetPostsStatsUseCase } from '../use-cases/GetPostsStatsUseCase';
-import { DeletePostUseCase } from '../use-cases/DeletePostUseCase';
-import { UniquizePostUseCase } from '../use-cases/UniquizePostUseCase';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
 import { LoginUseCase } from '../use-cases/LoginUseCase';
-import { CreatePublicationChannelUseCase } from '../use-cases/CreatePublicationChannelUseCase';
-import { GetPublicationChannelsUseCase } from '../use-cases/GetPublicationChannelsUseCase';
-import { GetActivePublicationChannelsUseCase } from '../use-cases/GetActivePublicationChannelsUseCase';
-import { UpdatePublicationChannelUseCase } from '../use-cases/UpdatePublicationChannelUseCase';
-import { DeletePublicationChannelUseCase } from '../use-cases/DeletePublicationChannelUseCase';
 import { TelegramPublishService } from '../services/TelegramPublishService';
 import { PublishPostUseCase } from '../use-cases/PublishPostUseCase';
-import { CreateManualPostUseCase } from '../use-cases/CreateManualPostUseCase';
+import { PostedChannelRepository } from '../repositories/PostedChannelRepository';
+import { PostedChannelService } from '../services/PostedChannelService';
 
 
 export class DependencyContainer {
@@ -42,6 +31,7 @@ export class DependencyContainer {
   private channelRepository?: ChannelRepository;
   private publicationChannelRepository?: PublicationChannelRepository;
   private categoryRepository?: CategoryRepository;
+  private postedChannelRepository?: PostedChannelRepository;
 
   private authService?: AuthService;
   private userPermissionService?: UserPermissionService;
@@ -53,6 +43,7 @@ export class DependencyContainer {
   private channelService?: ChannelService;
   private publicationChannelService?: PublicationChannelService;
   private categoryService?: CategoryService;
+  private postedChannelService?: PostedChannelService;
 
   private constructor() {}
 
@@ -78,7 +69,10 @@ export class DependencyContainer {
   }
   
   getPublishPostUseCase(): PublishPostUseCase {
-    return new PublishPostUseCase(this.getPostRepository(), this.getTelegramPublishService());
+    return new PublishPostUseCase(
+      this.getPostRepository(),
+      this.getTelegramPublishService()
+    );
   }
 
   getUserRepository(): UserRepository {
@@ -103,6 +97,12 @@ export class DependencyContainer {
     if (!this.mongo) throw new Error('MongoDB not initialized');
     if (!this.categoryRepository) this.categoryRepository = new CategoryRepository(this.mongo);
     return this.categoryRepository;
+  }
+
+  getPostedChannelRepository(): PostedChannelRepository {
+    if (!this.mongo) throw new Error('MongoDB not initialized');
+    if (!this.postedChannelRepository) this.postedChannelRepository = new PostedChannelRepository(this.mongo);
+    return this.postedChannelRepository;
   }
 
   getAuthService(): AuthService {
@@ -152,28 +152,9 @@ export class DependencyContainer {
     return this.categoryService;
   }
 
-  getGetPostUseCase(): GetPostUseCase {
-    return new GetPostUseCase(this.getPostService());
-  }
-
-  getGetPostsUseCase(): GetPostsUseCase {
-    return new GetPostsUseCase(this.getPostService());
-  }
-
-  getGetPostsWithQueryUseCase(): GetPostsWithQueryUseCase {
-    return new GetPostsWithQueryUseCase(this.getPostService());
-  }
-
-  getGetPostsInfiniteScrollUseCase(): GetPostsInfiniteScrollUseCase {
-    return new GetPostsInfiniteScrollUseCase(this.getPostService());
-  }
-
-  getGetPostsStatsUseCase(): GetPostsStatsUseCase {
-    return new GetPostsStatsUseCase(this.getPostService());
-  }
-
-  getDeletePostUseCase(): DeletePostUseCase {
-    return new DeletePostUseCase(this.getPostService());
+  getPostedChannelService(): PostedChannelService {
+    if (!this.postedChannelService) this.postedChannelService = new PostedChannelService(this.getPostedChannelRepository());
+    return this.postedChannelService;
   }
 
   getCreateUserUseCase(): CreateUserUseCase {
@@ -182,37 +163,5 @@ export class DependencyContainer {
 
   getLoginUseCase(): LoginUseCase {
     return new LoginUseCase(this.getUserService());
-  }
-
-  // CRUD каналов и вспомогательные методы теперь идут через ChannelController -> ChannelService
-
-  getCreatePublicationChannelUseCase(): CreatePublicationChannelUseCase {
-    return new CreatePublicationChannelUseCase(this.getPublicationChannelService());
-  }
-
-  getGetPublicationChannelsUseCase(): GetPublicationChannelsUseCase {
-    return new GetPublicationChannelsUseCase(this.getPublicationChannelService());
-  }
-
-  getGetActivePublicationChannelsUseCase(): GetActivePublicationChannelsUseCase {
-    return new GetActivePublicationChannelsUseCase(this.getPublicationChannelService());
-  }
-
-  getUpdatePublicationChannelUseCase(): UpdatePublicationChannelUseCase {
-    return new UpdatePublicationChannelUseCase(this.getPublicationChannelService());
-  }
-
-  getDeletePublicationChannelUseCase(): DeletePublicationChannelUseCase {
-    return new DeletePublicationChannelUseCase(this.getPublicationChannelService());
-  }
-
-  getCreateManualPostUseCase(): CreateManualPostUseCase {
-    return new CreateManualPostUseCase(this.getPostService());
-  }
-
-  // CRUD категорий теперь вызывается напрямую через CategoryService из контроллера
-
-  getUniquizePostUseCase(): UniquizePostUseCase {
-    return new UniquizePostUseCase(this.getPostService());
   }
 } 

@@ -11,11 +11,8 @@ export const infiniteScrollQuerySchema = {
     category: { type: 'string' },
     date_from: { type: 'string', format: 'date-time' },
     date_to: { type: 'string', format: 'date-time' },
-    // Основной параметр для выбора поля сортировки из UI
     filter: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel', 'err'] },
-    // Направление сортировки
     order: { type: 'string', enum: ['asc', 'desc'] },
-    // Алиасы
     sort: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel', 'err'] },
     sortBy: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel', 'err'] },
     sort_field: { type: 'string', enum: ['timestamp', 'created_at', 'source_channel', 'err'] },

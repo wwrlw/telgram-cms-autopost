@@ -1,33 +1,24 @@
 import { FastifyInstance } from "fastify";
 import { DependencyContainer } from "../container/DependencyContainer";
-import { GetPostUseCase } from "../use-cases/GetPostUseCase";
-import { GetPostsUseCase } from "../use-cases/GetPostsUseCase";
-import { GetPostsWithQueryUseCase } from "../use-cases/GetPostsWithQueryUseCase";
-import { GetPostsInfiniteScrollUseCase } from "../use-cases/GetPostsInfiniteScrollUseCase";
-import { GetPostsStatsUseCase } from "../use-cases/GetPostsStatsUseCase";
-import { DeletePostUseCase } from "../use-cases/DeletePostUseCase";
+import { PostsController } from "../controllers/PostsController";
 import { parsePostQuery } from "../utils/queryParser";
 import { parseInfiniteScrollQuery } from "../utils/infiniteScrollQueryParser";
 import { postQuerySchema, postSearchResponseSchema } from "../schemas/postQuerySchema";
 import { infiniteScrollQuerySchema, infiniteScrollResponseSchema } from "../schemas/infiniteScrollSchema";
 import { Post } from "../models/Post";
-import { pipeline } from 'node:stream/promises';
-import fs from 'fs';
-import path from 'path';
 import { requireAuth, requirePermission } from "../middleware/authRole";
 import { logAction } from "../middleware/logging";
 import { PERMISSIONS } from "../models/Category";
 
 export async function postsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
+  const controller = new PostsController();
 
-  // Новый endpoint для статистики постов (в начале для правильного порядка)
   fastify.get(
     "/posts/stats",
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
-      const getPostsStatsUseCase = container.getGetPostsStatsUseCase();
-      const stats = await getPostsStatsUseCase.execute();
+      const stats = await controller.stats();
       return { success: true, data: stats };
     }
   );
@@ -45,8 +36,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const query = parsePostQuery(request.query);
-      const getPostsWithQueryUseCase = container.getGetPostsWithQueryUseCase();
-      const result = await getPostsWithQueryUseCase.execute(query);
+      const result = await controller.listWithQuery(query);
       return { success: true, ...result };
     }
   );
@@ -66,8 +56,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
         ? parsePostQuery(queryParams)
         : { pagination: { page: 1, limit: 24 } } as any;
 
-      const getPostsWithQueryUseCase = container.getGetPostsWithQueryUseCase();
-      const result = await getPostsWithQueryUseCase.execute(query);
+      const result = await controller.listWithQuery(query);
 
       if (hasParams) {
         return { success: true, ...result };
@@ -76,7 +65,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Новый endpoint для infinite scroll
   fastify.get(
     "/posts/infinite-scroll",
     { 
@@ -91,8 +79,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const queryParams = request.query as any;
       const query = parseInfiniteScrollQuery(queryParams);
-      const getPostsInfiniteScrollUseCase = container.getGetPostsInfiniteScrollUseCase();
-      const result = await getPostsInfiniteScrollUseCase.execute(query);
+      const result = await controller.listInfinite(query);
       return { success: true, ...result };
     }
   );
@@ -102,8 +89,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] }, 
     async (request, reply) => {
       const id = (request.params as any).id;
-      const getPostUseCase = container.getGetPostUseCase();
-      const post = await getPostUseCase.execute(id);
+      const post = await controller.get(id);
       return { success: true, data: post };
     }
   );
@@ -115,78 +101,66 @@ export async function postsRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const id = (request.params as any).id;
-      const deletePostUseCase = container.getDeletePostUseCase();
-      const result = await deletePostUseCase.execute(id);
+      const result = await controller.delete(id);
       try { await logAction(request, reply); } catch {}
       return { success: true, message: result.message };
     }
   );
-  // Запланировать пост
   fastify.post(
     '/posts/:id/schedule',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const { scheduled_at, channel_id } = request.body as { scheduled_at: string; channel_id: string };
-      const postService = container.getPostService();
-      const result = await postService.schedulePost(id, new Date(scheduled_at), channel_id);
+      const result = await controller.schedule(id, new Date(scheduled_at), channel_id);
       await logAction(request, reply);
       return { success: true, data: result };
     }
   );
-  // Получить запланированные посты
   fastify.get(
     '/posts/scheduled',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
-      const postService = container.getPostService();
       const { channel_id } = (request.query as any) || {};
-      const scheduledPosts = await postService.getScheduledPosts(channel_id);
+      const scheduledPosts = await controller.getScheduled(channel_id);
       return { success: true, data: scheduledPosts };
     }
   );
-  // Отменить отложенную публикацию
   fastify.delete(
     '/posts/:id/schedule',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.DELETE_POSTS)] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const postService = container.getPostService();
-      const result = await postService.cancelScheduledPost(id);
+      const result = await controller.cancelSchedule(id);
       return { success: true, data: result };
     }
   );
 
-  // Получить опубликованные посты
   fastify.get(
     '/posts/published',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
-      const postService = container.getPostService();
       const { channel_id } = (request.query as any) || {};
-      const publishedPosts = await postService.getPublishedPosts(channel_id);
+      const publishedPosts = await controller.getPublished(channel_id);
       return { success: true, data: publishedPosts };
     }
   );
 
-  // Обновить пост
   fastify.put(
     '/posts/:id',
     { 
       preHandler: [requireAuth, requirePermission(PERMISSIONS.EDIT_POSTS)],
-      // Разрешаем multipart/form-data для PUT запросов
-      bodyLimit: 10485760 // 10MB
+      bodyLimit: 10485760
     },
     async (request: any, reply) => {
         const { id } = request.params as { id: string };
-        const container = DependencyContainer.getInstance();
+        
         const parts = request.parts();
         const fields: any = {};
         const media: any[] = [];
 
         fastify.log.info(`Updating post ${id}`);
 
-        // Обрабатываем только поля формы, файлы должны быть загружены заранее через /media/upload
         for await (const part of parts) {
           if (part.type === 'field') {
             fields[part.fieldname] = part.value;
@@ -194,7 +168,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
           }
         }
 
-        // Обрабатываем медиафайлы, которые уже загружены через /media/upload
         const mediaFields = Object.keys(fields).filter(key => key.startsWith('media['));
         fastify.log.info(`Found ${mediaFields.length} media fields`);
         
@@ -212,7 +185,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
             }
           });
           
-          // Добавляем уже загруженные медиафайлы
           mediaMap.forEach((mediaItem) => {
             const mediaObj = {
               type: mediaItem.type || 'photo',
@@ -234,8 +206,7 @@ export async function postsRoutes(fastify: FastifyInstance) {
         
         fastify.log.info(`Update data: ${JSON.stringify(updateData)}`);
         
-        const postService = container.getPostService();
-        const updatedPost = await postService.updatePost(id, updateData);
+        const updatedPost = await controller.update(id, updateData);
         
         fastify.log.info(`Post updated successfully: ${updatedPost._id}`);
         
@@ -247,19 +218,17 @@ export async function postsRoutes(fastify: FastifyInstance) {
     '/posts',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.CREATE_POSTS)] },
     async (request: any, reply) => {
-      const container = DependencyContainer.getInstance();
+      
       const parts = request.parts();
       const fields: any = {};
       const media: any[] = [];
 
-      // Обрабатываем только поля формы, файлы должны быть загружены заранее через /media/upload
       for await (const part of parts) {
         if (part.type === 'field') {
           fields[part.fieldname] = part.value;
         }
       }
 
-      // Обрабатываем медиафайлы, которые уже загружены через /media/upload
       const mediaFields = Object.keys(fields).filter(key => key.startsWith('media['));
       if (mediaFields.length > 0) {
         const mediaMap = new Map();
@@ -274,7 +243,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
           }
         });
         
-        // Добавляем уже загруженные медиафайлы
         mediaMap.forEach((mediaItem) => {
           media.push({
             type: mediaItem.type || 'photo',
@@ -292,17 +260,13 @@ export async function postsRoutes(fastify: FastifyInstance) {
         format: (fields.format === 'html' || fields.format === 'markdown') ? fields.format : undefined
       } as any;
 
-      const useCase = container.getCreateManualPostUseCase();
-      const post = await useCase.execute(dto);
+      const post = await controller.create(dto);
 
-      // если scheduled_at присутствует -> планируем
       if (fields.scheduled_at && fields.channel_id) {
         const postService = container.getPostService();
         await postService.schedulePost(post._id!.toString(), new Date(fields.scheduled_at), fields.channel_id);
-        // Логируем добавление отложенного поста
         await logAction(request, reply);
       } else {
-        // Логируем сохранение поста
         await logAction(request, reply);
       }
 
@@ -310,27 +274,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Тестовый роут для проверки настроек Yandex GPT
-  fastify.get(
-    "/posts/test-yandex-config",
-    { 
-      preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)]
-    },
-    async (request, reply) => {
-      return {
-        success: true,
-        data: {
-          hasYandexApiFolder: !!process.env.YANDEX_API_FOLDER,
-          hasIamToken: !!process.env.IAM_TOKEN,
-          yandexApiFolder: process.env.YANDEX_API_FOLDER ? 
-            process.env.YANDEX_API_FOLDER.substring(0, 8) + '...' : null,
-          iamTokenLength: process.env.IAM_TOKEN ? process.env.IAM_TOKEN.length : 0
-        }
-      };
-    }
-  );
-
-  // Роут для уникализации поста
   fastify.post(
     "/posts/:id/uniquize",
     { 
@@ -347,13 +290,11 @@ export async function postsRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const uniquizePostUseCase = container.getUniquizePostUseCase();
-      const uniquizedPost = await uniquizePostUseCase.execute(id);
+      const uniquizedPost = await controller.uniquize(id);
       return { success: true, data: uniquizedPost };
     }
   );
 
-  // Очистка старых постов и медиа
   fastify.post(
     "/posts/cleanup",
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.CLEANUP_POSTS)] },
