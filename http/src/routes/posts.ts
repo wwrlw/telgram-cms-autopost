@@ -16,7 +16,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     "/posts/stats",
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
       const stats = await controller.stats();
       return { success: true, data: stats };
@@ -26,7 +25,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts/search",
     { 
-      preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)],
       schema: {
         querystring: postQuerySchema,
         response: {
@@ -44,7 +42,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts",
     { 
-      preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)],
       schema: {
         querystring: postQuerySchema
       }
@@ -68,7 +65,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/posts/infinite-scroll",
     { 
-      preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)],
       schema: {
         querystring: infiniteScrollQuerySchema,
         response: {
@@ -86,7 +82,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     '/post/:id', 
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] }, 
     async (request, reply) => {
       const id = (request.params as any).id;
       const post = await controller.get(id);
@@ -119,7 +114,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
   );
   fastify.get(
     '/posts/scheduled',
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
       const { channel_id } = (request.query as any) || {};
       const scheduledPosts = await controller.getScheduled(channel_id);
@@ -138,7 +132,6 @@ export async function postsRoutes(fastify: FastifyInstance) {
 
   fastify.get(
     '/posts/published',
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_POSTS)] },
     async (request, reply) => {
       const { channel_id } = (request.query as any) || {};
       const publishedPosts = await controller.getPublished(channel_id);
@@ -204,11 +197,9 @@ export async function postsRoutes(fastify: FastifyInstance) {
           format: (fields.format === 'html' || fields.format === 'markdown') ? fields.format : undefined
         } as Partial<Post>;
         
-        fastify.log.info(`Update data: ${JSON.stringify(updateData)}`);
         
         const updatedPost = await controller.update(id, updateData);
         
-        fastify.log.info(`Post updated successfully: ${updatedPost._id}`);
         
         return { success: true, data: updatedPost, message: 'Пост успешно обновлен' };
     }

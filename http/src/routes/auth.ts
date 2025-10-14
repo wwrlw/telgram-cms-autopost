@@ -37,7 +37,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
         const loginUseCase = container.getLoginUseCase();
         const result = await loginUseCase.execute(loginData);
         
-        // Устанавливаем refreshToken в HttpOnly cookie
         const { refreshToken, accessToken, ...rest } = result as any;
         reply
           .setCookie('refreshToken', refreshToken, {
@@ -53,7 +52,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
             data: { accessToken, refreshToken, ...rest } 
           });
       } catch (loginError: any) {
-        // Если ошибка логина, значит пароль неправильный
         if (loginError.message === 'Invalid username or password') {
           return reply.status(400).send({ 
             success: false, 
@@ -62,7 +60,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
           });
         }
         
-        // Другие ошибки логина
         reply.status(400).send({ 
           success: false, 
           message: loginError.message 
@@ -78,7 +75,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Refresh token endpoint (public)
   fastify.post('/refresh', async (request, reply) => {
     try {
       const cookieRt = (request as any).cookies?.refreshToken;
@@ -148,8 +144,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
   fastify.get('/users', {
     preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS)]
   }, async (request, reply) => {
-    // DEBUG: print user
-    console.log('AUTH USERS ROUTE: request.user =', (request as any).user);
     try {
       const userService = container.getUserService();
       const users = await userService.getAllUsers();
