@@ -77,7 +77,8 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
             is_private: { type: 'boolean' },
             is_active: { type: 'boolean' },
             bot_token: { type: 'string' },
-            signature: { type: 'string' }
+            signature: { type: 'string' },
+            prompt: { type: 'string' }
           }
         }
       }
@@ -111,7 +112,8 @@ export async function postedChannelsRoutes(fastify: FastifyInstance) {
             is_private: { type: 'boolean' },
             is_active: { type: 'boolean' },
             bot_token: { type: 'string' },
-            signature: { type: 'string' }
+            signature: { type: 'string' },
+            prompt: { type: 'string' }
           }
         }
       }

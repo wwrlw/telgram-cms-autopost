@@ -6,7 +6,6 @@ export interface Channel {
   channel_id: number;
   category_id?: ObjectId;
   is_private: boolean;
-  prompt?: string;
   created_at: Date;
 }
 
@@ -15,7 +14,6 @@ export interface CreateChannelDto {
   channel_id: number;
   category_id?: ObjectId;
   is_private?: boolean;
-  prompt?: string;
 }
 
 export interface ChannelResponse {
@@ -24,6 +22,5 @@ export interface ChannelResponse {
   channel_id: number;
   category_id?: string;
   is_private: boolean;
-  prompt?: string;
   created_at: Date;
 } 

@@ -22,7 +22,8 @@ export default async function publishRoutes(fastify: FastifyInstance) {
   const publishPostToChannelUseCase = new PublishPostToChannelUseCase(
     postService,
     postedChannelService,
-    telegramPublishService
+    telegramPublishService,
+    yandexGPTService
   );
 
   const deletePostFromTelegramUseCase = new DeletePostFromTelegramUseCase(

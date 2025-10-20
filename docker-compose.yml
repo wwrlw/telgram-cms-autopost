@@ -1,6 +1,8 @@
 services:
   backend:
-    build: ./http
+    build:
+      context: ./http
+      dockerfile: dockerfile.dev
     container_name: tg-parse-backend
     restart: unless-stopped
     ports:
