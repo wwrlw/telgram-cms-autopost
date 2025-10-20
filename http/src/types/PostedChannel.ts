@@ -5,4 +5,5 @@ export interface PostedChannel {
   is_private: boolean;
   is_active: boolean;
   signature: string;
+  prompt?: string;
 }

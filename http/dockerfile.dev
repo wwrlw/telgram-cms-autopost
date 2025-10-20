@@ -1,0 +1,15 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm ci
+
+COPY . .
+
+ENV CHOKIDAR_USEPOLLING=1
+
+RUN mkdir -p /app/media && chmod 755 /app/media
+
+CMD ["npm", "run", "dev"]

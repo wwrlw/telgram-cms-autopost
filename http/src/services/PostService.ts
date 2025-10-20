@@ -246,7 +246,7 @@ export class PostService implements IPostService {
       throw new NotFoundError('Post not found');
     }
 
-    const allowedFields: (keyof Post)[] = ['text', 'url', 'source_channel', 'is_unique', 'media', 'channel_id', 'format'];
+    const allowedFields: (keyof Post)[] = ['text', 'url', 'source_channel', 'is_unique', 'unique_text', 'media', 'channel_id', 'format'];
     const filteredUpdateData: Partial<Post> = {};
     
     for (const field of allowedFields) {
@@ -312,6 +312,31 @@ export class PostService implements IPostService {
     
     const updatedPost = await this.postRepository.update(id, {
       unique_text: uniquizedText,
+      is_unique: true,
+      updated_at: new Date()
+    });
+
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to update post with uniquized text');
+    }
+
+    return updatedPost;
+  }
+
+  async uniquizePostWithCustomPrompt(id: string, customPrompt: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+
+    if (!post.text || post.text.trim() === '') {
+      throw new NotFoundError('Post has no text to uniquize');
+    }
+
+    const rewritten = await this.yandexGPTService.rewriteWithCustomPrompt(post.text, customPrompt);
+
+    const updatedPost = await this.postRepository.update(id, {
+      unique_text: rewritten,
       is_unique: true,
       updated_at: new Date()
     });

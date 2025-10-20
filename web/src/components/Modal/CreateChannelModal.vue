@@ -196,40 +196,6 @@
                                             канала (необязательно)
                                         </p>
                                     </div>
-
-                                    <div>
-                                        <label
-                                            for="prompt"
-                                            class="block text-sm font-medium text-gray-700"
-                                        >
-                                            Промпт для AI обработки
-                                        </label>
-                                        <div class="mt-1">
-                                            <textarea
-                                                v-model="formData.prompt"
-                                                name="prompt"
-                                                id="prompt"
-                                                rows="4"
-                                                placeholder="Введите промпт для обработки текста постов этого канала..."
-                                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
-                                                :class="{
-                                                    'border-red-300':
-                                                        errors.prompt,
-                                                }"
-                                            ></textarea>
-                                        </div>
-                                        <p
-                                            v-if="errors.prompt"
-                                            class="mt-1 text-sm text-red-600"
-                                        >
-                                            {{ errors.prompt }}
-                                        </p>
-                                        <p class="mt-1 text-sm text-gray-500">
-                                            Промпт для AI обработки текста
-                                            постов. Если не указан, будет
-                                            использован стандартный промпт.
-                                        </p>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -306,7 +272,6 @@ const formData = ref({
     channel_id: null,
     category_id: "",
     is_private: false,
-    prompt: "",
 });
 
 const errors = ref({});
@@ -373,7 +338,6 @@ const resetForm = () => {
         channel_id: null,
         category_id: "",
         is_private: false,
-        prompt: "",
     };
     errors.value = {};
     isSubmitting.value = false;
@@ -388,7 +352,6 @@ watch(
                 channel_id: props.channel.channel_id,
                 category_id: props.channel.category_id || "",
                 is_private: props.channel.is_private || false,
-                prompt: props.channel.prompt || "",
             };
         } else if (newValue) {
             resetForm();

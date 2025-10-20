@@ -276,6 +276,14 @@ export async function postsRoutes(fastify: FastifyInstance) {
             id: { type: 'string' }
           },
           required: ['id']
+        },
+        body: {
+          type: 'object',
+          properties: {
+            custom_prompt: { type: 'string' },
+            save_prompt: { type: 'boolean' },
+            channel_id: { type: 'string' }
+          }
         }
       }
     },
