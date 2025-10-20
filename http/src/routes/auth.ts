@@ -4,6 +4,7 @@ import { LoginUseCase } from '../use-cases/LoginUseCase';
 import { CreateUserDto, LoginDto } from '../models/User';
 import { requireAuth, requireRole, requirePermission } from '../middleware/authRole';
 import { logAction } from '../middleware/logging';
+import { registerSchema } from '../schemas/registerSchema';
 import { ROLES, PERMISSIONS } from '../models/Category';
 import { DependencyContainer } from '../container/DependencyContainer';
 
@@ -122,6 +123,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
   });
 
   fastify.post('/register', {
+    schema: registerSchema,
     preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
   }, async (request, reply) => {
     try {
@@ -129,7 +131,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
       const createUserUseCase = container.getCreateUserUseCase();
       const result = await createUserUseCase.execute(userData);
       
-      reply.send({ 
+      reply.code(201).send({ 
         success: true, 
         data: result 
       });

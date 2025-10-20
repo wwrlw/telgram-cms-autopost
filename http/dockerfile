@@ -2,31 +2,14 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install build tools for native dependencies
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    py3-pip
-
-# Copy package files first
 COPY package*.json ./
 
-# Remove any existing node_modules and lock files
-RUN rm -rf node_modules package-lock.json
+RUN npm ci
 
-# Install dependencies fresh
-RUN npm install
-
-# Copy source code
 COPY . .
 
-# Remove node_modules again and reinstall to ensure clean build
-RUN rm -rf node_modules && npm install
+ENV CHOKIDAR_USEPOLLING=1
 
-RUN npm run build
-
-# Create media directory and set permissions
 RUN mkdir -p /app/media && chmod 755 /app/media
 
 CMD ["npm", "run", "dev"]

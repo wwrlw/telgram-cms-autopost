@@ -7,7 +7,7 @@ export const getMediaUrl = (filePath) => {
     try {
         const cleanPath = filePath.replace("/app/", "");
         const baseUrl =
-            import.meta.env.VITE_API_URL || "https://tg.chiorio.com";
+            import.meta.env.VITE_API_URL || "https://tgdev.chiorio.com";
 
         if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
             return filePath;
@@ -38,7 +38,7 @@ export const getCoverImageUrl = (filePath) => {
     try {
         const cleanPath = filePath.replace("/app/", "");
         const baseUrl =
-            import.meta.env.VITE_API_URL || "https://tg.chiorio.com";
+            import.meta.env.VITE_API_URL || "https://tgdev.chiorio.com";
 
         if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
             return filePath;

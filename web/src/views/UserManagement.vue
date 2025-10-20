@@ -154,7 +154,6 @@
         </div>
     </div>
 
-    <!-- Create User Modal -->
     <div
         v-if="showCreateModal"
         class="fixed inset-0 bg-white/30 backdrop-blur-sm overflow-y-auto h-full w-full z-50"
@@ -327,7 +326,6 @@
         </div>
     </div>
 
-    <!-- Confirm Modal -->
     <ConfirmModal
         :show="showConfirmModal"
         :message="confirmMessage"
@@ -461,7 +459,6 @@ const createUser = () => {
 };
 
 const openRoleModal = (user) => {
-    // Не открываем модальное окно для супер администраторов
     if (user.role === "super_admin") {
         return;
     }
@@ -547,7 +544,6 @@ const refreshUsersHandler = async () => {
     } catch (error) {
         console.error("Error refreshing users:", error);
 
-        // Показываем уведомление об ошибке
         if (window.$toast) {
             window.$toast.error(
                 "Ошибка обновления пользователей: " +
@@ -564,7 +560,6 @@ onMounted(async () => {
         console.error("Error in onMounted:", error);
     }
 
-    // Слушаем событие обновления пользователей из Header
     window.addEventListener("refreshUsers", refreshUsersHandler);
 });
 

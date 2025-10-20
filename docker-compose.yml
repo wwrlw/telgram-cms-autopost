@@ -4,7 +4,7 @@ services:
     container_name: tg-parse-backend
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "4000:4000"
     volumes:
       - ./parser/media:/app/media
     environment:
@@ -19,6 +19,7 @@ services:
       - YANDEX_API_KEY=${YANDEX_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - VITE_API_URL=${VITE_API_URL}
+      - PORT=${PORT}
     networks:
       - bots_bots
   parser:
@@ -26,7 +27,7 @@ services:
     container_name: tg-parse-parser
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3002:3002"
+      - "127.0.0.1:3003:3003"
     volumes:
       - ./parser:/app
       - /app/node_modules
@@ -49,16 +50,16 @@ services:
       - bots_bots
   frontend:
     build:
-      context: ./src
+      context: ./web
       target: dev
       dockerfile: dockerfile
     container_name: tg-parse-frontend
     restart: unless-stopped
     volumes:
-      - ./src:/app/
+      - ./web:/app/
       - /app/node_modules
     ports:
-      - '127.0.0.1:5173:5173'
+      - '127.0.0.1:5174:5174'
     environment:
       - NODE_ENV=development
       - VITE_API_URL=${VITE_API_URL}

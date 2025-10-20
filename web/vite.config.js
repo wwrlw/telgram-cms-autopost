@@ -16,8 +16,8 @@ export default defineConfig({
     ],
     server: {
         host: "0.0.0.0",
-        port: 5179,
-        allowedHosts: ["tg.chiorio.com", "tgdev.chiorio.com"],
+        port: 5174,
+        allowedHosts: ["tgdev.chiorio.com"],
     },
     resolve: {
         alias: {
