@@ -240,6 +240,25 @@
                                 ></textarea>
                             </div>
 
+                            <div>
+                                <label
+                                    for="prompt"
+                                    class="block text-sm font-medium text-gray-700"
+                                    >Промпт для AI обработки</label
+                                >
+                                <textarea
+                                    id="prompt"
+                                    v-model="formData.prompt"
+                                    rows="4"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    placeholder="Введите промпт для обработки текста при публикации..."
+                                ></textarea>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Если не указан, будет использован
+                                    стандартный промпт.
+                                </p>
+                            </div>
+
                             <div class="flex items-center">
                                 <input
                                     type="checkbox"
@@ -328,6 +347,7 @@ const formData = reactive({
     is_private: false,
     is_active: true,
     signature: "",
+    prompt: "",
 });
 
 const loadChannels = () => {
@@ -354,6 +374,7 @@ const openCreateModal = () => {
         is_private: false,
         is_active: true,
         signature: "",
+        prompt: "",
     });
     showModal.value = true;
 };
@@ -366,6 +387,7 @@ const openEditModal = (channel) => {
         is_private: channel.is_private,
         is_active: channel.is_active,
         signature: channel.signature,
+        prompt: channel.prompt || "",
     });
     showModal.value = true;
 };

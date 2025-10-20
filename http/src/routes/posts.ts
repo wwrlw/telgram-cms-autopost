@@ -457,14 +457,32 @@ export async function postsRoutes(fastify: FastifyInstance) {
             id: { type: 'string' }
           },
           required: ['id']
+        },
+        body: {
+          type: 'object',
+          properties: {
+            custom_prompt: { type: 'string' },
+            save_prompt: { type: 'boolean' },
+            channel_id: { type: 'string' }
+          }
         }
       }
     },
     async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
+        const { custom_prompt, save_prompt, channel_id } = (request.body as any) || {};
         const uniquizePostUseCase = container.getUniquizePostUseCase();
-        const uniquizedPost = await uniquizePostUseCase.execute(id);
+        const uniquizedPost = await uniquizePostUseCase.execute(id, custom_prompt);
+
+        if (save_prompt && custom_prompt && channel_id) {
+          const publicationChannelService = container.getPublicationChannelService();
+          try {
+            await publicationChannelService.updatePublicationChannel(channel_id, { prompt: custom_prompt });
+          } catch (e) {
+            request.log?.warn?.({ err: e }, 'Не удалось сохранить промпт в канал публикации');
+          }
+        }
         
         return {
           success: true,

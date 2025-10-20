@@ -9,36 +9,28 @@
         >
             <button class="tg-menu-item" @click="applyCtx('bold')">
                 <span>Жирный</span>
-                <!-- <kbd>Ctrl+B</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('italic')">
                 <span>Курсив</span>
-                <!-- <kbd>Ctrl+I</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('underline')">
                 <span>Подчёркнутый</span>
-                <!-- <kbd>Ctrl+U</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('strike')">
                 <span>Зачёркнутый</span>
-                <!-- <kbd>Ctrl+Shift+X</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('quote')">
                 <span>Цитата</span>
-                <!-- <kbd>Ctrl+Shift+.</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('mono')">
                 <span>Моноширинный</span>
-                <!-- <kbd>Ctrl+Shift+M</kbd> -->
             </button>
             <button class="tg-menu-item" @click="applyCtx('spoiler')">
                 <span>Скрытый</span>
-                <!-- <kbd>Ctrl+Shift+P</kbd> -->
             </button>
             <div class="tg-menu-sep"></div>
             <button class="tg-menu-item" @click="applyCtx('link')">
                 <span>Добавить ссылку</span>
-                <!-- <kbd>Ctrl+K</kbd> -->
             </button>
         </div>
     </div>
