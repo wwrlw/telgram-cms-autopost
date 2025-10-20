@@ -1,0 +1,31 @@
+{
+  // --- Общие настройки редактора ---
+  "editor.tabSize": 4, // Устанавливаем в соответствии с вашим .prettierrc
+  "editor.insertSpaces": true,
+  
+  // --- Включаем форматирование и автоисправление при сохранении ---
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+      // Применяет все авто-исправляемые правила ESLint при сохранении
+      "source.fixAll.eslint": "always"
+  },
+
+  // --- Указываем форматер по умолчанию для разных языков ---
+  "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[vue]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // --- Настройки Prettier ---
+  "prettier.useEditorConfig": false,
+  "prettier.printWidth": 120,
+  "prettier.proseWrap": "always"
+}

@@ -15,8 +15,6 @@ export class PublishPostUseCase {
       throw new NotFoundError('Post not found');
     }
 
-    // TODO: Нужно передать канал, но этот use case устарел
-    // Используйте PublishPostToChannelUseCase вместо этого
     return {
       success: false,
       message: 'This use case is deprecated. Use PublishPostToChannelUseCase instead.'

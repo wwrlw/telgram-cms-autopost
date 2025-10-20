@@ -1,155 +1,72 @@
 import { FastifyInstance } from 'fastify';
-import { DependencyContainer } from '../container/DependencyContainer';
+import { PublicationChannelController } from '../controllers/PublicationChannelController';
 import { requireAuth, requirePermission } from '../middleware/authRole';
 import { logAction } from '../middleware/logging';
 import { PERMISSIONS } from '../models/Category';
+import { createPublicationChannelBodySchema, updatePublicationChannelBodySchema } from '../schemas/publicationChannel';
 
 export async function postedChannelsRoutes(fastify: FastifyInstance) {
-  const container = DependencyContainer.getInstance();
+  const controller = new PublicationChannelController();
 
-  // Получить все каналы публикации
   fastify.get(
     '/posted-channels',
-    { preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)] },
     async (request, reply) => {
-      try {
-        const getPublicationChannelsUseCase = container.getGetPublicationChannelsUseCase();
-        const channels = await getPublicationChannelsUseCase.execute();
-        return {
-          success: true,
-          data: channels
-        };
-      } catch (error) {
-        throw error;
-      }
+      const channels = await controller.list();
+      return { success: true, data: channels };
     }
   );
 
-  // Получить активные каналы публикации
   fastify.get(
     '/posted-channels/active',
-    { preHandler: [requireAuth] },
     async (request, reply) => {
-      try {
-        const getActivePublicationChannelsUseCase = container.getGetActivePublicationChannelsUseCase();
-        const channels = await getActivePublicationChannelsUseCase.execute();
-        return {
-          success: true,
-          data: channels
-        };
-      } catch (error) {
-        throw error;
-      }
+      const channels = await controller.listActive();
+      return { success: true, data: channels };
     }
   );
 
-  // Получить канал по ID
   fastify.get(
     '/posted-channels/:id',
-    { preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)] },
     async (request, reply) => {
-      try {
-        const id = (request.params as any).id;
-        const publicationChannelService = container.getPublicationChannelService();
-        const channel = await publicationChannelService.getPublicationChannelById(id);
-        return {
-          success: true,
-          data: channel
-        };
-      } catch (error) {
-        throw error;
-      }
+      const id = (request.params as any).id;
+      const channel = await controller.get(id);
+      return { success: true, data: channel };
     }
   );
 
-  // Создать новый канал публикации
   fastify.post(
     '/posted-channels',
     { 
       preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)],
-      schema: {
-        body: {
-          type: 'object',
-          required: ['name', 'channel_id', 'is_private'],
-          properties: {
-            name: { type: 'string' },
-            channel_id: { type: 'string' },
-            is_private: { type: 'boolean' },
-            is_active: { type: 'boolean' },
-            bot_token: { type: 'string' },
-            signature: { type: 'string' },
-            prompt: { type: 'string' }
-          }
-        }
-      }
+      schema: { body: createPublicationChannelBodySchema }
     },
     async (request, reply) => {
-      try {
-        const channelData = request.body as any;
-        const createPublicationChannelUseCase = container.getCreatePublicationChannelUseCase();
-        const channel = await createPublicationChannelUseCase.execute(channelData);
-        return {
-          success: true,
-          data: channel
-        };
-      } catch (error) {
-        throw error;
-      }
+      const channelData = request.body as any;
+      const channel = await controller.create(channelData);
+      return { success: true, data: channel };
     }
   );
 
-  // Обновить канал публикации
   fastify.put(
     '/posted-channels/:id',
     { 
       preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)],
-      schema: {
-        body: {
-          type: 'object',
-          properties: {
-            name: { type: 'string' },
-            channel_id: { type: 'string' },
-            is_private: { type: 'boolean' },
-            is_active: { type: 'boolean' },
-            bot_token: { type: 'string' },
-            signature: { type: 'string' },
-            prompt: { type: 'string' }
-          }
-        }
-      }
+      schema: { body: updatePublicationChannelBodySchema }
     },
     async (request, reply) => {
-      try {
-        const id = (request.params as any).id;
-        const channelData = request.body as any;
-        const updatePublicationChannelUseCase = container.getUpdatePublicationChannelUseCase();
-        const channel = await updatePublicationChannelUseCase.execute(id, channelData);
-        return {
-          success: true,
-          data: channel
-        };
-      } catch (error) {
-        throw error;
-      }
+      const id = (request.params as any).id;
+      const channelData = request.body as any;
+      const channel = await controller.update(id, channelData);
+      return { success: true, data: channel };
     }
   );
 
-  // Удалить канал публикации
   fastify.delete(
     '/posted-channels/:id',
     { preValidation: [requireAuth, requirePermission(PERMISSIONS.MANAGE_PUBLICATION_CHANNELS)] },
     async (request, reply) => {
-      try {
-        const id = (request.params as any).id;
-        const deletePublicationChannelUseCase = container.getDeletePublicationChannelUseCase();
-        const deleted = await deletePublicationChannelUseCase.execute(id);
-        return {
-          success: true,
-          data: { deleted }
-        };
-      } catch (error) {
-        throw error;
-      }
+      const id = (request.params as any).id;
+      const deleted = await controller.remove(id);
+      return { success: true, data: { deleted } };
     }
   );
 } 

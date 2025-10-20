@@ -7,7 +7,6 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();
 
 
-  // Дневные срезы аналитики по каналу
   fastify.get(
     '/analytics/daily',
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.VIEW_ANALYTICS)] },
@@ -23,10 +22,8 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
           return reply.status(500).send({ success: false, message: 'MongoDB не инициализирована' });
         }
 
-        // Строим фильтр запроса
         const filter: any = { channel_id: channelid };
         
-        // Добавляем фильтр по датам если они указаны
         if (startDate || endDate) {
           filter.date = {};
           if (startDate) {
@@ -37,10 +34,8 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
           }
         }
 
-        // Определяем лимит записей
         let queryLimit = Math.min(Number(limit) || 60, 365);
         
-        // Если указан диапазон дат, увеличиваем лимит
         if (startDate && endDate) {
           const start = new Date(startDate);
           const end = new Date(endDate);

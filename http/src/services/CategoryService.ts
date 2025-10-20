@@ -13,18 +13,15 @@ export class CategoryService implements ICategoryService {
   constructor(private categoryRepository: ICategoryRepository) {}
 
   async createCategory(categoryData: CreateCategoryDto): Promise<CategoryResponse> {
-    // Validate required fields
     if (!categoryData.name?.trim()) {
       throw new ValidationError('Category name is required');
     }
 
-    // Check if category with same name already exists
     const existingCategory = await this.categoryRepository.findByName(categoryData.name);
     if (existingCategory) {
       throw new ValidationError('Category with this name already exists');
     }
 
-    // Normalize and validate color if provided
     if (categoryData.color) {
       categoryData.color = categoryData.color.toUpperCase();
     }
@@ -87,13 +84,11 @@ export class CategoryService implements ICategoryService {
       throw new ValidationError('Category ID is required');
     }
 
-    // Check if category exists
     const existingCategory = await this.categoryRepository.findById(id);
     if (!existingCategory) {
       throw new NotFoundError('Category not found');
     }
 
-    // If updating name, check for duplicates
     if (categoryData.name && categoryData.name !== existingCategory.name) {
       const duplicateCategory = await this.categoryRepository.findByName(categoryData.name);
       if (duplicateCategory) {
@@ -101,7 +96,6 @@ export class CategoryService implements ICategoryService {
       }
     }
 
-    // Normalize and validate color if provided
     if (categoryData.color) {
       categoryData.color = categoryData.color.toUpperCase();
     }
@@ -130,7 +124,6 @@ export class CategoryService implements ICategoryService {
       throw new ValidationError('Category ID is required');
     }
 
-    // Check if category exists
     const existingCategory = await this.categoryRepository.findById(id);
     if (!existingCategory) {
       throw new NotFoundError('Category not found');

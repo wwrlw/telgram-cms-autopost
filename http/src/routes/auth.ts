@@ -4,6 +4,7 @@ import { LoginUseCase } from '../use-cases/LoginUseCase';
 import { CreateUserDto, LoginDto } from '../models/User';
 import { requireAuth, requireRole, requirePermission } from '../middleware/authRole';
 import { logAction } from '../middleware/logging';
+import { registerSchema } from '../schemas/registerSchema';
 import { ROLES, PERMISSIONS } from '../models/Category';
 import { DependencyContainer } from '../container/DependencyContainer';
 
@@ -37,7 +38,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
         const loginUseCase = container.getLoginUseCase();
         const result = await loginUseCase.execute(loginData);
         
-        // Устанавливаем refreshToken в HttpOnly cookie
         const { refreshToken, accessToken, ...rest } = result as any;
         reply
           .setCookie('refreshToken', refreshToken, {
@@ -53,7 +53,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
             data: { accessToken, refreshToken, ...rest } 
           });
       } catch (loginError: any) {
-        // Если ошибка логина, значит пароль неправильный
         if (loginError.message === 'Invalid username or password') {
           return reply.status(400).send({ 
             success: false, 
@@ -62,7 +61,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
           });
         }
         
-        // Другие ошибки логина
         reply.status(400).send({ 
           success: false, 
           message: loginError.message 
@@ -78,7 +76,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Refresh token endpoint (public)
   fastify.post('/refresh', async (request, reply) => {
     try {
       const cookieRt = (request as any).cookies?.refreshToken;
@@ -126,6 +123,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
   });
 
   fastify.post('/register', {
+    schema: registerSchema,
     preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS), logAction]
   }, async (request, reply) => {
     try {
@@ -133,7 +131,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
       const createUserUseCase = container.getCreateUserUseCase();
       const result = await createUserUseCase.execute(userData);
       
-      reply.send({ 
+      reply.code(201).send({ 
         success: true, 
         data: result 
       });
@@ -148,8 +146,6 @@ export default async function authRoutes(fastify: FastifyInstance) {
   fastify.get('/users', {
     preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_USERS)]
   }, async (request, reply) => {
-    // DEBUG: print user
-    console.log('AUTH USERS ROUTE: request.user =', (request as any).user);
     try {
       const userService = container.getUserService();
       const users = await userService.getAllUsers();

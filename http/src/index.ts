@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import dotenv from 'dotenv';
-import mongoConnector from './db/mongo';
+import mongoConnector from './plugins/mongo';
 import authPlugin from './plugins/auth';
 import authRoutes from './routes/auth';
 import { postsRoutes } from './routes/posts';
@@ -9,6 +9,7 @@ import { postedChannelsRoutes } from './routes/posted-channels';
 import { categoriesRoutes } from './routes/categories';
 import { analyticsRoutes } from './routes/analytics';
 import publishRoutes from './routes/publish';
+import swagger from './plugins/swagger';
 import logsRoutes from './routes/logs';
 import { mediaRoutes } from './routes/media';
 import cors from '@fastify/cors'
@@ -16,7 +17,6 @@ import fastifyStatic from '@fastify/static'
 import path from 'path';
 import { DependencyContainer } from './container/DependencyContainer';
 import { errorHandler } from './middleware/ErrorHandler';
-// @ts-ignore – нет типов для fastify v4
 import multipart from '@fastify/multipart'
 import cookie from '@fastify/cookie'
 
@@ -26,7 +26,6 @@ const fastify = Fastify({ logger: true });
 
 async function start() {
     try {
-        // Доверяем заголовкам прокси (X-Forwarded-Proto и т.д.), чтобы корректно определялся HTTPS
         (fastify as any).trustProxy = true;
         await fastify.register(cors, {
             origin: true,
@@ -41,13 +40,12 @@ async function start() {
         
         await fastify.register(multipart, { limits: { files: 10 } });
         
-        // Настройка раздачи статических файлов для медиа
         await fastify.register(fastifyStatic, {
             root: path.join(process.cwd(), 'media'),
             prefix: '/media/',
             decorateReply: false
         });
-        
+        await fastify.register(swagger);
         await fastify.register(authPlugin);
         await fastify.register(authRoutes, { prefix: '/auth' });
         await fastify.register(postsRoutes);
@@ -60,7 +58,7 @@ async function start() {
         await fastify.register(mediaRoutes);
         fastify.setErrorHandler(errorHandler);
         await fastify.ready();
-        await fastify.listen({ port: Number(process.env.PORT) || 3001, host: '0.0.0.0' });
+        await fastify.listen({ port: Number(process.env.PORT) || 4000, host: '0.0.0.0' });
     } catch (err) {
         fastify.log.error(err);
         process.exit(1);

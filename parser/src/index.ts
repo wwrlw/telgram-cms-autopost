@@ -13,12 +13,12 @@ const mongoHost = process.env.MONGO_HOST;
 const mongoPort = process.env.MONGO_PORT;
 const MONGO_DB = process.env.MONGO_DB_NAME || 'parse-news';
 
-let mongoUri = `mongodb://${mongoHost}:${mongoPort}/${MONGO_DB}`;
+let mongoUri = process.env.MONGODB_URI;
 if (mongoUsername && mongoPassword) {
   mongoUri = `mongodb://${mongoUsername}:${mongoPassword}@${mongoHost}:${mongoPort}/${MONGO_DB}?authSource=admin`;
 }
 
-const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:3001';
+const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:4000';
 const apiUsername = process.env.API_USERNAME || "myuser";
 const apiPassword = process.env.API_PASSWORD || "mypassword";
 

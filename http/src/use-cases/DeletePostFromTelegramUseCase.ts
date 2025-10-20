@@ -10,7 +10,6 @@ export class DeletePostFromTelegramUseCase {
 
   async execute(postId: string): Promise<{ success: boolean; message: string }> {
     try {
-      // Получаем пост
       const post = await this.postService.getPost(postId);
       
       if (!post.is_published) {
@@ -25,7 +24,6 @@ export class DeletePostFromTelegramUseCase {
         return { success: false, message: 'ID канала публикации не найден' };
       }
 
-      // Удаляем сообщение из Telegram
       const deleteResult = await this.telegramPublishService.deletePost(
         post.telegram_message_id,
         post.published_channel_id
@@ -35,7 +33,6 @@ export class DeletePostFromTelegramUseCase {
         return deleteResult;
       }
 
-      // Обновляем статус поста в базе данных
       await this.postService.unmarkAsPublished(postId);
 
       return { 
