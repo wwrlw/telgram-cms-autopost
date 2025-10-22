@@ -12,6 +12,7 @@
     "@fastify/jwt": "^7.0.0",
     "@fastify/mongodb": "^6.2.0",
     "@fastify/multipart": "^7.0.0",
+    "@fastify/redis": "^6.2.0",
     "@fastify/static": "^6.12.0",
     "@fastify/swagger": "^8.15.0",
     "@fastify/swagger-ui": "^2.1.0",

@@ -76,6 +76,13 @@ export class YandexGPTService {
     try {
       const modelName = `gpt://${this.folderId}/gpt-oss-120b/latest`;
 
+      const systemPrompt = `Ты профессиональный рерайтер контента. Твоя задача - переписать предоставленный текст в стиле канала "${profile.channelHandle}", сохранив всю информацию, но адаптировав под стиль и тон этого канала.`;
+      
+      const userPrompt = `Перепиши этот текст в стиле канала "${profile.channelHandle}":
+      
+Текст:
+${text}`;
+
       const response = await openai.chat.completions.create({
         model: modelName,
         messages: [

@@ -3,6 +3,7 @@ import { FastifyMongoObject } from "@fastify/mongodb";
 import { IPostRepository } from "../interfaces/repositories/IPostRepository";
 import { Post, CreatePostDto } from "../models/Post";
 import { PostQuery, PaginatedResponse, PostFilters, InfiniteScrollQuery, InfiniteScrollResponse } from "../types/PostQuery";
+import { mongoCached } from "../utils/cache";
 
 export class PostRepository implements IPostRepository {
   constructor(private mongo: FastifyMongoObject) {}
@@ -1009,7 +1010,8 @@ export class PostRepository implements IPostRepository {
     return result;
   }
 
-  async getPostsStatsToday(): Promise<number> {
+  // Кэшируем статистику постов за сегодня на 1 минуту
+  getPostsStatsToday = mongoCached(async (): Promise<number> => {
     if (!this.mongo.db) throw new Error("MongoDB is not connected");
 
     console.log('getPostsStatsToday called');
@@ -1038,14 +1040,18 @@ export class PostRepository implements IPostRepository {
 
     console.log('MongoDB pipeline:', JSON.stringify(pipeline, null, 2));
 
-    const result = await this.mongo.db.collection("posts").aggregate(pipeline).toArray();
+    const result = await this.mongo.db.collection("posts").aggregate(pipeline, { 
+      allowDiskUse: false, 
+      maxTimeMS: 10000, 
+      batchSize: 100 
+    }).toArray();
     console.log('MongoDB aggregation result:', result);
 
     const count = result[0]?.count || 0;
     console.log('Final count for today:', count);
     
     return count;
-}
+  }, 60000); // 1 минута кэш
 
   // Cleanup helper methods
   async countAll(): Promise<number> {

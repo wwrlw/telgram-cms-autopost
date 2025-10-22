@@ -1,14 +1,12 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
 COPY package*.json ./
-
-RUN npm ci
+RUN npm install
 
 COPY . .
-
-ENV CHOKIDAR_USEPOLLING=1
+RUN npm run build
 
 RUN mkdir -p /app/media && chmod 755 /app/media
 

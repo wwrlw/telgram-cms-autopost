@@ -31,7 +31,7 @@ const config = {
   apiId: Number(process.env.API_ID),
   apiHash: process.env.API_HASH!,
   sessionString: process.env.STRING_SESSION!,
-  mongoUri: process.env.MONGO_URI || mongoUri,
+  mongoUri: process.env.MONGO_URI || 'mongodb://admin:Xdas33JJdasnnjdA22KKsaaA@localhost:27019/?authSource=admin',
   MONGO_DB,
   mediaPath: process.env.MEDIA_PATH || './media'
 };
