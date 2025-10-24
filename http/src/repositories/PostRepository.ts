@@ -33,7 +33,7 @@ export class PostRepository implements IPostRepository {
       { $match: { _id: new ObjectId(id) } },
       { $lookup: { from: 'channels', localField: 'channel_id', foreignField: 'channel_id', as: 'channel' } },
       { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
-      { $addFields: { 'channel.category_id_obj': { $cond: { if: { $eq: [{ $type: '$channel.category_id' }, 'string'] }, then: { $toObjectId: '$channel.category_id' }, else: '$channel.category_id' } } } },
+      { $addFields: { 'channel.category_id_obj': { $cond: { if: { $and: [{ $eq: [{ $type: '$channel.category_id' }, 'string'] }, { $ne: ['$channel.category_id', ''] }] }, then: { $toObjectId: '$channel.category_id' }, else: '$channel.category_id' } } } },
       { $lookup: { from: 'categories', localField: 'channel.category_id_obj', foreignField: '_id', as: 'category' } },
       { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
       { $addFields: { category_id: '$category._id', category_name: '$category.name', category_color: '$category.color', channel_username: '$channel.username' } }
@@ -85,7 +85,7 @@ export class PostRepository implements IPostRepository {
         $addFields: {
           'channel.category_id_obj': {
             $cond: {
-              if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+              if: { $and: [{ $eq: [{ $type: '$channel.category_id' }, 'string'] }, { $ne: ['$channel.category_id', ''] }] },
               then: { $toObjectId: '$channel.category_id' },
               else: '$channel.category_id'
             }
@@ -571,7 +571,7 @@ export class PostRepository implements IPostRepository {
         $addFields: {
           'channel.category_id_obj': {
             $cond: {
-              if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+              if: { $and: [{ $eq: [{ $type: '$channel.category_id' }, 'string'] }, { $ne: ['$channel.category_id', ''] }] },
               then: { $toObjectId: '$channel.category_id' },
               else: '$channel.category_id'
             }
@@ -663,7 +663,7 @@ export class PostRepository implements IPostRepository {
         $addFields: {
           'channel.category_id_obj': {
             $cond: {
-              if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+              if: { $and: [{ $eq: [{ $type: '$channel.category_id' }, 'string'] }, { $ne: ['$channel.category_id', ''] }] },
               then: { $toObjectId: '$channel.category_id' },
               else: '$channel.category_id'
             }
@@ -768,7 +768,7 @@ export class PostRepository implements IPostRepository {
           $addFields: {
             'channel.category_id_obj': {
               $cond: {
-                if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+                if: { $and: [{ $eq: [{ $type: '$channel.category_id' }, 'string'] }, { $ne: ['$channel.category_id', ''] }] },
                 then: { $toObjectId: '$channel.category_id' },
                 else: '$channel.category_id'
               }
@@ -845,7 +845,7 @@ export class PostRepository implements IPostRepository {
           $addFields: {
             'channel.category_id_obj': {
               $cond: {
-                if: { $eq: [{ $type: '$channel.category_id' }, 'string'] },
+                if: { $and: [{ $eq: [{ $type: '$channel.category_id' }, 'string'] }, { $ne: ['$channel.category_id', ''] }] },
                 then: { $toObjectId: '$channel.category_id' },
                 else: '$channel.category_id'
               }

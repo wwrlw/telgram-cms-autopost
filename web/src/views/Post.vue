@@ -91,7 +91,11 @@
                             class="w-4 h-4 animate-spin"
                         />
 
-                        <ArrowDown v-else class="cursor-pointer" @click="showPromptPopover = !showPromptPopover" />
+                        <ArrowDown
+                            v-else
+                            class="cursor-pointer"
+                            @click="showPromptPopover = !showPromptPopover"
+                        />
                         <span>{{
                             uniquizing
                                 ? "Уникализация..."
@@ -175,7 +179,7 @@ import ScheduleControls from "@/components/Post/ScheduleControls.vue";
 
 import { useEventBus, EVENTS } from "@/composables/useEventBus";
 
-import { Brain, ArrowLeftRight, Loader2, ArrowDown } from "lucide-vue-next";
+import { ArrowLeftRight, Loader2, ArrowDown } from "lucide-vue-next";
 
 const router = useRouter();
 const route = useRoute();

@@ -218,7 +218,7 @@ export class BotPublishService implements ITelegramPublishService {
       const albumCandidates = post.media.filter(m => m.type === 'photo' || m.type === 'video');
       const otherMedia = post.media.filter(m => !(m.type === 'photo' || m.type === 'video'));
 
-      if (albumCandidates.length > 2) {
+      if (albumCandidates.length >= 2) {
         console.log(`Отправляем альбом (sendMediaGroup) из ${albumCandidates.length} элементов`);
 
         const mediaItems = albumCandidates.map((m, idx) => {

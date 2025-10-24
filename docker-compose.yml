@@ -32,7 +32,7 @@ services:
       - PARSER_API_URL=http://parse:3003
       - PARSER_API_USERNAME=${API_USERNAME}
       - PARSER_API_PASSWORD=${API_PASSWORD}
-      - USE_MTPROTO=true
+      - USE_MTPROTO=${USE_MTPROTO}
       - REDIS_URL=redis://redis:6379
     deploy:
       resources:
@@ -54,6 +54,7 @@ services:
       - ./parser:/app
       - /app/node_modules
       - ./parser/media:/app/media
+    command: npm run watch
     environment:
       - NODE_ENV=development
       - STRING_SESSION=${STRING_SESSION}

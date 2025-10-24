@@ -170,11 +170,12 @@
         </div>
 
         <div class="content-area p-3">
-            <router-link
-                :to="{ name: 'post', params: { id: post._id } }"
-                class="font-medium text-gray-900 mb-2 line-clamp-3 cursor-pointer hover:text-blue-600 transition-colors"
-            >
-                {{ displayText }}
+            <router-link :to="{ name: 'post', params: { id: post._id } }">
+                <span
+                    v-html="displayText"
+                    class="font-medium text-gray-900 mb-2 line-clamp-3 cursor-pointer hover:text-blue-600 transition-colors"
+                >
+                </span>
             </router-link>
 
             <div v-if="post.is_unique && post.unique_text" class="mb-2">

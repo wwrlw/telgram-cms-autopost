@@ -510,7 +510,7 @@ export class PublishService {
           }
 
           const videoMetadata = await this.getVideoMetadata(filePath);
-          
+          console.log(this.getMimeType(filePath))
           return new Api.InputMediaUploadedDocument({
             file: uploadedFile,
             mimeType: this.getMimeType(filePath),
@@ -662,12 +662,10 @@ export class PublishService {
     if (fileSize < 1024 * 1024) {
       return 1;
     }
-    
     // Для средних файлов (1MB - 100MB) используем 2-4 воркера
     if (fileSize < 100 * 1024 * 1024) {
       return Math.min(4, Math.max(2, Math.floor(fileSize / (10 * 1024 * 1024))));
     }
-    
     // Для больших файлов (> 100MB) используем 4-8 воркеров
     return Math.min(8, Math.max(4, Math.floor(fileSize / (50 * 1024 * 1024))));
   }
