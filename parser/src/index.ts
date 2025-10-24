@@ -3,7 +3,7 @@ import cron from 'node-cron';
 import { TelegramService } from './services/telegramService.js';
 import { ApiService } from './services/apiService.js';
 import { SchedulerService } from './services/SchedulerService.js';
-import { ChannelConfig } from './types/index.js';
+import { QueueWorker } from './workers/QueueWorker.js';
 
 dotenv.config();
 
@@ -82,6 +82,10 @@ async function initializeParser() {
     });
 
     await telegramService.start();
+    
+    const queueWorker = new QueueWorker(telegramService);
+    queueWorker.start();
+    
     schedulerService.start();
 
     console.log('📊 Обновляем статистику каналов при запуске...');
@@ -192,7 +196,6 @@ process.on('SIGTERM', async () => {
 (async () => {
   try {
     await initializeParser();
-    
     // Периодические задачи через cron
     cron.schedule('*/10 * * * *', updateChannels); // каждые 10 минут
     cron.schedule('*/10 * * * *', updatePostedChannels); // каждые 10 минут

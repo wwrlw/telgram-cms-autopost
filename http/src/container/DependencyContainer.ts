@@ -16,16 +16,19 @@ import { YandexGPTService } from '../services/YandexGPTService';
 import { UserPermissionService } from '../services/UserPermissionService';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
 import { LoginUseCase } from '../use-cases/LoginUseCase';
-import { TelegramPublishService } from '../services/TelegramPublishService';
+import { BotPublishService } from '../services/BotPublishService';
+import { MTProtoPublishService } from '../services/MTProtoPublishService';
+import { ITelegramPublishService } from '../interfaces/services/ITelegramPublishService';
 import { PublishPostUseCase } from '../use-cases/PublishPostUseCase';
+import { PublishPostToChannelUseCase } from '../use-cases/PublishPostToChannelUseCase';
 import { PostedChannelRepository } from '../repositories/PostedChannelRepository';
 import { PostedChannelService } from '../services/PostedChannelService';
-
+import { DeletePostFromTelegramUseCase } from '../use-cases/DeletePostFromTelegramUseCase'
 
 export class DependencyContainer {
   private static instance: DependencyContainer;
   private mongo: FastifyMongoObject | null = null;
-  // Кэш инстансов для избежания лишних аллокаций и единообразного жизненного цикла
+  // Кэш для синглтонов
   private postRepository?: PostRepository;
   private userRepository?: UserRepository;
   private channelRepository?: ChannelRepository;
@@ -36,7 +39,7 @@ export class DependencyContainer {
   private authService?: AuthService;
   private userPermissionService?: UserPermissionService;
   private yandexGptService?: YandexGPTService;
-  private telegramPublishService?: TelegramPublishService;
+  private telegramPublishService?: ITelegramPublishService;
 
   private postService?: PostService;
   private userService?: UserService;
@@ -63,8 +66,26 @@ export class DependencyContainer {
     if (!this.postRepository) this.postRepository = new PostRepository(this.mongo);
     return this.postRepository;
   }
-  getTelegramPublishService(): TelegramPublishService {
-    if (!this.telegramPublishService) this.telegramPublishService = new TelegramPublishService();
+
+  getDeletePostFromTelegramUseCase(): DeletePostFromTelegramUseCase {
+    return new DeletePostFromTelegramUseCase(
+      this.getPostService(),
+      this.getTelegramPublishService()
+    );
+  }
+
+  getTelegramPublishService(): ITelegramPublishService {
+    if (this.telegramPublishService) {
+      return this.telegramPublishService;
+    }
+    if (process.env.USE_MTPROTO === 'true') {
+      console.log('🔌 Инициализируем сервис публикации через MTProto...');
+      this.telegramPublishService = new MTProtoPublishService();
+    } else {
+      console.log('🔌 Инициализируем сервис публикации через Bot API...');
+      this.telegramPublishService = new BotPublishService();
+    }
+
     return this.telegramPublishService;
   }
   
@@ -72,6 +93,15 @@ export class DependencyContainer {
     return new PublishPostUseCase(
       this.getPostRepository(),
       this.getTelegramPublishService()
+    );
+  }
+
+  getPublishPostToChannelUseCase(): PublishPostToChannelUseCase {
+    return new PublishPostToChannelUseCase(
+      this.getPostService(),
+      this.getPostedChannelService(),
+      this.getTelegramPublishService(),
+      // this.getYandexGPTService()
     );
   }
 

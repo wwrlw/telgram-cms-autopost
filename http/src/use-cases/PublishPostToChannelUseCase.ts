@@ -8,12 +8,11 @@ export class PublishPostToChannelUseCase {
     private postService: IPostService,
     private postedChannelService: IPostedChannelService,
     private telegramPublishService: ITelegramPublishService,
-    private yandexGPTService: YandexGPTService
+    // private yandexGPTService: YandexGPTService
   ) {}
 
   async execute(postId: string, channelId: string): Promise<{ success: boolean; message: string }> {
     try {
-      // Получаем пост
       const post = await this.postService.getPost(postId);
       if (!post) {
         return { success: false, message: 'Пост не найден' };
@@ -24,25 +23,23 @@ export class PublishPostToChannelUseCase {
         return { success: false, message: 'Канал не найден' };
       }
 
-      // Перед публикацией: если есть кастомный промпт — используем его, иначе применяем дефолтную обработку
-      if (post.text) {
-        try {
-          if (channel.prompt && channel.prompt.trim().length > 0) {
-            const rewritten = await this.yandexGPTService.rewriteWithCustomPrompt(post.text, channel.prompt);
-            (post as any).text = rewritten;
-          } else {
-            const rewritten = await this.yandexGPTService.uniquizeText(post.text);
-            (post as any).text = rewritten;
-          }
-        } catch (e) {
-          console.warn('Не удалось переписать текст перед публикацией, публикуем исходный текст. Причина:', e);
-        }
-      }
+      // if (post.text) {
+      //   try {
+      //     if (channel.prompt && channel.prompt.trim().length > 0) {
+      //       const rewritten = await this.yandexGPTService.rewriteWithCustomPrompt(post.text, channel.prompt);
+      //       (post as any).text = rewritten;
+      //     } else {
+      //       const rewritten = await this.yandexGPTService.uniquizeText(post.text);
+      //       (post as any).text = rewritten;
+      //     }
+      //   } catch (e) {
+      //     console.warn('Не удалось переписать текст перед публикацией, публикуем исходный текст. Причина:', e);
+      //   }
+      // }
 
       const publishResult = await this.telegramPublishService.publishPost(post, channel);
       
       if (publishResult.success) {
-        // Отмечаем пост как опубликованный с сохранением telegram_message_id
         if (publishResult.messageId) {
           await this.postService.markAsPublishedWithTelegramId(postId, channelId, publishResult.messageId);
         } else {

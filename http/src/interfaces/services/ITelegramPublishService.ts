@@ -4,5 +4,9 @@ import { PostedChannel } from '../../types/PostedChannel';
 export interface ITelegramPublishService {
   publishPost(post: Post, channel: PostedChannel): Promise<{ success: boolean; message: string; messageId?: string }>;
   deletePost(messageId: string, channelId: string): Promise<{ success: boolean; message: string }>;
-  getChannelAnalytics(channelId: string): Promise<any>;
+  schedulePost(post: Post, channel: PostedChannel, scheduleDate: Date): Promise<{ success: boolean; message: string; scheduledMessageId?: string }>;
+  getScheduledMessages(channelId: string): Promise<any[]>;
+  editScheduledMessage(scheduledMessageId: number, channelId: string, newScheduleDate: Date): Promise<{ success: boolean; message: string }>;
+  deleteScheduledMessage(scheduledMessageId: number, channelId: string): Promise<{ success: boolean; message: string }>;
+  sendScheduledMessages(scheduledMessageIds: number[], channelId: string): Promise<{ success: boolean; message: string }>;
 } 

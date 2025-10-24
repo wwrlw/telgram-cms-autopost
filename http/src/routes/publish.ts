@@ -1,37 +1,17 @@
 import { FastifyInstance } from 'fastify';
-import { PublishPostToChannelUseCase } from '../use-cases/PublishPostToChannelUseCase';
-import { DeletePostFromTelegramUseCase } from '../use-cases/DeletePostFromTelegramUseCase';
-import { PostService } from '../services/PostService';
-import { PostRepository } from '../repositories/PostRepository';
-import { PostedChannelService } from '../services/PostedChannelService';
-import { PostedChannelRepository } from '../repositories/PostedChannelRepository';
-import { TelegramPublishService } from '../services/TelegramPublishService';
-import { YandexGPTService } from '../services/YandexGPTService';
+import { DependencyContainer } from '../container/DependencyContainer';
 import { logAction } from '../middleware/logging';
 import { requireAuth, requirePermission } from '../middleware/authRole';
 import { PERMISSIONS } from '../models/Category';
 
 export default async function publishRoutes(fastify: FastifyInstance) {
-  const postRepository = new PostRepository(fastify.mongo);
-  const yandexGPTService = new YandexGPTService();
-  const postService = new PostService(postRepository, yandexGPTService);
-  const postedChannelRepository = new PostedChannelRepository(fastify.mongo);
-  const postedChannelService = new PostedChannelService(postedChannelRepository);
-  const telegramPublishService = new TelegramPublishService();
-  
-  const publishPostToChannelUseCase = new PublishPostToChannelUseCase(
-    postService,
-    postedChannelService,
-    telegramPublishService,
-    yandexGPTService
-  );
+  const container = DependencyContainer.getInstance();
+  container.setMongo(fastify.mongo);
 
-  const deletePostFromTelegramUseCase = new DeletePostFromTelegramUseCase(
-    postService,
-    telegramPublishService
-  );
+  const publishPostToChannelUseCase = container.getPublishPostToChannelUseCase();
+  const deletePostFromTelegramUseCase = container.getDeletePostFromTelegramUseCase();
+  const postedChannelService = container.getPostedChannelService();
 
-  // Публикация поста в конкретный канал
   fastify.post('/publish/:postId/:channelId', { 
     preValidation: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] 
   }, async (request, reply) => {
@@ -39,7 +19,7 @@ export default async function publishRoutes(fastify: FastifyInstance) {
       const { postId, channelId } = request.params as { postId: string; channelId: string };
       
       const result = await publishPostToChannelUseCase.execute(postId, channelId);
-      // Логируем публикацию поста
+      
       await logAction(request, reply);
       
       if (result.success) {
@@ -53,7 +33,6 @@ export default async function publishRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Удаление поста из Telegram
   fastify.delete('/publish/:postId', { 
     preValidation: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] 
   }, async (request, reply) => {
@@ -73,7 +52,6 @@ export default async function publishRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Получить список каналов для публикации
   fastify.get('/publish/channels', async (request, reply) => {
     try {
       const channels = await postedChannelService.getActivePostedChannels();
@@ -83,4 +61,4 @@ export default async function publishRoutes(fastify: FastifyInstance) {
       return reply.status(500).send({ success: false, message: 'Внутренняя ошибка сервера' });
     }
   });
-} 
+}

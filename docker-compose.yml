@@ -1,14 +1,16 @@
 services:
-  backend:
+  http:
     build:
       context: ./http
       dockerfile: dockerfile.dev
-    container_name: tg-parse-backend
+    container_name: tg-backend
     restart: unless-stopped
     ports:
       - "4000:4000"
     volumes:
       - ./parser/media:/app/media
+      - ./http:/app
+      - /app/node_modules
     environment:
       - NODE_ENV=development
       - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017
@@ -22,11 +24,29 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - VITE_API_URL=${VITE_API_URL}
       - PORT=${PORT}
+      - NODE_OPTIONS=--max-old-space-size=1024
+      - UV_THREADPOOL_SIZE=16
+      - DEBUG=fastify:*
+      - MONGO_EXPLAIN=0
+      - CACHE_ENABLED=true
+      - PARSER_API_URL=http://parse:3003
+      - PARSER_API_USERNAME=${API_USERNAME}
+      - PARSER_API_PASSWORD=${API_PASSWORD}
+      - USE_MTPROTO=true
+      - REDIS_URL=redis://redis:6379
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
     networks:
-      - bots_bots
-  parser:
+      - bots_bots_dev
+  parse:
     build: ./parser
-    container_name: tg-parse-parser
+    container_name: tg-parser
     restart: unless-stopped
     ports:
       - "127.0.0.1:3003:3003"
@@ -46,16 +66,17 @@ services:
       - API_USERNAME=${API_USERNAME}
       - API_PASSWORD=${API_PASSWORD}
       - STATS_UPDATE_LIMIT=${STATS_UPDATE_LIMIT}
+      - REDIS_URL=redis://redis:6379
     depends_on:
-      - backend
+      - http
     networks:
-      - bots_bots
-  frontend:
+      - bots_bots_dev
+  web:
     build:
       context: ./web
       target: dev
       dockerfile: dockerfile
-    container_name: tg-parse-frontend
+    container_name: tg-frontend
     restart: unless-stopped
     volumes:
       - ./web:/app/
@@ -66,10 +87,19 @@ services:
       - NODE_ENV=development
       - VITE_API_URL=${VITE_API_URL}
     depends_on:
-      - backend
+      - http
     networks:
-      - bots_bots
+      - bots_bots_dev
+  redis:
+    image: redis:7-alpine
+    ports:
+    - "6380:6379"
+    container_name: tg-redis
+    restart: unless-stopped
+    networks:
+      - bots_bots_dev
 
 networks:
-  bots_bots:
-    external: true
+  bots_bots_dev:
+    driver: bridge
+  
