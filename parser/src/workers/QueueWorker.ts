@@ -1,12 +1,12 @@
 import Queue from 'bull';
-import { TelegramService } from '../services/telegramService.js';
+import { PublishService } from '../services/publishService.js';
 
 export class QueueWorker {
   private publishQueue: Queue.Queue;
-  private telegramService: TelegramService;
+  private publishService: PublishService;
 
-  constructor(telegramService: TelegramService) {
-    this.telegramService = telegramService;
+  constructor(publishService: PublishService) {
+    this.publishService = publishService;
     this.publishQueue = new Queue('publish-queue', process.env.REDIS_URL || 'redis://localhost:6379');
   }
 
@@ -19,7 +19,7 @@ export class QueueWorker {
       console.log(`📥 Обрабатываем задачу публикации: ${job.id}`);
       
       try {
-        const result = await this.telegramService.publishPost(post, channel);
+        const result = await this.publishService.publishPost(post, channel);
         
         if (result.success) {
           console.log(`✅ Пост ${postId} успешно опубликован в канал ${channelId}`);
@@ -40,7 +40,7 @@ export class QueueWorker {
       console.log(`📥 Обрабатываем задачу удаления: ${job.id}`);
       
       try {
-        const result = await this.telegramService.deletePost(messageId, channelId);
+        const result = await this.publishService.deletePost(messageId, channelId);
         return result;
       } catch (error) {
         console.error(`❌ Ошибка удаления поста ${messageId}:`, error);
@@ -54,7 +54,7 @@ export class QueueWorker {
       console.log(`📥 Обрабатываем задачу планирования: ${job.id}`);
       
       try {
-        const result = await this.telegramService.schedulePost(
+        const result = await this.publishService.schedulePost(
           post, 
           channel, 
           new Date(scheduleDate)

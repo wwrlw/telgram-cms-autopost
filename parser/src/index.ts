@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 import cron from 'node-cron';
 import { TelegramService } from './services/telegramService.js';
 import { ApiService } from './services/apiService.js';
-import { SchedulerService } from './services/SchedulerService.js';
 import { QueueWorker } from './workers/QueueWorker.js';
 
 dotenv.config();
@@ -41,8 +40,6 @@ console.log('📁 Media path:', config.mediaPath);
 console.log('🗄️ MongoDB:', config.mongoUri);
 
 const apiService = new ApiService(apiBaseUrl, apiUsername, apiPassword);
-
-const schedulerService = new SchedulerService(apiService);
 
 let telegramService: TelegramService;
 
@@ -83,10 +80,9 @@ async function initializeParser() {
 
     await telegramService.start();
     
-    const queueWorker = new QueueWorker(telegramService);
+    const queueWorker = new QueueWorker(telegramService.getPublishService());
     queueWorker.start();
     
-    schedulerService.start();
 
     console.log('📊 Обновляем статистику каналов при запуске...');
     await updateChannelsStats();
@@ -177,7 +173,6 @@ async function collectPostedChannelsAnalytics() {
 
 process.on('SIGINT', async () => {
   console.log('\n🛑 Получен сигнал SIGINT, останавливаем сервис...');
-  schedulerService.stop();
   if (telegramService) {
     await telegramService.stop();
   }
@@ -186,7 +181,6 @@ process.on('SIGINT', async () => {
 
 process.on('SIGTERM', async () => {
   console.log('\n🛑 Получен сигнал SIGTERM, останавливаем сервис...');
-  schedulerService.stop();
   if (telegramService) {
     await telegramService.stop();
   }

@@ -18,12 +18,11 @@ export class TelegramService {
   private publishService: PublishService;
   private conversionService: ConversionService;
   private channelStatsService: ChannelStatsService;
-  private channelAnalyticsService: ChannelAnalyticsService; // Добавляем
+  private channelAnalyticsService: ChannelAnalyticsService;
 
   private albumBuffer: { [groupedId: string]: any[] } = {};
   private albumTimers: { [groupedId: string]: NodeJS.Timeout } = {};
   
-  // Добавляем поле для каналов публикации
   private postedChannels: PostedChannel[] = [];
 
   constructor(
@@ -32,7 +31,7 @@ export class TelegramService {
       apiHash: string;
       sessionString: string;
       targetChannels: ChannelConfig[];
-      postedChannels: PostedChannel[]; // Добавляем в конфиг
+      postedChannels: PostedChannel[];
       mongoUri: string;
       MONGO_DB: string;
       mediaPath: string;
@@ -50,7 +49,7 @@ export class TelegramService {
 
     this.mongoService = new MongoService(config.mongoUri, config.MONGO_DB);
     this.mediaService = new MediaService(config.mediaPath);
-    this.publishService = new PublishService();
+    this.publishService = new PublishService(this.client);
     this.conversionService = new ConversionService();
     this.channelStatsService = new ChannelStatsService(this.client, this.mongoService);
     this.postedChannels = config.postedChannels || [];
@@ -384,21 +383,18 @@ export class TelegramService {
       const stats: PostStats = {};
       let hasStats = false;
 
-      // Views - most common statistic
       if (message.views !== undefined && message.views !== null) {
         stats.views = Number(message.views);
         hasStats = true;
         console.log(`👁️ Просмотры: ${stats.views}`);
       }
 
-      // Forwards
       if (message.forwards !== undefined && message.forwards !== null) {
         stats.forwards = Number(message.forwards);
         hasStats = true;
         console.log(`🔄 Пересылки: ${stats.forwards}`);
       }
 
-      // Comments/Replies
       if (message.replies && message.replies.replies !== undefined && message.replies.replies !== null) {
         stats.comments = Number(message.replies.replies);
         hasStats = true;
@@ -579,11 +575,7 @@ export class TelegramService {
         delete this.albumBuffer[groupId];
         delete this.albumTimers[groupId];
 
-         try {
-          await this.publishService.publishPost(postData);
-        } catch (publishError) {
-          console.error('❌ Ошибка автоматической публикации альбома:', publishError);
-        }
+        // Автоматическая публикация отключена - посты публикуются через очередь
 
         // Логируем конверсию
         this.conversionService.logConversionMetrics(conversionMetrics, postUrl);
@@ -665,6 +657,10 @@ export class TelegramService {
 
   getPostedChannels(): PostedChannel[] {
     return this.postedChannels;
+  }
+
+  getPublishService(): PublishService {
+    return this.publishService;
   }
 
 

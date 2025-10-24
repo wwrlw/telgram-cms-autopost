@@ -4,15 +4,9 @@ import { PostedChannel } from '../types/PostedChannel';
 import { QueueService } from '../queues/QueueService';
 
 export class MTProtoPublishService implements ITelegramPublishService {
-  private parserApiUrl: string;
-  private parserApiUsername: string;
-  private parserApiPassword: string;
   private queueService: QueueService;
 
   constructor() {
-    this.parserApiUrl = process.env.PARSER_API_URL || 'http://localhost:3003';
-    this.parserApiUsername = process.env.API_USERNAME || 'myuser';
-    this.parserApiPassword = process.env.API_PASSWORD || 'mypassword';
     this.queueService = new QueueService();
   }
 
@@ -27,7 +21,7 @@ export class MTProtoPublishService implements ITelegramPublishService {
         channel
       );
 
-      return { 
+      return {
         success: true, 
         message: `Задача публикации добавлена в очередь (ID: ${jobId})`,
         messageId: jobId
@@ -41,137 +35,104 @@ export class MTProtoPublishService implements ITelegramPublishService {
     }
   }
 
-  async deletePost(messageId: string, channelId: string): Promise<{ success: boolean; message: string }> {
+  async deletePost(messageId: string, channelId: string): Promise<{ success: boolean; message: string; messageId?: string }> {
     try {
-      console.log('Удаляем пост через парсер:', { messageId, channelId });
+      console.log('📤 Добавляем задачу публикации в очередь...');
+      
+      const jobId = await this.queueService.deletePost(
+        messageId,
+        channelId,
+      );
 
-      const response = await this.callParserAPI('DELETE', '/publish/mtproto/post', {
-        messageId: parseInt(messageId),
-        channelId
-      });
-
-      return response;
+      return { 
+        success: true, 
+        message: `Задача публикации добавлена в очередь (ID: ${jobId})`,
+        messageId: jobId,
+      };
     } catch (error) {
-      console.error('❌ Ошибка удаления поста через парсер:', error);
-      return { success: false, message: 'Ошибка удаления поста через парсер' };
+      console.error('❌ Ошибка добавления задачи в очередь:', error);
+      return { 
+        success: false, 
+        message: 'Ошибка добавления задачи в очередь' 
+      };
     }
   }
 
 
   async schedulePost(post: Post, channel: PostedChannel, scheduleDate: Date): Promise<{ success: boolean; message: string; scheduledMessageId?: string }> {
     try {
-      console.log('=== НАЧАЛО ПЛАНИРОВАНИЯ ЧЕРЕЗ ПАРСЕР ===');
-      console.log('Планируем пост через парсер на:', scheduleDate.toISOString());
-
-      const response = await this.callParserAPI('POST', '/publish/mtproto/schedule', {
+      console.log('📤 Добавляем задачу публикации в очередь...');
+      
+      const jobId = await this.queueService.schedulePost(
+        post?._id?.toString() || '',
+        channel.channel_id,
         post,
         channel,
-        scheduleDate: scheduleDate.toISOString()
-      });
-
-      console.log('✅ Ответ от парсера (планирование):', response);
-      return response;
-
+        scheduleDate
+      );
+  
+      return { 
+        success: true, 
+        message: `Задача публикации добавлена в очередь (ID: ${jobId})`,
+        scheduledMessageId: jobId,
+      };
     } catch (error) {
-      console.error('❌ Ошибка планирования через парсер:', error);
-      return { success: false, message: 'Критическая ошибка при планировании через MTProto' };
-    } finally {
-      console.log('=== КОНЕЦ ПЛАНИРОВАНИЯ ЧЕРЕЗ ПАРСЕР ===');
+      console.error('❌ Ошибка добавления задачи в очередь:', error);
+      return { 
+        success: false, 
+        message: 'Ошибка добавления задачи в очередь' 
+      };
     }
   }
 
 
   async getScheduledMessages(channelId: string): Promise<any[]> {
     try {
-      const response = await this.callParserAPI('GET', `/publish/mtproto/scheduled/${channelId}`);
-      return response.data || [];
+      const jobId = await this.queueService.getScheduledMessages(channelId);
+      console.log(`📤 Задача получения отложенных сообщений добавлена в очередь: ${jobId}`);
+      return []; // Возвращаем пустой массив, так как результат будет обработан воркером
     } catch (error) {
-      console.error('❌ Ошибка получения отложенных сообщений через парсер:', error);
+      console.error('❌ Ошибка добавления задачи получения отложенных сообщений в очередь:', error);
       return [];
     }
   }
-
-
+  
   async editScheduledMessage(scheduledMessageId: number, channelId: string, newScheduleDate: Date): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await this.callParserAPI('PUT', '/publish/mtproto/scheduled/edit', {
-        scheduledMessageId,
-        channelId,
-        newScheduleDate: newScheduleDate.toISOString()
-      });
-
-      return response;
+      // Здесь можно добавить метод editScheduledMessage в QueueService если нужно
+      console.log('📤 Редактирование отложенного сообщения через очередь не реализовано');
+      return { success: false, message: 'Редактирование отложенных сообщений не реализовано' };
     } catch (error) {
-      console.error('❌ Ошибка редактирования отложенного сообщения через парсер:', error);
+      console.error('❌ Ошибка редактирования отложенного сообщения:', error);
       return { success: false, message: 'Ошибка редактирования отложенного сообщения' };
     }
   }
-
-
+  
   async deleteScheduledMessage(scheduledMessageId: number, channelId: string): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await this.callParserAPI('DELETE', '/publish/mtproto/scheduled', {
-        scheduledMessageId,
-        channelId
-      });
-
-      return response;
+      const jobId = await this.queueService.deleteScheduledMessage(scheduledMessageId, channelId);
+      console.log(`📤 Задача удаления отложенного сообщения добавлена в очередь: ${jobId}`);
+      return { 
+        success: true, 
+        message: `Задача удаления отложенного сообщения добавлена в очередь (ID: ${jobId})` 
+      };
     } catch (error) {
-      console.error('❌ Ошибка удаления отложенного сообщения через парсер:', error);
-      return { success: false, message: 'Ошибка удаления отложенного сообщения' };
+      console.error('❌ Ошибка добавления задачи удаления отложенного сообщения в очередь:', error);
+      return { success: false, message: 'Ошибка добавления задачи в очередь' };
     }
   }
-
-
+  
   async sendScheduledMessages(scheduledMessageIds: number[], channelId: string): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await this.callParserAPI('POST', '/publish/mtproto/scheduled/send', {
-        scheduledMessageIds,
-        channelId
-      });
-
-      return response;
-    } catch (error) {
-      console.error('❌ Ошибка отправки отложенных сообщений через парсер:', error);
-      return { success: false, message: 'Ошибка отправки отложенных сообщений' };
-    }
-  }
-
-  private async callParserAPI(method: string, endpoint: string, data?: any): Promise<any> {
-    try {
-      const url = `${this.parserApiUrl}${endpoint}`;
-      
-      const options: RequestInit = {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${this.parserApiUsername}:${this.parserApiPassword}`).toString('base64')}`
-        }
+      const jobId = await this.queueService.sendScheduledMessages(scheduledMessageIds, channelId);
+      console.log(`📤 Задача отправки отложенных сообщений добавлена в очередь: ${jobId}`);
+      return { 
+        success: true, 
+        message: `Задача отправки отложенных сообщений добавлена в очередь (ID: ${jobId})` 
       };
-
-      if (data && method !== 'GET') {
-        options.body = JSON.stringify(data);
-      }
-
-      console.log(`📡 Вызываем парсер API: ${method} ${url}`);
-      if (data) {
-        console.log('📤 Данные:', JSON.stringify(data, null, 2));
-      }
-
-      const response = await fetch(url, options);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Parser API error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log('📥 Ответ от парсера:', JSON.stringify(result, null, 2));
-      
-      return result;
     } catch (error) {
-      console.error('❌ Ошибка вызова парсера API:', error);
-      throw error;
+      console.error('❌ Ошибка добавления задачи отправки отложенных сообщений в очередь:', error);
+      return { success: false, message: 'Ошибка добавления задачи в очередь' };
     }
   }
 

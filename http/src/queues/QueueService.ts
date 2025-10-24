@@ -53,4 +53,32 @@ export class QueueService {
     console.log(`📤 Задача планирования добавлена в очередь: ${job.id}`);
     return job.id?.toString() || '';
   }
+  async getScheduledMessages(channelId: string) {
+    const job = await this.publishQueue.add('GET_SCHEDULED_MESSAGES', {
+      channelId
+    });
+    
+    console.log(`📤 Задача получения отложенных сообщений добавлена в очередь: ${job.id}`);
+    return job.id?.toString() || '';
+  }
+
+  async deleteScheduledMessage(scheduledMessageId: number, channelId: string) {
+    const job = await this.publishQueue.add('DELETE_SCHEDULED_MESSAGE', {
+      scheduledMessageId,
+      channelId
+    });
+    
+    console.log(`📤 Задача удаления отложенного сообщения добавлена в очередь: ${job.id}`);
+    return job.id?.toString() || '';
+  }
+
+  async sendScheduledMessages(scheduledMessageIds: number[], channelId: string) {
+    const job = await this.publishQueue.add('SEND_SCHEDULED_MESSAGES', {
+      scheduledMessageIds,
+      channelId
+    });
+    
+    console.log(`📤 Задача отправки отложенных сообщений добавлена в очередь: ${job.id}`);
+    return job.id?.toString() || '';
+  }
 }
