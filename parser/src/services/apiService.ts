@@ -304,49 +304,6 @@ export class ApiService {
     }));
   }
 
-  async getScheduledPosts(): Promise<ScheduledPost[]> {
-    await this.ensureAuthenticated();
-
-    try {
-      const response = await fetch(`${this.baseUrl}/posts/scheduled`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.status === 401) {
-        await this.refresh();
-        
-        const retryResponse = await fetch(`${this.baseUrl}/posts/scheduled`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to get scheduled posts: ${retryResponse.statusText}`);
-        }
-
-        const retryData = await retryResponse.json() as { success: boolean; data: ScheduledPost[] };
-        return retryData.data || [];
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to get scheduled posts: ${response.statusText}`);
-      }
-
-      const data = await response.json() as { success: boolean; data: ScheduledPost[] };
-      return data.data || [];
-    } catch (error) {
-      console.error('❌ Error fetching scheduled posts:', error);
-      throw error;
-    }
-  }
-
   async publishToChannel(postId: string, channelId: string): Promise<boolean> {
     await this.ensureAuthenticated();
 
@@ -431,6 +388,141 @@ export class ApiService {
       return true;
     } catch (error) {
       console.error('❌ Error saving scheduled message ID:', error);
+      return false;
+    }
+  }
+
+  async savePublishedMessageId(postId: string, messageId: string, channelId: string): Promise<boolean> {
+    await this.ensureAuthenticated();
+
+    try {
+      const response = await fetch(`${this.baseUrl}/posts/${postId}/published-message-id`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          telegram_message_id: messageId,
+          published_channel_id: channelId
+        }),
+      });
+
+      if (response.status === 401) {
+        await this.refresh();
+        
+        const retryResponse = await fetch(`${this.baseUrl}/posts/${postId}/published-message-id`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            telegram_message_id: messageId,
+            published_channel_id: channelId
+          }),
+        });
+
+        if (!retryResponse.ok) {
+          console.error(`Failed to save published message ID: ${retryResponse.statusText}`);
+          return false;
+        }
+
+        return true;
+      }
+
+      if (!response.ok) {
+        console.error(`Failed to save published message ID: ${response.statusText}`);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ Error saving published message ID:', error);
+      return false;
+    }
+  }
+
+  async getScheduledPosts(): Promise<any[]> {
+    await this.ensureAuthenticated();
+
+    try {
+      const response = await fetch(`${this.baseUrl}/posts/scheduled`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 401) {
+        await this.refresh();
+        
+        const retryResponse = await fetch(`${this.baseUrl}/posts/scheduled`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!retryResponse.ok) {
+          throw new Error(`Failed to get scheduled posts: ${retryResponse.statusText}`);
+        }
+
+        const retryData = await retryResponse.json() as { success: boolean; data: any[] };
+        return retryData.data || [];
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to get scheduled posts: ${response.statusText}`);
+      }
+
+      const data = await response.json() as { success: boolean; data: any[] };
+      return data.data || [];
+    } catch (error) {
+      console.error('❌ Error fetching scheduled posts:', error);
+      return [];
+    }
+  }
+
+  async updateScheduledPostAsPublished(postId: string): Promise<boolean> {
+    await this.ensureAuthenticated();
+
+    try {
+      const response = await fetch(`${this.baseUrl}/posts/${postId}/mark-scheduled-as-published`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        },
+      });
+
+      if (response.status === 401) {
+        await this.refresh();
+        
+        const retryResponse = await fetch(`${this.baseUrl}/posts/${postId}/mark-scheduled-as-published`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${this.token}`
+          },
+        });
+        
+        if (!retryResponse.ok) {
+          console.error(`Failed to mark scheduled post as published: ${retryResponse.statusText}`);
+          return false;
+        }
+
+        return true;
+      }
+
+      if (!response.ok) {
+        console.error(`Failed to mark scheduled post as published: ${response.statusText}`);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ Error marking scheduled post as published:', error);
       return false;
     }
   }

@@ -385,8 +385,8 @@ export class PublishService {
       
       for (let i = 0; i < mediaArray.length; i++) {
         const media = mediaArray[i];
-        const mediaCaption = i === 0 ? caption : '';
-        const inputMedia = await this.createInputMedia(media, mediaCaption);
+        // Загружаем и создаем InputMedia
+        const inputMedia = await this.createInputMediaForGroup(media);
         inputMediaArray.push(inputMedia);
       }
 
@@ -395,8 +395,10 @@ export class PublishService {
         multiMedia: inputMediaArray.map((media, index) => new Api.InputSingleMedia({
           media: media,
           randomId: bigInt(Date.now() + index),
-          message: index === 0 ? caption : ''
+          message: index === 0 ? caption : '' // Подпись только для первого медиа
         })),
+        silent: false,
+        noforwards: false,
       }));
 
       const messageId = (result as any).updates?.[0]?.id || (result as any).id;
@@ -419,8 +421,8 @@ export class PublishService {
       
       for (let i = 0; i < mediaArray.length; i++) {
         const media = mediaArray[i];
-        const mediaCaption = i === 0 ? caption : '';
-        const inputMedia = await this.createInputMedia(media, mediaCaption);
+        // Для SendMultiMedia не нужна caption в InputSingleMedia
+        const inputMedia = await this.createInputMediaForGroup(media);
         inputMediaArray.push(inputMedia);
       }
 
@@ -429,9 +431,11 @@ export class PublishService {
         multiMedia: inputMediaArray.map((media, index) => new Api.InputSingleMedia({
           media: media,
           randomId: bigInt(Date.now() + index),
-          message: index === 0 ? caption : ''
+          message: index === 0 ? caption : '' // Подпись только для первого медиа
         })),
-        scheduleDate: scheduleTimestamp
+        scheduleDate: scheduleTimestamp,
+        silent: false,
+        noforwards: false,
       }));
 
       const scheduledMessageId = (result as any).updates?.[0]?.id || (result as any).id;
@@ -448,6 +452,49 @@ export class PublishService {
     }
   }
 
+
+  /**
+   * Создает InputMedia для медиа-групп (без подписи)
+   */
+  private async createInputMediaForGroup(media: any): Promise<any> {
+    const filePath = await this.findMediaFile(media.file_path);
+    if (!filePath) {
+      throw new Error(`Файл не найден: ${media.file_path}`);
+    }
+
+    const path = await import('path');
+    const stats = fs.statSync(filePath);
+    const fileName = path.basename(filePath);
+    
+    console.log(`📤 Загружаем файл для группы: ${fileName} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`);
+    
+    const uploadedFile = await this.client.uploadFile({
+      file: new CustomFile(fileName, stats.size, filePath),
+      workers: 1
+    });
+
+    console.log('✅ Файл успешно загружен в Telegram');
+
+    switch (media.type) {
+      case 'photo':
+        return new Api.InputMediaUploadedPhoto({
+          file: uploadedFile
+        });
+      case 'video':
+        // Для видео в группах используем InputMediaUploadedDocument
+        return new Api.InputMediaUploadedDocument({
+          file: uploadedFile,
+          mimeType: this.getMimeType(filePath),
+          attributes: []
+        });
+      default:
+        return new Api.InputMediaUploadedDocument({
+          file: uploadedFile,
+          mimeType: this.getMimeType(filePath),
+          attributes: []
+        });
+    }
+  }
 
   /**
    * @param media - объект медиафайла с типом и путями
@@ -510,8 +557,7 @@ export class PublishService {
       switch (media.type) {
         case 'photo':
           return new Api.InputMediaUploadedPhoto({
-            file: uploadedFile,
-            ttlSeconds: undefined
+            file: uploadedFile
           });
 
         case 'video':
@@ -545,8 +591,7 @@ export class PublishService {
                 supportsStreaming: this.isStreamableVideo(filePath)
               })
             ],
-            thumb: thumb,
-            ttlSeconds: undefined
+            thumb: thumb
           });
 
         case 'document':
@@ -554,8 +599,7 @@ export class PublishService {
           return new Api.InputMediaUploadedDocument({
             file: uploadedFile,
             mimeType: this.getMimeType(filePath),
-            attributes: [],
-            ttlSeconds: undefined
+            attributes: []
           });
       }
     } catch (error) {

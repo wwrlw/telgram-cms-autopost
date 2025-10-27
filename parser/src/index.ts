@@ -86,6 +86,7 @@ async function initializeParser() {
 
     console.log('📊 Обновляем статистику каналов при запуске...');
     await updateChannelsStats();
+    await checkScheduledPosts();
     
     console.log('✅ Система конверсии активна - будет рассчитывать ER и ERR для всех постов');
 
@@ -171,6 +172,52 @@ async function collectPostedChannelsAnalytics() {
   }
 }
 
+async function checkScheduledPosts() {
+  try {
+    if (telegramService && apiService) {
+      console.log('🔍 Проверяем отложенные сообщения на публикацию...');
+      
+      const scheduledPosts = await apiService.getScheduledPosts();
+      console.log(`📋 Найдено отложенных постов: ${scheduledPosts.length}`);
+      
+      const postedChannels = await apiService.getActivePostedChannels();
+      
+      for (const post of scheduledPosts) {
+        if (!post.scheduled_at) continue;
+        
+        const scheduledDate = new Date(post.scheduled_at);
+        const now = new Date();
+        
+        if (scheduledDate <= now) {
+          console.log(`⏰ Время публикации прошло для поста ${post._id}, проверяем обновление...`);
+          
+          const channel = postedChannels.find(c => c.channel_id === post.scheduled_channel_id);
+          
+          if (channel && post.scheduled_message_id) {
+            try {
+              const scheduledMessages = await telegramService.getPublishService().getScheduledMessages(channel.channel_id);
+              
+              const foundMessage = scheduledMessages.find((msg: any) => msg.id?.toString() === post.scheduled_message_id.toString());
+              
+              if (!foundMessage) {
+                console.log(`✅ Отложенное сообщение ${post.scheduled_message_id} было опубликовано, обновляем пост ${post._id}`);
+                
+                await apiService.updateScheduledPostAsPublished(post._id);
+              }
+            } catch (error) {
+              console.error(`❌ Ошибка при проверке отложенного сообщения для поста ${post._id}:`, error);
+            }
+          }
+        }
+      }
+      
+      console.log('✅ Проверка отложенных сообщений завершена');
+    }
+  } catch (error) {
+    console.error('❌ Ошибка проверки отложенных сообщений:', error);
+  }
+}
+
 process.on('SIGINT', async () => {
   console.log('\n🛑 Получен сигнал SIGINT, останавливаем сервис...');
   if (telegramService) {
@@ -195,6 +242,7 @@ process.on('SIGTERM', async () => {
     cron.schedule('*/10 * * * *', updatePostedChannels); // каждые 10 минут
     cron.schedule('*/5 * * * *', updatePostsStats); // каждые 5 минут
     cron.schedule('*/30 * * * *', updateChannelsStats); // каждые 30 минут
+    cron.schedule('*/2 * * * *', checkScheduledPosts); // каждые 2 минуты - проверка отложенных сообщений
     cron.schedule('0 3 * * *', collectPostedChannelsAnalytics); // каждый день в 03:00
     cron.schedule('15 3 * * *', async () => { if (telegramService) await telegramService.collectDailyChannelSnapshots(); }); // дневные срезы в 03:15
     cron.schedule('0 * * * *', cleanupDuplicates); // каждый час

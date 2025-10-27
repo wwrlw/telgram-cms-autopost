@@ -24,7 +24,12 @@ export class QueueWorker {
       try {
         const result = await this.publishService.publishPost(post, channel);
         
-        if (result.success) {
+        if (result.success && result.messageId) {
+          // Сохраняем telegram_message_id в БД
+          console.log(`💾 Сохраняем telegram_message_id для поста ${postId}: ${result.messageId}`);
+          await this.apiService.savePublishedMessageId(postId, result.messageId, channelId);
+          console.log(`✅ Пост ${postId} успешно опубликован в канал ${channelId}`);
+        } else if (result.success) {
           console.log(`✅ Пост ${postId} успешно опубликован в канал ${channelId}`);
         } else {
           throw new Error(result.message);
@@ -43,7 +48,14 @@ export class QueueWorker {
       console.log(`📥 Обрабатываем задачу удаления: ${job.id}`);
       
       try {
-        const result = await this.publishService.deletePost(messageId, channelId);
+        // Конвертируем messageId в number для MTProto API
+        const messageIdNum = parseInt(messageId, 10);
+        if (isNaN(messageIdNum)) {
+          throw new Error(`Неверный messageId: ${messageId}`);
+        }
+        console.log(`🔧 Конвертированный messageId: ${messageIdNum}`);
+        
+        const result = await this.publishService.deletePost(messageIdNum, channelId);
         return result;
       } catch (error) {
         console.error(`❌ Ошибка удаления поста ${messageId}:`, error);

@@ -15,6 +15,8 @@ export interface IPostService {
   schedulePost(id: string, scheduledAt: Date, channelId: string): Promise<Post>;
   getScheduledPosts(): Promise<Post[]>;
   saveScheduledMessageId(id: string, scheduledMessageId: string): Promise<Post>;
+  savePublishedMessageId(id: string, telegramMessageId: string, channelId: string): Promise<Post>;
+  markScheduledAsPublished(id: string): Promise<Post>;
   cancelScheduledPost(id: string): Promise<Post>;
   markAsPublished(id: string, channelName: string): Promise<Post>;
   markAsPublishedWithTelegramId(id: string, channelId: string, telegramMessageId: string): Promise<Post>;

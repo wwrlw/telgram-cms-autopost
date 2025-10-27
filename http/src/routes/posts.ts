@@ -398,4 +398,29 @@ export async function postsRoutes(fastify: FastifyInstance) {
       return { success: true, data: result };
     }
   );
+
+  fastify.put(
+    '/posts/:id/published-message-id',
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { telegram_message_id, published_channel_id } = request.body as { telegram_message_id: string; published_channel_id: string };
+      
+      const result = await container.getPostService().savePublishedMessageId(id, telegram_message_id, published_channel_id);
+      
+      return { success: true, data: result };
+    }
+  );
+
+  fastify.put(
+    '/posts/:id/mark-scheduled-as-published',
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      
+      const result = await container.getPostService().markScheduledAsPublished(id);
+      
+      return { success: true, data: result };
+    }
+  );
 }

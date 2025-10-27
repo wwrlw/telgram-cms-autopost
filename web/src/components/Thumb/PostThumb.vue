@@ -146,7 +146,6 @@
                     </button>
 
                     <button
-                        v-if="route.name !== 'scheduled-posts'"
                         @click.prevent.stop="$emit('delete', post)"
                         class="p-1.5 bg-black bg-opacity-60 text-white rounded-full hover:bg-red-600 transition-colors backdrop-blur-sm action-button"
                         title="Удалить"

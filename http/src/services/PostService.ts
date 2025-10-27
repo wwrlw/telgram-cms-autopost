@@ -98,6 +98,53 @@ export class PostService implements IPostService {
     return updatedPost;
   }
 
+  async savePublishedMessageId(id: string, telegramMessageId: string, channelId: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+    
+    const updatedPost = await this.postRepository.update(id, {
+      is_published: true,
+      published_at: new Date(),
+      telegram_message_id: telegramMessageId,
+      published_channel_id: channelId,
+      scheduled_at: undefined,
+      scheduled_channel_id: undefined,
+      scheduled_message_id: undefined,
+      updated_at: new Date()
+    });
+    
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to save published message ID');
+    }
+    
+    return updatedPost;
+  }
+
+  async markScheduledAsPublished(id: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+    
+    // Обновляем пост: убираем поля отложенной публикации и отмечаем как опубликованный
+    const updatedPost = await this.postRepository.update(id, {
+      is_published: true,
+      published_at: new Date(),
+      scheduled_at: undefined,
+      scheduled_channel_id: undefined,
+      scheduled_message_id: undefined,
+      updated_at: new Date()
+    });
+    
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to mark scheduled post as published');
+    }
+    
+    return updatedPost;
+  }
+
   async getScheduledPosts(channelId?: string): Promise<Post[]> {
     return await this.postRepository.findScheduled(channelId);
   }
