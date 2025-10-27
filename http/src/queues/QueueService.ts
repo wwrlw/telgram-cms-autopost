@@ -46,11 +46,9 @@ export class QueueService {
       post,
       channel,
       scheduleDate: scheduleDate.toISOString()
-    }, {
-      delay: scheduleDate.getTime() - Date.now()
     });
     
-    console.log(`📤 Задача планирования добавлена в очередь: ${job.id}`);
+    console.log(`📤 Задача планирования добавлена в очередь: ${job.id} (дата публикации: ${scheduleDate.toISOString()})`);
     return job.id?.toString() || '';
   }
   async getScheduledMessages(channelId: string) {

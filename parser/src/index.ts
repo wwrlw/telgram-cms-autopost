@@ -80,7 +80,7 @@ async function initializeParser() {
 
     await telegramService.start();
     
-    const queueWorker = new QueueWorker(telegramService.getPublishService());
+    const queueWorker = new QueueWorker(telegramService.getPublishService(), apiService);
     queueWorker.start();
     
 

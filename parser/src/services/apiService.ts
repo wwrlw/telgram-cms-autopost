@@ -390,6 +390,51 @@ export class ApiService {
     }
   }
 
+  async saveScheduledMessageId(postId: string, scheduledMessageId: string): Promise<boolean> {
+    await this.ensureAuthenticated();
+
+    try {
+      const response = await fetch(`${this.baseUrl}/posts/${postId}/scheduled-message-id`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ scheduled_message_id: scheduledMessageId }),
+      });
+
+      if (response.status === 401) {
+        await this.refresh();
+        
+        const retryResponse = await fetch(`${this.baseUrl}/posts/${postId}/scheduled-message-id`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ scheduled_message_id: scheduledMessageId }),
+        });
+
+        if (!retryResponse.ok) {
+          console.error(`Failed to save scheduled message ID: ${retryResponse.statusText}`);
+          return false;
+        }
+
+        return true;
+      }
+
+      if (!response.ok) {
+        console.error(`Failed to save scheduled message ID: ${response.statusText}`);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ Error saving scheduled message ID:', error);
+      return false;
+    }
+  }
+
   async getActivePostedChannels(): Promise<PostedChannel[]> {
     await this.ensureAuthenticated();
 

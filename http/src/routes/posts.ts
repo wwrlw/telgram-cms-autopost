@@ -96,6 +96,20 @@ export async function postsRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const id = (request.params as any).id;
+      
+      // Получаем пост чтобы узнать telegram_message_id
+      try {
+        const post = await container.getPostService().getPost(id);
+        
+        // Если пост был опубликован, удаляем из Telegram
+        if (post.telegram_message_id && post.published_channel_id) {
+          const telegramPublishService = container.getTelegramPublishService();
+          await telegramPublishService.deletePost(post.telegram_message_id, post.published_channel_id);
+        }
+      } catch (error) {
+        console.warn('Не удалось получить пост для удаления из Telegram:', error);
+      }
+      
       const result = await controller.delete(id);
       try { await logAction(request, reply); } catch {}
       return { success: true, message: result.message };
@@ -107,9 +121,33 @@ export async function postsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const { scheduled_at, channel_id } = request.body as { scheduled_at: string; channel_id: string };
+      
+      // Обновляем пост в БД
       const result = await controller.schedule(id, new Date(scheduled_at), channel_id);
+      
+      // Получаем данные поста для публикации
+      const post = await container.getPostService().getPost(id);
+      
+      // Получаем данные канала для публикации
+      const channel = await container.getPostedChannelService().getPostedChannelByChannelId(channel_id);
+      if (!channel) {
+        throw new Error('Канал не найден');
+      }
+      
+      // Добавляем задачу в очередь через MTProto
+      const telegramPublishService = container.getTelegramPublishService();
+      const scheduleResult = await telegramPublishService.schedulePost(
+        post,
+        channel,
+        new Date(scheduled_at)
+      );
+      
+      if (!scheduleResult.success) {
+        console.error('Ошибка добавления задачи отложенной публикации:', scheduleResult.message);
+      }
+      
       await logAction(request, reply);
-      return { success: true, data: result };
+      return { success: true, data: { ...result, scheduleJobId: scheduleResult.scheduledMessageId } };
     }
   );
   fastify.get(
@@ -125,7 +163,23 @@ export async function postsRoutes(fastify: FastifyInstance) {
     { preHandler: [requireAuth, requirePermission(PERMISSIONS.DELETE_POSTS)] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
+      
+      // Получаем пост чтобы узнать scheduled_message_id
+      const post = await container.getPostService().getPost(id);
+      
+      // Отменяем в БД
       const result = await controller.cancelSchedule(id);
+      
+      // Если есть отложенное сообщение в Telegram, удаляем его
+      if (post.scheduled_message_id && post.scheduled_channel_id) {
+        const telegramPublishService = container.getTelegramPublishService();
+        await telegramPublishService.deleteScheduledMessage(
+          parseInt(post.scheduled_message_id),
+          post.scheduled_channel_id
+        );
+      }
+      
+      await logAction(request, reply);
       return { success: true, data: result };
     }
   );
@@ -255,7 +309,29 @@ export async function postsRoutes(fastify: FastifyInstance) {
 
       if (fields.scheduled_at && fields.channel_id) {
         const postService = container.getPostService();
+        const postedChannelService = container.getPostedChannelService();
+        const telegramPublishService = container.getTelegramPublishService();
+        
+        // Обновляем пост в БД
         await postService.schedulePost(post._id!.toString(), new Date(fields.scheduled_at), fields.channel_id);
+        
+        // Получаем данные канала для публикации
+        const channel = await postedChannelService.getPostedChannelByChannelId(fields.channel_id);
+        if (!channel) {
+          throw new Error('Канал не найден');
+        }
+        
+        // Добавляем задачу в очередь через MTProto
+        const scheduleResult = await telegramPublishService.schedulePost(
+          post,
+          channel,
+          new Date(fields.scheduled_at)
+        );
+        
+        if (!scheduleResult.success) {
+          console.error('Ошибка добавления задачи отложенной публикации:', scheduleResult.message);
+        }
+        
         await logAction(request, reply);
       } else {
         await logAction(request, reply);
@@ -306,6 +382,19 @@ export async function postsRoutes(fastify: FastifyInstance) {
         removeCount: removeCount ? Number(removeCount) : undefined,
         dryRun: dryRun === 'true' || dryRun === true,
       });
+      return { success: true, data: result };
+    }
+  );
+
+  fastify.put(
+    '/posts/:id/scheduled-message-id',
+    { preHandler: [requireAuth, requirePermission(PERMISSIONS.PUBLISH_POSTS)] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { scheduled_message_id } = request.body as { scheduled_message_id: string };
+      
+      const result = await container.getPostService().saveScheduledMessageId(id, scheduled_message_id);
+      
       return { success: true, data: result };
     }
   );

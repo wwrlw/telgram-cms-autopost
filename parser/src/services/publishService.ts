@@ -74,19 +74,42 @@ export class PublishService {
 
   async getScheduledMessages(channelId: string): Promise<any[]> {
     try {
+      console.log('=== НАЧАЛО ПОЛУЧЕНИЯ ОТЛОЖЕННЫХ СООБЩЕНИЙ ===');
+      console.log('📋 Запрос отложенных сообщений для канала:', channelId);
+      
       const entity = await this.getChannelEntity(channelId);
       if (!entity) {
+        console.error('❌ Не удалось получить entity канала');
         return [];
       }
 
+      console.log('📞 Вызываем API GetScheduledHistory...');
       const result = await this.client.invoke(new Api.messages.GetScheduledHistory({
         peer: entity,
         hash: bigInt(0),
       }));
 
-      return (result as any).messages || [];
+      const messages = (result as any).messages || [];
+      
+      console.log(`📬 Получено отложенных сообщений: ${messages.length}`);
+      
+      if (messages.length > 0) {
+        console.log('📝 Детали отложенных сообщений:');
+        messages.forEach((msg: any, index: number) => {
+          console.log(`  ${index + 1}. ID: ${msg.id}, Дата: ${new Date((msg.date || 0) * 1000).toISOString()}, Текст: ${(msg.message || '').substring(0, 50)}...`);
+        });
+      } else {
+        console.log('ℹ️ Отложенных сообщений не найдено');
+      }
+      
+      console.log('=== КОНЕЦ ПОЛУЧЕНИЯ ОТЛОЖЕННЫХ СООБЩЕНИЙ ===');
+      
+      return messages;
     } catch (error) {
       console.error('❌ Ошибка получения отложенных сообщений:', error);
+      if (error instanceof Error) {
+        console.error('Сообщение об ошибке:', error.message);
+      }
       return [];
     }
   }

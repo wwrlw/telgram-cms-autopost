@@ -50,6 +50,7 @@ export interface Post {
   created_at: Date;
   scheduled_at?: Date;
   scheduled_channel_id?: string;
+  scheduled_message_id?: string;
   is_published?: boolean;
   published_at?: Date;
   telegram_message_id?: string;

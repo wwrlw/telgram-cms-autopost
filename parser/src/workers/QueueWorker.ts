@@ -1,12 +1,15 @@
 import Queue from 'bull';
 import { PublishService } from '../services/publishService.js';
+import { ApiService } from '../services/apiService.js';
 
 export class QueueWorker {
   private publishQueue: Queue.Queue;
   private publishService: PublishService;
+  private apiService: ApiService;
 
-  constructor(publishService: PublishService) {
+  constructor(publishService: PublishService, apiService: ApiService) {
     this.publishService = publishService;
+    this.apiService = apiService;
     this.publishQueue = new Queue('publish-queue', process.env.REDIS_URL || 'redis://localhost:6379');
   }
 
@@ -59,9 +62,58 @@ export class QueueWorker {
           channel, 
           new Date(scheduleDate)
         );
+        
+        if (result.success && result.scheduledMessageId) {
+          await this.apiService.saveScheduledMessageId(postId, result.scheduledMessageId);
+        }
+        
         return result;
       } catch (error) {
         console.error(`❌ Ошибка планирования поста ${postId}:`, error);
+        throw error;
+      }
+    });
+
+    this.publishQueue.process('GET_SCHEDULED_MESSAGES', async (job) => {
+      const { channelId } = job.data;
+      
+      console.log(`📥 Обрабатываем задачу получения отложенных сообщений: ${job.id}`);
+      console.log(`📋 Канал ID: ${channelId}`);
+      
+      try {
+        const result = await this.publishService.getScheduledMessages(channelId);
+        console.log(`✅ Получено отложенных сообщений: ${result.length}`);
+        return result;
+      } catch (error) {
+        console.error(`❌ Ошибка получения отложенных сообщений:`, error);
+        throw error;
+      }
+    });
+
+    this.publishQueue.process('DELETE_SCHEDULED_MESSAGE', async (job) => {
+      const { scheduledMessageId, channelId } = job.data;
+      
+      console.log(`📥 Обрабатываем задачу удаления отложенного сообщения: ${job.id}`);
+      
+      try {
+        const result = await this.publishService.deleteScheduledMessage(scheduledMessageId, channelId);
+        return result;
+      } catch (error) {
+        console.error(`❌ Ошибка удаления отложенного сообщения:`, error);
+        throw error;
+      }
+    });
+
+    this.publishQueue.process('SEND_SCHEDULED_MESSAGES', async (job) => {
+      const { scheduledMessageIds, channelId } = job.data;
+      
+      console.log(`📥 Обрабатываем задачу отправки отложенных сообщений: ${job.id}`);
+      
+      try {
+        const result = await this.publishService.sendScheduledMessages(scheduledMessageIds, channelId);
+        return result;
+      } catch (error) {
+        console.error(`❌ Ошибка отправки отложенных сообщений:`, error);
         throw error;
       }
     });

@@ -43,7 +43,7 @@ services:
           memory: 512M
           cpus: '0.5'
     networks:
-      - bots_bots_dev
+      - bots_bots
   parse:
     build: ./parser
     container_name: tg-parser
@@ -71,7 +71,7 @@ services:
     depends_on:
       - http
     networks:
-      - bots_bots_dev
+      - bots_bots
   web:
     build:
       context: ./web
@@ -90,7 +90,7 @@ services:
     depends_on:
       - http
     networks:
-      - bots_bots_dev
+      - bots_bots
   redis:
     image: redis:7-alpine
     ports:
@@ -98,9 +98,8 @@ services:
     container_name: tg-redis
     restart: unless-stopped
     networks:
-      - bots_bots_dev
+      - bots_bots
 
 networks:
-  bots_bots_dev:
-    driver: bridge
-  
+  bots_bots:
+    external: true

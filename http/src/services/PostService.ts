@@ -80,6 +80,24 @@ export class PostService implements IPostService {
     };
   }
 
+  async saveScheduledMessageId(id: string, scheduledMessageId: string): Promise<Post> {
+    const post = await this.postRepository.findById(id);
+    if (!post) {
+      throw new NotFoundError('Post not found');
+    }
+    
+    const updatedPost = await this.postRepository.update(id, {
+      scheduled_message_id: scheduledMessageId,
+      updated_at: new Date()
+    });
+    
+    if (!updatedPost) {
+      throw new NotFoundError('Failed to save scheduled message ID');
+    }
+    
+    return updatedPost;
+  }
+
   async getScheduledPosts(channelId?: string): Promise<Post[]> {
     return await this.postRepository.findScheduled(channelId);
   }
@@ -92,7 +110,8 @@ export class PostService implements IPostService {
     
     const updatedPost = await this.postRepository.update(id, {
       scheduled_at: undefined,
-      scheduled_channel_id: undefined
+      scheduled_channel_id: undefined,
+      scheduled_message_id: undefined
     });
     
     if (!updatedPost) {
