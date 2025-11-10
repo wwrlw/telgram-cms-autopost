@@ -14,7 +14,6 @@ export class ChannelStatsService {
    */
   async getChannelSubscribersCount(channelConfig: ChannelConfig): Promise<number | null> {
     try {
-      console.log(`📊 Получаем количество подписчиков для канала ${channelConfig.id}...`);
       
       let entity;
       
@@ -49,14 +48,14 @@ export class ChannelStatsService {
         
         if (fullChannel.fullChat && (fullChannel.fullChat as any).participantsCount !== undefined) {
           participantsCount = (fullChannel.fullChat as any).participantsCount;
-          console.log(`👥 GetFullChannel: ${participantsCount}`);
+          // console.log(`👥 GetFullChannel: ${participantsCount}`);
         }
       } catch (fullChannelError: any) {
-        console.log(`⚠️ Не удалось получить полную информацию о канале: ${fullChannelError?.message || fullChannelError}`);
+        // console.log(`⚠️ Не удалось получить полную информацию о канале: ${fullChannelError?.message || fullChannelError}`);
       }
       
       if (participantsCount !== null && participantsCount !== undefined && participantsCount > 0) {
-        console.log(`👥 Канал ${channelConfig.id}: ${participantsCount} подписчиков`);
+        // console.log(`👥 Канал ${channelConfig.id}: ${participantsCount} подписчиков`);
         return Number(participantsCount);
       } else {
         console.log(`⚠️ Не удалось получить количество подписчиков для канала ${channelConfig.id}. Entity type: ${entity.className}, Properties:`, Object.keys(entity));
@@ -73,7 +72,7 @@ export class ChannelStatsService {
    * Обновляет статистику каналов в базе данных
    */
   async updateChannelsStats(targetChannels: ChannelConfig[]): Promise<void> {
-    console.log('🔄 Начинаем обновление статистики каналов...');
+    // console.log('🔄 Начинаем обновление статистики каналов...');
     
     let updatedCount = 0;
     let skippedCount = 0;
@@ -93,10 +92,10 @@ export class ChannelStatsService {
           };
 
           await this.mongoService.saveChannelStats(channelStats);
-          console.log(`✅ Обновлена статистика канала ${channelConfig.id}: ${subscribersCount} подписчиков`);
+          // console.log(`✅ Обновлена статистика канала ${channelConfig.id}: ${subscribersCount} подписчиков`);
           updatedCount++;
         } else {
-          console.log(`⚠️ Пропускаем канал ${channelConfig.id} - не удалось получить статистику`);
+          // console.log(`⚠️ Пропускаем канал ${channelConfig.id} - не удалось получить статистику`);
           skippedCount++;
         }
 
@@ -117,7 +116,7 @@ export class ChannelStatsService {
       const channelStats = await this.mongoService.getChannelStats(channelId);
       
       if (channelStats && channelStats.subscribers_count !== null && channelStats.subscribers_count !== undefined) {
-        console.log(`📊 Подписчики канала ${channelId} из БД: ${channelStats.subscribers_count}`);
+        // console.log(`📊 Подписчики канала ${channelId} из БД: ${channelStats.subscribers_count}`);
         return channelStats.subscribers_count;
       } else {
         console.log(`⚠️ Нет данных о подписчиках канала ${channelId} в БД, используем значение по умолчанию`);

@@ -19,14 +19,17 @@
                     :show-combined-heading="true"
                     :has-new-files="previews.length > 0"
                     :new-previews="previews"
+                    :spoilers="existingSpoilers"
                     @open="openMediaViewer"
                     @remove="removeExistingMedia"
                     @removeNew="removeNewPreview"
+                    @update-spoiler="updateExistingSpoiler"
                 />
 
                 <MediaPicker
                     v-model="files"
                     v-model:previews="previews"
+                    v-model:spoilers="spoilers"
                     :existing-count="postData?.media?.length || 0"
                     :max-files="10"
                     :show-grid="false"
@@ -194,6 +197,8 @@ const channels = ref([]);
 const loadingPost = ref(false);
 const postData = ref(null);
 const previews = ref([]);
+const spoilers = ref([]);
+const existingSpoilers = ref([]);
 const uniquizing = ref(false);
 const showingUniqueText = ref(false);
 const showPromptPopover = ref(false);
@@ -258,11 +263,17 @@ function cancel() {
 function removeExistingMedia(index) {
     if (postData.value && postData.value.media) {
         postData.value.media.splice(index, 1);
+        existingSpoilers.value.splice(index, 1);
     }
+}
+
+function updateExistingSpoiler(index, hasSpoiler) {
+    existingSpoilers.value[index] = hasSpoiler;
 }
 
 function removeNewPreview(index) {
     const prev = previews.value.splice(index, 1)[0];
+    spoilers.value.splice(index, 1);
     if (prev?.url) URL.revokeObjectURL(prev.url);
 }
 
@@ -307,7 +318,8 @@ async function savePost() {
     try {
         const uploadedFiles = [];
         if (files.value.length > 0) {
-            for (const file of files.value) {
+            for (let i = 0; i < files.value.length; i++) {
+                const file = files.value[i];
                 const formData = new FormData();
                 formData.append("file", file);
 
@@ -319,7 +331,12 @@ async function savePost() {
                     );
 
                     if (uploadResult.success) {
-                        uploadedFiles.push(uploadResult.data);
+                        const mediaData = uploadResult.data;
+                        // Добавляем информацию о спойлере
+                        if (spoilers.value[i]) {
+                            mediaData.has_spoiler = true;
+                        }
+                        uploadedFiles.push(mediaData);
                     } else {
                         window?.$toast?.error(
                             `Ошибка загрузки файла ${file.name}: ${uploadResult.message}`
@@ -334,7 +351,12 @@ async function savePost() {
         }
 
         const existingMedia = postData.value.media || [];
-        const allMedia = [...existingMedia, ...uploadedFiles];
+        // Добавляем спойлеры к существующим медиа файлам
+        const existingMediaWithSpoilers = existingMedia.map((media, index) => ({
+            ...media,
+            has_spoiler: existingSpoilers.value[index] || false
+        }));
+        const allMedia = [...existingMediaWithSpoilers, ...uploadedFiles];
 
         const updateData = {
             id: postData.value._id,
@@ -392,7 +414,8 @@ async function publishNow() {
     try {
         const uploadedFiles = [];
         if (files.value.length > 0) {
-            for (const file of files.value) {
+            for (let i = 0; i < files.value.length; i++) {
+                const file = files.value[i];
                 const formData = new FormData();
                 formData.append("file", file);
 
@@ -404,7 +427,12 @@ async function publishNow() {
                     );
 
                     if (uploadResult.success) {
-                        uploadedFiles.push(uploadResult.data);
+                        const mediaData = uploadResult.data;
+                        // Добавляем информацию о спойлере
+                        if (spoilers.value[i]) {
+                            mediaData.has_spoiler = true;
+                        }
+                        uploadedFiles.push(mediaData);
                     } else {
                         window?.$toast?.error(
                             `Ошибка загрузки файла ${file.name}: ${uploadResult.message}`
@@ -419,7 +447,12 @@ async function publishNow() {
         }
 
         const existingMedia = postData.value.media || [];
-        const allMedia = [...existingMedia, ...uploadedFiles];
+        // Добавляем спойлеры к существующим медиа файлам
+        const existingMediaWithSpoilers = existingMedia.map((media, index) => ({
+            ...media,
+            has_spoiler: existingSpoilers.value[index] || false
+        }));
+        const allMedia = [...existingMediaWithSpoilers, ...uploadedFiles];
 
         const updateData = {
             id: postData.value._id,
@@ -496,7 +529,8 @@ async function publishLater() {
     try {
         const uploadedFiles = [];
         if (files.value.length > 0) {
-            for (const file of files.value) {
+            for (let i = 0; i < files.value.length; i++) {
+                const file = files.value[i];
                 const formData = new FormData();
                 formData.append("file", file);
 
@@ -508,7 +542,12 @@ async function publishLater() {
                     );
 
                     if (uploadResult.success) {
-                        uploadedFiles.push(uploadResult.data);
+                        const mediaData = uploadResult.data;
+                        // Добавляем информацию о спойлере
+                        if (spoilers.value[i]) {
+                            mediaData.has_spoiler = true;
+                        }
+                        uploadedFiles.push(mediaData);
                     } else {
                         window?.$toast?.error(
                             `Ошибка загрузки файла ${file.name}: ${uploadResult.message}`
@@ -523,7 +562,12 @@ async function publishLater() {
         }
 
         const existingMedia = postData.value.media || [];
-        const allMedia = [...existingMedia, ...uploadedFiles];
+        // Добавляем спойлеры к существующим медиа файлам
+        const existingMediaWithSpoilers = existingMedia.map((media, index) => ({
+            ...media,
+            has_spoiler: existingSpoilers.value[index] || false
+        }));
+        const allMedia = [...existingMediaWithSpoilers, ...uploadedFiles];
 
         const updateData = {
             id: postData.value._id,
@@ -583,6 +627,11 @@ function loadPost() {
             postData.value = res.data;
             initializeEditorContent(res.data);
             selectDefaultChannelByCategory();
+
+            // Загружаем спойлеры для существующих медиа файлов
+            if (res.data.media && res.data.media.length > 0) {
+                existingSpoilers.value = res.data.media.map(m => m.has_spoiler || false);
+            }
         } else {
             window?.$toast?.error(res?.message || "Не удалось загрузить пост");
         }

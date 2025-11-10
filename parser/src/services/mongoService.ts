@@ -475,7 +475,7 @@ export class MongoService {
         { upsert: true }
       );
 
-      console.log(`💾 Статистика канала ${channelStats.channel_id} сохранена в БД`);
+      // console.log(`💾 Статистика канала ${channelStats.channel_id} сохранена в БД`);
     } catch (error) {
       console.error('❌ Ошибка сохранения статистики канала:', error);
       throw error;

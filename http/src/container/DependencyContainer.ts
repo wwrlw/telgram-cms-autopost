@@ -13,6 +13,7 @@ import { PublicationChannelService } from '../services/PublicationChannelService
 import { CategoryService } from '../services/CategoryService';
 import { AuthService } from '../services/AuthService';
 import { YandexGPTService } from '../services/YandexGPTService';
+import { TimeWebGptService } from '../services/TimeWebGpt';
 import { UserPermissionService } from '../services/UserPermissionService';
 import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
 import { LoginUseCase } from '../use-cases/LoginUseCase';
@@ -39,6 +40,7 @@ export class DependencyContainer {
   private authService?: AuthService;
   private userPermissionService?: UserPermissionService;
   private yandexGptService?: YandexGPTService;
+  private timeWebGptService?: TimeWebGptService;
   private telegramPublishService?: ITelegramPublishService;
 
   private postService?: PostService;
@@ -157,8 +159,13 @@ export class DependencyContainer {
     return this.yandexGptService;
   }
 
+  getTimeWebGptService(): TimeWebGptService {
+    if (!this.timeWebGptService) this.timeWebGptService = new TimeWebGptService();
+    return this.timeWebGptService;
+  }
+
   getPostService(): PostService {
-    if (!this.postService) this.postService = new PostService(this.getPostRepository(), this.getYandexGPTService());
+    if (!this.postService) this.postService = new PostService(this.getPostRepository(), this.getTimeWebGptService());
     return this.postService;
   }
 

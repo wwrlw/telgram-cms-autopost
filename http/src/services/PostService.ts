@@ -4,13 +4,12 @@ import { IPostRepository } from '../interfaces/repositories/IPostRepository';
 import { Post, CreatePostDto } from '../models/Post';
 import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse } from '../types/PostQuery';
 import { NotFoundError } from '../exceptions/NotFoundError';
-import { YandexGPTService } from './YandexGPTService';
-import { ChannelProfileService } from './ChannelProfileService';
+import { TimeWebGptService } from './TimeWebGpt';
 
 export class PostService implements IPostService {
   constructor(
     private postRepository: IPostRepository,
-    private yandexGPTService: YandexGPTService
+    private timeWebGptService: TimeWebGptService,
   ) {}
 
   async getPost(id: string): Promise<Post> {
@@ -370,11 +369,7 @@ export class PostService implements IPostService {
     }
 
     // Определяем исходный канал для профиля
-    const sourceHandle = post.channel_username || post.source_channel;
-    const profileService = new ChannelProfileService();
-    const profile = profileService.getProfileByHandle(sourceHandle);
-
-    const uniquizedText = await this.yandexGPTService.rewriteWithProfile(post.text, profile);
+    const uniquizedText = await this.timeWebGptService.uniquizeText(post.text);
     
     const updatedPost = await this.postRepository.update(id, {
       unique_text: uniquizedText,
@@ -399,7 +394,7 @@ export class PostService implements IPostService {
       throw new NotFoundError('Post has no text to uniquize');
     }
 
-    const rewritten = await this.yandexGPTService.rewriteWithCustomPrompt(post.text, customPrompt);
+    const rewritten = await this.timeWebGptService.uniquizeText(post.text);
 
     const updatedPost = await this.postRepository.update(id, {
       unique_text: rewritten,

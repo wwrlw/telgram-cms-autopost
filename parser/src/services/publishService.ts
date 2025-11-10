@@ -198,22 +198,61 @@ export class PublishService {
 
   private async getChannelEntity(channelId: string): Promise<any> {
     try {
-      const channelIdNum = parseInt(channelId);
-      let telegramChannelId = Math.abs(channelIdNum);
-      
+      const trimmedChannelId = channelId.trim();
+
+      if (!/^-?\d+$/.test(trimmedChannelId)) {
+        const normalizedUsername = trimmedChannelId.startsWith('@')
+          ? trimmedChannelId.slice(1)
+          : trimmedChannelId;
+
+        return await this.client.getEntity(normalizedUsername);
+      }
+
+      const channelIdNum = Number(trimmedChannelId);
+
+      if (Number.isNaN(channelIdNum)) {
+        throw new Error(`Некорректный идентификатор канала: ${channelId}`);
+      }
+
+      const absoluteChannelId = Math.abs(channelIdNum);
+      let telegramChannelId = absoluteChannelId;
+
       if (telegramChannelId < 1_000_000_000_000) {
         telegramChannelId = 1_000_000_000_000 + telegramChannelId;
       }
 
+      let entity;
+
       try {
-        return await this.client.getEntity(telegramChannelId);
+        entity = await this.client.getEntity(telegramChannelId);
       } catch (firstError) {
         try {
-          return await this.client.getEntity(-telegramChannelId);
+          entity = await this.client.getEntity(-telegramChannelId);
         } catch (secondError) {
-          return await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
+          try {
+            entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
+          } catch (thirdError) {
+            try {
+              entity = await this.client.getEntity(new Api.PeerUser({ userId: BigInt(telegramChannelId) as any }));
+            } catch (fourthError) {
+              try {
+                entity = await this.client.getEntity(new Api.PeerChat({ chatId: BigInt(telegramChannelId) as any }));
+              } catch (fifthError) {
+                console.log(`⚠️ Не удалось получить entity для канала ${channelId}`);
+                console.log(`🔍 Пробовали ID: ${telegramChannelId}, -${telegramChannelId}, PeerChannel, PeerUser, PeerChat`);
+                return null;
+              }
+            }
+          }
         }
       }
+
+      if (!entity) {
+        console.log(`⚠️ Не удалось получить entity для канала ${channelId}`);
+        return null;
+      }
+
+      return entity;
     } catch (error) {
       console.error('❌ Ошибка получения entity канала:', error);
       return null;
@@ -317,11 +356,18 @@ export class PublishService {
         throw new Error(`Файл не найден: ${media.file_path}`);
       }
 
-      const result: any = await this.client.sendFile(entity, {
+      const sendOptions: any = {
         file: filePath,
         caption: caption,
         parseMode: 'html'
-      } as any);
+      };
+
+      // Добавляем спойлер если он включен
+      if (media.has_spoiler) {
+        sendOptions.has_spoiler = true;
+      }
+
+      const result: any = await this.client.sendFile(entity, sendOptions);
 
       const messageId = result?.id;
       console.log('✅ Медиафайл отправлен, ID:', messageId);
@@ -360,12 +406,19 @@ export class PublishService {
         throw new Error(`Файл не найден: ${media.file_path}`);
       }
 
-      const result: any = await this.client.sendFile(entity, {
+      const sendOptions: any = {
         file: filePath,
         caption: caption,
         parseMode: 'html',
         schedule: scheduleTimestamp
-      } as any);
+      };
+
+      // Добавляем спойлер если он включен
+      if (media.has_spoiler) {
+        sendOptions.has_spoiler = true;
+      }
+
+      const result: any = await this.client.sendFile(entity, sendOptions);
 
       const scheduledMessageId = result?.id;
       console.log('✅ Медиафайл запланирован, ID:', scheduledMessageId);
@@ -391,7 +444,14 @@ export class PublishService {
         if (!filePath) {
           throw new Error(`Файл не найден: ${media.file_path}`);
         }
-        files.push({ file: filePath });
+
+        const fileOptions: any = { file: filePath };
+        // Добавляем спойлер если он включен
+        if (media.has_spoiler) {
+          fileOptions.has_spoiler = true;
+        }
+
+        files.push(fileOptions);
       }
 
       const result: any = await this.client.sendFile(entity, {
@@ -423,7 +483,14 @@ export class PublishService {
         if (!filePath) {
           throw new Error(`Файл не найден: ${media.file_path}`);
         }
-        files.push({ file: filePath });
+
+        const fileOptions: any = { file: filePath };
+        // Добавляем спойлер если он включен
+        if (media.has_spoiler) {
+          fileOptions.has_spoiler = true;
+        }
+
+        files.push(fileOptions);
       }
 
       const result: any = await this.client.sendFile(entity, {

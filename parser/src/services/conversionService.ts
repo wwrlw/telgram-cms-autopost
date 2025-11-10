@@ -51,7 +51,7 @@ export class ConversionService {
     // Рассчитываем ERR (просмотры) = (просмотры/кол-во подписчиков) * 100%
     if (stats.views !== undefined && subscribersCount > 0) {
       conversion.err = Number(((stats.views / subscribersCount) * 100).toFixed(2));
-      console.log(`📊 ERR рассчитан: ${conversion.err}% (${stats.views} просмотров / ${subscribersCount} подписчиков)`);
+      // console.log(`📊 ERR рассчитан: ${conversion.err}% (${stats.views} просмотров / ${subscribersCount} подписчиков)`);
       hasMetrics = true;
     }
 

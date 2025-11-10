@@ -35,9 +35,9 @@ const config = {
   mediaPath: process.env.MEDIA_PATH || './media'
 };
 
-console.log('🔗 API URL:', apiBaseUrl);
-console.log('📁 Media path:', config.mediaPath);
-console.log('🗄️ MongoDB:', config.mongoUri);
+// console.log('🔗 API URL:', apiBaseUrl);
+// console.log('📁 Media path:', config.mediaPath);
+// console.log('🗄️ MongoDB:', config.mongoUri);
 
 const apiService = new ApiService(apiBaseUrl, apiUsername, apiPassword);
 
@@ -60,14 +60,14 @@ async function initializeParser() {
     console.log('📋 Channels info:');
     channelConfigs.forEach(channel => {
       const privacyStatus = channel.is_private ? '🔒 Private' : '🔓 Public';
-      console.log(`  - ${channel.username} (ID: ${channel.id}) [${privacyStatus}]`);
+      // console.log(`  - ${channel.username} (ID: ${channel.id}) [${privacyStatus}]`);
     });
 
     console.log('🔍 Получаем каналы для публикации из API...');
     const postedChannels = await apiService.getActivePostedChannels();
     
     if (postedChannels.length > 0) {
-      console.log('🎯 Posted channels:', postedChannels.map(c => `${c.name} (${c.channel_id})`));
+      // console.log('🎯 Posted channels:', postedChannels.map(c => `${c.name} (${c.channel_id})`));
     } else {
       console.warn('⚠️ Не найдено каналов для публикации');
     }
@@ -84,11 +84,11 @@ async function initializeParser() {
     queueWorker.start();
     
 
-    console.log('📊 Обновляем статистику каналов при запуске...');
+    // console.log('📊 Обновляем статистику каналов при запуске...');
     await updateChannelsStats();
     await checkScheduledPosts();
     
-    console.log('✅ Система конверсии активна - будет рассчитывать ER и ERR для всех постов');
+    // console.log('✅ Система конверсии активна - будет рассчитывать ER и ERR для всех постов');
 
 
   } catch (error) {
@@ -100,14 +100,14 @@ async function initializeParser() {
 
 async function updateChannels() {
   try {
-    console.log('🔄 Обновляем список каналов...');
+    // console.log('🔄 Обновляем список каналов...');
     const channelConfigs = await apiService.getChannelConfigs();
     
     if (telegramService) {
       await telegramService.updateTargetChannels(channelConfigs);
     }
     
-    console.log('✅ Список каналов обновлен:', channelConfigs.map(c => `${c.id} (${c.is_private ? 'Private' : 'Public'})`));
+    // console.log('✅ Список каналов обновлен:', channelConfigs.map(c => `${c.id} (${c.is_private ? 'Private' : 'Public'})`));
   } catch (error) {
     console.error('❌ Ошибка обновления каналов:', error);
   }
@@ -127,7 +127,7 @@ async function updatePostsStats() {
 async function updateChannelsStats() {
   try {
     if (telegramService) {
-      console.log('📊 Запускаем обновление статистики каналов (подписчики)...');
+      // console.log('📊 Запускаем обновление статистики каналов (подписчики)...');
       await telegramService.updateChannelsStats();
     }
   } catch (error) {
@@ -138,7 +138,7 @@ async function updateChannelsStats() {
 async function cleanupDuplicates() {
   try {
     if (telegramService) {
-      console.log('🧹 Запускаем очистку дубликатов...');
+      // console.log('🧹 Запускаем очистку дубликатов...');
       await telegramService.cleanupDuplicates();
     }
   } catch (error) {
@@ -148,14 +148,14 @@ async function cleanupDuplicates() {
 
 async function updatePostedChannels() {
   try {
-    console.log('🔄 Обновляем список каналов публикации...');
+    // console.log('🔄 Обновляем список каналов публикации...');
     const postedChannels = await apiService.getActivePostedChannels();
     
     if (telegramService) {
       await telegramService.updatePostedChannels(postedChannels);
     }
     
-    console.log('✅ Список каналов публикации обновлен:', postedChannels.map(c => `${c.name} (${c.channel_id})`));
+    // console.log('✅ Список каналов публикации обновлен:', postedChannels.map(c => `${c.name} (${c.channel_id})`));
   } catch (error) {
     console.error('❌ Ошибка обновления каналов публикации:', error);
   }
@@ -164,21 +164,21 @@ async function updatePostedChannels() {
 async function collectPostedChannelsAnalytics() {
   try {
     if (telegramService) {
-      console.log('📊 Запускаем сбор аналитики по каналам публикации...');
+      // console.log('📊 Запускаем сбор аналитики по каналам публикации...');
       await telegramService.collectPostedChannelsAnalytics();
     }
   } catch (error) {
-    console.error('❌ Ошибка сбора аналитики по каналам публикации:', error);
+    // console.error('❌ Ошибка сбора аналитики по каналам публикации:', error);
   }
 }
 
 async function checkScheduledPosts() {
   try {
     if (telegramService && apiService) {
-      console.log('🔍 Проверяем отложенные сообщения на публикацию...');
+      // console.log('🔍 Проверяем отложенные сообщения на публикацию...');
       
       const scheduledPosts = await apiService.getScheduledPosts();
-      console.log(`📋 Найдено отложенных постов: ${scheduledPosts.length}`);
+      // console.log(`📋 Найдено отложенных постов: ${scheduledPosts.length}`);
       
       const postedChannels = await apiService.getActivePostedChannels();
       
@@ -189,7 +189,7 @@ async function checkScheduledPosts() {
         const now = new Date();
         
         if (scheduledDate <= now) {
-          console.log(`⏰ Время публикации прошло для поста ${post._id}, проверяем обновление...`);
+          // console.log(`⏰ Время публикации прошло для поста ${post._id}, проверяем обновление...`);
           
           const channel = postedChannels.find(c => c.channel_id === post.scheduled_channel_id);
           
@@ -200,7 +200,7 @@ async function checkScheduledPosts() {
               const foundMessage = scheduledMessages.find((msg: any) => msg.id?.toString() === post.scheduled_message_id.toString());
               
               if (!foundMessage) {
-                console.log(`✅ Отложенное сообщение ${post.scheduled_message_id} было опубликовано, обновляем пост ${post._id}`);
+                // console.log(`✅ Отложенное сообщение ${post.scheduled_message_id} было опубликовано, обновляем пост ${post._id}`);
                 
                 await apiService.updateScheduledPostAsPublished(post._id);
               }
@@ -211,7 +211,7 @@ async function checkScheduledPosts() {
         }
       }
       
-      console.log('✅ Проверка отложенных сообщений завершена');
+      // console.log('✅ Проверка отложенных сообщений завершена');
     }
   } catch (error) {
     console.error('❌ Ошибка проверки отложенных сообщений:', error);

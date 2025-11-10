@@ -10,6 +10,7 @@
             <MediaPicker
                 v-model="files"
                 v-model:previews="previews"
+                v-model:spoilers="spoilers"
                 :existing-count="0"
                 :max-files="10"
             />
@@ -174,6 +175,7 @@ const channels = ref([]);
 const loadingPost = ref(false);
 const postData = ref(null);
 const previews = ref([]);
+const spoilers = ref([]);
 const isSubmitting = ref(false);
 const uniquizing = ref(false);
 const uniqueText = ref("");
@@ -224,6 +226,7 @@ const createNewPost = () => {
     editorHtml.value = "";
     files.value = [];
     previews.value = [];
+    spoilers.value = [];
     selectedChannel.value = "";
     schedule.value = false;
     scheduledAt.value = "";
@@ -276,7 +279,8 @@ const send = async (publishLater) => {
     try {
         const uploadedFiles = [];
         if (files.value.length > 0) {
-            for (const file of files.value) {
+            for (let i = 0; i < files.value.length; i++) {
+                const file = files.value[i];
                 const formData = new FormData();
                 formData.append("file", file);
 
@@ -288,7 +292,12 @@ const send = async (publishLater) => {
                     );
 
                     if (uploadResult.success) {
-                        uploadedFiles.push(uploadResult.data);
+                        const mediaData = uploadResult.data;
+                        // Добавляем информацию о спойлере
+                        if (spoilers.value[i]) {
+                            mediaData.has_spoiler = true;
+                        }
+                        uploadedFiles.push(mediaData);
                     } else {
                         window?.$toast?.error(
                             `Ошибка загрузки файла ${file.name}: ${uploadResult.message}`
@@ -336,7 +345,6 @@ const send = async (publishLater) => {
                     if (publishLater) {
                         window?.$toast?.success("Пост запланирован");
                         emitEvent(EVENTS.SCHEDULED_POST_CREATED, response.data);
-                        // Убираем автоматическое перенаправление на страницу запланированных постов
                         // router.push("/scheduled-posts");
                         postSaved.value = true;
                     } else {
@@ -398,7 +406,8 @@ const savePostToDatabase = async () => {
     try {
         const uploadedFiles = [];
         if (files.value.length > 0) {
-            for (const file of files.value) {
+            for (let i = 0; i < files.value.length; i++) {
+                const file = files.value[i];
                 const formData = new FormData();
                 formData.append("file", file);
 
@@ -410,7 +419,12 @@ const savePostToDatabase = async () => {
                     );
 
                     if (uploadResult.success) {
-                        uploadedFiles.push(uploadResult.data);
+                        const mediaData = uploadResult.data;
+                        // Добавляем информацию о спойлере
+                        if (spoilers.value[i]) {
+                            mediaData.has_spoiler = true;
+                        }
+                        uploadedFiles.push(mediaData);
                     } else {
                         window?.$toast?.error(
                             `Ошибка загрузки файла ${file.name}: ${uploadResult.message}`
@@ -436,6 +450,8 @@ const savePostToDatabase = async () => {
                 );
             if (media.mime_type)
                 formData.append(`media[${index}][mime_type]`, media.mime_type);
+            if (media.has_spoiler)
+                formData.append(`media[${index}][has_spoiler]`, media.has_spoiler);
         });
 
         http.createPost(
@@ -529,6 +545,7 @@ function loadPost() {
 async function preloadMedia(post) {
     if (!post || !post.media || !post.media.length) return;
     const arr = [];
+    const spoilersArr = [];
     for (const m of post.media.slice(0, 10)) {
         try {
             const url = getMediaUrl(m.file_path);
@@ -537,11 +554,13 @@ async function preloadMedia(post) {
             const filename = m.file_path.split("/").pop() || "media";
             const file = new File([blob], filename, { type: blob.type });
             arr.push(file);
+            spoilersArr.push(m.has_spoiler || false);
         } catch (e) {
             console.error("Ошибка загрузки медиа", e);
         }
     }
     addFiles(arr);
+    spoilers.value = spoilersArr;
 }
 
 function publishNow() {

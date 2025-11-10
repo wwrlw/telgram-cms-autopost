@@ -42,13 +42,25 @@
                     :src="item.url"
                     class="w-full h-full object-cover"
                 ></video>
-                <button
-                    @click="removeFile(idx)"
-                    class="absolute top-1 right-1 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Удалить файл"
-                >
-                    ✕
-                </button>
+                <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        @click="toggleSpoiler(idx)"
+                        :class="[
+                            'bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs',
+                            spoilersLocal[idx] ? 'bg-red-500/70' : 'bg-black/50'
+                        ]"
+                        :title="spoilersLocal[idx] ? 'Убрать спойлер' : 'Добавить спойлер'"
+                    >
+                        <Eye class="w-4 h-4"></Eye>
+                    </button>
+                    <button
+                        @click="removeFile(idx)"
+                        class="bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                        title="Удалить файл"
+                    >
+                        ✕
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -57,7 +69,7 @@
 <script setup>
 import { ref, watch, computed } from "vue";
 
-import { Paperclip } from "lucide-vue-next";
+import { Paperclip, Eye } from "lucide-vue-next";
 
 const props = defineProps({
     modelValue: { type: Array, default: () => [] },
@@ -65,11 +77,13 @@ const props = defineProps({
     maxFiles: { type: Number, default: 10 },
     existingCount: { type: Number, default: 0 },
     showGrid: { type: Boolean, default: true },
+    spoilers: { type: Array, default: () => [] },
 });
-const emit = defineEmits(["update:modelValue", "update:previews"]);
+const emit = defineEmits(["update:modelValue", "update:previews", "update:spoilers"]);
 
 const filesLocal = ref([...props.modelValue]);
 const previewsLocal = ref([...props.previews]);
+const spoilersLocal = ref([...props.spoilers]);
 const fileInputRef = ref(null);
 
 watch(
@@ -82,6 +96,12 @@ watch(
     () => props.previews,
     (v) => {
         if (v !== previewsLocal.value) previewsLocal.value = [...v];
+    }
+);
+watch(
+    () => props.spoilers,
+    (v) => {
+        if (v !== spoilersLocal.value) spoilersLocal.value = [...v];
     }
 );
 
@@ -100,9 +120,11 @@ function addFiles(newArr) {
             url,
             isImage: file.type.startsWith("image"),
         });
+        spoilersLocal.value.push(false); // По умолчанию спойлер отключен
     });
     emit("update:modelValue", filesLocal.value);
     emit("update:previews", previewsLocal.value);
+    emit("update:spoilers", spoilersLocal.value);
 }
 
 function handleFiles(e) {
@@ -122,9 +144,16 @@ function handleFiles(e) {
 function removeFile(index) {
     filesLocal.value.splice(index, 1);
     const prev = previewsLocal.value.splice(index, 1)[0];
+    spoilersLocal.value.splice(index, 1);
     if (prev?.url) URL.revokeObjectURL(prev.url);
     emit("update:modelValue", filesLocal.value);
     emit("update:previews", previewsLocal.value);
+    emit("update:spoilers", spoilersLocal.value);
+}
+
+function toggleSpoiler(index) {
+    spoilersLocal.value[index] = !spoilersLocal.value[index];
+    emit("update:spoilers", spoilersLocal.value);
 }
 
 function triggerFile() {

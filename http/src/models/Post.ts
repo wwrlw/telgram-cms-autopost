@@ -4,6 +4,7 @@ export interface Media {
   type: string;
   file_path: string;
   thumbnail_path?: string;
+  has_spoiler?: boolean;
 }
 
 export interface PostStats {
@@ -69,4 +70,5 @@ export interface CreatePostDto {
   format?: 'html' | 'markdown';
   conversion_metrics?: ConversionMetrics; // Только метрики конверсии
   category_id?: ObjectId;
+  has_spoiler?: boolean;
 } 

@@ -47,13 +47,25 @@
                         <FileText class="w-8 h-8 text-gray-400" />
                     </div>
                 </div>
-                <button
-                    @click="handleRemove(item)"
-                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                    title="Удалить файл"
-                >
-                    <X class="w-3 h-3" />
-                </button>
+                <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        @click="toggleSpoiler(idx)"
+                        :class="[
+                            'bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs',
+                            isSpoilerEnabled(idx) ? 'bg-red-500/70' : 'bg-black/50'
+                        ]"
+                        :title="isSpoilerEnabled(idx) ? 'Убрать спойлер' : 'Добавить спойлер'"
+                    >
+                        <Eye class="w-4 h-4"></Eye>
+                    </button>
+                    <button
+                        @click="handleRemove(item)"
+                        class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                        title="Удалить файл"
+                    >
+                        <X class="w-3 h-3" />
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -62,16 +74,17 @@
 <script setup>
 import { computed, ref } from "vue";
 import { getMediaUrl } from "@/js/utils";
-import { Play, FileText, X } from "lucide-vue-next";
+import { Play, FileText, X, Eye } from "lucide-vue-next";
 
 const props = defineProps({
     media: { type: Array, default: () => [] },
     showCombinedHeading: { type: Boolean, default: false },
     hasNewFiles: { type: Boolean, default: false },
     newPreviews: { type: Array, default: () => [] },
+    spoilers: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(["open", "remove", "removeNew"]);
+const emit = defineEmits(["open", "remove", "removeNew", "update-spoiler"]);
 
 const imageDimensions = ref(new Map());
 
@@ -131,6 +144,15 @@ const headingText = computed(() =>
         ? "Медиафайлы (существующие + новые):"
         : "Медиафайлы:"
 );
+
+function toggleSpoiler(index) {
+    const hasSpoiler = !isSpoilerEnabled(index);
+    emit("update-spoiler", index, hasSpoiler);
+}
+
+function isSpoilerEnabled(index) {
+    return props.spoilers[index] || false;
+}
 
 const combinedItems = computed(() => {
     const existing = (props.media || []).map((m, index) => ({

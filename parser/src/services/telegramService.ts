@@ -267,7 +267,7 @@ export class TelegramService {
                 // Логируем конверсию
                 this.conversionService.logConversionMetrics(conversionMetrics, post.url);
                 
-                console.log(`✅ Обновлена конверсия для ${post.url}:`, conversionMetrics);
+                // console.log(`✅ Обновлена конверсия для ${post.url}:`, conversionMetrics);
                 updatedCount++;
               } else {
                 console.log(`⚠️ Не удалось рассчитать конверсию для ${post.url}`);
@@ -302,9 +302,9 @@ export class TelegramService {
    */
   async updateChannelsStats(): Promise<void> {
     try {
-      console.log('🔄 Начинаем обновление статистики каналов...');
+      // console.log('🔄 Начинаем обновление статистики каналов...');
       await this.channelStatsService.updateChannelsStats(this.config.targetChannels);
-      console.log('✅ Обновление статистики каналов завершено');
+      // console.log('✅ Обновление статистики каналов завершено');
     } catch (error) {
       console.error('❌ Ошибка при обновлении статистики каналов:', error);
     }

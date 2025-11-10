@@ -231,6 +231,9 @@ export class BotPublishService implements ITelegramPublishService {
             item.caption = caption.substring(0, 1024);
             item.parse_mode = 'HTML';
           }
+          if (m.has_spoiler) {
+            item.has_spoiler = true;
+          }
           return item;
         });
 
@@ -269,10 +272,14 @@ export class BotPublishService implements ITelegramPublishService {
           }
 
           const mediaUrl = getMediaUrl(media.file_path);
-          const mediaRequestBody = {
+          const mediaRequestBody: any = {
             chat_id: channel.channel_id,
             [media.type]: mediaUrl
           };
+
+          if (media.has_spoiler) {
+            mediaRequestBody.has_spoiler = true;
+          }
 
           try {
             const extraResp = await fetch(`${this.baseUrl}/${method}`, {
@@ -320,12 +327,16 @@ export class BotPublishService implements ITelegramPublishService {
             console.error('❌ Ошибка при проверке файла:', fileError);
           }
 
-          const mediaRequestBody = {
+          const mediaRequestBody: any = {
             chat_id: channel.channel_id,
             [mediaType]: publicUrl,
-            caption: caption.substring(0, 1024), 
+            caption: caption.substring(0, 1024),
             parse_mode: 'HTML'
           };
+
+          if (media.has_spoiler) {
+            mediaRequestBody.has_spoiler = true;
+          }
           
           console.log('📤 Запрос медиа к Telegram API:', JSON.stringify(mediaRequestBody, null, 2));
 
@@ -367,12 +378,16 @@ export class BotPublishService implements ITelegramPublishService {
         }
         
         const firstMediaUrl = getMediaUrl(firstMedia.file_path);
-        const firstMediaRequestBody = {
+        const firstMediaRequestBody: any = {
           chat_id: channel.channel_id,
           [firstMediaType]: firstMediaUrl,
-          caption: caption.substring(0, 1024), 
+          caption: caption.substring(0, 1024),
           parse_mode: 'HTML'
         };
+
+        if (firstMedia.has_spoiler) {
+          firstMediaRequestBody.has_spoiler = true;
+        }
         
         console.log('📤 Отправляем первый медиафайл с подписью:', JSON.stringify(firstMediaRequestBody, null, 2));
         
@@ -402,10 +417,14 @@ export class BotPublishService implements ITelegramPublishService {
           
           if (method) {
             const mediaUrl = getMediaUrl(media.file_path);
-            const mediaRequestBody = {
-              chat_id: channel.channel_id,
-              [mediaType]: mediaUrl
-            };
+          const mediaRequestBody: any = {
+            chat_id: channel.channel_id,
+            [mediaType]: mediaUrl
+          };
+
+          if (media.has_spoiler) {
+            mediaRequestBody.has_spoiler = true;
+          }
             
             console.log(`📤 Отправляем медиафайл ${i + 1}/${post.media.length}:`, JSON.stringify(mediaRequestBody, null, 2));
             
