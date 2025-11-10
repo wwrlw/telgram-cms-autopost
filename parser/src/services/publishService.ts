@@ -29,7 +29,6 @@ export class PublishService {
       }
 
       const messageText = this.formatMessageText(post, channel);
-      console.log('📝 Форматированный текст:', messageText);
 
       if (post.media && post.media.length > 0) {
         return await this.sendMediaWithMTProto(post, entity, messageText);
@@ -223,16 +222,15 @@ export class PublishService {
 
   private async sendTextWithMTProto(entity: any, messageText: string): Promise<PublishResult> {
     try {
-      console.log('📝 Отправляем текстовое сообщение через MTProto');
+      console.log('📝 Отправляем текстовое сообщение через MTProto (parseMode=html)');
 
-      const result = await this.client.invoke(new Api.messages.SendMessage({
-        peer: entity,
+      const result: any = await this.client.sendMessage(entity, {
         message: messageText,
-        randomId: bigInt(Date.now()),
-        noWebpage: true
-      }));
+        parseMode: 'html',
+        linkPreview: false
+      });
 
-      const messageId = (result as any).updates?.[0]?.id || (result as any).id;
+      const messageId = result?.id;
       console.log('✅ Текстовое сообщение отправлено, ID:', messageId);
 
       return { 
@@ -248,17 +246,16 @@ export class PublishService {
 
   private async sendScheduledTextWithMTProto(entity: any, messageText: string, scheduleTimestamp: number): Promise<PublishResult> {
     try {
-      console.log('📝 Планируем текстовое сообщение через MTProto на:', new Date(scheduleTimestamp * 1000).toISOString());
+      console.log('📝 Планируем текстовое сообщение через MTProto (parseMode=html) на:', new Date(scheduleTimestamp * 1000).toISOString());
 
-      const result = await this.client.invoke(new Api.messages.SendMessage({
-        peer: entity,
+      const result: any = await this.client.sendMessage(entity, {
         message: messageText,
-        randomId: bigInt(Date.now()),
-        noWebpage: true,
-        scheduleDate: scheduleTimestamp
-      }));
+        parseMode: 'html',
+        linkPreview: false,
+        schedule: scheduleTimestamp
+      });
 
-      const scheduledMessageId = (result as any).updates?.[0]?.id || (result as any).id;
+      const scheduledMessageId = result?.id;
       console.log('✅ Текстовое сообщение запланировано, ID:', scheduledMessageId);
 
       return { 
@@ -313,17 +310,20 @@ export class PublishService {
         file_path: media.file_path,
         thumbnail_path: media.thumbnail_path
       });
-      
-      const inputMedia = await this.createInputMedia(media, caption);
-      
-      const result = await this.client.invoke(new Api.messages.SendMedia({
-        peer: entity,
-        media: inputMedia,
-        message: caption,
-        randomId: bigInt(Date.now()),
-      }));
 
-      const messageId = (result as any).updates?.[0]?.id || (result as any).id;
+      // Используем высокоуровневый helper с поддержкой parseMode='html'
+      const filePath = await this.findMediaFile(media.file_path);
+      if (!filePath) {
+        throw new Error(`Файл не найден: ${media.file_path}`);
+      }
+
+      const result: any = await this.client.sendFile(entity, {
+        file: filePath,
+        caption: caption,
+        parseMode: 'html'
+      } as any);
+
+      const messageId = result?.id;
       console.log('✅ Медиафайл отправлен, ID:', messageId);
 
       return { 
@@ -355,17 +355,19 @@ export class PublishService {
 
   private async sendScheduledSingleMediaWithMTProto(media: any, entity: any, caption: string, scheduleTimestamp: number): Promise<PublishResult> {
     try {
-      const inputMedia = await this.createInputMedia(media, caption);
-      
-      const result = await this.client.invoke(new Api.messages.SendMedia({
-        peer: entity,
-        media: inputMedia,
-        message: caption,
-        randomId: bigInt(Date.now()),
-        scheduleDate: scheduleTimestamp
-      }));
+      const filePath = await this.findMediaFile(media.file_path);
+      if (!filePath) {
+        throw new Error(`Файл не найден: ${media.file_path}`);
+      }
 
-      const scheduledMessageId = (result as any).updates?.[0]?.id || (result as any).id;
+      const result: any = await this.client.sendFile(entity, {
+        file: filePath,
+        caption: caption,
+        parseMode: 'html',
+        schedule: scheduleTimestamp
+      } as any);
+
+      const scheduledMessageId = result?.id;
       console.log('✅ Медиафайл запланирован, ID:', scheduledMessageId);
 
       return { 
@@ -381,27 +383,24 @@ export class PublishService {
 
   private async sendMediaGroupWithMTProto(mediaArray: any[], entity: any, caption: string): Promise<PublishResult> {
     try {
-      const inputMediaArray = [];
-      
+      // Отправляем альбом с использованием helper, чтобы работал parseMode='html' в подписи
+      const files: any[] = [];
       for (let i = 0; i < mediaArray.length; i++) {
         const media = mediaArray[i];
-        // Загружаем и создаем InputMedia
-        const inputMedia = await this.createInputMediaForGroup(media);
-        inputMediaArray.push(inputMedia);
+        const filePath = await this.findMediaFile(media.file_path);
+        if (!filePath) {
+          throw new Error(`Файл не найден: ${media.file_path}`);
+        }
+        files.push({ file: filePath });
       }
 
-      const result = await this.client.invoke(new Api.messages.SendMultiMedia({
-        peer: entity,
-        multiMedia: inputMediaArray.map((media, index) => new Api.InputSingleMedia({
-          media: media,
-          randomId: bigInt(Date.now() + index),
-          message: index === 0 ? caption : '' // Подпись только для первого медиа
-        })),
-        silent: false,
-        noforwards: false,
-      }));
+      const result: any = await this.client.sendFile(entity, {
+        file: files,
+        caption: caption,
+        parseMode: 'html'
+      } as any);
 
-      const messageId = (result as any).updates?.[0]?.id || (result as any).id;
+      const messageId = Array.isArray(result) ? result[0]?.id : result?.id;
       console.log('✅ Группа медиафайлов отправлена, ID:', messageId);
 
       return { 
@@ -417,28 +416,24 @@ export class PublishService {
 
   private async sendScheduledMediaGroupWithMTProto(mediaArray: any[], entity: any, caption: string, scheduleTimestamp: number): Promise<PublishResult> {
     try {
-      const inputMediaArray = [];
-      
+      const files: any[] = [];
       for (let i = 0; i < mediaArray.length; i++) {
         const media = mediaArray[i];
-        // Для SendMultiMedia не нужна caption в InputSingleMedia
-        const inputMedia = await this.createInputMediaForGroup(media);
-        inputMediaArray.push(inputMedia);
+        const filePath = await this.findMediaFile(media.file_path);
+        if (!filePath) {
+          throw new Error(`Файл не найден: ${media.file_path}`);
+        }
+        files.push({ file: filePath });
       }
 
-      const result = await this.client.invoke(new Api.messages.SendMultiMedia({
-        peer: entity,
-        multiMedia: inputMediaArray.map((media, index) => new Api.InputSingleMedia({
-          media: media,
-          randomId: bigInt(Date.now() + index),
-          message: index === 0 ? caption : '' // Подпись только для первого медиа
-        })),
-        scheduleDate: scheduleTimestamp,
-        silent: false,
-        noforwards: false,
-      }));
+      const result: any = await this.client.sendFile(entity, {
+        file: files,
+        caption: caption,
+        parseMode: 'html',
+        schedule: scheduleTimestamp
+      } as any);
 
-      const scheduledMessageId = (result as any).updates?.[0]?.id || (result as any).id;
+      const scheduledMessageId = Array.isArray(result) ? result[0]?.id : result?.id;
       console.log('✅ Группа медиафайлов запланирована, ID:', scheduledMessageId);
 
       return { 
@@ -742,26 +737,20 @@ export class PublishService {
     let result = post.text || '';
 
     if (isHtml) {
-      result = result.replace(/<br\s*\/?>/gi, '\n');
-      
       result = result.replace(/<\/p>/gi, '\n').replace(/<p>/gi, '');
-      
-      const allowed = '(?:b|strong|i|em|u|s|del|strike|a|code|pre|blockquote|tg-emoji|span)';
+      const allowed = '(?:b|strong|i|em|u|s|del|strike|a|code|pre|br|blockquote|tg-emoji|span)';
       result = result.replace(new RegExp(`<(?!(?:\/?${allowed})\\b)[^>]*>`, 'gi'), '');
       result = result.replace(/<span(?![^>]*class=["'][^"']*tg-spoiler[^"']*["'])[\s\S]*?>/gi, '');
-      
       result = result
         .replace(/<strong>/gi, '<b>')
         .replace(/<\/strong>/gi, '</b>')
         .replace(/<em>/gi, '<i>')
         .replace(/<\/em>/gi, '</i>');
-        
       result = result.replace(/<a\s+([^>]*href=["'][^"']+["'][^>]*)>/gi, (_m: string, attrs: string) => {
         if (/\brel=/.test(attrs)) return `<a ${attrs}>`;
         return `<a ${attrs} rel="noopener noreferrer">`;
       });
-      
-      result = result.replace(/\n\s*\n\s*\n/g, '\n\n');
+      result = result.replace(/<br\s*\/?>(?=\s*\n?)/gi, '\n');
     } else {
       result = (post.text || '')
         .replace(/&/g, '&amp;')
@@ -772,6 +761,7 @@ export class PublishService {
         .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')
         .replace(/\r\n|\r|\n/g, '\n');
       result = result.replace(/<(?!\/?(b|i|a|code|pre)\b)[^>]*>/gi, '');
+      result = result.replace(/<br\s*\/?>(?=\s*\n?)/gi, '\n');
     }
 
     if (channel.signature) {

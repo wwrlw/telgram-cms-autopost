@@ -273,9 +273,20 @@ export class PostRepository implements IPostRepository {
       },
       { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
       {
+        $addFields: {
+          'channel.category_id_obj': {
+            $cond: {
+              if: { $and: [{ $eq: [{ $type: '$channel.category_id' }, 'string'] }, { $ne: ['$channel.category_id', ''] }] },
+              then: { $toObjectId: '$channel.category_id' },
+              else: '$channel.category_id'
+            }
+          }
+        }
+      },
+      {
         $lookup: {
           from: 'categories',
-          localField: 'channel.category_id',
+          localField: 'channel.category_id_obj',
           foreignField: '_id',
           as: 'category'
         }
@@ -954,9 +965,20 @@ export class PostRepository implements IPostRepository {
       },
       { $unwind: { path: '$channel', preserveNullAndEmptyArrays: true } },
       {
+        $addFields: {
+          'channel.category_id_obj': {
+            $cond: {
+              if: { $and: [{ $eq: [{ $type: '$channel.category_id' }, 'string'] }, { $ne: ['$channel.category_id', ''] }] },
+              then: { $toObjectId: '$channel.category_id' },
+              else: '$channel.category_id'
+            }
+          }
+        }
+      },
+      {
         $lookup: {
           from: 'categories',
-          localField: 'channel.category_id',
+          localField: 'channel.category_id_obj',
           foreignField: '_id',
           as: 'category'
         }

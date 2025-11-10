@@ -1,12 +1,12 @@
 services:
-  http:
+  backend:
     build:
       context: ./http
       dockerfile: dockerfile.dev
-    container_name: tg-backend
+    container_name: tg-parse-backend
     restart: unless-stopped
     ports:
-      - "4000:4000"
+      - "3001:3001"
     volumes:
       - ./parser/media:/app/media
       - ./http:/app
@@ -29,7 +29,7 @@ services:
       - DEBUG=fastify:*
       - MONGO_EXPLAIN=0
       - CACHE_ENABLED=true
-      - PARSER_API_URL=http://parse:3003
+      # - PARSER_API_URL=http://parse:3003
       - PARSER_API_USERNAME=${API_USERNAME}
       - PARSER_API_PASSWORD=${API_PASSWORD}
       - USE_MTPROTO=${USE_MTPROTO}
@@ -44,12 +44,12 @@ services:
           cpus: '0.5'
     networks:
       - bots_bots
-  parse:
+  parser:
     build: ./parser
-    container_name: tg-parser
+    container_name: tg-parse-parser
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3003:3003"
+      - "127.0.0.1:3002:3002"
     volumes:
       - ./parser:/app
       - /app/node_modules
@@ -69,33 +69,33 @@ services:
       - STATS_UPDATE_LIMIT=${STATS_UPDATE_LIMIT}
       - REDIS_URL=redis://redis:6379
     depends_on:
-      - http
+      - backend
     networks:
       - bots_bots
-  web:
+  frontend:
     build:
       context: ./web
       target: dev
       dockerfile: dockerfile
-    container_name: tg-frontend
+    container_name: tg-parse-frontend
     restart: unless-stopped
     volumes:
       - ./web:/app/
       - /app/node_modules
     ports:
-      - '127.0.0.1:5174:5174'
+      - '127.0.0.1:5173:5173'
     environment:
       - NODE_ENV=development
       - VITE_API_URL=${VITE_API_URL}
     depends_on:
-      - http
+      - backend
     networks:
       - bots_bots
   redis:
     image: redis:7-alpine
     ports:
-    - "6380:6379"
-    container_name: tg-redis
+    - "6381:6379"
+    container_name: tg-parse-redis
     restart: unless-stopped
     networks:
       - bots_bots
