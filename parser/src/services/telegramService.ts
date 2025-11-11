@@ -514,40 +514,50 @@ export class TelegramService {
       this.albumTimers[groupId] = setTimeout(async () => {
         const albumMsgs = this.albumBuffer[groupId];
 
-        const meidaToProcces: any[] = albumMsgs.map(m => m.media).filter(Boolean);
-        let text = albumMsgs.find(m => m.message)?.message || '';
-        
-        const allMedia = await this.mediaService.processMedia(
-          this.client,
-          { media: meidaToProcces },
-          Number(peer.channelId || peer.userId || peer.chatId || 0),
-          albumMsgs[0].id
-        )
-        
-        const channelConfig = this.config.targetChannels.find(c => normalizeId(c.id) === normalizedIncomingId);
-        const sourceChannel = await this.getChannelIdentifier(peer, channelConfig);
-        const postUrl = `https://t.me/${sourceChannel}/${albumMsgs[0].id}`;
-        
-        const stats = this.getPostStatsFromMessage(albumMsgs[0]);
-        
-        const subscribersCount = await this.channelStatsService.getChannelSubscribersFromDB(this.getFullChannelId(peer));
-        const conversionMetrics = this.conversionService.calculateConversionMetrics(stats, subscribersCount);
-        
-        const postData: CreatePostDto = {
-          source_channel: sourceChannel,
-          channel_id: this.getFullChannelId(peer),
-          text,
-          url: postUrl,
-          media: allMedia,
-          is_unique: false,
-          conversion_metrics: conversionMetrics
-        };
-        
-        await this.mongoService.savePost(postData);
-        delete this.albumBuffer[groupId];
-        delete this.albumTimers[groupId];
+        if (!albumMsgs?.length) {
+          delete this.albumBuffer[groupId];
+          delete this.albumTimers[groupId];
+          return;
+        }
 
-        this.conversionService.logConversionMetrics(conversionMetrics, postUrl);
+        try {
+          const meidaToProcces: any[] = albumMsgs.map(m => m.media).filter(Boolean);
+          const text = albumMsgs.find(m => m.message)?.message || '';
+
+          const allMedia = await this.mediaService.processMedia(
+            this.client,
+            { media: meidaToProcces },
+            Number(peer.channelId || peer.userId || peer.chatId || 0),
+            albumMsgs[0].id
+          );
+
+          const channelConfig = this.config.targetChannels.find(c => normalizeId(c.id) === normalizedIncomingId);
+          const sourceChannel = await this.getChannelIdentifier(peer, channelConfig);
+          const postUrl = `https://t.me/${sourceChannel}/${albumMsgs[0].id}`;
+
+          const stats = this.getPostStatsFromMessage(albumMsgs[0]);
+
+          const subscribersCount = await this.channelStatsService.getChannelSubscribersFromDB(this.getFullChannelId(peer));
+          const conversionMetrics = this.conversionService.calculateConversionMetrics(stats, subscribersCount);
+
+          const postData: CreatePostDto = {
+            source_channel: sourceChannel,
+            channel_id: this.getFullChannelId(peer),
+            text,
+            url: postUrl,
+            media: allMedia,
+            is_unique: false,
+            conversion_metrics: conversionMetrics
+          };
+
+          await this.mongoService.savePost(postData);
+          this.conversionService.logConversionMetrics(conversionMetrics, postUrl);
+        } catch (error) {
+          console.error('❌ Ошибка при обработке альбома сообщений:', error);
+        } finally {
+          delete this.albumBuffer[groupId];
+          delete this.albumTimers[groupId];
+        }
       }, 1000);
       return;
     }

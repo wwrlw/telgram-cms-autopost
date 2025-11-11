@@ -1,8 +1,9 @@
-import { TelegramClient, Api } from 'telegram';
+import { TelegramClient, Api, utils } from 'telegram';
 import { Post } from '../types/index.js';
 import { PostedChannel } from '../types/index.js';
 import bigInt from "big-integer";
 import fs from 'fs';
+import crypto from 'crypto';
 import { CustomFile } from 'telegram/client/uploads.js';
 import { _parseMessageText } from 'telegram/client/messageParse.js';
 
@@ -588,37 +589,56 @@ export class PublishService {
 
   private async sendMediaGroupWithMTProto(mediaArray: any[], entity: any, caption: string): Promise<PublishResult> {
     try {
-      // Отправляем альбом с использованием helper, чтобы работал parseMode='html' в подписи
-      const files: any[] = [];
-      for (let i = 0; i < mediaArray.length; i++) {
-        const media = mediaArray[i];
-        const filePath = await this.findMediaFile(media.file_path);
-        if (!filePath) {
-          throw new Error(`Файл не найден: ${media.file_path}`);
-        }
-
-        const fileOptions: any = { file: filePath };
-        // Добавляем спойлер если он включен
-        if (media.has_spoiler) {
-          fileOptions.spoiler = true;
-        }
-
-        files.push(fileOptions);
+      if (!Array.isArray(mediaArray) || mediaArray.length === 0) {
+        throw new Error('Нет медиафайлов для отправки');
       }
 
-      const result: any = await this.client.sendFile(entity, {
-        file: files,
-        caption: caption,
-        parseMode: 'html'
-      } as any);
+      const inputPeer = await this.client.getInputEntity(entity);
 
-      const messageId = Array.isArray(result) ? result[0]?.id : result?.id;
-      console.log('✅ Группа медиафайлов отправлена, ID:', messageId);
+      const inputMediaList = [];
+      for (const media of mediaArray) {
+        const preparedMedia = await this.prepareAlbumMedia(media, inputPeer);
+        inputMediaList.push(preparedMedia);
+      }
+
+      const [preparedCaption, entities] = await _parseMessageText(this.client as any, caption || '', 'html');
+
+      const multiMedia = inputMediaList.map((mediaInput, index) => new Api.InputSingleMedia({
+        media: mediaInput,
+        message: index === 0 ? preparedCaption : '',
+        entities: index === 0 && Array.isArray(entities) && entities.length > 0 ? entities : undefined,
+        randomId: this.generateRandomLong()
+      }));
+
+      console.log('🧪 Подготовленный альбом:', multiMedia.map((item, index) => ({
+        index,
+        mediaClass: item.media?.className,
+        mediaType: (mediaArray[index] || {}).type,
+        hasEntities: !!item.entities,
+        messageLength: item.message?.length || 0,
+        randomId: item.randomId !== undefined ? item.randomId.toString() : undefined
+      })));
+
+      const request = new Api.messages.SendMultiMedia({
+        peer: inputPeer,
+        multiMedia
+      });
+
+      const result = await this.client.invoke(request);
+      const sentMessages: any = this.client._getResponseMessage(request, result, inputPeer);
+      const resolvedMessages = Array.isArray(sentMessages)
+        ? sentMessages
+        : sentMessages
+          ? [sentMessages]
+          : [];
+
+      const firstMessageId = resolvedMessages.length > 0 ? resolvedMessages[0]?.id : undefined;
+      console.log('✅ Группа медиафайлов отправлена, ID первого сообщения:', firstMessageId);
 
       return { 
         success: true, 
         message: 'Группа медиафайлов отправлена через MTProto',
-        messageId: messageId?.toString()
+        messageId: firstMessageId ? firstMessageId.toString() : undefined
       };
     } catch (error) {
       console.error('❌ Ошибка отправки группы медиафайлов:', error);
@@ -628,36 +648,57 @@ export class PublishService {
 
   private async sendScheduledMediaGroupWithMTProto(mediaArray: any[], entity: any, caption: string, scheduleTimestamp: number): Promise<PublishResult> {
     try {
-      const files: any[] = [];
-      for (let i = 0; i < mediaArray.length; i++) {
-        const media = mediaArray[i];
-        const filePath = await this.findMediaFile(media.file_path);
-        if (!filePath) {
-          throw new Error(`Файл не найден: ${media.file_path}`);
-        }
-
-        const fileOptions: any = { file: filePath };
-        if (media.has_spoiler) {
-          fileOptions.spoiler = true;
-        }
-
-        files.push(fileOptions);
+      if (!Array.isArray(mediaArray) || mediaArray.length === 0) {
+        throw new Error('Нет медиафайлов для планирования');
       }
 
-      const result: any = await this.client.sendFile(entity, {
-        file: files,
-        caption: caption,
-        parseMode: 'html',
-        scheduleDate: scheduleTimestamp
-      } as any);
+      const inputPeer = await this.client.getInputEntity(entity);
 
-      const scheduledMessageId = Array.isArray(result) ? result[0]?.id : result?.id;
-      console.log('✅ Группа медиафайлов запланирована, ID:', scheduledMessageId);
+      const inputMediaList = [];
+      for (const media of mediaArray) {
+        const preparedMedia = await this.prepareAlbumMedia(media, inputPeer);
+        inputMediaList.push(preparedMedia);
+      }
+
+      const [preparedCaption, entities] = await _parseMessageText(this.client as any, caption || '', 'html');
+
+      const multiMedia = inputMediaList.map((mediaInput, index) => new Api.InputSingleMedia({
+        media: mediaInput,
+        message: index === 0 ? preparedCaption : '',
+        entities: index === 0 && Array.isArray(entities) && entities.length > 0 ? entities : undefined,
+        randomId: this.generateRandomLong()
+      }));
+
+      console.log('🧪 Подготовленный альбом (schedule):', multiMedia.map((item, index) => ({
+        index,
+        mediaClass: item.media?.className,
+        mediaType: (mediaArray[index] || {}).type,
+        hasEntities: !!item.entities,
+        messageLength: item.message?.length || 0,
+        randomId: item.randomId !== undefined ? item.randomId.toString() : undefined
+      })));
+
+      const request = new Api.messages.SendMultiMedia({
+        peer: inputPeer,
+        multiMedia,
+        scheduleDate: scheduleTimestamp
+      });
+
+      const result = await this.client.invoke(request);
+      const scheduledMessages: any = this.client._getResponseMessage(request, result, inputPeer);
+      const resolvedMessages = Array.isArray(scheduledMessages)
+        ? scheduledMessages
+        : scheduledMessages
+          ? [scheduledMessages]
+          : [];
+
+      const firstMessageId = resolvedMessages.length > 0 ? resolvedMessages[0]?.id : undefined;
+      console.log('✅ Группа медиафайлов запланирована, ID первого сообщения:', firstMessageId);
 
       return { 
         success: true, 
         message: 'Группа медиафайлов запланирована через MTProto',
-        scheduledMessageId: scheduledMessageId?.toString()
+        scheduledMessageId: firstMessageId ? firstMessageId.toString() : undefined
       };
     } catch (error) {
       console.error('❌ Ошибка планирования группы медиафайлов:', error);
@@ -683,7 +724,7 @@ export class PublishService {
     
     const uploadedFile = await this.client.uploadFile({
       file: new CustomFile(fileName, stats.size, filePath),
-      workers: 1
+      workers: this.getOptimalWorkers(stats.size)
     });
 
     console.log('✅ Файл успешно загружен в Telegram');
@@ -694,11 +735,35 @@ export class PublishService {
           file: uploadedFile
         });
       case 'video':
-        // Для видео в группах используем InputMediaUploadedDocument
+        let thumb: any = undefined;
+        if (media.thumbnail_path) {
+          const thumbPath = await this.findMediaFile(media.thumbnail_path);
+          if (thumbPath) {
+            const thumbStats = fs.statSync(thumbPath);
+            const thumbFileName = path.basename(thumbPath);
+            console.log(`🖼️ Загружаем превью для группы: ${thumbFileName} (${(thumbStats.size / 1024).toFixed(2)}KB)`);
+            thumb = await this.client.uploadFile({
+              file: new CustomFile(thumbFileName, thumbStats.size, thumbPath),
+              workers: 1
+            });
+            console.log('✅ Превью для группы загружено');
+          }
+        }
+
+        const videoMetadata = await this.getVideoMetadata(filePath);
+
         return new Api.InputMediaUploadedDocument({
           file: uploadedFile,
           mimeType: this.getMimeType(filePath),
-          attributes: []
+          attributes: [
+            new Api.DocumentAttributeVideo({
+              duration: videoMetadata.duration || 0,
+              w: videoMetadata.width || 0,
+              h: videoMetadata.height || 0,
+              supportsStreaming: this.isStreamableVideo(filePath)
+            })
+          ],
+          thumb
         });
       default:
         return new Api.InputMediaUploadedDocument({
@@ -707,6 +772,26 @@ export class PublishService {
           attributes: []
         });
     }
+  }
+
+  private async prepareAlbumMedia(media: any, inputPeer: any): Promise<any> {
+    const uploadedMedia = await this.createInputMediaForGroup(media);
+
+    const uploadResult = await this.client.invoke(new Api.messages.UploadMedia({
+      peer: inputPeer,
+      media: uploadedMedia
+    }));
+
+    if (uploadResult instanceof Api.MessageMediaPhoto) {
+      return utils.getInputMedia(uploadResult.photo);
+    }
+
+    if (uploadResult instanceof Api.MessageMediaDocument) {
+      return utils.getInputMedia(uploadResult.document);
+    }
+
+    console.error('❌ Не удалось подготовить медиа для альбома. Неизвестный ответ UploadMedia:', uploadResult?.className || uploadResult);
+    throw new Error('Не удалось подготовить медиа для альбома');
   }
 
   /**
@@ -910,6 +995,16 @@ export class PublishService {
     }
     // Для больших файлов (> 100MB) используем 4-8 воркеров
     return Math.min(8, Math.max(4, Math.floor(fileSize / (50 * 1024 * 1024))));
+  }
+
+  private generateRandomLong(): bigInt.BigInteger {
+    let value = 0n;
+    while (value === 0n) {
+      const bytes = crypto.randomBytes(8);
+      value = BigInt('0x' + bytes.toString('hex'));
+      value = BigInt.asUintN(63, value);
+    }
+    return bigInt(value.toString());
   }
 
   private formatMessageText(post: Post, channel: PostedChannel): string {
