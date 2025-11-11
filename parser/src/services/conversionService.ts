@@ -41,17 +41,13 @@ export class ConversionService {
       hasMetrics = true;
     }
 
-    // Рассчитываем ER (реакции) = (реакции/кол-во просмотров) * 100%
     if (stats.reactions !== undefined && stats.views !== undefined && stats.views > 0) {
       conversion.er = Number(((stats.reactions / stats.views) * 100).toFixed(2));
-      console.log(`📊 ER рассчитан: ${conversion.er}% (${stats.reactions} реакций / ${stats.views} просмотров)`);
       hasMetrics = true;
     }
 
-    // Рассчитываем ERR (просмотры) = (просмотры/кол-во подписчиков) * 100%
     if (stats.views !== undefined && subscribersCount > 0) {
       conversion.err = Number(((stats.views / subscribersCount) * 100).toFixed(2));
-      // console.log(`📊 ERR рассчитан: ${conversion.err}% (${stats.views} просмотров / ${subscribersCount} подписчиков)`);
       hasMetrics = true;
     }
 
@@ -76,7 +72,6 @@ export class ConversionService {
 
   logConversionMetrics(conversion: ConversionMetrics | undefined, postUrl: string): void {
     if (!conversion) {
-      console.log(`📊 Конверсия для ${postUrl}: данных недостаточно`);
       return;
     }
 
@@ -97,7 +92,5 @@ export class ConversionService {
     if (conversion.reactions !== undefined) {
       metrics.push(`Реакции: ${conversion.reactions}`);
     }
-
-    console.log(`📊 Конверсия для ${postUrl}: ${metrics.join(', ')}`);
   }
 } 

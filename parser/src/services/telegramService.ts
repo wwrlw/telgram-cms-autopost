@@ -161,7 +161,6 @@ export class TelegramService {
       const statsLimit = Number(process.env.STATS_UPDATE_LIMIT) || 150;
       const cutoffDate = new Date();
       const recentPosts = await this.mongoService.getRecentPostsForStats(statsLimit);
-      console.log(`📊 Найдено ${recentPosts.length} постов для обновления статистики (ограничение: ${statsLimit})`);
       
       let updatedCount = 0;
       let skippedCount = 0;
@@ -170,7 +169,6 @@ export class TelegramService {
         try {
           const urlMatch = post.url.match(/https:\/\/t\.me\/([^/]+)\/(\d+)/);
           if (!urlMatch) {
-            console.log(`⚠️ Не удалось извлечь данные из URL: ${post.url}`);
             skippedCount++;
             continue;
           }
@@ -219,7 +217,6 @@ export class TelegramService {
                   telegramChannelId = 1_000_000_000_000 + telegramChannelId;
                 }
                 
-                // Try multiple approaches to get the entity
                 try {
                   entity = await this.client.getEntity(telegramChannelId);
                 } catch (firstError) {
@@ -254,23 +251,17 @@ export class TelegramService {
             const updatedStats = this.getPostStatsFromMessage(message);
             
             if (updatedStats) {
-              // Получаем количество подписчиков канала для расчета конверсии
               const subscribersCount = await this.channelStatsService.getChannelSubscribersFromDB(post.channel_id);
               
-              // Рассчитываем метрики конверсии
               const conversionMetrics = this.conversionService.calculateConversionMetrics(updatedStats, subscribersCount);
               
-              // Обновляем конверсию в БД
               if (conversionMetrics) {
                 await this.mongoService.updatePostStats(post.url, conversionMetrics);
                 
-                // Логируем конверсию
                 this.conversionService.logConversionMetrics(conversionMetrics, post.url);
                 
-                // console.log(`✅ Обновлена конверсия для ${post.url}:`, conversionMetrics);
                 updatedCount++;
               } else {
-                console.log(`⚠️ Не удалось рассчитать конверсию для ${post.url}`);
                 skippedCount++;
               }
             } else {
@@ -282,7 +273,6 @@ export class TelegramService {
             skippedCount++;
           }
           
-          // Add delay between requests to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 1000));
           
         } catch (error) {
@@ -297,14 +287,9 @@ export class TelegramService {
     }
   }
 
-  /**
-   * Обновляет статистику каналов (количество подписчиков)
-   */
   async updateChannelsStats(): Promise<void> {
     try {
-      // console.log('🔄 Начинаем обновление статистики каналов...');
       await this.channelStatsService.updateChannelsStats(this.config.targetChannels);
-      // console.log('✅ Обновление статистики каналов завершено');
     } catch (error) {
       console.error('❌ Ошибка при обновлении статистики каналов:', error);
     }
@@ -360,12 +345,6 @@ export class TelegramService {
   async getChannelInfo(username: string): Promise<void> {
     try {
       const entity = await this.client.getEntity(username);
-      console.log('📊 Информация о канале:', {
-        id: (entity as any).id,
-        title: (entity as any).title,
-        username: (entity as any).username,
-        participantsCount: (entity as any).participantsCount
-      });
     } catch (error) {
       console.error('❌ Ошибка получения информации о канале:', error);
     }
@@ -378,7 +357,6 @@ export class TelegramService {
         return undefined;
       }
       
-      console.log(`📊 Извлекаем статистику из сообщения ${message.id}`);
       
       const stats: PostStats = {};
       let hasStats = false;
@@ -386,19 +364,16 @@ export class TelegramService {
       if (message.views !== undefined && message.views !== null) {
         stats.views = Number(message.views);
         hasStats = true;
-        console.log(`👁️ Просмотры: ${stats.views}`);
       }
 
       if (message.forwards !== undefined && message.forwards !== null) {
         stats.forwards = Number(message.forwards);
         hasStats = true;
-        console.log(`🔄 Пересылки: ${stats.forwards}`);
       }
 
       if (message.replies && message.replies.replies !== undefined && message.replies.replies !== null) {
         stats.comments = Number(message.replies.replies);
         hasStats = true;
-        console.log(`💬 Комментарии: ${stats.comments}`);
       }
 
       if (message.reactions && message.reactions.results && Array.isArray(message.reactions.results)) {
@@ -421,7 +396,6 @@ export class TelegramService {
           }
           
           hasStats = true;
-          console.log(`😍 Реакции: ${stats.reactions}`, stats.reactions_detail);
         }
       }
 
@@ -516,13 +490,11 @@ export class TelegramService {
       .includes(normalizedIncomingId);
     
     if (!isTargetChannel) {
-      console.log(`⏭️ Сообщение из канала ${channelId} не в списке целевых каналов [${this.config.targetChannels.map(c => c.id).join(', ')}], пропускаем`);
       return;
     }
 
     const messageText = (msg as any).message || '';
     if (messageText && await this.mongoService.checkTextDuplicate(messageText)) {
-      console.log(`⏭️ Дубликат текста обнаружен на ранней стадии, пропускаем: ${messageText.substring(0, 50)}...`);
       return;
     }
 
@@ -575,11 +547,7 @@ export class TelegramService {
         delete this.albumBuffer[groupId];
         delete this.albumTimers[groupId];
 
-        // Автоматическая публикация отключена - посты публикуются через очередь
-
-        // Логируем конверсию
         this.conversionService.logConversionMetrics(conversionMetrics, postUrl);
-        console.log(`📤 Сохранён альбом-пост из ${sourceChannel}:`, postData);
       }, 1000);
       return;
     }
@@ -588,18 +556,14 @@ export class TelegramService {
       const channelConfig = this.config.targetChannels.find(c => normalizeId(c.id) === normalizedIncomingId);
       const sourceChannel = await this.getChannelIdentifier(peer, channelConfig);
 
-      console.log(`📨 Сообщение из целевого канала: ${sourceChannel} (ID: ${channelId})`);
-
       const postUrl = `https://t.me/${sourceChannel}/${msg.id}`;
 
       const exists = await this.mongoService.checkPostExists(postUrl);
       if (exists) {
-        console.log(`⏭️ Пост ${postUrl} уже существует, пропускаем`);
         return;
       }
 
       console.log(`📝 Обрабатываем новый пост: ${postUrl}`);
-      console.log(`📄 Текст: ${(msg as any).message ? (msg as any).message.substring(0, 100) + '...' : 'Без текста'}`);
 
       const media = await this.mediaService.processMedia(
         this.client,
@@ -610,7 +574,6 @@ export class TelegramService {
 
       const stats = this.getPostStatsFromMessage(msg);
       
-      // Получаем количество подписчиков для расчета конверсии
       const subscribersCount = await this.channelStatsService.getChannelSubscribersFromDB(this.getFullChannelId(peer));
       const conversionMetrics = this.conversionService.calculateConversionMetrics(stats, subscribersCount);
 
@@ -626,12 +589,8 @@ export class TelegramService {
 
       await this.mongoService.savePost(postData);
 
-      // Логируем конверсию
       this.conversionService.logConversionMetrics(conversionMetrics, postUrl);
       
-      console.log(`✅ Пост успешно сохранен: ${postUrl}`);
-      console.log(`📊 Статистика: ${stats ? JSON.stringify(stats) : 'Нет данных'}`);
-
     } catch (error) {
       console.error('❌ Ошибка при обработке сообщения:', error);
     }
@@ -643,11 +602,7 @@ export class TelegramService {
 
   async updatePostedChannels(newPostedChannels: PostedChannel[]): Promise<void> {
     console.log('🔄 Обновляем каналы публикации...');
-    console.log('📋 Старые каналы публикации:', this.postedChannels.map(c => c.name));
-    console.log('📋 Новые каналы публикации:', newPostedChannels.map(c => c.name));
-    
     this.postedChannels = newPostedChannels;
-    
     if (newPostedChannels.length > 0) {
       console.log(`✅ Обновлено ${newPostedChannels.length} каналов публикации`);
     } else {

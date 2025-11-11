@@ -4,6 +4,7 @@ import { PostedChannel } from '../types/index.js';
 import bigInt from "big-integer";
 import fs from 'fs';
 import { CustomFile } from 'telegram/client/uploads.js';
+import { _parseMessageText } from 'telegram/client/messageParse.js';
 
 export interface PublishResult {
   success: boolean;
@@ -82,7 +83,6 @@ export class PublishService {
         return [];
       }
 
-      console.log('📞 Вызываем API GetScheduledHistory...');
       const result = await this.client.invoke(new Api.messages.GetScheduledHistory({
         peer: entity,
         hash: bigInt(0),
@@ -344,16 +344,13 @@ export class PublishService {
 
   private async sendSingleMediaWithMTProto(media: any, entity: any, caption: string): Promise<PublishResult> {
     try {
-      console.log('📎 Обрабатываем медиафайл:', {
-        type: media.type,
-        file_path: media.file_path,
-        thumbnail_path: media.thumbnail_path
-      });
-
-      // Используем высокоуровневый helper с поддержкой parseMode='html'
       const filePath = await this.findMediaFile(media.file_path);
       if (!filePath) {
         throw new Error(`Файл не найден: ${media.file_path}`);
+      }
+
+      if (media.has_spoiler && media.type === 'photo') {
+        return await this.sendPhotoWithSpoiler(entity, filePath, caption);
       }
 
       const sendOptions: any = {
@@ -362,10 +359,16 @@ export class PublishService {
         parseMode: 'html'
       };
 
-      // Добавляем спойлер если он включен
       if (media.has_spoiler) {
-        sendOptions.has_spoiler = true;
+        sendOptions.spoiler = true;
       }
+
+      console.log('📎 Обрабатываем медиафайл:', {
+        type: media.type,
+        file_path: media.file_path,
+        thumbnail_path: media.thumbnail_path,
+        spoiler: media.has_spoiler,
+      });
 
       const result: any = await this.client.sendFile(entity, sendOptions);
 
@@ -406,16 +409,19 @@ export class PublishService {
         throw new Error(`Файл не найден: ${media.file_path}`);
       }
 
+      if (media.has_spoiler && media.type === 'photo') {
+        return await this.sendPhotoWithSpoiler(entity, filePath, caption, { scheduleTimestamp });
+      }
+
       const sendOptions: any = {
         file: filePath,
         caption: caption,
         parseMode: 'html',
-        schedule: scheduleTimestamp
+        scheduleDate: scheduleTimestamp
       };
 
-      // Добавляем спойлер если он включен
       if (media.has_spoiler) {
-        sendOptions.has_spoiler = true;
+        sendOptions.spoiler = true;
       }
 
       const result: any = await this.client.sendFile(entity, sendOptions);
@@ -434,6 +440,52 @@ export class PublishService {
     }
   }
 
+  private async sendPhotoWithSpoiler(
+    entity: any,
+    filePath: string,
+    caption: string,
+    options?: { scheduleTimestamp?: number }
+  ): Promise<PublishResult> {
+    const scheduleTimestamp = options?.scheduleTimestamp;
+    const path = await import('path');
+    const stats = fs.statSync(filePath);
+    const fileName = path.basename(filePath);
+
+    const uploadedFile = await this.client.uploadFile({
+      file: new CustomFile(fileName, stats.size, filePath),
+      workers: this.getOptimalWorkers(stats.size)
+    });
+
+    const [preparedCaption, entities] = await _parseMessageText(this.client as any, caption || '', 'html');
+
+    const request = new Api.messages.SendMedia({
+      peer: entity,
+      media: new Api.InputMediaUploadedPhoto({
+        file: uploadedFile,
+        spoiler: true
+      }),
+      message: preparedCaption,
+      entities,
+      scheduleDate: scheduleTimestamp
+    });
+
+    const result = await this.client.invoke(request);
+    const sentMessage: any = this.client._getResponseMessage(request, result, entity);
+    const resolved = Array.isArray(sentMessage) ? sentMessage[0] : sentMessage;
+    const messageId = resolved?.id ? resolved.id.toString() : undefined;
+
+    console.log(
+      scheduleTimestamp
+        ? '✅ Фото со спойлером запланировано, ID:'
+        : '✅ Фото со спойлером отправлено, ID:',
+      messageId
+    );
+
+    return scheduleTimestamp
+      ? { success: true, message: 'Медиафайл запланирован через MTProto', scheduledMessageId: messageId }
+      : { success: true, message: 'Медиафайл отправлен через MTProto', messageId };
+  }
+
   private async sendMediaGroupWithMTProto(mediaArray: any[], entity: any, caption: string): Promise<PublishResult> {
     try {
       // Отправляем альбом с использованием helper, чтобы работал parseMode='html' в подписи
@@ -448,7 +500,7 @@ export class PublishService {
         const fileOptions: any = { file: filePath };
         // Добавляем спойлер если он включен
         if (media.has_spoiler) {
-          fileOptions.has_spoiler = true;
+          fileOptions.spoiler = true;
         }
 
         files.push(fileOptions);
@@ -485,9 +537,8 @@ export class PublishService {
         }
 
         const fileOptions: any = { file: filePath };
-        // Добавляем спойлер если он включен
         if (media.has_spoiler) {
-          fileOptions.has_spoiler = true;
+          fileOptions.spoiler = true;
         }
 
         files.push(fileOptions);
@@ -497,7 +548,7 @@ export class PublishService {
         file: files,
         caption: caption,
         parseMode: 'html',
-        schedule: scheduleTimestamp
+        scheduleDate: scheduleTimestamp
       } as any);
 
       const scheduledMessageId = Array.isArray(result) ? result[0]?.id : result?.id;
@@ -559,9 +610,9 @@ export class PublishService {
   }
 
   /**
-   * @param media - объект медиафайла с типом и путями
-   * @param caption - подпись к медиафайлу
-   * @returns InputMedia объект для API
+   * @param media
+   * @param caption
+   * @returns 
    */
   private async createInputMedia(media: any, caption: string): Promise<any> {
     try {
@@ -700,41 +751,6 @@ export class PublishService {
     return null;
   }
 
-  // private async findMediaFileByName(fileName: string): Promise<string[]> {
-  //   const fs = await import('fs');
-  //   const path = await import('path');
-  //   const possiblePaths: string[] = [];
-    
-  //   // Список папок для поиска
-  //   const searchDirs = [
-  //     process.cwd(),
-  //     '/app',
-  //     path.join(process.cwd(), 'media'),
-  //     '/app/media',
-  //     path.join(process.cwd(), 'parser', 'media'),
-  //     '/app/parser/media'
-  //   ];
-    
-  //   for (const dir of searchDirs) {
-  //     if (fs.existsSync(dir)) {
-  //       const subDirs = ['photos', 'videos', 'documents', 'thumbnails'];
-  //       for (const subDir of subDirs) {
-  //         const fullPath = path.join(dir, subDir, fileName);
-  //         if (fs.existsSync(fullPath)) {
-  //           possiblePaths.push(fullPath);
-  //         }
-  //       }
-        
-  //       const directPath = path.join(dir, fileName);
-  //       if (fs.existsSync(directPath)) {
-  //         possiblePaths.push(directPath);
-  //       }
-  //     }
-  //   }
-    
-  //   return possiblePaths;
-  // }
-
   private getMimeType(filePath: string): string {
     const ext = filePath.split('.').pop()?.toLowerCase();
     const mimeTypes: { [key: string]: string } = {
@@ -758,9 +774,6 @@ export class PublishService {
     return mimeTypes[ext || ''] || 'application/octet-stream';
   }
 
-  /**
-   * Получает метаданные видеофайла
-   */
   private async getVideoMetadata(filePath: string): Promise<{ duration: number; width: number; height: number }> {
     try {
       return {

@@ -615,10 +615,8 @@ let http = {
     updatePost: function (params, callback) {
         const { id, ...updateData } = params;
 
-        // Создаем FormData для отправки данных
         const formData = new FormData();
 
-        // Добавляем текстовые поля
         if (updateData.text !== undefined) {
             formData.append("text", updateData.text);
         }
@@ -635,7 +633,6 @@ let http = {
             formData.append("format", updateData.format);
         }
 
-        // Добавляем медиафайлы
         if (updateData.media && Array.isArray(updateData.media)) {
             updateData.media.forEach((media, index) => {
                 formData.append(`media[${index}][type]`, media.type);
@@ -645,6 +642,9 @@ let http = {
                         `media[${index}][original_name]`,
                         media.original_name
                     );
+                }
+                if (media.has_spoiler !== undefined) {
+                    formData.append(`media[${index}][has_spoiler]`, media.has_spoiler ? 'true' : 'false')
                 }
                 if (media.mime_type) {
                     formData.append(

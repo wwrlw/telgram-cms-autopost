@@ -74,7 +74,6 @@ export class MongoService {
 
     // Проверяем дубликат по тексту перед сохранением
     if (await this.checkTextDuplicate(postData.text)) {
-      console.log(`⏭️ Дубликат по тексту, не сохраняем: ${postData.text.substring(0, 50)}...`);
       return;
     }
 
@@ -93,7 +92,6 @@ export class MongoService {
         { upsert: true }
       );
 
-      console.log(`💾 Пост сохранен в БД: ${post.url}`);
     } catch (error) {
       console.error('❌ Ошибка сохранения поста:', error);
       throw error;
@@ -121,7 +119,6 @@ export class MongoService {
 
     const exactTextMatch = await this.postsCollection.findOne({ text });
     if (exactTextMatch) {
-      console.log(`🔍 Найден точный дубликат текста: ${text.substring(0, 50)}...`);
       return true;
     }
 
@@ -132,7 +129,6 @@ export class MongoService {
       }).toArray();
 
       if (similarTexts.length > 0) {
-        console.log(`🔍 Найден похожий текст за последние 24 часа: ${text.substring(0, 50)}...`);
         return true;
       }
     }
@@ -201,7 +197,6 @@ export class MongoService {
       }
     );
 
-    console.log(`📊 Конверсия обновлена для поста: ${url}`);
   }
 
   async cleanupDuplicates(): Promise<void> {
@@ -210,7 +205,6 @@ export class MongoService {
     }
 
     try {
-      console.log('🧹 Начинаем очистку дубликатов...');
       
       // Находим дубликаты по тексту
       const duplicates = await this.postsCollection.aggregate([
@@ -246,11 +240,9 @@ export class MongoService {
         for (const post of toRemove) {
           await this.postsCollection.deleteOne({ _id: post._id });
           removedCount++;
-          console.log(`🗑️ Удален дубликат: ${post.url}`);
         }
       }
       
-      console.log(`✅ Очистка завершена. Удалено ${removedCount} дубликатов`);
     } catch (error) {
       console.error('❌ Ошибка при очистке дубликатов:', error);
     }
@@ -475,7 +467,6 @@ export class MongoService {
         { upsert: true }
       );
 
-      // console.log(`💾 Статистика канала ${channelStats.channel_id} сохранена в БД`);
     } catch (error) {
       console.error('❌ Ошибка сохранения статистики канала:', error);
       throw error;
@@ -538,7 +529,6 @@ export class MongoService {
       if (!this.db) throw new Error('MongoDB is not connected');
       
       await this.db.collection('channel_analytics').insertOne(analytics);
-      console.log(`✅ Создана аналитика для канала: ${analytics.channel_name}`);
     } catch (error) {
       console.error('❌ Ошибка создания аналитики канала:', error);
       throw error;
@@ -559,7 +549,6 @@ export class MongoService {
         }
       );
       
-      console.log(`✅ Обновлена аналитика для канала: ${channelId}`);
     } catch (error) {
       console.error('❌ Ошибка обновления аналитики канала:', error);
       throw error;

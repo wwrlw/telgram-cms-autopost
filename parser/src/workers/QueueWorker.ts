@@ -10,7 +10,7 @@ export class QueueWorker {
   constructor(publishService: PublishService, apiService: ApiService) {
     this.publishService = publishService;
     this.apiService = apiService;
-    this.publishQueue = new Queue('publish-queue', process.env.REDIS_URL || 'redis://localhost:6379');
+    this.publishQueue = new Queue('publish-queue', process.env.REDIS_URL || 'redis://localhost:6380');
   }
 
   start() {

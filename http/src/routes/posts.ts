@@ -236,7 +236,8 @@ export async function postsRoutes(fastify: FastifyInstance) {
             const mediaObj = {
               type: mediaItem.type || 'photo',
               file_path: mediaItem.file_path,
-              thumbnail_path: mediaItem.thumbnail_path
+              thumbnail_path: mediaItem.thumbnail_path,
+              has_spoiler: mediaItem.has_spoiler === 'true',
             };
             media.push(mediaObj);
             fastify.log.info(`Added media: ${JSON.stringify(mediaObj)}`);

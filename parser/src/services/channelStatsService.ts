@@ -48,17 +48,13 @@ export class ChannelStatsService {
         
         if (fullChannel.fullChat && (fullChannel.fullChat as any).participantsCount !== undefined) {
           participantsCount = (fullChannel.fullChat as any).participantsCount;
-          // console.log(`👥 GetFullChannel: ${participantsCount}`);
         }
       } catch (fullChannelError: any) {
-        // console.log(`⚠️ Не удалось получить полную информацию о канале: ${fullChannelError?.message || fullChannelError}`);
       }
       
       if (participantsCount !== null && participantsCount !== undefined && participantsCount > 0) {
-        // console.log(`👥 Канал ${channelConfig.id}: ${participantsCount} подписчиков`);
         return Number(participantsCount);
       } else {
-        console.log(`⚠️ Не удалось получить количество подписчиков для канала ${channelConfig.id}. Entity type: ${entity.className}, Properties:`, Object.keys(entity));
         return null;
       }
       
@@ -72,7 +68,6 @@ export class ChannelStatsService {
    * Обновляет статистику каналов в базе данных
    */
   async updateChannelsStats(targetChannels: ChannelConfig[]): Promise<void> {
-    // console.log('🔄 Начинаем обновление статистики каналов...');
     
     let updatedCount = 0;
     let skippedCount = 0;
@@ -92,10 +87,8 @@ export class ChannelStatsService {
           };
 
           await this.mongoService.saveChannelStats(channelStats);
-          // console.log(`✅ Обновлена статистика канала ${channelConfig.id}: ${subscribersCount} подписчиков`);
           updatedCount++;
         } else {
-          // console.log(`⚠️ Пропускаем канал ${channelConfig.id} - не удалось получить статистику`);
           skippedCount++;
         }
 
@@ -106,8 +99,6 @@ export class ChannelStatsService {
         skippedCount++;
       }
     }
-
-    console.log(`✅ Обновление статистики каналов завершено. Обновлено: ${updatedCount}, Пропущено: ${skippedCount}`);
   }
 
 
@@ -116,10 +107,8 @@ export class ChannelStatsService {
       const channelStats = await this.mongoService.getChannelStats(channelId);
       
       if (channelStats && channelStats.subscribers_count !== null && channelStats.subscribers_count !== undefined) {
-        // console.log(`📊 Подписчики канала ${channelId} из БД: ${channelStats.subscribers_count}`);
         return channelStats.subscribers_count;
       } else {
-        console.log(`⚠️ Нет данных о подписчиках канала ${channelId} в БД, используем значение по умолчанию`);
         return 1000;
       }
     } catch (error) {
