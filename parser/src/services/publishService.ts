@@ -353,6 +353,10 @@ export class PublishService {
         return await this.sendPhotoWithSpoiler(entity, filePath, caption);
       }
 
+      if (media.has_spoiler && media.type === 'video') {
+        return await this.sendVideoWithSpoiler(entity, media, filePath, caption);
+      }
+
       const sendOptions: any = {
         file: filePath,
         caption: caption,
@@ -411,6 +415,10 @@ export class PublishService {
 
       if (media.has_spoiler && media.type === 'photo') {
         return await this.sendPhotoWithSpoiler(entity, filePath, caption, { scheduleTimestamp });
+      }
+
+      if (media.has_spoiler && media.type === 'video') {
+        return await this.sendVideoWithSpoiler(entity, media, filePath, caption, { scheduleTimestamp });
       }
 
       const sendOptions: any = {
@@ -484,6 +492,98 @@ export class PublishService {
     return scheduleTimestamp
       ? { success: true, message: 'Медиафайл запланирован через MTProto', scheduledMessageId: messageId }
       : { success: true, message: 'Медиафайл отправлен через MTProto', messageId };
+  }
+
+  private async sendVideoWithSpoiler(
+    entity: any,
+    media: any,
+    filePath: string,
+    caption: string,
+    options?: { scheduleTimestamp?: number }
+  ): Promise<PublishResult> {
+    try {
+      const scheduleTimestamp = options?.scheduleTimestamp;
+      const path = await import('path');
+      const stats = fs.statSync(filePath);
+      const fileName = path.basename(filePath);
+
+      const uploadedFile = await this.client.uploadFile({
+        file: new CustomFile(fileName, stats.size, filePath),
+        workers: this.getOptimalWorkers(stats.size)
+      });
+
+      let thumb: any = undefined;
+      if (media.thumbnail_path) {
+        const thumbPath = await this.findMediaFile(media.thumbnail_path);
+        if (thumbPath) {
+          const thumbStats = fs.statSync(thumbPath);
+          const thumbFileName = path.basename(thumbPath);
+          thumb = await this.client.uploadFile({
+            file: new CustomFile(thumbFileName, thumbStats.size, thumbPath),
+            workers: 1
+          });
+        }
+      }
+
+      const videoMetadata = await this.getVideoMetadata(filePath);
+      const [preparedCaption, entities] = await _parseMessageText(this.client as any, caption || '', 'html');
+
+      const request = new Api.messages.SendMedia({
+        peer: entity,
+        media: new Api.InputMediaUploadedDocument({
+          file: uploadedFile,
+          mimeType: this.getMimeType(filePath),
+          attributes: [
+            new Api.DocumentAttributeVideo({
+              duration: videoMetadata.duration || 0,
+              w: videoMetadata.width || 0,
+              h: videoMetadata.height || 0,
+              supportsStreaming: this.isStreamableVideo(filePath)
+            })
+          ],
+          thumb,
+          spoiler: true
+        }),
+        message: preparedCaption,
+        entities,
+        scheduleDate: scheduleTimestamp
+      });
+
+      const result = await this.client.invoke(request);
+      const sentMessage: any = this.client._getResponseMessage(request, result, entity);
+      const resolved = Array.isArray(sentMessage) ? sentMessage[0] : sentMessage;
+      const messageId = resolved?.id ? resolved.id.toString() : undefined;
+
+      console.log(
+        scheduleTimestamp
+          ? '✅ Видео со спойлером запланировано, ID:'
+          : '✅ Видео со спойлером отправлено, ID:',
+        messageId
+      );
+
+      return scheduleTimestamp
+        ? { success: true, message: 'Медиафайл запланирован через MTProto', scheduledMessageId: messageId }
+        : { success: true, message: 'Медиафайл отправлен через MTProto', messageId };
+    } catch (error) {
+      console.error('❌ Ошибка отправки видео со спойлером через MTProto:', error);
+
+      let errorMessage = 'Ошибка отправки видеофайла';
+      if (error instanceof Error) {
+        if (error.message.includes('FILE_TOO_LARGE')) {
+          errorMessage = 'Файл слишком большой для отправки';
+        } else if (error.message.includes('FILE_EMPTY')) {
+          errorMessage = 'Файл пустой или поврежден';
+        } else if (error.message.includes('FILE_NOT_FOUND')) {
+          errorMessage = 'Файл не найден';
+        } else if (error.message.includes('INVALID_FILE_TYPE') || error.message.includes('PHOTO_EXT_INVALID')) {
+          errorMessage = 'Неподдерживаемый тип файла';
+        } else {
+          errorMessage = `Ошибка отправки видеофайла: ${error.message}`;
+        }
+      }
+
+      return { success: false, message: errorMessage };
+    }
   }
 
   private async sendMediaGroupWithMTProto(mediaArray: any[], entity: any, caption: string): Promise<PublishResult> {
