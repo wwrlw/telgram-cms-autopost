@@ -3,12 +3,17 @@ import axios, { AxiosError } from "axios";
 export class TimeWebGptService {
   private readonly baseUrl = "https://agent.timeweb.cloud/api/v1/cloud-ai";
   private readonly agentAccessId: string;
+  private readonly apiToken: string;
 
   constructor() {
-    this.agentAccessId = process.env.TIMEWEB_ACCESS_ID ?? "ce5d443a-9c8e-4a75-8830-d300650528d9";
+    this.agentAccessId =
+      process.env.TIMEWEB_ACCESS_ID ?? "ce5d443a-9c8e-4a75-8830-d300650528d9";
+    this.apiToken = process.env.TIMEWEB_API_TOKEN ?? "";
 
-    if (!this.agentAccessId) {
-      throw new Error("Переменные окружения TIMEWEB_AGENT_ACCESS_ID (или TIMEWEB_ACCESS_ID) и TIMEWEB_API_TOKEN обязательны");
+    if (!this.agentAccessId || !this.apiToken) {
+      throw new Error(
+        "Переменные окружения TIMEWEB_ACCESS_ID и TIMEWEB_API_TOKEN обязательны"
+      );
     }
   }
 
@@ -32,7 +37,8 @@ export class TimeWebGptService {
     try {
       const response = await axios.post(url, payload, {
         headers: {
-          Authorization: ``,
+          // Токен доступа к Timeweb Cloud AI
+          Authorization: `Bearer ${this.apiToken}`,
           "Content-Type": "application/json",
         },
       });

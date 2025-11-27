@@ -18,13 +18,11 @@ export class ChannelAnalyticsService {
       
       for (const channel of postedChannels) {
         try {
-          console.log(`📊 Собираем статистику для канала: ${channel.name}`);
           
           const analytics = await this.collectChannelAnalytics(channel);
           
           if (analytics) {
             await this.saveChannelAnalytics(analytics);
-            console.log(`✅ Аналитика сохранена для канала: ${channel.name}`);
           }
           
           await new Promise(resolve => setTimeout(resolve, 2000));
@@ -34,7 +32,6 @@ export class ChannelAnalyticsService {
         }
       }
       
-      console.log('✅ Сбор аналитики по каналам публикации завершен');
     } catch (error) {
       console.error('❌ Ошибка сбора аналитики по каналам:', error);
     }
@@ -52,8 +49,6 @@ export class ChannelAnalyticsService {
 
     const dayStartUtc = new Date(Date.UTC(yyyy, now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
     const dayEndUtc = new Date(Date.UTC(yyyy, now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
-
-    console.log(`📅 Собираем дневные срезы за ${dateKey} (${dayStartUtc.toISOString()} - ${dayEndUtc.toISOString()})`);
 
     for (const channel of postedChannels) {
       try {
@@ -76,7 +71,6 @@ export class ChannelAnalyticsService {
         };
 
         await this.mongoService.upsertDailyChannelAnalytics(doc);
-        console.log(`✅ Дневной срез сохранен для ${channel.name}: posts_day=${dayStats.posts_day}, views_day=${dayStats.views_day}, er_day=${dayStats.err_day}`);
       } catch (e) {
         console.error(`❌ Ошибка сохранения дневного среза для ${channel.name}:`, e);
       }
@@ -86,7 +80,6 @@ export class ChannelAnalyticsService {
 
   private async calculateDailyMetricsForEntity(channel: PostedChannel, channelId: string, subscribersCount: number, start: Date, end: Date): Promise<{ views_day: number; err_day: number; posts_day: number; }> {
     try {
-      console.log(`📅 Расчёт дневных метрик для ${channel.name} за период: ${start.toISOString()} - ${end.toISOString()}`);
       
       const parsedId = parseInt(channel.channel_id);
       let telegramChannelId = Math.abs(parsedId);
@@ -113,22 +106,16 @@ export class ChannelAnalyticsService {
       let posts: any[] = [];
       let totalMessagesFetched = 0;
       
-      // Увеличиваем количество батчей для поиска сообщений за нужный день
       for (let i = 0; i < 20; i++) {
         const messages: any[] = await this.client.getMessages(entity, { limit: batchSize, offsetId });
         if (!messages || messages.length === 0) break;
         
         totalMessagesFetched += messages.length;
-        console.log(`📨 Получено ${messages.length} сообщений в батче ${i + 1}`);
         
         for (const msg of messages) {
           const msgDate = msg.date instanceof Date ? msg.date : new Date(msg.date);
           const msgUtc = new Date(msgDate.getTime());
           
-          // Добавляем отладочную информацию для первых нескольких сообщений
-          if (posts.length < 5) {
-            console.log(`📅 Сообщение ${msg.id}: ${msgUtc.toISOString()} (в диапазоне: ${msgUtc >= start && msgUtc <= end})`);
-          }
           
           if (msgUtc >= start && msgUtc <= end) {
             posts.push(msg);
@@ -140,7 +127,6 @@ export class ChannelAnalyticsService {
         if (oldestDate && new Date(oldestDate) < start) break;
       }
 
-      console.log(`📊 Всего получено сообщений: ${totalMessagesFetched}, отфильтровано по дате: ${posts.length}`);
 
       let totalViews = 0;
       let totalReactions = 0;
@@ -158,7 +144,6 @@ export class ChannelAnalyticsService {
       }
 
       const views_day = postsWithStats > 0 ? Math.round((totalViews / postsWithStats) * 100) / 100 : 0;
-      // ERR% = (средние просмотры на пост / подписчики) * 100
       const err_day = subscribersCount > 0 ? Math.round(((views_day / subscribersCount) * 100) * 100) / 100 : 0;
 
       return { views_day, err_day, posts_day: postsWithStats };
@@ -174,14 +159,11 @@ export class ChannelAnalyticsService {
   private async collectChannelAnalytics(channel: PostedChannel): Promise<ChannelAnalytics | null> {
     try {
       let entity;
-      
       const channelId = parseInt(channel.channel_id);
       let telegramChannelId = Math.abs(channelId);
-      
       if (telegramChannelId < 1_000_000_000_000) {
         telegramChannelId = 1_000_000_000_000 + telegramChannelId;
       }
-      
       try {
         entity = await this.client.getEntity(telegramChannelId);
       } catch (firstError) {
@@ -197,8 +179,6 @@ export class ChannelAnalyticsService {
               try {
                 entity = await this.client.getEntity(new Api.PeerChat({ chatId: BigInt(telegramChannelId) as any }));
               } catch (fifthError) {
-                console.log(`⚠️ Не удалось получить entity для канала ${channel.name} (ID: ${channel.channel_id})`);
-                console.log(`🔍 Пробовали ID: ${telegramChannelId}, -${telegramChannelId}, PeerChannel, PeerUser, PeerChat`);
                 return null;
               }
             }
@@ -207,16 +187,8 @@ export class ChannelAnalyticsService {
       }
 
       if (!entity) {
-        console.log(`⚠️ Не удалось получить entity для канала ${channel.name}`);
         return null;
       }
-
-      console.log(`✅ Получен entity для канала ${channel.name}:`, {
-        id: (entity as any).id,
-        title: (entity as any).title,
-        username: (entity as any).username,
-        className: entity.className
-      });
 
       let subscribersCount = 0;
       
@@ -228,45 +200,30 @@ export class ChannelAnalyticsService {
           
           if (fullChannel.fullChat && (fullChannel.fullChat as any).participantsCount !== undefined) {
             subscribersCount = (fullChannel.fullChat as any).participantsCount;
-            console.log(`👥 GetFullChannel: ${subscribersCount} подписчиков`);
           }
         } else if (entity.className === 'User') {
           subscribersCount = 1;
-          console.log(`👤 Пользователь: 1 подписчик`);
         }
       } catch (fullChannelError: any) {
-        console.log(`⚠️ Не удалось получить полную информацию о канале: ${fullChannelError?.message || fullChannelError}`);
         
         if (entity.className === 'Channel' || entity.className === 'Chat') {
           subscribersCount = (entity as any).participantsCount || 0;
-          console.log(`📊 Fallback participantsCount: ${subscribersCount}`);
         }
-      }
-      
-      if (subscribersCount === 0) {
-        console.log(`⚠️ Не удалось получить количество подписчиков для канала ${channel.name}`);
-        console.log(`🔍 Entity type: ${entity.className}, Properties:`, Object.keys(entity));
-      } else {
-        console.log(`👥 Канал ${channel.name}: ${subscribersCount} подписчиков`);
       }
       
       const messages = await this.client.getMessages(entity, { limit: 100 });
       
       if (!messages || messages.length === 0) {
-        console.log(`⚠️ Нет сообщений для анализа в канале ${channel.name}`);
         return null;
       }
-
       let totalViews = 0;
       let totalReactions = 0;
       let postsWithStats = 0;
-      
       for (const message of messages) {
         if (message.views !== undefined && message.views !== null) {
           totalViews += Number(message.views);
           postsWithStats++;
         }
-        
         if (message.reactions && message.reactions.results && Array.isArray(message.reactions.results)) {
           const messageReactions = message.reactions.results.reduce((total: number, reaction: any) => {
             return total + (Number(reaction.count) || 0);
@@ -276,7 +233,6 @@ export class ChannelAnalyticsService {
       }
 
       const avgViews = postsWithStats > 0 ? totalViews / postsWithStats : 0;
-      // Средний ERR% = (средние просмотры на пост / подписчики) * 100
       const avgERR = subscribersCount > 0 ? (avgViews / subscribersCount) * 100 : 0;
 
       const analytics: ChannelAnalytics = {
@@ -289,13 +245,6 @@ export class ChannelAnalyticsService {
         last_updated: new Date(),
         created_at: new Date()
       };
-
-      console.log(`📊 Аналитика для канала ${channel.name}:`, {
-        subscribers: subscribersCount,
-        avg_views: analytics.avg_views,
-        avg_err: analytics.avg_err,
-        posts_analyzed: postsWithStats
-      });
 
       return analytics;
       
@@ -311,7 +260,6 @@ export class ChannelAnalyticsService {
   private async saveChannelAnalytics(analytics: ChannelAnalytics): Promise<void> {
     try {
       const existing = await this.mongoService.getChannelAnalytics(analytics.channel_id);
-      
       if (existing) {
         await this.mongoService.updateChannelAnalytics(analytics.channel_id, {
           subscribers_count: analytics.subscribers_count,
