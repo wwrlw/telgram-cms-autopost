@@ -1,119 +1,201 @@
 <template>
-    <div
-        class="mb-3 bg-white p-4 rounded-lg shadow"
-        v-if="!loading || posts.length > 0"
-    >
-        <div class="space-y-4">
+    <div v-if="!loading || posts.length > 0" class="mb-4">
+        <div
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+        >
             <div
                 v-if="showStatusFilter"
-                class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4"
+                class="border-b border-gray-100 px-4 sm:px-6 pt-3"
             >
-                <div class="flex space-x-3">
-                    <select
-                        v-model="statusFilter"
-                        @change="updateStatusFilter"
-                        class="block w-full pl-3 pr-3 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                <div class="flex space-x-6 text-sm">
+                    <button
+                        type="button"
+                        class="pb-3 font-medium transition border-b-2"
+                        :class="
+                            statusFilter === ''
+                                ? 'border-indigo-600 text-indigo-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                        "
+                        @click="setStatus('')"
                     >
-                        <option value="">Все статусы</option>
-                        <option value="unique">Уникальные</option>
-                        <option value="duplicate">Дубликаты</option>
-                    </select>
+                        Все посты
+                    </button>
+                    <button
+                        type="button"
+                        class="pb-3 font-medium transition border-b-2"
+                        :class="
+                            statusFilter === 'unique'
+                                ? 'border-indigo-600 text-indigo-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                        "
+                        @click="setStatus('unique')"
+                    >
+                        Уникальные
+                    </button>
+                    <button
+                        type="button"
+                        class="pb-3 font-medium transition border-b-2"
+                        :class="
+                            statusFilter === 'duplicate'
+                                ? 'border-indigo-600 text-indigo-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                        "
+                        @click="setStatus('duplicate')"
+                    >
+                        Дубликаты
+                    </button>
                 </div>
             </div>
 
             <div
-                class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4"
+                class="p-4 flex flex-col md:flex-row gap-4 justify-between items-center bg-white"
             >
-                <div v-if="showCategoryFilter" class="flex-1">
-                    <select
-                        v-model="categoryFilter"
-                        @change="updateCategoryFilter"
-                        name="category"
-                        id="category"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                <div class="relative w-full md:w-96">
+                    <span
+                        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"
                     >
-                        <option value="">Все категории</option>
-                        <option
-                            v-for="category in categories"
-                            :key="category.id || category._id || category.name"
-                            :value="category.name"
-                        >
-                            {{ category.name }}
-                        </option>
-                    </select>
-                </div>
-                <div v-if="showChannelFilter" class="flex-1">
-                    <select
-                        v-model="channelFilter"
-                        @change="updateChannelFilter"
-                        name="channel"
-                        id="channel"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                        <option value="">Все каналы</option>
-                        <option
-                            v-for="channel in channels"
-                            :key="channel._id || channel.id"
-                            :value="channel.channel_id"
-                        >
-                            {{ channel.name }}
-                        </option>
-                    </select>
-                </div>
-                <div v-if="showDateFilters" class="flex space-x-3">
+                        <SearchIcon class="w-4 h-4" />
+                    </span>
                     <input
-                        v-model="dateFromFilter"
-                        @change="updateDateFilters"
-                        type="date"
-                        name="date_from"
-                        id="date_from"
-                        class="block px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                    <input
-                        v-model="dateToFilter"
-                        @change="updateDateFilters"
-                        type="date"
-                        name="date_to"
-                        id="date_to"
-                        class="block px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                        v-model="searchQuery"
+                        @input="updateSearch"
+                        type="text"
+                        class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                        placeholder="Поиск по названию или тексту..."
                     />
                 </div>
-            </div>
 
-            <div
-                v-if="showSortOptions"
-                class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4"
-            >
-                <div class="flex space-x-3">
-                    <select
-                        v-model="sortField"
-                        @change="updateSortOptions"
-                        class="block pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
-                    >
-                        <option
-                            v-for="option in sortOrderOptions"
-                            :key="option.value"
-                            :value="option.value"
-                        >
-                            {{ option.label }}
-                        </option>
-                    </select>
-                    <select
-                        v-model="sortOrder"
-                        @change="updateSortOptions"
-                        class="block pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
-                    >
-                        <option value="desc">По убыванию</option>
-                        <option value="asc">По возрастанию</option>
-                    </select>
-                </div>
-                <button
-                    @click="clearAllFilters"
-                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                <!-- Кнопки фильтров -->
+                <div
+                    class="flex items-center gap-3 w-full md:w-auto overflow-x-auto"
                 >
-                    <X class="h-4 w-4 mr-2" />
-                    Сбросить фильтры
-                </button>
+                    <!-- Категория -->
+                    <div
+                        v-if="showCategoryFilter"
+                        class="relative inline-flex items-center"
+                    >
+                        <span
+                            class="absolute left-3 inset-y-0 flex items-center pointer-events-none text-gray-400"
+                        >
+                            <FilterIcon class="w-4 h-4" />
+                        </span>
+                        <select
+                            v-model="categoryFilter"
+                            @change="updateCategoryFilter"
+                            name="category"
+                            id="category"
+                            class="pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none"
+                        >
+                            <option value="">Категория</option>
+                            <option
+                                v-for="category in categories"
+                                :key="category.id || category._id || category.name"
+                                :value="category.name"
+                            >
+                                {{ category.name }}
+                            </option>
+                        </select>
+                        <span
+                            class="absolute right-3 inset-y-0 flex items-center pointer-events-none text-gray-400 text-xs"
+                        >
+                            ▼
+                        </span>
+                    </div>
+
+                    <!-- Канал -->
+                    <div
+                        v-if="showChannelFilter"
+                        class="relative inline-flex items-center"
+                    >
+                        <select
+                            v-model="channelFilter"
+                            @change="updateChannelFilter"
+                            name="channel"
+                            id="channel"
+                            class="pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none"
+                        >
+                            <option value="">Канал</option>
+                            <option
+                                v-for="channel in channels"
+                                :key="channel._id || channel.id"
+                                :value="channel.channel_id"
+                            >
+                                {{ channel.name }}
+                            </option>
+                        </select>
+                        <span
+                            class="absolute right-3 inset-y-0 flex items-center pointer-events-none text-gray-400 text-xs"
+                        >
+                            ▼
+                        </span>
+                    </div>
+
+                    <!-- Даты -->
+                    <div v-if="showDateFilters" class="flex items-center gap-2">
+                        <div class="relative">
+                            <span
+                                class="absolute left-3 inset-y-0 flex items-center pointer-events-none text-gray-400"
+                            >
+                                <CalendarIcon class="w-4 h-4" />
+                            </span>
+                            <input
+                                v-model="dateFromFilter"
+                                @change="updateDateFilters"
+                                type="date"
+                                name="date_from"
+                                id="date_from"
+                                class="pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <span class="text-gray-400 text-xs">—</span>
+                        <input
+                            v-model="dateToFilter"
+                            @change="updateDateFilters"
+                            type="date"
+                            name="date_to"
+                            id="date_to"
+                            class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                    </div>
+
+                    <!-- Сортировка -->
+                    <div
+                        v-if="showSortOptions"
+                        class="flex items-center gap-2 ml-auto"
+                    >
+                        <select
+                            v-model="sortField"
+                            @change="updateSortOptions"
+                            class="hidden sm:block pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none"
+                        >
+                            <option
+                                v-for="option in sortOrderOptions"
+                                :key="option.value"
+                                :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </select>
+
+                        <button
+                            type="button"
+                            class="p-2.5 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-indigo-600 transition bg-white"
+                            @click="toggleSortOrder"
+                            title="Сортировка"
+                        >
+                            <SortIcon class="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <!-- Сброс -->
+                    <button
+                        type="button"
+                        class="ml-1 text-sm text-gray-400 hover:text-red-500 transition font-medium whitespace-nowrap"
+                        @click="clearAllFilters"
+                    >
+                        Сбросить
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -121,7 +203,13 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { X } from "lucide-vue-next";
+import {
+    X,
+    Search as SearchIcon,
+    Filter as FilterIcon,
+    Calendar as CalendarIcon,
+    ArrowDownWideNarrow as SortIcon,
+} from "lucide-vue-next";
 
 const props = defineProps({
     loading: {
@@ -242,6 +330,10 @@ const sortOrder = computed({
         }),
 });
 
+const updateSearch = () => {
+    emit("update:searchQuery", searchQuery.value);
+};
+
 const dateFromFilter = computed({
     get: () => props.dateFromFilterValue,
     set: (v) =>
@@ -273,6 +365,17 @@ const updateSortOptions = () =>
         sortField: sortField.value,
         sortOrder: sortOrder.value,
     });
+
+// Установка статуса по вкладкам
+const setStatus = (value) => {
+    statusFilter.value = value;
+    updateStatusFilter();
+};
+
+const toggleSortOrder = () => {
+    sortOrder.value = sortOrder.value === "desc" ? "asc" : "desc";
+    updateSortOptions();
+};
 
 const clearAllFilters = () => {
     statusFilter.value = "";

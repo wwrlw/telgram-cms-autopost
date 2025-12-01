@@ -4,57 +4,53 @@
             <div
                 v-for="stat in computedStats"
                 :key="stat.key"
-                class="bg-white overflow-hidden shadow rounded-lg"
+                class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-3"
             >
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div
-                                v-if="stat.iconBg"
-                                :class="`w-8 h-8 ${stat.iconBg} rounded-md flex items-center justify-center`"
-                            >
-                                <svg
-                                    class="w-5 h-5 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        :d="stat.iconPath"
-                                    />
-                                </svg>
-                            </div>
-                            <svg
-                                v-else
-                                :class="`h-6 w-6 ${stat.iconColor || 'text-gray-400'}`"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    :d="stat.iconPath"
-                                />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt
-                                    class="text-sm font-medium text-gray-500 truncate"
-                                >
-                                    {{ stat.label }}
-                                </dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    {{ stat.value }}
-                                </dd>
-                            </dl>
-                        </div>
+                <div
+                    class="flex-shrink-0"
+                    :class="stat.iconBg ? 'p-2.5 rounded-xl' : ''"
+                    :style="stat.iconBg ? { backgroundColor: '' } : {}"
+                >
+                    <div
+                        v-if="stat.iconBg"
+                        :class="`inline-flex items-center justify-center rounded-xl ${stat.iconBg} bg-opacity-90`"
+                    >
+                        <svg
+                            class="w-4 h-4 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                :d="stat.iconPath"
+                            />
+                        </svg>
                     </div>
+                    <svg
+                        v-else
+                        :class="`h-5 w-5 ${stat.iconColor || 'text-gray-400'}`"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            :d="stat.iconPath"
+                        />
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs text-gray-500 font-medium truncate">
+                        {{ stat.label }}
+                    </p>
+                    <p class="text-2xl font-semibold text-gray-900 leading-tight">
+                        {{ stat.value }}
+                    </p>
                 </div>
             </div>
         </div>
