@@ -1,20 +1,6 @@
 <template>
     <div class="min-h-screen bg-gray-50" data-posts-component>
         <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <StatsCards
-                v-if="!loading || posts.length > 0"
-                :totalCount="totalCount"
-                :data="posts"
-                type="posts"
-                :todayCount="todayCount"
-            />
-
-            <Search
-                :loading="loading"
-                :posts="posts"
-                :model-value="searchQuery"
-                @update:searchQuery="handleSearchChange"
-            />
 
             <Filters
                 :loading="loading"
@@ -36,6 +22,10 @@
                 @update:sortOptions="handleSortOptionsChange"
                 @clearFilters="handleClearFilters"
             />
+
+            <div class="flex gap-2 text-gray-600 text-sm">
+                Найдено постов: <span class="font-bold text-gray-800">{{ totalCount }}</span>
+            </div>
 
             <Thumbs
                 :posts="posts"
@@ -76,7 +66,6 @@ import {
     onDeactivated,
 } from "vue";
 import http from "@/js/http";
-import StatsCards from "@/components/StatsCards.vue";
 import Filters from "@/components/Shared/Filters.vue";
 import Thumbs from "@/components/Thumb/Thumbs.vue";
 import Search from "@/components/Shared/Search.vue";

@@ -6,6 +6,12 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { CustomFile } from 'telegram/client/uploads.js';
 import { _parseMessageText } from 'telegram/client/messageParse.js';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import ffmpegPath from 'ffmpeg-static';
+import path from 'path';
+
+const execFileAsync = promisify(execFile);
 
 export interface PublishResult {
   success: boolean;
@@ -14,7 +20,100 @@ export interface PublishResult {
   scheduledMessageId?: string;
 }
 export class PublishService {
-  constructor(private client: TelegramClient) {}
+  private readonly watermarkPath: string;
+
+  constructor(private client: TelegramClient) {
+    // Пытаемся найти файл водяного знака в различных возможных местах
+    const possiblePaths = [
+      '/home/tubelab/bots/tg.chiorio.com/parser/1px/2.png',
+      path.join(process.cwd(), 'parser', '1px', '2.png'),
+      path.join(process.cwd(), '1px', '2.png'),
+    ];
+    
+    this.watermarkPath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
+    
+    if (!fs.existsSync(this.watermarkPath)) {
+      console.warn(`⚠️ Файл водяного знака не найден. Будет использован путь: ${this.watermarkPath}`);
+    } else {
+      console.log(`✅ Файл водяного знака найден: ${this.watermarkPath}`);
+    }
+  }
+
+  private getRandomWatermarkPosition(): 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' {
+    const positions: ('top-left' | 'top-right' | 'bottom-left' | 'bottom-right')[] = [
+      'top-left',
+      'top-right',
+      'bottom-left',
+      'bottom-right'
+    ];
+    return positions[Math.floor(Math.random() * positions.length)];
+  }
+
+  /**
+   * @param inputPath
+   * @param position
+   * @param opacity
+   * @param scale
+   * @returns
+   */
+  private async addWatermarkToVideo(
+    inputPath: string,
+    position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' = 'bottom-right',
+    opacity: number = 0.44,
+    scale: number = 0.8
+  ): Promise<string> {
+    const bin = (ffmpegPath as unknown as string) || 'ffmpeg';
+    
+    if (!fs.existsSync(this.watermarkPath)) {
+      console.warn(`⚠️ Файл водяного знака не найден: ${this.watermarkPath}`);
+      return inputPath;
+    }
+
+    const parsedPath = path.parse(inputPath);
+    const outputPath = path.join(parsedPath.dir, `${parsedPath.name}_watermarked${parsedPath.ext}`);
+    
+    let overlayPosition = '';
+    switch (position) {
+      case 'top-left':
+        overlayPosition = '10:10';
+        break;
+      case 'top-right':
+        overlayPosition = 'main_w-overlay_w-10:10';
+        break;
+      case 'bottom-left':
+        overlayPosition = '10:main_h-overlay_h-10';
+        break;
+      case 'bottom-right':
+        overlayPosition = 'main_w-overlay_w-10:main_h-overlay_h-10';
+        break;
+    }
+
+    const args = [
+      '-i', inputPath,
+      '-i', this.watermarkPath,
+      '-filter_complex', 
+      `[1:v]scale=iw*${scale}:-1,format=rgba,colorchannelmixer=aa=${opacity}[watermark];` +
+      `[0:v][watermark]overlay=${overlayPosition}[v]`,
+      '-map', '[v]',
+      '-map', '0:a?',
+      '-c:v', 'libx264',
+      '-c:a', 'copy',
+      '-preset', 'fast',
+      '-crf', '23',
+      '-y',
+      outputPath
+    ];
+
+    try {
+      console.log(`🎬 Начинаем наложение водяного знака на видео: ${path.basename(inputPath)}`);
+      await execFileAsync(bin, args);
+      console.log(`✅ Водяной знак наложен на видео: ${path.basename(outputPath)}`);
+      return outputPath;
+    } catch (error) {
+      console.error('❌ Ошибка наложения водяного знака:', error);
+      return inputPath;
+    }
+  }
 
   async publishPost(post: Post, channel: PostedChannel): Promise<PublishResult> {
     try {
@@ -344,6 +443,8 @@ export class PublishService {
   }
 
   private async sendSingleMediaWithMTProto(media: any, entity: any, caption: string): Promise<PublishResult> {
+    let watermarkedVideoPath: string | null = null;
+    
     try {
       const filePath = await this.findMediaFile(media.file_path);
       if (!filePath) {
@@ -358,8 +459,21 @@ export class PublishService {
         return await this.sendVideoWithSpoiler(entity, media, filePath, caption);
       }
 
+      let finalFilePath = filePath;
+      if (media.type === 'video') {
+        try {
+          const randomPosition = this.getRandomWatermarkPosition();
+          finalFilePath = await this.addWatermarkToVideo(filePath, randomPosition, 0.44, 0.8);
+          if (finalFilePath !== filePath) {
+            watermarkedVideoPath = finalFilePath;
+          }
+        } catch (error) {
+          console.warn('⚠️ Не удалось наложить водяной знак, используем оригинальное видео:', error);
+        }
+      }
+
       const sendOptions: any = {
-        file: filePath,
+        file: finalFilePath,
         caption: caption,
         parseMode: 'html'
       };
@@ -380,12 +494,28 @@ export class PublishService {
       const messageId = result?.id;
       console.log('✅ Медиафайл отправлен, ID:', messageId);
 
+      if (watermarkedVideoPath && fs.existsSync(watermarkedVideoPath)) {
+        try {
+          fs.unlinkSync(watermarkedVideoPath);
+          console.log('🗑️ Временный файл с водяным знаком удален');
+        } catch (err) {
+          console.warn('⚠️ Не удалось удалить временный файл:', err);
+        }
+      }
+
       return { 
         success: true, 
         message: 'Медиафайл отправлен через MTProto',
         messageId: messageId?.toString()
       };
     } catch (error) {
+      if (watermarkedVideoPath && fs.existsSync(watermarkedVideoPath)) {
+        try {
+          fs.unlinkSync(watermarkedVideoPath);
+        } catch (err) {
+        }
+      }
+      
       console.error('❌ Ошибка отправки медиафайла:', error);
       
       let errorMessage = 'Ошибка отправки медиафайла';
@@ -408,6 +538,8 @@ export class PublishService {
   }
 
   private async sendScheduledSingleMediaWithMTProto(media: any, entity: any, caption: string, scheduleTimestamp: number): Promise<PublishResult> {
+    let watermarkedVideoPath: string | null = null;
+    
     try {
       const filePath = await this.findMediaFile(media.file_path);
       if (!filePath) {
@@ -422,8 +554,21 @@ export class PublishService {
         return await this.sendVideoWithSpoiler(entity, media, filePath, caption, { scheduleTimestamp });
       }
 
+      let finalFilePath = filePath;
+      if (media.type === 'video') {
+        try {
+          const randomPosition = this.getRandomWatermarkPosition();
+        finalFilePath = await this.addWatermarkToVideo(filePath, randomPosition, 0.44, 0.8);
+          if (finalFilePath !== filePath) {
+            watermarkedVideoPath = finalFilePath;
+          }
+        } catch (error) {
+          console.warn('⚠️ Не удалось наложить водяной знак, используем оригинальное видео:', error);
+        }
+      }
+
       const sendOptions: any = {
-        file: filePath,
+        file: finalFilePath,
         caption: caption,
         parseMode: 'html',
         scheduleDate: scheduleTimestamp
@@ -438,12 +583,28 @@ export class PublishService {
       const scheduledMessageId = result?.id;
       console.log('✅ Медиафайл запланирован, ID:', scheduledMessageId);
 
+      if (watermarkedVideoPath && fs.existsSync(watermarkedVideoPath)) {
+        try {
+          fs.unlinkSync(watermarkedVideoPath);
+          console.log('🗑️ Временный файл с водяным знаком удален');
+        } catch (err) {
+          console.warn('⚠️ Не удалось удалить временный файл:', err);
+        }
+      }
+
       return { 
         success: true, 
         message: 'Медиафайл запланирован через MTProto',
         scheduledMessageId: scheduledMessageId?.toString()
       };
     } catch (error) {
+      if (watermarkedVideoPath && fs.existsSync(watermarkedVideoPath)) {
+        try {
+          fs.unlinkSync(watermarkedVideoPath);
+        } catch (err) {
+        }
+      }
+      
       console.error('❌ Ошибка планирования медиафайла:', error);
       return { success: false, message: 'Ошибка планирования медиафайла' };
     }
@@ -502,14 +663,28 @@ export class PublishService {
     caption: string,
     options?: { scheduleTimestamp?: number }
   ): Promise<PublishResult> {
+    let watermarkedVideoPath: string | null = null;
+    
     try {
       const scheduleTimestamp = options?.scheduleTimestamp;
       const path = await import('path');
-      const stats = fs.statSync(filePath);
-      const fileName = path.basename(filePath);
+      
+      let finalFilePath = filePath;
+      try {
+        const randomPosition = this.getRandomWatermarkPosition();
+        finalFilePath = await this.addWatermarkToVideo(filePath, randomPosition, 0.44, 0.8);
+        if (finalFilePath !== filePath) {
+          watermarkedVideoPath = finalFilePath;
+        }
+      } catch (error) {
+        console.warn('⚠️ Не удалось наложить водяной знак, используем оригинальное видео:', error);
+      }
+      
+      const stats = fs.statSync(finalFilePath);
+      const fileName = path.basename(finalFilePath);
 
       const uploadedFile = await this.client.uploadFile({
-        file: new CustomFile(fileName, stats.size, filePath),
+        file: new CustomFile(fileName, stats.size, finalFilePath),
         workers: this.getOptimalWorkers(stats.size)
       });
 
@@ -526,20 +701,20 @@ export class PublishService {
         }
       }
 
-      const videoMetadata = await this.getVideoMetadata(filePath);
+      const videoMetadata = await this.getVideoMetadata(finalFilePath);
       const [preparedCaption, entities] = await _parseMessageText(this.client as any, caption || '', 'html');
 
       const request = new Api.messages.SendMedia({
         peer: entity,
         media: new Api.InputMediaUploadedDocument({
           file: uploadedFile,
-          mimeType: this.getMimeType(filePath),
+          mimeType: this.getMimeType(finalFilePath),
           attributes: [
             new Api.DocumentAttributeVideo({
               duration: videoMetadata.duration || 0,
               w: videoMetadata.width || 0,
               h: videoMetadata.height || 0,
-              supportsStreaming: this.isStreamableVideo(filePath)
+              supportsStreaming: this.isStreamableVideo(finalFilePath)
             })
           ],
           thumb,
@@ -562,10 +737,26 @@ export class PublishService {
         messageId
       );
 
+      if (watermarkedVideoPath && fs.existsSync(watermarkedVideoPath)) {
+        try {
+          fs.unlinkSync(watermarkedVideoPath);
+          console.log('🗑️ Временный файл с водяным знаком удален');
+        } catch (err) {
+          console.warn('⚠️ Не удалось удалить временный файл:', err);
+        }
+      }
+
       return scheduleTimestamp
         ? { success: true, message: 'Медиафайл запланирован через MTProto', scheduledMessageId: messageId }
         : { success: true, message: 'Медиафайл отправлен через MTProto', messageId };
     } catch (error) {
+      if (watermarkedVideoPath && fs.existsSync(watermarkedVideoPath)) {
+        try {
+          fs.unlinkSync(watermarkedVideoPath);
+        } catch (err) {
+        }
+      }
+      
       console.error('❌ Ошибка отправки видео со спойлером через MTProto:', error);
 
       let errorMessage = 'Ошибка отправки видеофайла';
@@ -717,17 +908,39 @@ export class PublishService {
     }
 
     const path = await import('path');
-    const stats = fs.statSync(filePath);
-    const fileName = path.basename(filePath);
+    
+    // Накладываем водяной знак на видео
+    let finalFilePath = filePath;
+    if (media.type === 'video') {
+      try {
+        const randomPosition = this.getRandomWatermarkPosition();
+        finalFilePath = await this.addWatermarkToVideo(filePath, randomPosition, 0.44, 0.8);
+      } catch (error) {
+        console.warn('⚠️ Не удалось наложить водяной знак на видео в группе, используем оригинальное видео:', error);
+      }
+    }
+    
+    const stats = fs.statSync(finalFilePath);
+    const fileName = path.basename(finalFilePath);
     
     console.log(`📤 Загружаем файл для группы: ${fileName} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`);
     
     const uploadedFile = await this.client.uploadFile({
-      file: new CustomFile(fileName, stats.size, filePath),
+      file: new CustomFile(fileName, stats.size, finalFilePath),
       workers: this.getOptimalWorkers(stats.size)
     });
 
     console.log('✅ Файл успешно загружен в Telegram');
+
+    // Удаляем временный файл с водяным знаком после успешной загрузки
+    if (finalFilePath !== filePath && fs.existsSync(finalFilePath)) {
+      try {
+        fs.unlinkSync(finalFilePath);
+        console.log('🗑️ Временный файл с водяным знаком удален (группа)');
+      } catch (err) {
+        console.warn('⚠️ Не удалось удалить временный файл:', err);
+      }
+    }
 
     switch (media.type) {
       case 'photo':
@@ -750,17 +963,17 @@ export class PublishService {
           }
         }
 
-        const videoMetadata = await this.getVideoMetadata(filePath);
+        const videoMetadata = await this.getVideoMetadata(finalFilePath);
 
         return new Api.InputMediaUploadedDocument({
           file: uploadedFile,
-          mimeType: this.getMimeType(filePath),
+          mimeType: this.getMimeType(finalFilePath),
           attributes: [
             new Api.DocumentAttributeVideo({
               duration: videoMetadata.duration || 0,
               w: videoMetadata.width || 0,
               h: videoMetadata.height || 0,
-              supportsStreaming: this.isStreamableVideo(filePath)
+              supportsStreaming: this.isStreamableVideo(finalFilePath)
             })
           ],
           thumb
@@ -768,7 +981,7 @@ export class PublishService {
       default:
         return new Api.InputMediaUploadedDocument({
           file: uploadedFile,
-          mimeType: this.getMimeType(filePath),
+          mimeType: this.getMimeType(finalFilePath),
           attributes: []
         });
     }
