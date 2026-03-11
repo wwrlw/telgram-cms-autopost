@@ -10,11 +10,6 @@ export class PostRepository implements IPostRepository {
   }
 
   async savePost(postData: CreatePostDto): Promise<void> {
-    // Проверяем дубликат по тексту перед сохранением
-    if (await this.checkTextDuplicate(postData.text)) {
-      return;
-    }
-
     try {
       const post: Post = {
         ...postData,
@@ -38,31 +33,6 @@ export class PostRepository implements IPostRepository {
   async checkPostExists(url: string): Promise<boolean> {
     const post = await this.collection.findOne({ url });
     return !!post;
-  }
-
-  async checkTextDuplicate(text: string): Promise<boolean> {
-    // Если текст пустой, не считаем его дубликатом
-    if (!text || text.trim().length === 0) {
-      return false;
-    }
-
-    const exactTextMatch = await this.collection.findOne({ text });
-    if (exactTextMatch) {
-      return true;
-    }
-
-    if (text.length > 20) {
-      const similarTexts = await this.collection.find({
-        text: { $regex: text.substring(0, Math.min(50, text.length)), $options: 'i' },
-        created_at: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-      }).toArray();
-
-      if (similarTexts.length > 0) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   async getPostByUrl(url: string): Promise<Post | null> {

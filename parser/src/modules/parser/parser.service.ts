@@ -126,12 +126,8 @@ export class ParserService {
 
     if (!isTargetChannel) return;
 
-    const messageText = msg.message || '';
-    if (messageText && await this.postRepository.checkTextDuplicate(messageText)) return;
-
     const channelConfig = targetChannels.find(c => this.normalizeChannelId(c.id) === normalizedIncomingId);
 
-    // Album (media group) handling
     if (msg.groupedId) {
       const groupId = msg.groupedId.toString();
       if (!this.albumBuffer[groupId]) this.albumBuffer[groupId] = [];
@@ -159,7 +155,6 @@ export class ParserService {
       return;
     }
 
-    // Single message handling
     try {
       const sourceChannel = await this.channelService.getChannelIdentifier(peer, channelConfig);
       const postUrl = `https://t.me/${sourceChannel}/${msg.id}`;

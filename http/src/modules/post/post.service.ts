@@ -4,16 +4,13 @@ import { IPostRepository } from './repositories/post.repository.interface';
 import { Post, CreatePostDto } from './post.model';
 import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse } from './post.types';
 import { NotFoundError } from '../../shared/exceptions/not-found.error';
-import { TimeWebGptService } from '../ai/timeweb-gpt.service';
 
 export class PostService implements IPostService {
   constructor(
     private postRepository: IPostRepository,
-    private timeWebGptService: TimeWebGptService,
   ) {}
 
   async getPost(id: string): Promise<Post> {
-    // const post = await this.postRepository.findById(id);
     const post = await this.postRepository.findByIdWithCategory(id);
     if (!post) {
       throw new NotFoundError('Post not found');
@@ -368,11 +365,8 @@ export class PostService implements IPostService {
       throw new NotFoundError('Post has no text to uniquize');
     }
 
-    // Определяем исходный канал для профиля
-    const uniquizedText = await this.timeWebGptService.uniquizeText(post.text);
     
     const updatedPost = await this.postRepository.update(id, {
-      unique_text: uniquizedText,
       is_unique: true,
       updated_at: new Date()
     });
@@ -394,10 +388,7 @@ export class PostService implements IPostService {
       throw new NotFoundError('Post has no text to uniquize');
     }
 
-    const rewritten = await this.timeWebGptService.uniquizeText(post.text);
-
     const updatedPost = await this.postRepository.update(id, {
-      unique_text: rewritten,
       is_unique: true,
       updated_at: new Date()
     });

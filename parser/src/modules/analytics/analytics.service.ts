@@ -9,9 +9,6 @@ export class AnalyticsService {
     private analyticsRepository: IAnalyticsRepository,
   ) {}
 
-  /**
-   * Собирает статистику по каналам публикации
-   */
   async collectPostedChannelsAnalytics(postedChannels: PostedChannel[]): Promise<void> {
     try {
       console.log('📊 Начинаем сбор аналитики по каналам публикации...');
@@ -34,9 +31,6 @@ export class AnalyticsService {
     }
   }
 
-  /**
-   * Сохраняет дневной срез по всем каналам публикации
-   */
   async collectDailySnapshots(postedChannels: PostedChannel[], targetDate?: Date): Promise<void> {
     const now = targetDate || new Date();
     const yyyy = now.getUTCFullYear();
@@ -147,9 +141,7 @@ export class AnalyticsService {
     }
   }
 
-  /**
-   * Собирает статистику для конкретного канала
-   */
+
   private async collectChannelAnalytics(channel: PostedChannel): Promise<ChannelAnalytics | null> {
     try {
       let entity;
@@ -246,9 +238,7 @@ export class AnalyticsService {
     }
   }
 
-  /**
-   * Сохраняет аналитику канала в БД
-   */
+
   private async saveChannelAnalytics(analytics: ChannelAnalytics): Promise<void> {
     try {
       const existing = await this.analyticsRepository.getChannelAnalytics(analytics.channel_id);

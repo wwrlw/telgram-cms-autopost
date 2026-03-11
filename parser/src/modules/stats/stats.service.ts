@@ -13,7 +13,6 @@ export class StatsService {
     private conversionService: ConversionService,
   ) {}
 
-  // ===== From ChannelStatsService =====
 
   async updateChannelsStats(targetChannels: ChannelConfig[]): Promise<void> {
     let updatedCount = 0;
@@ -153,7 +152,6 @@ export class StatsService {
     }
   }
 
-  // ===== From TelegramService.updatePostsStats =====
 
   async updatePostsStats(targetChannels: ChannelConfig[]): Promise<void> {
     try {

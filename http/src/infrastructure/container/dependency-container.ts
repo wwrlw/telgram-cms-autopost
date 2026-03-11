@@ -12,8 +12,6 @@ import { ChannelService } from '../../modules/channel/channel.service';
 import { PublicationChannelService } from '../../modules/publication-channel/publication-channel.service';
 import { CategoryService } from '../../modules/category/category.service';
 import { AuthService } from '../../modules/auth/auth.service';
-import { YandexGPTService } from '../../modules/ai/yandex-gpt.service';
-import { TimeWebGptService } from '../../modules/ai/timeweb-gpt.service';
 import { UserPermissionService } from '../../modules/user/user-permission.service';
 import { CreateUserUseCase } from '../../modules/user/use-cases/create-user.use-case';
 import { LoginUseCase } from '../../modules/auth/use-cases/login.use-case';
@@ -39,8 +37,6 @@ export class DependencyContainer {
 
   private authService?: AuthService;
   private userPermissionService?: UserPermissionService;
-  private yandexGptService?: YandexGPTService;
-  private timeWebGptService?: TimeWebGptService;
   private telegramPublishService?: ITelegramPublishService;
 
   private postService?: PostService;
@@ -154,18 +150,8 @@ export class DependencyContainer {
     return this.userPermissionService;
   }
 
-  getYandexGPTService(): YandexGPTService {
-    if (!this.yandexGptService) this.yandexGptService = new YandexGPTService();
-    return this.yandexGptService;
-  }
-
-  getTimeWebGptService(): TimeWebGptService {
-    if (!this.timeWebGptService) this.timeWebGptService = new TimeWebGptService();
-    return this.timeWebGptService;
-  }
-
   getPostService(): PostService {
-    if (!this.postService) this.postService = new PostService(this.getPostRepository(), this.getTimeWebGptService());
+    if (!this.postService) this.postService = new PostService(this.getPostRepository());
     return this.postService;
   }
 

@@ -13,25 +13,20 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017
-      - MONGODB_DB=${MONGODB_DB}
+      - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017/?authSource=admin
+      - MONGO_DB_NAME=${MONGO_DB_NAME}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - JWT_ACCESS_TTL=${JWT_ACCESS_TTL}
       - JWT_REFRESH_TTL=${JWT_REFRESH_TTL}
-      - YANDEX_API_FOLDER=${YANDEX_API_FOLDER}
-      - YANDEX_API_KEY=${YANDEX_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - VITE_API_URL=${VITE_API_URL}
-      - TIMEWEB_ACCESS_ID=${TIMEWEB_ACCESS_ID}
-      - TIMEWEB_API_TOKEN=${TIMEWEB_API_TOKEN}
       - PORT=${PORT}
       - NODE_OPTIONS=--max-old-space-size=1024
       - UV_THREADPOOL_SIZE=16
       - DEBUG=fastify:*
       - MONGO_EXPLAIN=0
       - CACHE_ENABLED=true
-      # - PARSER_API_URL=http://parse:3003
       - PARSER_API_USERNAME=${API_USERNAME}
       - PARSER_API_PASSWORD=${API_PASSWORD}
       - USE_MTPROTO=${USE_MTPROTO}
@@ -64,12 +59,16 @@ services:
       - API_ID=${API_ID}
       - API_HASH=${API_HASH}
       - MEDIA_PATH=${MEDIA_PATH}
-      - MONGO_DB_NAME=${MONGODB_DB}
+      - MONGO_DB_NAME=${MONGO_DB_NAME}
       - API_BASE_URL=${API_BASE_URL}
       - API_USERNAME=${API_USERNAME}
       - API_PASSWORD=${API_PASSWORD}
       - STATS_UPDATE_LIMIT=${STATS_UPDATE_LIMIT}
       - REDIS_URL=redis://redis:6379
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_HOST=mongo
+      - MONGO_PORT=27017
     depends_on:
       - backend
     networks:
@@ -101,7 +100,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
     volumes:
-      - mongo_data:/data/db
+      - ./data:/data/db
     networks:
       - bots_bots
 
@@ -133,6 +132,3 @@ services:
 networks:
   bots_bots:
     external: true
-
-volumes:
-  mongo_data:

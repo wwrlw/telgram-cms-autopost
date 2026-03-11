@@ -7,7 +7,7 @@ async function mongoConnector(fastify: FastifyInstance) {
   fastify.register(fastifyMongo, {
     forceClose: true,
     url: process.env.MONGODB_URI,
-    database: process.env.MONGODB_DB || '',
+    database: process.env.MONGO_DB_NAME || '',
   });
 }
 
