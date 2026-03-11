@@ -1,12 +1,12 @@
 import { FastifyInstance } from 'fastify';
-import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
-import { LoginUseCase } from '../use-cases/LoginUseCase';
-import { CreateUserDto, LoginDto } from '../models/User';
-import { requireAuth, requireRole, requirePermission } from '../middleware/authRole';
-import { logAction } from '../middleware/logging';
-import { registerSchema } from '../schemas/registerSchema';
-import { ROLES, PERMISSIONS } from '../models/Category';
-import { DependencyContainer } from '../container/DependencyContainer';
+import { CreateUserUseCase } from '../user/use-cases/create-user.use-case';
+import { LoginUseCase } from './use-cases/login.use-case';
+import { CreateUserDto, LoginDto } from '../user/user.model';
+import { requireAuth, requireRole, requirePermission } from '../../shared/middleware/auth-role';
+import { logAction } from '../../shared/middleware/logging';
+import { registerSchema } from './auth.schemas';
+import { ROLES, PERMISSIONS } from '../category/category.model';
+import { DependencyContainer } from '../../infrastructure/container/dependency-container';
 
 export default async function authRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();

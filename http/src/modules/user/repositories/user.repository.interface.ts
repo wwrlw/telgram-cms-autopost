@@ -1,4 +1,4 @@
-import { User, CreateUserDto } from '../../models/User';
+import { User, CreateUserDto } from '../user.model';
 
 export interface IUserRepository {
   findById(id: string): Promise<User | null>;

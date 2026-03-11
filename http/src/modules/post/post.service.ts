@@ -1,10 +1,10 @@
 import { ObjectId } from 'mongodb';
-import { IPostService } from '../interfaces/services/IPostService';
-import { IPostRepository } from '../interfaces/repositories/IPostRepository';
-import { Post, CreatePostDto } from '../models/Post';
-import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse } from '../types/PostQuery';
-import { NotFoundError } from '../exceptions/NotFoundError';
-import { TimeWebGptService } from './TimeWebGpt';
+import { IPostService } from './post.service.interface';
+import { IPostRepository } from './repositories/post.repository.interface';
+import { Post, CreatePostDto } from './post.model';
+import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse } from './post.types';
+import { NotFoundError } from '../../shared/exceptions/not-found.error';
+import { TimeWebGptService } from '../ai/timeweb-gpt.service';
 
 export class PostService implements IPostService {
   constructor(

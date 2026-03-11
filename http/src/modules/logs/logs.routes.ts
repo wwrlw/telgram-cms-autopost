@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
-import { requireAuth, requirePermission } from '../middleware/authRole';
-import { PERMISSIONS } from '../models/Category';
-import { Log } from '../models/Log';
+import { requireAuth, requirePermission } from '../../shared/middleware/auth-role';
+import { PERMISSIONS } from '../category/category.model';
+import { Log } from './log.model';
 
 export default async function logsRoutes(fastify: FastifyInstance) {
   fastify.get('/', {

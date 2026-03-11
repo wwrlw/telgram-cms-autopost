@@ -1,4 +1,4 @@
-import { PublicationChannel, CreatePublicationChannelDto, UpdatePublicationChannelDto } from '../../models/PublicationChannel';
+import { PublicationChannel, CreatePublicationChannelDto, UpdatePublicationChannelDto } from '../publication-channel.model';
 
 export interface IPublicationChannelRepository {
   create(channelData: CreatePublicationChannelDto): Promise<PublicationChannel>;

@@ -1,6 +1,6 @@
-import { DependencyContainer } from '../container/DependencyContainer';
-import { Post } from '../models/Post';
-import { PostQuery } from '../types/PostQuery';
+import { DependencyContainer } from '../../infrastructure/container/dependency-container';
+import { Post } from './post.model';
+import { PostQuery } from './post.types';
 
 export class PostsController {
   private postService = DependencyContainer.getInstance().getPostService();

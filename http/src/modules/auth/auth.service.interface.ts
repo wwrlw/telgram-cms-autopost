@@ -1,4 +1,4 @@
-import { User } from '../../models/User';
+import { User } from '../user/user.model';
 
 export interface IAuthService {
   generateAccessToken(user: User): string;

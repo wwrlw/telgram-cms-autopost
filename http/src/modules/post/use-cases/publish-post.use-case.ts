@@ -1,6 +1,6 @@
-import { IPostRepository } from '../interfaces/repositories/IPostRepository';
-import { ITelegramPublishService } from '../interfaces/services/ITelegramPublishService';
-import { NotFoundError } from '../exceptions/NotFoundError';
+import { IPostRepository } from '../repositories/post.repository.interface';
+import { ITelegramPublishService } from '../../telegram/telegram-publish.service.interface';
+import { NotFoundError } from '../../../shared/exceptions/not-found.error';
 
 export class PublishPostUseCase {
   constructor(

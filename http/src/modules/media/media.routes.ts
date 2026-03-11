@@ -2,9 +2,9 @@ import { FastifyInstance } from 'fastify';
 import path from 'path';
 import fs from 'fs';
 import { pipeline } from 'stream/promises';
-import { DependencyContainer } from '../container/DependencyContainer';
-import { requireAuth, requirePermission } from '../middleware/authRole';
-import { PERMISSIONS } from '../models/Category';
+import { DependencyContainer } from '../../infrastructure/container/dependency-container';
+import { requireAuth, requirePermission } from '../../shared/middleware/auth-role';
+import { PERMISSIONS } from '../category/category.model';
 
 export async function mediaRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();

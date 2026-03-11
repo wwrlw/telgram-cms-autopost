@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify";
-import { CreateCategoryDto, UpdateCategoryDto } from "../models/Category";
-import { CategoryController } from "../controllers/CategoryController";
-import { requireAuth, requirePermission } from "../middleware/authRole";
-import { PERMISSIONS } from "../models/Category";
-import { createCategoryBodySchema, updateCategoryBodySchema } from "../schemas/category";
+import { CreateCategoryDto, UpdateCategoryDto } from "./category.model";
+import { CategoryController } from "./category.controller";
+import { requireAuth, requirePermission } from "../../shared/middleware/auth-role";
+import { PERMISSIONS } from "./category.model";
+import { createCategoryBodySchema, updateCategoryBodySchema } from "./category.schemas";
 
 export async function categoriesRoutes(fastify: FastifyInstance) {
   const controller = new CategoryController();

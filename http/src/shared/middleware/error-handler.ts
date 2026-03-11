@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { ValidationError } from '../exceptions/ValidationError';
-import { NotFoundError } from '../exceptions/NotFoundError';
-import { AuthenticationError } from '../exceptions/AuthenticationError';
+import { ValidationError } from '../exceptions/validation.error';
+import { NotFoundError } from '../exceptions/not-found.error';
+import { AuthenticationError } from '../exceptions/authentication.error';
 
 export function errorHandler(
   error: Error,

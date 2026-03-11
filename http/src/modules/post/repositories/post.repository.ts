@@ -1,9 +1,9 @@
 import { ObjectId } from "mongodb";
 import { FastifyMongoObject } from "@fastify/mongodb";
-import { IPostRepository } from "../interfaces/repositories/IPostRepository";
-import { Post, CreatePostDto } from "../models/Post";
-import { PostQuery, PaginatedResponse, PostFilters, InfiniteScrollQuery, InfiniteScrollResponse } from "../types/PostQuery";
-import { mongoCached } from "../utils/cache";
+import { IPostRepository } from "./post.repository.interface";
+import { Post, CreatePostDto } from "../post.model";
+import { PostQuery, PaginatedResponse, PostFilters, InfiniteScrollQuery, InfiniteScrollResponse } from "../post.types";
+import { mongoCached } from "../../../shared/utils/cache";
 
 export class PostRepository implements IPostRepository {
   constructor(private mongo: FastifyMongoObject) {}

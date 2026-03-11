@@ -1,4 +1,4 @@
-import { Category, CreateCategoryDto, UpdateCategoryDto, CategoryResponse } from '../../models/Category';
+import { Category, CreateCategoryDto, UpdateCategoryDto, CategoryResponse } from './category.model';
 
 export interface ICategoryService {
   createCategory(categoryData: CreateCategoryDto): Promise<CategoryResponse>;

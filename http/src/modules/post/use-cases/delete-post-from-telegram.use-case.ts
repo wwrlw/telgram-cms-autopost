@@ -1,6 +1,6 @@
-import { IPostService } from '../interfaces/services/IPostService';
-import { ITelegramPublishService } from '../interfaces/services/ITelegramPublishService';
-import { NotFoundError } from '../exceptions/NotFoundError';
+import { IPostService } from '../post.service.interface';
+import { ITelegramPublishService } from '../../telegram/telegram-publish.service.interface';
+import { NotFoundError } from '../../../shared/exceptions/not-found.error';
 
 export class DeletePostFromTelegramUseCase {
   constructor(

@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { FastifyMongoObject } from '@fastify/mongodb';
-import { ICategoryRepository } from '../interfaces/repositories/ICategoryRepository';
-import { Category, CreateCategoryDto, UpdateCategoryDto } from '../models/Category';
+import { ICategoryRepository } from './category.repository.interface';
+import { Category, CreateCategoryDto, UpdateCategoryDto } from '../category.model';
 
 export class CategoryRepository implements ICategoryRepository {
   constructor(private mongo: FastifyMongoObject) {}

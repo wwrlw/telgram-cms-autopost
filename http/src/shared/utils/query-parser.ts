@@ -1,4 +1,4 @@
-import { PostQuery, PaginationParams, PostFilters, SortParams } from '../types/PostQuery';
+import { PostQuery, PaginationParams, PostFilters, SortParams } from '../../modules/post/post.types';
 
 export function parsePostQuery(query: any): PostQuery {
   const pagination = parsePagination(query);

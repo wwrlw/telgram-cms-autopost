@@ -1,4 +1,4 @@
-import { PostedChannel } from '../../types/PostedChannel';
+import { PostedChannel } from '../posted-channel.types';
 
 export interface IPostedChannelRepository {
   findAll(): Promise<PostedChannel[]>;

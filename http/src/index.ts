@@ -1,22 +1,22 @@
 import Fastify from 'fastify';
 import dotenv from 'dotenv';
-import mongoConnector from './plugins/mongo';
-import authPlugin from './plugins/auth';
-import authRoutes from './routes/auth';
-import { postsRoutes } from './routes/posts';
-import { channelsRoutes } from './routes/channels';
-import { postedChannelsRoutes } from './routes/posted-channels';
-import { categoriesRoutes } from './routes/categories';
-import { analyticsRoutes } from './routes/analytics';
-import publishRoutes from './routes/publish';
-import swagger from './plugins/swagger';
-import logsRoutes from './routes/logs';
-import { mediaRoutes } from './routes/media';
+import mongoConnector from './infrastructure/plugins/mongo';
+import authPlugin from './infrastructure/plugins/auth';
+import authRoutes from './modules/auth/auth.routes';
+import { postsRoutes } from './modules/post/post.routes';
+import { channelsRoutes } from './modules/channel/channel.routes';
+import { postedChannelsRoutes } from './modules/publication-channel/publication-channel.routes';
+import { categoriesRoutes } from './modules/category/category.routes';
+import { analyticsRoutes } from './modules/analytics/analytics.routes';
+import publishRoutes from './modules/publication-channel/publish.routes';
+import swagger from './infrastructure/plugins/swagger';
+import logsRoutes from './modules/logs/logs.routes';
+import { mediaRoutes } from './modules/media/media.routes';
 import cors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
 import path from 'path';
-import { DependencyContainer } from './container/DependencyContainer';
-import { errorHandler } from './middleware/ErrorHandler';
+import { DependencyContainer } from './infrastructure/container/dependency-container';
+import { errorHandler } from './shared/middleware/error-handler';
 import multipart from '@fastify/multipart'
 import cookie from '@fastify/cookie'
 

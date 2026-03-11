@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify';
-import { DependencyContainer } from '../container/DependencyContainer';
-import { logAction } from '../middleware/logging';
-import { requireAuth, requirePermission } from '../middleware/authRole';
-import { PERMISSIONS } from '../models/Category';
+import { DependencyContainer } from '../../infrastructure/container/dependency-container';
+import { logAction } from '../../shared/middleware/logging';
+import { requireAuth, requirePermission } from '../../shared/middleware/auth-role';
+import { PERMISSIONS } from '../category/category.model';
 
 export default async function publishRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();

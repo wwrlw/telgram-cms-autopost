@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { Log } from '../models/Log';
-import { enhancedRequireAuth } from './enhancedAuth';
+import { Log } from '../../modules/logs/log.model';
+import { enhancedRequireAuth } from './enhanced-auth';
 import { ObjectId } from 'mongodb';
 
 /**

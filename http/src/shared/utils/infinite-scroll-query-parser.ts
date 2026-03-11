@@ -1,4 +1,4 @@
-import { InfiniteScrollQuery, InfiniteScrollParams, PostFilters, SortParams } from '../types/PostQuery';
+import { InfiniteScrollQuery, InfiniteScrollParams, PostFilters, SortParams } from '../../modules/post/post.types';
 
 export function parseInfiniteScrollQuery(query: any): InfiniteScrollQuery {
   const pagination = parseInfiniteScrollPagination(query);

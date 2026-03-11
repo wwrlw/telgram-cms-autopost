@@ -1,5 +1,5 @@
-import { DependencyContainer } from '../container/DependencyContainer';
-import { CreateChannelDto } from '../models/Channel';
+import { DependencyContainer } from '../../infrastructure/container/dependency-container';
+import { CreateChannelDto } from './channel.model';
 
 export class ChannelController {
   private channelService = DependencyContainer.getInstance().getChannelService();

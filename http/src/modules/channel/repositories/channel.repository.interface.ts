@@ -1,4 +1,4 @@
-import { Channel, CreateChannelDto } from '../../models/Channel';
+import { Channel, CreateChannelDto } from '../channel.model';
 
 export interface IChannelRepository {
   findById(id: string): Promise<Channel | null>;

@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { MongoClient, ObjectId } from 'mongodb';
-import { Log } from '../models/Log';
+import { Log } from '../../modules/logs/log.model';
 
 export const logAction = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = (request as any).user;

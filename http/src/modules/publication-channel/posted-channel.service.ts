@@ -1,6 +1,6 @@
-import { IPostedChannelService } from '../interfaces/services/IPostedChannelService';
-import { IPostedChannelRepository } from '../interfaces/repositories/IPostedChannelRepository';
-import { PostedChannel } from '../types/PostedChannel';
+import { IPostedChannelService } from './posted-channel.service.interface';
+import { IPostedChannelRepository } from './repositories/posted-channel.repository.interface';
+import { PostedChannel } from './posted-channel.types';
 
 export class PostedChannelService implements IPostedChannelService {
   constructor(private postedChannelRepository: IPostedChannelRepository) {}

@@ -1,5 +1,5 @@
-import { Post } from '../../models/Post';
-import { PostedChannel } from '../../types/PostedChannel';
+import { Post } from '../post/post.model';
+import { PostedChannel } from '../publication-channel/posted-channel.types';
 
 export interface ITelegramPublishService {
   publishPost(post: Post, channel: PostedChannel): Promise<{ success: boolean; message: string; messageId?: string }>;

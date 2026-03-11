@@ -1,4 +1,4 @@
-import { Category, CreateCategoryDto, UpdateCategoryDto } from '../../models/Category';
+import { Category, CreateCategoryDto, UpdateCategoryDto } from '../category.model';
 
 export interface ICategoryRepository {
   findById(id: string): Promise<Category | null>;

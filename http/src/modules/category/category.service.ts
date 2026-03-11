@@ -1,13 +1,13 @@
-import { ICategoryService } from '../interfaces/services/ICategoryService';
-import { ICategoryRepository } from '../interfaces/repositories/ICategoryRepository';
+import { ICategoryService } from './category.service.interface';
+import { ICategoryRepository } from './repositories/category.repository.interface';
 import { 
   Category, 
   CreateCategoryDto, 
   UpdateCategoryDto, 
   CategoryResponse 
-} from '../models/Category';
-import { NotFoundError } from '../exceptions/NotFoundError';
-import { ValidationError } from '../exceptions/ValidationError';
+} from './category.model';
+import { NotFoundError } from '../../shared/exceptions/not-found.error';
+import { ValidationError } from '../../shared/exceptions/validation.error';
 
 export class CategoryService implements ICategoryService {
   constructor(private categoryRepository: ICategoryRepository) {}

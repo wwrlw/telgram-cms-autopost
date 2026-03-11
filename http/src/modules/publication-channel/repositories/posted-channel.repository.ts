@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { FastifyMongoObject } from '@fastify/mongodb';
-import { IPostedChannelRepository } from '../interfaces/repositories/IPostedChannelRepository';
-import { PostedChannel } from '../types/PostedChannel';
+import { IPostedChannelRepository } from './posted-channel.repository.interface';
+import { PostedChannel } from '../posted-channel.types';
 
 export class PostedChannelRepository implements IPostedChannelRepository {
   constructor(private mongo: FastifyMongoObject) {}

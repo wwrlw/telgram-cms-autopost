@@ -1,30 +1,30 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import { FastifyMongoObject } from '@fastify/mongodb';
-import { PostRepository } from '../repositories/PostRepository';
-import { UserRepository } from '../repositories/UserRepository';
-import { ChannelRepository } from '../repositories/ChannelRepository';
-import { PublicationChannelRepository } from '../repositories/PublicationChannelRepository';
-import { CategoryRepository } from '../repositories/CategoryRepository';
-import { PostService } from '../services/PostService';
-import { UserService } from '../services/UserService';
-import { ChannelService } from '../services/ChannelService';
-import { PublicationChannelService } from '../services/PublicationChannelService';
-import { CategoryService } from '../services/CategoryService';
-import { AuthService } from '../services/AuthService';
-import { YandexGPTService } from '../services/YandexGPTService';
-import { TimeWebGptService } from '../services/TimeWebGpt';
-import { UserPermissionService } from '../services/UserPermissionService';
-import { CreateUserUseCase } from '../use-cases/CreateUserUseCase';
-import { LoginUseCase } from '../use-cases/LoginUseCase';
-import { BotPublishService } from '../services/BotPublishService';
-import { MTProtoPublishService } from '../services/MTProtoPublishService';
-import { ITelegramPublishService } from '../interfaces/services/ITelegramPublishService';
-import { PublishPostUseCase } from '../use-cases/PublishPostUseCase';
-import { PublishPostToChannelUseCase } from '../use-cases/PublishPostToChannelUseCase';
-import { PostedChannelRepository } from '../repositories/PostedChannelRepository';
-import { PostedChannelService } from '../services/PostedChannelService';
-import { DeletePostFromTelegramUseCase } from '../use-cases/DeletePostFromTelegramUseCase'
+import { PostRepository } from '../../modules/post/repositories/post.repository';
+import { UserRepository } from '../../modules/user/repositories/user.repository';
+import { ChannelRepository } from '../../modules/channel/repositories/channel.repository';
+import { PublicationChannelRepository } from '../../modules/publication-channel/repositories/publication-channel.repository';
+import { CategoryRepository } from '../../modules/category/repositories/category.repository';
+import { PostService } from '../../modules/post/post.service';
+import { UserService } from '../../modules/user/user.service';
+import { ChannelService } from '../../modules/channel/channel.service';
+import { PublicationChannelService } from '../../modules/publication-channel/publication-channel.service';
+import { CategoryService } from '../../modules/category/category.service';
+import { AuthService } from '../../modules/auth/auth.service';
+import { YandexGPTService } from '../../modules/ai/yandex-gpt.service';
+import { TimeWebGptService } from '../../modules/ai/timeweb-gpt.service';
+import { UserPermissionService } from '../../modules/user/user-permission.service';
+import { CreateUserUseCase } from '../../modules/user/use-cases/create-user.use-case';
+import { LoginUseCase } from '../../modules/auth/use-cases/login.use-case';
+import { BotPublishService } from '../../modules/telegram/bot-publish.service';
+import { MTProtoPublishService } from '../../modules/telegram/mtproto-publish.service';
+import { ITelegramPublishService } from '../../modules/telegram/telegram-publish.service.interface';
+import { PublishPostUseCase } from '../../modules/post/use-cases/publish-post.use-case';
+import { PublishPostToChannelUseCase } from '../../modules/post/use-cases/publish-post-to-channel.use-case';
+import { PostedChannelRepository } from '../../modules/publication-channel/repositories/posted-channel.repository';
+import { PostedChannelService } from '../../modules/publication-channel/posted-channel.service';
+import { DeletePostFromTelegramUseCase } from '../../modules/post/use-cases/delete-post-from-telegram.use-case'
 
 export class DependencyContainer {
   private static instance: DependencyContainer;

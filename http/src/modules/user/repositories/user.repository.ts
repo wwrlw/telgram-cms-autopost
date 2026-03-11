@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { FastifyMongoObject } from '@fastify/mongodb';
-import { IUserRepository } from '../interfaces/repositories/IUserRepository';
-import { User, CreateUserDto } from '../models/User';
+import { IUserRepository } from './user.repository.interface';
+import { User, CreateUserDto } from '../user.model';
 
 export class UserRepository implements IUserRepository {
   constructor(private mongo: FastifyMongoObject) {}

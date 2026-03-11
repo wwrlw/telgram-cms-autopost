@@ -1,5 +1,5 @@
-import { Post, CreatePostDto } from '../../models/Post';
-import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse, PostStats } from '../../types/PostQuery';
+import { Post, CreatePostDto } from './post.model';
+import { PostQuery, PaginatedResponse, InfiniteScrollQuery, InfiniteScrollResponse, PostStats } from './post.types';
 
 export interface IPostService {
   getPost(id: string): Promise<Post>;

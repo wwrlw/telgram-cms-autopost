@@ -1,15 +1,15 @@
-import { IUserService } from '../interfaces/services/IUserService';
-import { IUserRepository } from '../interfaces/repositories/IUserRepository';
-import { IAuthService } from '../interfaces/services/IAuthService';
+import { IUserService } from './user.service.interface';
+import { IUserRepository } from './repositories/user.repository.interface';
+import { IAuthService } from '../auth/auth.service.interface';
 import { 
   User, 
   CreateUserDto, 
   LoginDto, 
   UserResponse, 
   AuthResponse 
-} from '../models/User';
-import { NotFoundError } from '../exceptions/NotFoundError';
-import { AuthenticationError } from '../exceptions/AuthenticationError';
+} from './user.model';
+import { NotFoundError } from '../../shared/exceptions/not-found.error';
+import { AuthenticationError } from '../../shared/exceptions/authentication.error';
 
 export class UserService implements IUserService {
   constructor(

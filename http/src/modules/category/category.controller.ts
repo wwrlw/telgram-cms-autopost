@@ -1,5 +1,5 @@
-import { DependencyContainer } from '../container/DependencyContainer';
-import { CreateCategoryDto, UpdateCategoryDto } from '../models/Category';
+import { DependencyContainer } from '../../infrastructure/container/dependency-container';
+import { CreateCategoryDto, UpdateCategoryDto } from './category.model';
 
 export class CategoryController {
   private categoryService = DependencyContainer.getInstance().getCategoryService();

@@ -1,4 +1,4 @@
-import { Channel, CreateChannelDto, ChannelResponse } from '../../models/Channel';
+import { Channel, CreateChannelDto, ChannelResponse } from './channel.model';
 
 export interface IChannelService {
   createChannel(channelData: CreateChannelDto): Promise<ChannelResponse>;

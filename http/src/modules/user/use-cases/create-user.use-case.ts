@@ -1,7 +1,7 @@
-import { IUserService } from '../interfaces/services/IUserService';
-import { CreateUserDto, UserResponse } from '../models/User';
-import { ValidationError } from '../exceptions/ValidationError';
-import { ROLES } from '../models/Category';
+import { IUserService } from '../user.service.interface';
+import { CreateUserDto, UserResponse } from '../user.model';
+import { ValidationError } from '../../../shared/exceptions/validation.error';
+import { ROLES } from '../../category/category.model';
 
 export class CreateUserUseCase {
   constructor(private userService: IUserService) {}

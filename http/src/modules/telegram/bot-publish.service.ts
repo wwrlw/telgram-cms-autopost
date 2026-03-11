@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
-import { ITelegramPublishService } from '../interfaces/services/ITelegramPublishService';
-import { Post } from '../models/Post';
-import { PostedChannel } from '../types/PostedChannel';
+import { ITelegramPublishService } from './telegram-publish.service.interface';
+import { Post } from '../post/post.model';
+import { PostedChannel } from '../publication-channel/posted-channel.types';
 export class BotPublishService implements ITelegramPublishService {
   private botToken: any;
   private baseUrl: string;

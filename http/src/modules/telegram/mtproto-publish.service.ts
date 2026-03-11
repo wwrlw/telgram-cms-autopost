@@ -1,7 +1,7 @@
-import { ITelegramPublishService } from '../interfaces/services/ITelegramPublishService';
-import { Post } from '../models/Post';
-import { PostedChannel } from '../types/PostedChannel';
-import { QueueService } from '../queues/QueueService';
+import { ITelegramPublishService } from './telegram-publish.service.interface';
+import { Post } from '../post/post.model';
+import { PostedChannel } from '../publication-channel/posted-channel.types';
+import { QueueService } from '../../infrastructure/queue/queue.service';
 
 export class MTProtoPublishService implements ITelegramPublishService {
   private queueService: QueueService;

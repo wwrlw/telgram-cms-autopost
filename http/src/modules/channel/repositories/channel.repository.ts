@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { FastifyMongoObject } from '@fastify/mongodb';
-import { IChannelRepository } from '../interfaces/repositories/IChannelRepository';
-import { Channel, CreateChannelDto } from '../models/Channel';
+import { IChannelRepository } from './channel.repository.interface';
+import { Channel, CreateChannelDto } from '../channel.model';
 
 export class ChannelRepository implements IChannelRepository {
   constructor(private mongo: FastifyMongoObject) {}

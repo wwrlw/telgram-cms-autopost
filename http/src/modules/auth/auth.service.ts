@@ -1,5 +1,5 @@
-import { IAuthService } from '../interfaces/services/IAuthService';
-import { User } from '../models/User';
+import { IAuthService } from './auth.service.interface';
+import { User } from '../user/user.model';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 

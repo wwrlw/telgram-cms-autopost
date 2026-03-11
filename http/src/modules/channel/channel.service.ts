@@ -1,12 +1,12 @@
 import { ObjectId } from 'mongodb';
-import { IChannelService } from '../interfaces/services/IChannelService';
-import { IChannelRepository } from '../interfaces/repositories/IChannelRepository';
+import { IChannelService } from './channel.service.interface';
+import { IChannelRepository } from './repositories/channel.repository.interface';
 import { 
   Channel, 
   CreateChannelDto, 
   ChannelResponse 
-} from '../models/Channel';
-import { NotFoundError } from '../exceptions/NotFoundError';
+} from './channel.model';
+import { NotFoundError } from '../../shared/exceptions/not-found.error';
 
 export class ChannelService implements IChannelService {
   constructor(private channelRepository: IChannelRepository) {}

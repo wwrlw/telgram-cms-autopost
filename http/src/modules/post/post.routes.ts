@@ -1,14 +1,14 @@
 import { FastifyInstance } from "fastify";
-import { DependencyContainer } from "../container/DependencyContainer";
-import { PostsController } from "../controllers/PostsController";
-import { parsePostQuery } from "../utils/queryParser";
-import { parseInfiniteScrollQuery } from "../utils/infiniteScrollQueryParser";
-import { postQuerySchema, postSearchResponseSchema } from "../schemas/postQuerySchema";
-import { infiniteScrollQuerySchema, infiniteScrollResponseSchema } from "../schemas/infiniteScrollSchema";
-import { Post } from "../models/Post";
-import { requireAuth, requirePermission } from "../middleware/authRole";
-import { logAction } from "../middleware/logging";
-import { PERMISSIONS } from "../models/Category";
+import { DependencyContainer } from "../../infrastructure/container/dependency-container";
+import { PostsController } from "./post.controller";
+import { parsePostQuery } from "../../shared/utils/query-parser";
+import { parseInfiniteScrollQuery } from "../../shared/utils/infinite-scroll-query-parser";
+import { postQuerySchema, postSearchResponseSchema } from "./post.query.schema";
+import { infiniteScrollQuerySchema, infiniteScrollResponseSchema } from "./post.infinite-scroll.schema";
+import { Post } from "./post.model";
+import { requireAuth, requirePermission } from "../../shared/middleware/auth-role";
+import { logAction } from "../../shared/middleware/logging";
+import { PERMISSIONS } from "../category/category.model";
 
 export async function postsRoutes(fastify: FastifyInstance) {
   const container = DependencyContainer.getInstance();

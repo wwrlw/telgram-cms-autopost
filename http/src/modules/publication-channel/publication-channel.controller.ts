@@ -1,5 +1,5 @@
-import { DependencyContainer } from '../container/DependencyContainer';
-import { CreatePublicationChannelDto, UpdatePublicationChannelDto } from '../models/PublicationChannel';
+import { DependencyContainer } from '../../infrastructure/container/dependency-container';
+import { CreatePublicationChannelDto, UpdatePublicationChannelDto } from './publication-channel.model';
 
 export class PublicationChannelController {
   private publicationChannelService = DependencyContainer.getInstance().getPublicationChannelService();

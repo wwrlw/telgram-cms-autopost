@@ -1,7 +1,7 @@
-import { IUserService } from '../interfaces/services/IUserService';
-import { LoginDto, AuthResponse } from '../models/User';
-import { ValidationError } from '../exceptions/ValidationError';
-import { AuthenticationError } from '../exceptions/AuthenticationError';
+import { IUserService } from '../../user/user.service.interface';
+import { LoginDto, AuthResponse } from '../../user/user.model';
+import { ValidationError } from '../../../shared/exceptions/validation.error';
+import { AuthenticationError } from '../../../shared/exceptions/authentication.error';
 
 export class LoginUseCase {
   constructor(private userService: IUserService) {}

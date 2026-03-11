@@ -1,9 +1,9 @@
 import { FastifyInstance } from 'fastify';
-import { PublicationChannelController } from '../controllers/PublicationChannelController';
-import { requireAuth, requirePermission } from '../middleware/authRole';
-import { logAction } from '../middleware/logging';
-import { PERMISSIONS } from '../models/Category';
-import { createPublicationChannelBodySchema, updatePublicationChannelBodySchema } from '../schemas/publicationChannel';
+import { PublicationChannelController } from './publication-channel.controller';
+import { requireAuth, requirePermission } from '../../shared/middleware/auth-role';
+import { logAction } from '../../shared/middleware/logging';
+import { PERMISSIONS } from '../category/category.model';
+import { createPublicationChannelBodySchema, updatePublicationChannelBodySchema } from './publication-channel.schemas';
 
 export async function postedChannelsRoutes(fastify: FastifyInstance) {
   const controller = new PublicationChannelController();

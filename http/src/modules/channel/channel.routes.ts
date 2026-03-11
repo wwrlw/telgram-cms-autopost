@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify";
-import { ChannelController } from "../controllers/ChannelController";
-import { requireAuth, requirePermission } from "../middleware/authRole";
-import { PERMISSIONS } from "../models/Category";
-import { logAction } from "../middleware/logging";
-import { createChannelBodySchema, updateChannelBodySchema } from "../schemas/channel";
+import { ChannelController } from "./channel.controller";
+import { requireAuth, requirePermission } from "../../shared/middleware/auth-role";
+import { PERMISSIONS } from "../category/category.model";
+import { logAction } from "../../shared/middleware/logging";
+import { createChannelBodySchema, updateChannelBodySchema } from "./channel.schemas";
 
 export async function channelsRoutes(fastify: FastifyInstance) {
   const controller = new ChannelController();

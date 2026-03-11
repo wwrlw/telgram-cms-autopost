@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { UserPermissionService } from '../services/UserPermissionService';
-import { UserRepository } from '../repositories/UserRepository';
-import { PERMISSIONS, ROLES } from '../models/Category';
+import { UserPermissionService } from '../../modules/user/user-permission.service';
+import { UserRepository } from '../../modules/user/repositories/user.repository';
+import { PERMISSIONS, ROLES } from '../../modules/category/category.model';
 
 /**
  * Расширенная проверка авторизации с валидацией токена и прав
@@ -31,19 +31,9 @@ export const enhancedRequireAuth = async (request: FastifyRequest, reply: Fastif
       (request as any).user = {
         userId: userPermissions.userId,
         username: userPermissions.username,
-        role: userPermissions.role, // Роль ТОЛЬКО из БД, не из токена!
+        role: userPermissions.role,
         permissions: userPermissions.permissions,
-        isActive: userPermissions.isActive,
-        lastVerified: userPermissions.lastVerified
       };
-
-      // Проверяем, что пользователь активен
-      if (!userPermissions.isActive) {
-        return reply.status(403).send({ 
-          success: false, 
-          message: 'User account is deactivated' 
-        });
-      }
 
       // Проверяем, что пользователь не заблокирован
       if (userPermissions.role === ROLES.BANNED) {

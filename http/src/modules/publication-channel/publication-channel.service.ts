@@ -1,7 +1,7 @@
-import { IPublicationChannelService } from '../interfaces/services/IPublicationChannelService';
-import { IPublicationChannelRepository } from '../interfaces/repositories/IPublicationChannelRepository';
-import { PublicationChannel, CreatePublicationChannelDto, UpdatePublicationChannelDto, PublicationChannelResponse } from '../models/PublicationChannel';
-import { NotFoundError } from '../exceptions/NotFoundError';
+import { IPublicationChannelService } from './publication-channel.service.interface';
+import { IPublicationChannelRepository } from './repositories/publication-channel.repository.interface';
+import { PublicationChannel, CreatePublicationChannelDto, UpdatePublicationChannelDto, PublicationChannelResponse } from './publication-channel.model';
+import { NotFoundError } from '../../shared/exceptions/not-found.error';
 
 export class PublicationChannelService implements IPublicationChannelService {
   constructor(private publicationChannelRepository: IPublicationChannelRepository) {}

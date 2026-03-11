@@ -1,6 +1,6 @@
-import { IPostService } from '../interfaces/services/IPostService';
-import { Post } from '../models/Post';
-import { ValidationError } from '../exceptions/ValidationError';
+import { IPostService } from '../post.service.interface';
+import { Post } from '../post.model';
+import { ValidationError } from '../../../shared/exceptions/validation.error';
 
 export class UniquizePostUseCase {
   constructor(private postService: IPostService) {}

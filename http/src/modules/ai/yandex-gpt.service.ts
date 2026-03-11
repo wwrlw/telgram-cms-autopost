@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { ChannelRewriteProfile, ChannelProfileService } from "./ChannelProfileService";
+import { ChannelRewriteProfile, ChannelProfileService } from "../channel/channel-profile.service";
 
 const openai = new OpenAI({
   apiKey: process.env.YANDEX_API_KEY!,
