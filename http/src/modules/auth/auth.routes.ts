@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { CreateUserUseCase } from '../user/use-cases/create-user.use-case';
+import { CreateUserUseCase } from './use-cases/create-user.use-case';
 import { LoginUseCase } from './use-cases/login.use-case';
 import { CreateUserDto, LoginDto } from '../user/user.model';
 import { requireAuth, requireRole, requirePermission } from '../../shared/middleware/auth-role';
@@ -291,67 +291,4 @@ export default async function authRoutes(fastify: FastifyInstance) {
       });
     }
   });
-
-  // fastify.get('/check', async (request, reply) => {
-  //   try {
-  //     let tokenUser;
-  //     try {
-  //       await (request as any).jwtVerify();
-  //       tokenUser = (request as any).user;
-  //     } catch (jwtError) {
-  //       return reply.status(401).send({ 
-  //         success: false, 
-  //         message: 'Invalid token',
-  //         code: 'INVALID_TOKEN'
-  //       });
-  //     }
-
-  //     if (!tokenUser || !tokenUser.userId) {
-  //       return reply.status(401).send({ 
-  //         success: false, 
-  //         message: 'Invalid user data in token',
-  //         code: 'INVALID_TOKEN'
-  //       });
-  //     }
-
-  //     const mongo = (request.server as any).mongo;
-  //     const db = mongo.db;
-  //     const usersCollection = db.collection('users');
-      
-  //     const { ObjectId } = await import('mongodb');
-  //     const dbUser = await usersCollection.findOne({ _id: new ObjectId(tokenUser.userId) });
-      
-  //     // Проверяем, что пользователь существует в БД
-  //     if (!dbUser) {
-  //       return reply.status(404).send({ 
-  //         success: false, 
-  //         message: 'User not found in database',
-  //         code: 'USER_NOT_FOUND'
-  //       });
-  //     }
-      
-  //     // Проверяем, не заблокирован ли пользователь
-  //     if (dbUser.role === ROLES.BANNED) {
-  //       return reply.status(403).send({ 
-  //         success: false, 
-  //         message: 'User account is banned',
-  //         code: 'USER_BANNED'
-  //       });
-  //     }
-      
-  //     reply.send({
-  //       success: true,
-  //       data: {
-  //         role: dbUser.role,
-  //         username: dbUser.username
-  //       }
-  //     });
-  //   } catch (error: any) {
-  //     console.error('Error in /check endpoint:', error);
-  //     reply.status(500).send({ 
-  //       success: false, 
-  //       message: 'Internal server error' 
-  //     });
-  //   }
-  // });
 }

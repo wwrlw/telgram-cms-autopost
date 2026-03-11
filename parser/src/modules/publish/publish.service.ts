@@ -1,6 +1,6 @@
 import { TelegramClient, Api, utils } from 'telegram';
-import { Post } from '../types/index.js';
-import { PostedChannel } from '../types/index.js';
+import { Post } from '../../types/index.js';
+import { PostedChannel } from '../../types/index.js';
 import bigInt from "big-integer";
 import fs from 'fs';
 import crypto from 'crypto';
@@ -29,9 +29,9 @@ export class PublishService {
       path.join(process.cwd(), 'parser', '1px', '2.png'),
       path.join(process.cwd(), '1px', '2.png'),
     ];
-    
+
     this.watermarkPath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
-    
+
     if (!fs.existsSync(this.watermarkPath)) {
       console.warn(`⚠️ Файл водяного знака не найден. Будет использован путь: ${this.watermarkPath}`);
     } else {
@@ -63,7 +63,7 @@ export class PublishService {
     scale: number = 0.8
   ): Promise<string> {
     const bin = (ffmpegPath as unknown as string) || 'ffmpeg';
-    
+
     if (!fs.existsSync(this.watermarkPath)) {
       console.warn(`⚠️ Файл водяного знака не найден: ${this.watermarkPath}`);
       return inputPath;
@@ -71,7 +71,7 @@ export class PublishService {
 
     const parsedPath = path.parse(inputPath);
     const outputPath = path.join(parsedPath.dir, `${parsedPath.name}_watermarked${parsedPath.ext}`);
-    
+
     let overlayPosition = '';
     switch (position) {
       case 'top-left':
@@ -91,7 +91,7 @@ export class PublishService {
     const args = [
       '-i', inputPath,
       '-i', this.watermarkPath,
-      '-filter_complex', 
+      '-filter_complex',
       `[1:v]scale=iw*${scale}:-1,format=rgba,colorchannelmixer=aa=${opacity}[watermark];` +
       `[0:v][watermark]overlay=${overlayPosition}[v]`,
       '-map', '[v]',
@@ -118,10 +118,10 @@ export class PublishService {
   async publishPost(post: Post, channel: PostedChannel): Promise<PublishResult> {
     try {
       console.log('=== НАЧАЛО MTProto ПУБЛИКАЦИИ ===');
-      console.log('Публикуем пост:', { 
-        id: post._id, 
+      console.log('Публикуем пост:', {
+        id: post._id,
         textLength: post.text?.length || 0,
-        mediaCount: post.media?.length || 0 
+        mediaCount: post.media?.length || 0
       });
 
       const entity = await this.getChannelEntity(channel.channel_id);
@@ -176,7 +176,7 @@ export class PublishService {
     try {
       console.log('=== НАЧАЛО ПОЛУЧЕНИЯ ОТЛОЖЕННЫХ СООБЩЕНИЙ ===');
       console.log('📋 Запрос отложенных сообщений для канала:', channelId);
-      
+
       const entity = await this.getChannelEntity(channelId);
       if (!entity) {
         console.error('❌ Не удалось получить entity канала');
@@ -189,9 +189,9 @@ export class PublishService {
       }));
 
       const messages = (result as any).messages || [];
-      
+
       console.log(`📬 Получено отложенных сообщений: ${messages.length}`);
-      
+
       if (messages.length > 0) {
         console.log('📝 Детали отложенных сообщений:');
         messages.forEach((msg: any, index: number) => {
@@ -200,9 +200,9 @@ export class PublishService {
       } else {
         console.log('ℹ️ Отложенных сообщений не найдено');
       }
-      
+
       console.log('=== КОНЕЦ ПОЛУЧЕНИЯ ОТЛОЖЕННЫХ СООБЩЕНИЙ ===');
-      
+
       return messages;
     } catch (error) {
       console.error('❌ Ошибка получения отложенных сообщений:', error);
@@ -372,8 +372,8 @@ export class PublishService {
       const messageId = result?.id;
       console.log('✅ Текстовое сообщение отправлено, ID:', messageId);
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Текстовое сообщение отправлено через MTProto',
         messageId: messageId?.toString()
       };
@@ -397,8 +397,8 @@ export class PublishService {
       const scheduledMessageId = result?.id;
       console.log('✅ Текстовое сообщение запланировано, ID:', scheduledMessageId);
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Текстовое сообщение запланировано через MTProto',
         scheduledMessageId: scheduledMessageId?.toString()
       };
@@ -444,7 +444,7 @@ export class PublishService {
 
   private async sendSingleMediaWithMTProto(media: any, entity: any, caption: string): Promise<PublishResult> {
     let watermarkedVideoPath: string | null = null;
-    
+
     try {
       const filePath = await this.findMediaFile(media.file_path);
       if (!filePath) {
@@ -503,8 +503,8 @@ export class PublishService {
         }
       }
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Медиафайл отправлен через MTProto',
         messageId: messageId?.toString()
       };
@@ -515,9 +515,9 @@ export class PublishService {
         } catch (err) {
         }
       }
-      
+
       console.error('❌ Ошибка отправки медиафайла:', error);
-      
+
       let errorMessage = 'Ошибка отправки медиафайла';
       if (error instanceof Error) {
         if (error.message.includes('FILE_TOO_LARGE')) {
@@ -532,14 +532,14 @@ export class PublishService {
           errorMessage = `Ошибка отправки медиафайла: ${error.message}`;
         }
       }
-      
+
       return { success: false, message: errorMessage };
     }
   }
 
   private async sendScheduledSingleMediaWithMTProto(media: any, entity: any, caption: string, scheduleTimestamp: number): Promise<PublishResult> {
     let watermarkedVideoPath: string | null = null;
-    
+
     try {
       const filePath = await this.findMediaFile(media.file_path);
       if (!filePath) {
@@ -558,7 +558,7 @@ export class PublishService {
       if (media.type === 'video') {
         try {
           const randomPosition = this.getRandomWatermarkPosition();
-        finalFilePath = await this.addWatermarkToVideo(filePath, randomPosition, 0.44, 0.8);
+          finalFilePath = await this.addWatermarkToVideo(filePath, randomPosition, 0.44, 0.8);
           if (finalFilePath !== filePath) {
             watermarkedVideoPath = finalFilePath;
           }
@@ -592,8 +592,8 @@ export class PublishService {
         }
       }
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Медиафайл запланирован через MTProto',
         scheduledMessageId: scheduledMessageId?.toString()
       };
@@ -604,7 +604,7 @@ export class PublishService {
         } catch (err) {
         }
       }
-      
+
       console.error('❌ Ошибка планирования медиафайла:', error);
       return { success: false, message: 'Ошибка планирования медиафайла' };
     }
@@ -617,9 +617,9 @@ export class PublishService {
     options?: { scheduleTimestamp?: number }
   ): Promise<PublishResult> {
     const scheduleTimestamp = options?.scheduleTimestamp;
-    const path = await import('path');
+    const pathMod = await import('path');
     const stats = fs.statSync(filePath);
-    const fileName = path.basename(filePath);
+    const fileName = pathMod.basename(filePath);
 
     const uploadedFile = await this.client.uploadFile({
       file: new CustomFile(fileName, stats.size, filePath),
@@ -664,11 +664,11 @@ export class PublishService {
     options?: { scheduleTimestamp?: number }
   ): Promise<PublishResult> {
     let watermarkedVideoPath: string | null = null;
-    
+
     try {
       const scheduleTimestamp = options?.scheduleTimestamp;
-      const path = await import('path');
-      
+      const pathMod = await import('path');
+
       let finalFilePath = filePath;
       try {
         const randomPosition = this.getRandomWatermarkPosition();
@@ -679,9 +679,9 @@ export class PublishService {
       } catch (error) {
         console.warn('⚠️ Не удалось наложить водяной знак, используем оригинальное видео:', error);
       }
-      
+
       const stats = fs.statSync(finalFilePath);
-      const fileName = path.basename(finalFilePath);
+      const fileName = pathMod.basename(finalFilePath);
 
       const uploadedFile = await this.client.uploadFile({
         file: new CustomFile(fileName, stats.size, finalFilePath),
@@ -693,7 +693,7 @@ export class PublishService {
         const thumbPath = await this.findMediaFile(media.thumbnail_path);
         if (thumbPath) {
           const thumbStats = fs.statSync(thumbPath);
-          const thumbFileName = path.basename(thumbPath);
+          const thumbFileName = pathMod.basename(thumbPath);
           thumb = await this.client.uploadFile({
             file: new CustomFile(thumbFileName, thumbStats.size, thumbPath),
             workers: 1
@@ -756,7 +756,7 @@ export class PublishService {
         } catch (err) {
         }
       }
-      
+
       console.error('❌ Ошибка отправки видео со спойлером через MTProto:', error);
 
       let errorMessage = 'Ошибка отправки видеофайла';
@@ -826,8 +826,8 @@ export class PublishService {
       const firstMessageId = resolvedMessages.length > 0 ? resolvedMessages[0]?.id : undefined;
       console.log('✅ Группа медиафайлов отправлена, ID первого сообщения:', firstMessageId);
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Группа медиафайлов отправлена через MTProto',
         messageId: firstMessageId ? firstMessageId.toString() : undefined
       };
@@ -886,8 +886,8 @@ export class PublishService {
       const firstMessageId = resolvedMessages.length > 0 ? resolvedMessages[0]?.id : undefined;
       console.log('✅ Группа медиафайлов запланирована, ID первого сообщения:', firstMessageId);
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Группа медиафайлов запланирована через MTProto',
         scheduledMessageId: firstMessageId ? firstMessageId.toString() : undefined
       };
@@ -907,8 +907,8 @@ export class PublishService {
       throw new Error(`Файл не найден: ${media.file_path}`);
     }
 
-    const path = await import('path');
-    
+    const pathMod = await import('path');
+
     // Накладываем водяной знак на видео
     let finalFilePath = filePath;
     if (media.type === 'video') {
@@ -919,12 +919,12 @@ export class PublishService {
         console.warn('⚠️ Не удалось наложить водяной знак на видео в группе, используем оригинальное видео:', error);
       }
     }
-    
+
     const stats = fs.statSync(finalFilePath);
-    const fileName = path.basename(finalFilePath);
-    
+    const fileName = pathMod.basename(finalFilePath);
+
     console.log(`📤 Загружаем файл для группы: ${fileName} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`);
-    
+
     const uploadedFile = await this.client.uploadFile({
       file: new CustomFile(fileName, stats.size, finalFilePath),
       workers: this.getOptimalWorkers(stats.size)
@@ -953,7 +953,7 @@ export class PublishService {
           const thumbPath = await this.findMediaFile(media.thumbnail_path);
           if (thumbPath) {
             const thumbStats = fs.statSync(thumbPath);
-            const thumbFileName = path.basename(thumbPath);
+            const thumbFileName = pathMod.basename(thumbPath);
             console.log(`🖼️ Загружаем превью для группы: ${thumbFileName} (${(thumbStats.size / 1024).toFixed(2)}KB)`);
             thumb = await this.client.uploadFile({
               file: new CustomFile(thumbFileName, thumbStats.size, thumbPath),
@@ -1010,7 +1010,7 @@ export class PublishService {
   /**
    * @param media
    * @param caption
-   * @returns 
+   * @returns
    */
   private async createInputMedia(media: any, caption: string): Promise<any> {
     try {
@@ -1035,10 +1035,10 @@ export class PublishService {
 
       console.log('📁 Найден файл:', filePath);
 
-      const path = await import('path');
+      const pathMod = await import('path');
       const stats = fs.statSync(filePath);
       const maxSize = 2 * 1024 * 1024 * 1024;
-      
+
       if (stats.size > maxSize) {
         throw new Error(`Файл слишком большой: ${(stats.size / 1024 / 1024).toFixed(2)}MB (максимум 2GB)`);
       }
@@ -1047,12 +1047,12 @@ export class PublishService {
         throw new Error('Файл пустой');
       }
 
-      const fileName = path.basename(filePath);
+      const fileName = pathMod.basename(filePath);
       console.log(`📤 Загружаем файл: ${fileName} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`);
-      
+
       const workers = this.getOptimalWorkers(stats.size);
       console.log(`🔧 Используем ${workers} воркеров для загрузки`);
-      
+
       const uploadedFile = await this.client.uploadFile({
         file: new CustomFile(fileName, stats.size, filePath),
         workers: workers,
@@ -1077,9 +1077,9 @@ export class PublishService {
             const thumbPath = await this.findMediaFile(media.thumbnail_path);
             if (thumbPath) {
               const thumbStats = fs.statSync(thumbPath);
-              const thumbFileName = path.basename(thumbPath);
+              const thumbFileName = pathMod.basename(thumbPath);
               console.log(`🖼️ Загружаем превью: ${thumbFileName} (${(thumbStats.size / 1024).toFixed(2)}KB)`);
-              
+
               const thumbFile = await this.client.uploadFile({
                 file: new CustomFile(thumbFileName, thumbStats.size, thumbPath),
                 workers: 1
@@ -1123,28 +1123,28 @@ export class PublishService {
    * Находит файл по относительному пути
    */
   private async findMediaFile(relativePath: string): Promise<string | null> {
-    const fs = await import('fs');
-    const path = await import('path');
-    
+    const fsMod = await import('fs');
+    const pathMod = await import('path');
+
     const cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
-    
+
     const possiblePaths = [
-      path.join(process.cwd(), cleanPath),
-      path.join('/app', cleanPath),
-      path.join(process.cwd(), 'media', cleanPath),
-      path.join('/app', 'media', cleanPath),
-      path.join(process.cwd(), 'parser', 'media', cleanPath),
-      path.join('/app', 'parser', 'media', cleanPath),
+      pathMod.join(process.cwd(), cleanPath),
+      pathMod.join('/app', cleanPath),
+      pathMod.join(process.cwd(), 'media', cleanPath),
+      pathMod.join('/app', 'media', cleanPath),
+      pathMod.join(process.cwd(), 'parser', 'media', cleanPath),
+      pathMod.join('/app', 'parser', 'media', cleanPath),
       cleanPath
     ];
-    
+
     for (const fullPath of possiblePaths) {
-      if (fs.existsSync(fullPath)) {
+      if (fsMod.existsSync(fullPath)) {
         console.log('✅ Найден файл по пути:', fullPath);
         return fullPath;
       }
     }
-    
+
     console.error('❌ Файл не найден по путям:', possiblePaths);
     return null;
   }

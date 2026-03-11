@@ -1,254 +1,226 @@
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-import { TelegramService } from './services/telegramService.js';
-import { ApiService } from './services/apiService.js';
+import { config } from './config/index.js';
+import { MongoDatabase } from './core/database/mongo.client.js';
+import { HttpClient } from './core/api/http.client.js';
+import { TelegramClientService } from './modules/telegram/telegram.client.js';
+import { ChannelApi } from './modules/channel/channel.api.js';
+import { PostedChannelApi } from './modules/channel/posted-channel.api.js';
+import { PostApi } from './modules/post/post.api.js';
+import { PostRepository } from './modules/post/post.repository.js';
+import { ChannelStatsRepository } from './modules/channel/channel.repository.js';
+import { AnalyticsRepository } from './modules/analytics/analytics.repository.js';
+import { ChannelService } from './modules/channel/channel.service.js';
+import { MediaService } from './modules/media/media.service.js';
+import { ConversionService } from './modules/stats/conversion.service.js';
+import { StatsService } from './modules/stats/stats.service.js';
+import { AnalyticsService } from './modules/analytics/analytics.service.js';
+import { PublishService } from './modules/publish/publish.service.js';
+import { ParserService } from './modules/parser/parser.service.js';
 import { QueueWorker } from './workers/QueueWorker.js';
+import { PostedChannel } from './types/index.js';
 
 dotenv.config();
 
-const mongoUsername = process.env.MONGO_USERNAME;
-const mongoPassword = process.env.MONGO_PASSWORD;
-const mongoHost = process.env.MONGO_HOST;
-const mongoPort = process.env.MONGO_PORT;
-const MONGO_DB = process.env.MONGO_DB_NAME || 'parse-news';
+const db = new MongoDatabase(config.mongo.uri, config.mongo.dbName);
+const httpClient = new HttpClient(config.api.baseUrl, config.api.username, config.api.password);
+const channelApi = new ChannelApi(httpClient);
+const postedChannelApi = new PostedChannelApi(httpClient);
+const postApi = new PostApi(httpClient);
 
-let mongoUri = process.env.MONGODB_URI;
-if (mongoUsername && mongoPassword) {
-  mongoUri = `mongodb://${mongoUsername}:${mongoPassword}@${mongoHost}:${mongoPort}/${MONGO_DB}?authSource=admin`;
-}
+let telegramClient: TelegramClientService;
+let channelService: ChannelService;
+let statsService: StatsService;
+let analyticsService: AnalyticsService;
+let parserService: ParserService;
+let publishService: PublishService;
+let postedChannels: PostedChannel[] = [];
 
-const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:4000';
-const apiUsername = process.env.API_USERNAME || "myuser";
-const apiPassword = process.env.API_PASSWORD || "mypassword";
-
-if (!apiUsername || !apiPassword) {
-  console.error('❌ API_USERNAME и API_PASSWORD должны быть установлены в переменных окружения');
-  process.exit(1);
-}
-
-const config = {
-  apiId: Number(process.env.API_ID),
-  apiHash: process.env.API_HASH!,
-  sessionString: process.env.STRING_SESSION!,
-  mongoUri: process.env.MONGO_URI || 'mongodb://admin:Xdas33JJdasnnjdA22KKsaaA@localhost:27019/?authSource=admin',
-  MONGO_DB,
-  mediaPath: process.env.MEDIA_PATH || './media'
-};
-
-// console.log('🔗 API URL:', apiBaseUrl);
-// console.log('📁 Media path:', config.mediaPath);
-// console.log('🗄️ MongoDB:', config.mongoUri);
-
-const apiService = new ApiService(apiBaseUrl, apiUsername, apiPassword);
-
-let telegramService: TelegramService;
-
-async function initializeParser() {
+async function initialize(): Promise<void> {
   try {
-    console.log('🔍 Получаем каналы для парсинга из API...');
-    
-    const channelConfigs = await apiService.getChannelConfigs();
-    
+    console.log('🔍 Получаем каналы для парсинга...');
+    const channelConfigs = await channelApi.getChannelConfigs();
+
     if (channelConfigs.length === 0) {
-      console.warn('⚠️ Не найдено каналов для парсинга. Добавьте каналы через веб-интерфейс.');
-      setTimeout(initializeParser, 30000);
+      console.warn('⚠️ Нет каналов для парсинга. Повторная попытка через 30 секунд...');
+      setTimeout(initialize, 30000);
       return;
     }
-    
-    console.log('🎯 Target channels:', channelConfigs.map(c => `${c.id} (${c.is_private ? 'Private' : 'Public'})`));
-    
-    console.log('📋 Channels info:');
-    channelConfigs.forEach(channel => {
-      const privacyStatus = channel.is_private ? '🔒 Private' : '🔓 Public';
-      // console.log(`  - ${channel.username} (ID: ${channel.id}) [${privacyStatus}]`);
-    });
 
-    console.log('🔍 Получаем каналы для публикации из API...');
-    const postedChannels = await apiService.getActivePostedChannels();
-    
-    if (postedChannels.length > 0) {
-      // console.log('🎯 Posted channels:', postedChannels.map(c => `${c.name} (${c.channel_id})`));
-    } else {
-      console.warn('⚠️ Не найдено каналов для публикации');
+    console.log(`🎯 Каналов для парсинга: ${channelConfigs.length}`);
+
+    console.log('🔍 Получаем каналы для публикации...');
+    postedChannels = await postedChannelApi.getActivePostedChannels();
+
+    if (postedChannels.length === 0) {
+      console.warn('⚠️ Нет активных каналов для публикации');
     }
 
-    telegramService = new TelegramService({
-      ...config,
-      targetChannels: channelConfigs,
-      postedChannels: postedChannels
-    });
+    // Connect to MongoDB
+    await db.connect();
+    const dbInstance = db.getDb();
 
-    await telegramService.start();
-    
-    const queueWorker = new QueueWorker(telegramService.getPublishService(), apiService);
+    // Repositories
+    const postRepo = new PostRepository(dbInstance);
+    const channelStatsRepo = new ChannelStatsRepository(dbInstance);
+    const analyticsRepo = new AnalyticsRepository(dbInstance);
+
+    // Services
+    const mediaService = new MediaService(config.mediaPath);
+    const conversionService = new ConversionService();
+
+    // Connect to Telegram
+    telegramClient = new TelegramClientService(
+      config.telegram.apiId,
+      config.telegram.apiHash,
+      config.telegram.sessionString,
+    );
+    await telegramClient.connect();
+    const client = telegramClient.client;
+
+    // Init domain services
+    channelService = new ChannelService(client);
+    await channelService.updateTargetChannels(channelConfigs);
+
+    statsService = new StatsService(client, channelStatsRepo, postRepo, conversionService);
+    analyticsService = new AnalyticsService(client, analyticsRepo);
+    publishService = new PublishService(client);
+
+    // Parser — listens to incoming messages
+    parserService = new ParserService(client, postRepo, mediaService, statsService, conversionService, channelService);
+    parserService.addEventHandlers();
+
+    // Queue worker — processes publish/schedule/delete jobs
+    const queueWorker = new QueueWorker(publishService, postApi);
     queueWorker.start();
-    
 
-    // console.log('📊 Обновляем статистику каналов при запуске...');
-    await updateChannelsStats();
+    // Initial tasks on startup
+    await statsService.updateChannelsStats(channelConfigs);
     await checkScheduledPosts();
-    
-    // console.log('✅ Система конверсии активна - будет рассчитывать ER и ERR для всех постов');
 
-
+    console.log('✅ Парсер запущен');
   } catch (error) {
     console.error('❌ Ошибка инициализации парсера:', error);
     console.log('🔄 Повторная попытка через 30 секунд...');
-    setTimeout(initializeParser, 30000);
+    setTimeout(initialize, 30000);
   }
 }
 
-async function updateChannels() {
+async function updateChannels(): Promise<void> {
   try {
-    // console.log('🔄 Обновляем список каналов...');
-    const channelConfigs = await apiService.getChannelConfigs();
-    
-    if (telegramService) {
-      await telegramService.updateTargetChannels(channelConfigs);
-    }
-    
-    // console.log('✅ Список каналов обновлен:', channelConfigs.map(c => `${c.id} (${c.is_private ? 'Private' : 'Public'})`));
+    const channelConfigs = await channelApi.getChannelConfigs();
+    if (channelService) await channelService.updateTargetChannels(channelConfigs);
   } catch (error) {
     console.error('❌ Ошибка обновления каналов:', error);
   }
 }
 
-async function updatePostsStats() {
+async function updatePostedChannels(): Promise<void> {
   try {
-    if (telegramService) {
-      console.log('📊 Запускаем обновление статистики постов...');
-      await telegramService.updatePostsStats();
+    postedChannels = await postedChannelApi.getActivePostedChannels();
+    console.log(`✅ Каналы публикации обновлены: ${postedChannels.length}`);
+  } catch (error) {
+    console.error('❌ Ошибка обновления каналов публикации:', error);
+  }
+}
+
+async function updatePostsStats(): Promise<void> {
+  try {
+    if (statsService && channelService) {
+      await statsService.updatePostsStats(channelService.getTargetChannels());
     }
   } catch (error) {
     console.error('❌ Ошибка обновления статистики постов:', error);
   }
 }
 
-async function updateChannelsStats() {
+async function updateChannelsStats(): Promise<void> {
   try {
-    if (telegramService) {
-      // console.log('📊 Запускаем обновление статистики каналов (подписчики)...');
-      await telegramService.updateChannelsStats();
+    if (statsService && channelService) {
+      await statsService.updateChannelsStats(channelService.getTargetChannels());
     }
   } catch (error) {
     console.error('❌ Ошибка обновления статистики каналов:', error);
   }
 }
 
-async function cleanupDuplicates() {
+async function collectAnalytics(): Promise<void> {
   try {
-    if (telegramService) {
-      // console.log('🧹 Запускаем очистку дубликатов...');
-      await telegramService.cleanupDuplicates();
+    if (analyticsService) {
+      await analyticsService.collectPostedChannelsAnalytics(postedChannels);
     }
   } catch (error) {
-    console.error('❌ Ошибка очистки дубликатов:', error);
+    console.error('❌ Ошибка сбора аналитики:', error);
   }
 }
 
-async function updatePostedChannels() {
+async function collectDailySnapshots(): Promise<void> {
   try {
-    // console.log('🔄 Обновляем список каналов публикации...');
-    const postedChannels = await apiService.getActivePostedChannels();
-    
-    if (telegramService) {
-      await telegramService.updatePostedChannels(postedChannels);
+    if (analyticsService) {
+      await analyticsService.collectDailySnapshots(postedChannels);
     }
-    
-    // console.log('✅ Список каналов публикации обновлен:', postedChannels.map(c => `${c.name} (${c.channel_id})`));
   } catch (error) {
-    console.error('❌ Ошибка обновления каналов публикации:', error);
+    console.error('❌ Ошибка дневных срезов аналитики:', error);
   }
 }
 
-async function collectPostedChannelsAnalytics() {
+async function checkScheduledPosts(): Promise<void> {
   try {
-    if (telegramService) {
-      // console.log('📊 Запускаем сбор аналитики по каналам публикации...');
-      await telegramService.collectPostedChannelsAnalytics();
-    }
-  } catch (error) {
-    // console.error('❌ Ошибка сбора аналитики по каналам публикации:', error);
-  }
-}
+    if (!publishService) return;
 
-async function checkScheduledPosts() {
-  try {
-    if (telegramService && apiService) {
-      // console.log('🔍 Проверяем отложенные сообщения на публикацию...');
-      
-      const scheduledPosts = await apiService.getScheduledPosts();
-      // console.log(`📋 Найдено отложенных постов: ${scheduledPosts.length}`);
-      
-      const postedChannels = await apiService.getActivePostedChannels();
-      
-      for (const post of scheduledPosts) {
-        if (!post.scheduled_at) continue;
-        
-        const scheduledDate = new Date(post.scheduled_at);
-        const now = new Date();
-        
-        if (scheduledDate <= now) {
-          // console.log(`⏰ Время публикации прошло для поста ${post._id}, проверяем обновление...`);
-          
-          const channel = postedChannels.find(c => c.channel_id === post.scheduled_channel_id);
-          
-          if (channel && post.scheduled_message_id) {
-            try {
-              const scheduledMessages = await telegramService.getPublishService().getScheduledMessages(channel.channel_id);
-              
-              const foundMessage = scheduledMessages.find((msg: any) => msg.id?.toString() === post.scheduled_message_id.toString());
-              
-              if (!foundMessage) {
-                // console.log(`✅ Отложенное сообщение ${post.scheduled_message_id} было опубликовано, обновляем пост ${post._id}`);
-                
-                await apiService.updateScheduledPostAsPublished(post._id);
-              }
-            } catch (error) {
-              console.error(`❌ Ошибка при проверке отложенного сообщения для поста ${post._id}:`, error);
-            }
-          }
+    const scheduledPosts = await postApi.getScheduledPosts();
+    const activeChannels = await postedChannelApi.getActivePostedChannels();
+
+    for (const post of scheduledPosts) {
+      if (!post.scheduled_at) continue;
+
+      const scheduledDate = new Date(post.scheduled_at);
+      if (scheduledDate > new Date()) continue;
+
+      const channel = activeChannels.find((c: PostedChannel) => c.channel_id === post.scheduled_channel_id);
+      if (!channel || !post.scheduled_message_id) continue;
+
+      try {
+        const scheduledMessages = await publishService.getScheduledMessages(channel.channel_id);
+        const stillExists = scheduledMessages.find(
+          (msg: any) => msg.id?.toString() === post.scheduled_message_id.toString(),
+        );
+
+        if (!stillExists) {
+          await postApi.updateScheduledPostAsPublished(post._id);
         }
+      } catch (error) {
+        console.error(`❌ Ошибка проверки отложенного сообщения для поста ${post._id}:`, error);
       }
-      
-      // console.log('✅ Проверка отложенных сообщений завершена');
     }
   } catch (error) {
     console.error('❌ Ошибка проверки отложенных сообщений:', error);
   }
 }
 
-process.on('SIGINT', async () => {
-  console.log('\n🛑 Получен сигнал SIGINT, останавливаем сервис...');
-  if (telegramService) {
-    await telegramService.stop();
-  }
+async function shutdown(): Promise<void> {
+  console.log('\n🛑 Останавливаем сервис...');
+  if (telegramClient) await telegramClient.disconnect();
+  await db.disconnect();
   process.exit(0);
-});
+}
 
-process.on('SIGTERM', async () => {
-  console.log('\n🛑 Получен сигнал SIGTERM, останавливаем сервис...');
-  if (telegramService) {
-    await telegramService.stop();
-  }
-  process.exit(0);
-});
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 (async () => {
   try {
-    await initializeParser();
-    // Периодические задачи через cron
-    cron.schedule('*/10 * * * *', updateChannels); // каждые 10 минут
-    cron.schedule('*/10 * * * *', updatePostedChannels); // каждые 10 минут
-    cron.schedule('*/5 * * * *', updatePostsStats); // каждые 5 минут
-    cron.schedule('*/30 * * * *', updateChannelsStats); // каждые 30 минут
-    cron.schedule('*/2 * * * *', checkScheduledPosts); // каждые 2 минуты - проверка отложенных сообщений
-    cron.schedule('0 3 * * *', collectPostedChannelsAnalytics); // каждый день в 03:00
-    cron.schedule('15 3 * * *', async () => { if (telegramService) await telegramService.collectDailyChannelSnapshots(); }); // дневные срезы в 03:15
-    cron.schedule('0 * * * *', cleanupDuplicates); // каждый час
-    
+    await initialize();
+
+    cron.schedule('*/10 * * * *', updateChannels);
+    cron.schedule('*/10 * * * *', updatePostedChannels);
+    cron.schedule('*/5 * * * *', updatePostsStats);
+    cron.schedule('*/30 * * * *', updateChannelsStats);
+    cron.schedule('*/2 * * * *', checkScheduledPosts);
+    cron.schedule('0 3 * * *', collectAnalytics);
+    cron.schedule('15 3 * * *', collectDailySnapshots);
   } catch (error) {
     console.error('❌ Критическая ошибка:', error);
     process.exit(1);
   }
-})(); 
+})();

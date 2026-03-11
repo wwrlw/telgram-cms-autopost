@@ -1,4 +1,4 @@
-import { PostStats, ConversionMetrics, ChannelStats } from '../types/index.js';
+import { PostStats, ConversionMetrics } from '../../types/index.js';
 
 export class ConversionService {
   /**
@@ -76,11 +76,11 @@ export class ConversionService {
     }
 
     const metrics: string[] = [];
-    
+
     if (conversion.er !== undefined) {
       metrics.push(`ER: ${conversion.er}%`);
     }
-    
+
     if (conversion.err !== undefined) {
       metrics.push(`ERR: ${conversion.err}%`);
     }
@@ -93,4 +93,4 @@ export class ConversionService {
       metrics.push(`Реакции: ${conversion.reactions}`);
     }
   }
-} 
+}

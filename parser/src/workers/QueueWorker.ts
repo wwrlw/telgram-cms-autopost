@@ -1,13 +1,13 @@
 import Queue from 'bull';
-import { PublishService } from '../services/publishService.js';
-import { ApiService } from '../services/apiService.js';
+import { PublishService } from '../modules/publish/publish.service.js';
+import { PostApi } from '../modules/post/post.api.js';
 
 export class QueueWorker {
   private publishQueue: Queue.Queue;
   private publishService: PublishService;
-  private apiService: ApiService;
+  private apiService: PostApi;
 
-  constructor(publishService: PublishService, apiService: ApiService) {
+  constructor(publishService: PublishService, apiService: PostApi) {
     this.publishService = publishService;
     this.apiService = apiService;
     this.publishQueue = new Queue('publish-queue', process.env.REDIS_URL || 'redis://localhost:6380');

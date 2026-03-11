@@ -1,12 +1,12 @@
-import { MongoService } from './mongoService.js';
-import { PostedChannel, ChannelAnalytics, DailyChannelAnalytics } from '../types/index.js';
 import { TelegramClient } from 'telegram';
 import { Api } from 'telegram';
+import { PostedChannel, ChannelAnalytics, DailyChannelAnalytics } from '../../types/index.js';
+import { IAnalyticsRepository } from './analytics.repository.interface.js';
 
-export class ChannelAnalyticsService {
+export class AnalyticsService {
   constructor(
     private client: TelegramClient,
-    private mongoService: MongoService
+    private analyticsRepository: IAnalyticsRepository,
   ) {}
 
   /**
@@ -15,23 +15,20 @@ export class ChannelAnalyticsService {
   async collectPostedChannelsAnalytics(postedChannels: PostedChannel[]): Promise<void> {
     try {
       console.log('📊 Начинаем сбор аналитики по каналам публикации...');
-      
+
       for (const channel of postedChannels) {
         try {
-          
           const analytics = await this.collectChannelAnalytics(channel);
-          
+
           if (analytics) {
             await this.saveChannelAnalytics(analytics);
           }
-          
+
           await new Promise(resolve => setTimeout(resolve, 2000));
-          
         } catch (error) {
           console.error(`❌ Ошибка сбора статистики для канала ${channel.name}:`, error);
         }
       }
-      
     } catch (error) {
       console.error('❌ Ошибка сбора аналитики по каналам:', error);
     }
@@ -70,7 +67,7 @@ export class ChannelAnalyticsService {
           created_at: new Date()
         };
 
-        await this.mongoService.upsertDailyChannelAnalytics(doc);
+        await this.analyticsRepository.upsertDailyChannelAnalytics(doc);
       } catch (e) {
         console.error(`❌ Ошибка сохранения дневного среза для ${channel.name}:`, e);
       }
@@ -80,7 +77,6 @@ export class ChannelAnalyticsService {
 
   private async calculateDailyMetricsForEntity(channel: PostedChannel, channelId: string, subscribersCount: number, start: Date, end: Date): Promise<{ views_day: number; err_day: number; posts_day: number; }> {
     try {
-      
       const parsedId = parseInt(channel.channel_id);
       let telegramChannelId = Math.abs(parsedId);
       if (telegramChannelId < 1_000_000_000_000) {
@@ -105,33 +101,31 @@ export class ChannelAnalyticsService {
       const batchSize = 100;
       let posts: any[] = [];
       let totalMessagesFetched = 0;
-      
+
       for (let i = 0; i < 20; i++) {
         const messages: any[] = await this.client.getMessages(entity, { limit: batchSize, offsetId });
         if (!messages || messages.length === 0) break;
-        
+
         totalMessagesFetched += messages.length;
-        
+
         for (const msg of messages) {
           const msgDate = msg.date instanceof Date ? msg.date : new Date(msg.date);
           const msgUtc = new Date(msgDate.getTime());
-          
-          
+
           if (msgUtc >= start && msgUtc <= end) {
             posts.push(msg);
           }
         }
-        
+
         offsetId = messages[messages.length - 1].id;
         const oldestDate = messages[messages.length - 1]?.date;
         if (oldestDate && new Date(oldestDate) < start) break;
       }
 
-
       let totalViews = 0;
       let totalReactions = 0;
       let postsWithStats = 0;
-      
+
       for (const message of posts) {
         if (message.views !== undefined && message.views !== null) {
           totalViews += Number(message.views);
@@ -191,13 +185,13 @@ export class ChannelAnalyticsService {
       }
 
       let subscribersCount = 0;
-      
+
       try {
         if (entity.className === 'Channel' || entity.className === 'Chat') {
           const fullChannel = await this.client.invoke(new Api.channels.GetFullChannel({
             channel: entity
           }));
-          
+
           if (fullChannel.fullChat && (fullChannel.fullChat as any).participantsCount !== undefined) {
             subscribersCount = (fullChannel.fullChat as any).participantsCount;
           }
@@ -205,14 +199,13 @@ export class ChannelAnalyticsService {
           subscribersCount = 1;
         }
       } catch (fullChannelError: any) {
-        
         if (entity.className === 'Channel' || entity.className === 'Chat') {
           subscribersCount = (entity as any).participantsCount || 0;
         }
       }
-      
+
       const messages = await this.client.getMessages(entity, { limit: 100 });
-      
+
       if (!messages || messages.length === 0) {
         return null;
       }
@@ -247,7 +240,6 @@ export class ChannelAnalyticsService {
       };
 
       return analytics;
-      
     } catch (error) {
       console.error(`❌ Ошибка сбора аналитики для канала ${channel.name}:`, error);
       return null;
@@ -259,9 +251,9 @@ export class ChannelAnalyticsService {
    */
   private async saveChannelAnalytics(analytics: ChannelAnalytics): Promise<void> {
     try {
-      const existing = await this.mongoService.getChannelAnalytics(analytics.channel_id);
+      const existing = await this.analyticsRepository.getChannelAnalytics(analytics.channel_id);
       if (existing) {
-        await this.mongoService.updateChannelAnalytics(analytics.channel_id, {
+        await this.analyticsRepository.updateChannelAnalytics(analytics.channel_id, {
           subscribers_count: analytics.subscribers_count,
           avg_views: analytics.avg_views,
           avg_err: analytics.avg_err,
@@ -269,7 +261,7 @@ export class ChannelAnalyticsService {
           last_updated: analytics.last_updated
         });
       } else {
-        await this.mongoService.createChannelAnalytics(analytics);
+        await this.analyticsRepository.createChannelAnalytics(analytics);
       }
     } catch (error) {
       console.error(`❌ Ошибка сохранения аналитики для канала ${analytics.channel_name}:`, error);
