@@ -23,6 +23,9 @@ import { PublishPostToChannelUseCase } from '../../modules/post/use-cases/publis
 import { PostedChannelRepository } from '../../modules/publication-channel/repositories/posted-channel.repository';
 import { PostedChannelService } from '../../modules/publication-channel/posted-channel.service';
 import { DeletePostFromTelegramUseCase } from '../../modules/post/use-cases/delete-post-from-telegram.use-case'
+import { TelegramConfigRepository } from '../../modules/telegram-config/repositories/telegram-config.repository';
+import { TelegramConfigService } from '../../modules/telegram-config/telegram-config.service';
+import { EncryptionService } from '../../modules/telegram-config/encryption.service';
 
 export class DependencyContainer {
   private static instance: DependencyContainer;
@@ -45,6 +48,8 @@ export class DependencyContainer {
   private publicationChannelService?: PublicationChannelService;
   private categoryService?: CategoryService;
   private postedChannelService?: PostedChannelService;
+  private telegramConfigRepository?: TelegramConfigRepository;
+  private telegramConfigService?: TelegramConfigService;
 
   private constructor() {}
 
@@ -186,5 +191,26 @@ export class DependencyContainer {
 
   getLoginUseCase(): LoginUseCase {
     return new LoginUseCase(this.getUserService());
+  }
+
+  getTelegramConfigRepository(): TelegramConfigRepository {
+    if (!this.mongo) throw new Error('MongoDB not initialized');
+    if (!this.telegramConfigRepository)
+      this.telegramConfigRepository = new TelegramConfigRepository(this.mongo);
+    return this.telegramConfigRepository;
+  }
+
+  getTelegramConfigService(): TelegramConfigService {
+    if (!this.telegramConfigService) {
+      const encryptionKey = process.env.ENCRYPTION_KEY;
+      if (!encryptionKey) throw new Error('ENCRYPTION_KEY is not set in .env');
+      const parserUrl = process.env.PARSER_INTERNAL_URL || 'http://parser:3002';
+      this.telegramConfigService = new TelegramConfigService(
+        this.getTelegramConfigRepository(),
+        new EncryptionService(encryptionKey),
+        parserUrl,
+      );
+    }
+    return this.telegramConfigService;
   }
 } 

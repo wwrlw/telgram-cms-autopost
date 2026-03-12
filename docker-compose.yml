@@ -30,6 +30,8 @@ services:
       - PARSER_API_USERNAME=${API_USERNAME}
       - PARSER_API_PASSWORD=${API_PASSWORD}
       - USE_MTPROTO=${USE_MTPROTO}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - PARSER_INTERNAL_URL=http://parser:3002
       - REDIS_URL=redis://redis:6379
     deploy:
       resources:

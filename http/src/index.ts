@@ -12,6 +12,7 @@ import publishRoutes from './modules/publication-channel/publish.routes';
 import swagger from './infrastructure/plugins/swagger';
 import logsRoutes from './modules/logs/logs.routes';
 import { mediaRoutes } from './modules/media/media.routes';
+import telegramConfigRoutes from './modules/telegram-config/telegram-config.routes';
 import cors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
 import path from 'path';
@@ -56,6 +57,7 @@ async function start() {
         await fastify.register(publishRoutes);
         await fastify.register(logsRoutes, { prefix: '/logs' });
         await fastify.register(mediaRoutes);
+        await fastify.register(telegramConfigRoutes, { prefix: '/telegram-config' });
         fastify.setErrorHandler(errorHandler);
         await fastify.ready();
         await fastify.listen({ port: Number(process.env.PORT) || 4000, host: '0.0.0.0' });
