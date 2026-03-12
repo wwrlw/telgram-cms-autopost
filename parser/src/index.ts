@@ -4,6 +4,8 @@ import { config } from './config/index.js';
 import { MongoDatabase } from './core/database/mongo.client.js';
 import { HttpClient } from './core/api/http.client.js';
 import { TelegramClientService } from './modules/telegram/telegram.client.js';
+import { TelegramConfigApi } from './modules/telegram-config/telegram-config.api.js';
+import { startAuthServer } from './modules/telegram-config/auth.server.js';
 import { ChannelApi } from './modules/channel/channel.api.js';
 import { PostedChannelApi } from './modules/channel/posted-channel.api.js';
 import { PostApi } from './modules/post/post.api.js';
@@ -27,6 +29,7 @@ const httpClient = new HttpClient(config.api.baseUrl, config.api.username, confi
 const channelApi = new ChannelApi(httpClient);
 const postedChannelApi = new PostedChannelApi(httpClient);
 const postApi = new PostApi(httpClient);
+const telegramConfigApi = new TelegramConfigApi(httpClient);
 
 let telegramClient: TelegramClientService;
 let channelService: ChannelService;
@@ -69,12 +72,25 @@ async function initialize(): Promise<void> {
     const mediaService = new MediaService(config.mediaPath);
     const conversionService = new ConversionService();
 
+    // Загружаем Telegram credentials: сначала из бэкенда, fallback на env
+    let tgApiId = config.telegram.apiId;
+    let tgApiHash = config.telegram.apiHash;
+    let tgSession = config.telegram.sessionString;
+
+    const remoteConfig = await telegramConfigApi.getActiveConfig();
+    if (remoteConfig?.status === 'active') {
+      tgApiId = remoteConfig.apiId;
+      tgApiHash = remoteConfig.apiHash;
+      tgSession = remoteConfig.sessionString;
+      console.log('🔑 Telegram credentials загружены из базы');
+    } else if (!tgSession) {
+      console.warn('⚠️  Нет активной Telegram сессии. Запускаем auth server...');
+      startAuthServer(telegramConfigApi, 3002);
+      return; // ждём авторизации, после неё parser перезапустится
+    }
+
     // Connect to Telegram
-    telegramClient = new TelegramClientService(
-      config.telegram.apiId,
-      config.telegram.apiHash,
-      config.telegram.sessionString,
-    );
+    telegramClient = new TelegramClientService(tgApiId, tgApiHash, tgSession);
     await telegramClient.connect();
     const client = telegramClient.client;
 
