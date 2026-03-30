@@ -5,6 +5,7 @@ import { MediaService } from '../media/media.service.js';
 import { StatsService } from '../stats/stats.service.js';
 import { ConversionService } from '../stats/conversion.service.js';
 import { ChannelService } from '../channel/channel.service.js';
+import { toRawId, peerToStoredId } from '../channel/channel-id.utils.js';
 
 export class ParserService {
   private albumBuffer: { [groupedId: string]: any[] } = {};
@@ -21,18 +22,6 @@ export class ParserService {
 
   addEventHandlers(): void {
     this.client.addEventHandler(this.handleMessage.bind(this));
-  }
-
-  private normalizeChannelId(id: number): number {
-    let n = Math.abs(id);
-    if (n > 1_000_000_000_000) n -= 1_000_000_000_000;
-    return n;
-  }
-
-  private getFullChannelId(peer: any): number {
-    const rawChannelId = Number(peer.channelId || peer.userId || peer.chatId || 0);
-    if (peer.channelId) return -100 * 10000000000 - rawChannelId;
-    return rawChannelId;
   }
 
   private getPostStatsFromMessage(message: any): PostStats | undefined {
@@ -92,12 +81,12 @@ export class ParserService {
     );
 
     const stats = this.getPostStatsFromMessage(msg);
-    const subscribersCount = await this.statsService.getChannelSubscribersFromDB(this.getFullChannelId(peer));
+    const subscribersCount = await this.statsService.getChannelSubscribersFromDB(peerToStoredId(peer));
     const conversionMetrics = this.conversionService.calculateConversionMetrics(stats, subscribersCount);
 
     const postData: CreatePostDto = {
       source_channel: sourceChannel,
-      channel_id: this.getFullChannelId(peer),
+      channel_id: peerToStoredId(peer),
       text,
       url: postUrl,
       media,
@@ -117,16 +106,16 @@ export class ParserService {
     if (!peer) return;
 
     const channelId = Number(peer.channelId || peer.userId || peer.chatId || 0);
-    const normalizedIncomingId = this.normalizeChannelId(channelId);
+    const normalizedIncomingId = toRawId(channelId);
     const targetChannels = this.channelService.getTargetChannels();
 
     const isTargetChannel = targetChannels
-      .map(c => this.normalizeChannelId(c.id))
+      .map(c => toRawId(c.id))
       .includes(normalizedIncomingId);
 
     if (!isTargetChannel) return;
 
-    const channelConfig = targetChannels.find(c => this.normalizeChannelId(c.id) === normalizedIncomingId);
+    const channelConfig = targetChannels.find(c => toRawId(c.id) === normalizedIncomingId);
 
     if (msg.groupedId) {
       const groupId = msg.groupedId.toString();

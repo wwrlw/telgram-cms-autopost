@@ -1,6 +1,7 @@
 import { createServer, IncomingMessage, ServerResponse } from 'http';
-import { TelegramClient } from 'telegram';
+import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
+import { computeCheck } from 'telegram/Password.js';
 import { TelegramConfigApi } from './telegram-config.api.js';
 
 interface PendingAuth {
@@ -8,6 +9,7 @@ interface PendingAuth {
   phone: string;
   apiId: number;
   apiHash: string;
+  needsPassword: boolean;
 }
 
 let pendingAuth: PendingAuth | null = null;
@@ -26,6 +28,14 @@ function readBody(req: IncomingMessage): Promise<any> {
 function json(res: ServerResponse, status: number, data: any) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
+}
+
+async function finishAuth(client: TelegramClient, configApi: TelegramConfigApi) {
+  const session = client.session.save() as unknown as string;
+  await configApi.saveSession(session);
+  pendingAuth = null;
+  console.log('✅ Telegram авторизация завершена, сессия сохранена');
+  setTimeout(() => process.exit(0), 500);
 }
 
 export function startAuthServer(configApi: TelegramConfigApi, port = 3002): void {
@@ -59,7 +69,7 @@ export function startAuthServer(configApi: TelegramConfigApi, port = 3002): void
         await client.connect();
 
         const result = await client.sendCode({ apiId: Number(apiId), apiHash }, phone);
-        pendingAuth = { client, phone, apiId: Number(apiId), apiHash };
+        pendingAuth = { client, phone, apiId: Number(apiId), apiHash, needsPassword: false };
 
         console.log(`📱 Код отправлен на ${phone}`);
         json(res, 200, { success: true, data: { phoneCodeHash: result.phoneCodeHash } });
@@ -84,24 +94,58 @@ export function startAuthServer(configApi: TelegramConfigApi, port = 3002): void
           return;
         }
 
-        const { client, phone, apiId, apiHash } = pendingAuth;
+        const { client, phone } = pendingAuth;
 
-        await client.signIn(
-          { apiId, apiHash },
-          { phoneNumber: phone, phoneCodeHash, phoneCode: code },
-        );
+        try {
+          await client.invoke(new Api.auth.SignIn({
+            phoneNumber: phone,
+            phoneCodeHash,
+            phoneCode: code,
+          }));
+        } catch (signInError: any) {
+          if (signInError.message?.includes('SESSION_PASSWORD_NEEDED')) {
+            pendingAuth.needsPassword = true;
+            console.log('🔐 Аккаунт защищён паролем 2FA');
+            json(res, 200, { success: true, data: { needsPassword: true } });
+            return;
+          }
+          throw signInError;
+        }
 
-        const session = client.session.save() as unknown as string;
-        await configApi.saveSession(session);
-
-        pendingAuth = null;
-        console.log('✅ Telegram авторизация завершена, сессия сохранена');
-        json(res, 200, { success: true, data: { message: 'Авторизация успешна. Перезапустите парсер.' } });
-
-        // Перезапуск через политику docker restart
-        setTimeout(() => process.exit(0), 500);
+        await finishAuth(client, configApi);
+        json(res, 200, { success: true, data: { needsPassword: false, message: 'Авторизация успешна. Перезапустите парсер.' } });
       } catch (e: any) {
         console.error('❌ verify-code error:', e.message);
+        json(res, 500, { success: false, message: e.message });
+      }
+      return;
+    }
+
+    // Шаг 3: ввод пароля 2FA
+    if (method === 'POST' && url === '/internal/auth/verify-password') {
+      try {
+        if (!pendingAuth || !pendingAuth.needsPassword) {
+          json(res, 400, { success: false, message: 'Нет ожидающей 2FA авторизации.' });
+          return;
+        }
+
+        const { password } = await readBody(req);
+        if (!password) {
+          json(res, 400, { success: false, message: 'password required' });
+          return;
+        }
+
+        const { client } = pendingAuth;
+
+        const passwordInfo = await client.invoke(new Api.account.GetPassword());
+        const passwordCheck = await computeCheck(passwordInfo, password);
+        await client.invoke(new Api.auth.CheckPassword({ password: passwordCheck }));
+
+        await finishAuth(client, configApi);
+        console.log('✅ 2FA пароль принят');
+        json(res, 200, { success: true, data: { message: 'Авторизация успешна. Парсер перезапускается.' } });
+      } catch (e: any) {
+        console.error('❌ verify-password error:', e.message);
         json(res, 500, { success: false, message: e.message });
       }
       return;

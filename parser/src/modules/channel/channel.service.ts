@@ -1,6 +1,6 @@
 import { TelegramClient } from 'telegram';
-import { Api } from 'telegram';
 import { ChannelConfig } from '../../types/index.js';
+import { configToEntityArg, toRawId, peerToStoredId } from './channel-id.utils.js';
 
 export class ChannelService {
   private targetChannels: ChannelConfig[] = [];
@@ -31,30 +31,7 @@ export class ChannelService {
 
     for (const channelConfig of this.targetChannels) {
       try {
-        let entity;
-
-        if (channelConfig.is_private) {
-          let telegramChannelId = Math.abs(channelConfig.id);
-
-          if (telegramChannelId > 1_000_000_000_000) {
-            telegramChannelId -= 1_000_000_000_000;
-          }
-
-          entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
-        } else {
-          if (channelConfig.username) {
-            entity = await this.client.getEntity(channelConfig.username.replace('@', ''));
-          } else {
-            let telegramChannelId = Math.abs(channelConfig.id);
-
-            if (telegramChannelId > 1_000_000_000_000) {
-              telegramChannelId -= 1_000_000_000_000;
-            }
-
-            entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
-          }
-        }
-
+        const entity = await this.client.getEntity(configToEntityArg(channelConfig));
         const username = (entity as any).username || `channel_${Math.abs(channelConfig.id)}`;
         const title = (entity as any).title || 'Unknown';
         const privacyStatus = channelConfig.is_private ? '🔒 Private' : '🔓 Public';
@@ -66,45 +43,17 @@ export class ChannelService {
   }
 
   async resolveEntity(channelConfig: ChannelConfig): Promise<any> {
-    if (channelConfig.is_private) {
-      let telegramChannelId = Math.abs(channelConfig.id);
-
-      if (telegramChannelId > 1_000_000_000_000) {
-        telegramChannelId -= 1_000_000_000_000;
-      }
-
-      return await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
-    } else {
-      if (channelConfig.username) {
-        return await this.client.getEntity(channelConfig.username.replace('@', ''));
-      } else {
-        let telegramChannelId = Math.abs(channelConfig.id);
-
-        if (telegramChannelId > 1_000_000_000_000) {
-          telegramChannelId -= 1_000_000_000_000;
-        }
-
-        return await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
-      }
-    }
+    return await this.client.getEntity(configToEntityArg(channelConfig));
   }
 
+  /** peer объект gramjs → stored ID для БД (-100 префикс) */
   getFullChannelId(peer: any): number {
-    const rawChannelId = Number(peer.channelId || peer.userId || peer.chatId || 0);
-
-    if (peer.channelId) {
-      return -100 * 10000000000 - rawChannelId;
-    }
-
-    return rawChannelId;
+    return peerToStoredId(peer);
   }
 
+  /** stored/any ID → raw ID без префикса */
   normalizeChannelId(id: number): number {
-    let n = Math.abs(id);
-    if (n > 1_000_000_000_000) {
-      n -= 1_000_000_000_000;
-    }
-    return n;
+    return toRawId(id);
   }
 
   async getChannelIdentifier(peer: any, channelConfig?: ChannelConfig): Promise<string> {

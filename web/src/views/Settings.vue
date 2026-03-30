@@ -61,6 +61,8 @@
 
             <ClearDb v-if="userRole === 'super_admin'" />
 
+            <TelegramAuth v-if="userRole === 'super_admin'" />
+
             <div
                 v-if="userRole && userRole !== 'super_admin'"
                 class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded"
@@ -101,6 +103,7 @@
 <script setup>
 import { ref, onMounted, provide } from "vue";
 import ClearDb from "@/components/ClearDb.vue";
+import TelegramAuth from "@/components/TelegramAuth.vue";
 import ConfirmModal from "@/components/Modal/ConfirmModal.vue";
 import http from "@/js/http";
 

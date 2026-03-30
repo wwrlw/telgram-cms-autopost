@@ -51,7 +51,20 @@ export default async function telegramConfigRoutes(fastify: FastifyInstance) {
   }, async (req, reply) => {
     try {
       const service = container.getTelegramConfigService();
-      await service.verifyCode(req.params.id, req.body.code, req.body.phoneCodeHash);
+      const result = await service.verifyCode(req.params.id, req.body.code, req.body.phoneCodeHash);
+      reply.send({ success: true, data: result });
+    } catch (e: any) {
+      reply.status(500).send({ success: false, message: e.message });
+    }
+  });
+
+  // Шаг 3: ввод пароля 2FA
+  fastify.post<{ Params: { id: string }; Body: { password: string } }>('/:id/auth/verify-password', {
+    preHandler: [requireAuth, requirePermission(PERMISSIONS.MANAGE_CHANNELS)],
+  }, async (req, reply) => {
+    try {
+      const service = container.getTelegramConfigService();
+      await service.verifyPassword(req.params.id, req.body.password);
       reply.send({ success: true, data: { message: 'Авторизован. Парсер перезапускается.' } });
     } catch (e: any) {
       reply.status(500).send({ success: false, message: e.message });

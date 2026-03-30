@@ -766,7 +766,6 @@ let http = {
             });
     },
 
-    // Maintenance: cleanup old posts and media
     cleanupPosts: function (params = {}, callback, errorCallback) {
         const queryParams = new URLSearchParams();
         if (params.threshold !== undefined)
@@ -898,7 +897,66 @@ let http = {
             });
     },
 
-    // Infinite scroll methods for logs
+    telegramConfigGetAll: function (callback, errorCallback) {
+        instance
+            .get("/telegram-config")
+            .then((res) => callback(res.data))
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else callback({ success: false, message: "Failed to load configs" });
+            });
+    },
+
+    telegramConfigCreate: function (params, callback, errorCallback) {
+        instance
+            .post("/telegram-config", params)
+            .then((res) => callback(res.data))
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else callback({ success: false, message: "Failed to create config" });
+            });
+    },
+
+    telegramConfigSendCode: function (configId, callback, errorCallback) {
+        instance
+            .post(`/telegram-config/${configId}/auth/send-code`, {})
+            .then((res) => callback(res.data))
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else callback({ success: false, message: "Failed to send code" });
+            });
+    },
+
+    telegramConfigVerifyCode: function (configId, code, phoneCodeHash, callback, errorCallback) {
+        instance
+            .post(`/telegram-config/${configId}/auth/verify-code`, { code, phoneCodeHash })
+            .then((res) => callback(res.data))
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else callback({ success: false, message: "Failed to verify code" });
+            });
+    },
+
+    telegramConfigVerifyPassword: function (configId, password, callback, errorCallback) {
+        instance
+            .post(`/telegram-config/${configId}/auth/verify-password`, { password })
+            .then((res) => callback(res.data))
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else callback({ success: false, message: "Failed to verify password" });
+            });
+    },
+
+    telegramConfigDelete: function (configId, callback, errorCallback) {
+        instance
+            .delete(`/telegram-config/${configId}`)
+            .then((res) => callback(res.data))
+            .catch((err) => {
+                if (errorCallback) errorCallback(err);
+                else callback({ success: false, message: "Failed to delete config" });
+            });
+    },
+
     logsInfiniteScroll: function (params = {}, callback, errorCallback) {
         const queryParams = new URLSearchParams();
 

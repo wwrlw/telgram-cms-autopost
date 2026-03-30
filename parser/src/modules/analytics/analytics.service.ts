@@ -1,6 +1,6 @@
-import { TelegramClient } from 'telegram';
-import { Api } from 'telegram';
+import { TelegramClient, Api } from 'telegram';
 import { PostedChannel, ChannelAnalytics, DailyChannelAnalytics } from '../../types/index.js';
+import { toExpandedId, toPeerChannel, toPeerUser, toPeerChat } from '../channel/channel-id.utils.js';
 import { IAnalyticsRepository } from './analytics.repository.interface.js';
 
 export class AnalyticsService {
@@ -71,21 +71,17 @@ export class AnalyticsService {
 
   private async calculateDailyMetricsForEntity(channel: PostedChannel, channelId: string, subscribersCount: number, start: Date, end: Date): Promise<{ views_day: number; err_day: number; posts_day: number; }> {
     try {
-      const parsedId = parseInt(channel.channel_id);
-      let telegramChannelId = Math.abs(parsedId);
-      if (telegramChannelId < 1_000_000_000_000) {
-        telegramChannelId = 1_000_000_000_000 + telegramChannelId;
-      }
+      const expandedId = toExpandedId(parseInt(channel.channel_id));
 
       let entity: any;
       try {
-        entity = await this.client.getEntity(telegramChannelId);
+        entity = await this.client.getEntity(expandedId);
       } catch {}
       if (!entity) {
-        try { entity = await this.client.getEntity(-telegramChannelId); } catch {}
+        try { entity = await this.client.getEntity(-expandedId); } catch {}
       }
       if (!entity) {
-        try { entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any })); } catch {}
+        try { entity = await this.client.getEntity(toPeerChannel(parseInt(channel.channel_id))); } catch {}
       }
       if (!entity) {
         return { views_day: 0, err_day: 0, posts_day: 0 };
@@ -145,26 +141,23 @@ export class AnalyticsService {
   private async collectChannelAnalytics(channel: PostedChannel): Promise<ChannelAnalytics | null> {
     try {
       let entity;
-      const channelId = parseInt(channel.channel_id);
-      let telegramChannelId = Math.abs(channelId);
-      if (telegramChannelId < 1_000_000_000_000) {
-        telegramChannelId = 1_000_000_000_000 + telegramChannelId;
-      }
+      const rawId = parseInt(channel.channel_id);
+      const expandedId = toExpandedId(rawId);
       try {
-        entity = await this.client.getEntity(telegramChannelId);
-      } catch (firstError) {
+        entity = await this.client.getEntity(expandedId);
+      } catch {
         try {
-          entity = await this.client.getEntity(-telegramChannelId);
-        } catch (secondError) {
+          entity = await this.client.getEntity(-expandedId);
+        } catch {
           try {
-            entity = await this.client.getEntity(new Api.PeerChannel({ channelId: BigInt(telegramChannelId) as any }));
-          } catch (thirdError) {
+            entity = await this.client.getEntity(toPeerChannel(rawId));
+          } catch {
             try {
-              entity = await this.client.getEntity(new Api.PeerUser({ userId: BigInt(telegramChannelId) as any }));
-            } catch (fourthError) {
+              entity = await this.client.getEntity(toPeerUser(rawId));
+            } catch {
               try {
-                entity = await this.client.getEntity(new Api.PeerChat({ chatId: BigInt(telegramChannelId) as any }));
-              } catch (fifthError) {
+                entity = await this.client.getEntity(toPeerChat(rawId));
+              } catch {
                 return null;
               }
             }

@@ -83,7 +83,7 @@ export class TelegramConfigService {
   }
 
   // Шаг 2: проксируем verify-code на парсер
-  async verifyCode(id: string, code: string, phoneCodeHash: string): Promise<void> {
+  async verifyCode(id: string, code: string, phoneCodeHash: string): Promise<{ needsPassword: boolean }> {
     const res = await fetch(`${this.parserInternalUrl}/internal/auth/verify-code`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -93,6 +93,29 @@ export class TelegramConfigService {
     if (!res.ok) {
       const err = await res.json() as any;
       throw new Error(err.message || 'Parser verify-code failed');
+    }
+
+    const data = await res.json() as any;
+    const needsPassword = data.data?.needsPassword === true;
+
+    if (!needsPassword) {
+      await this.repo.updateStatus(id, 'active');
+    }
+
+    return { needsPassword };
+  }
+
+  // Шаг 3: проксируем verify-password на парсер (2FA)
+  async verifyPassword(id: string, password: string): Promise<void> {
+    const res = await fetch(`${this.parserInternalUrl}/internal/auth/verify-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json() as any;
+      throw new Error(err.message || 'Parser verify-password failed');
     }
 
     await this.repo.updateStatus(id, 'active');
