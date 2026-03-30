@@ -1198,15 +1198,12 @@ export class PublishService {
 
 
   private getOptimalWorkers(fileSize: number): number {
-    // Для маленьких файлов (< 1MB) используем 1 воркер
     if (fileSize < 1024 * 1024) {
       return 1;
     }
-    // Для средних файлов (1MB - 100MB) используем 2-4 воркера
     if (fileSize < 100 * 1024 * 1024) {
       return Math.min(4, Math.max(2, Math.floor(fileSize / (10 * 1024 * 1024))));
     }
-    // Для больших файлов (> 100MB) используем 4-8 воркеров
     return Math.min(8, Math.max(4, Math.floor(fileSize / (50 * 1024 * 1024))));
   }
 

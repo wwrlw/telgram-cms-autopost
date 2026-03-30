@@ -1,4 +1,5 @@
 import { TelegramClient } from 'telegram';
+import { NewMessage } from 'telegram/events/index.js';
 import { CreatePostDto, ChannelConfig, PostStats } from '../../types/index.js';
 import { IPostRepository } from '../post/post.repository.interface.js';
 import { MediaService } from '../media/media.service.js';
@@ -21,7 +22,11 @@ export class ParserService {
   ) {}
 
   addEventHandlers(): void {
-    this.client.addEventHandler(this.handleMessage.bind(this));
+    this.client.addEventHandler(
+      this.handleMessage.bind(this),
+      new NewMessage({}),
+    );
+    console.log('👂 [Parser] Event handler зарегистрирован (NewMessage, all)');
   }
 
   private getPostStatsFromMessage(message: any): PostStats | undefined {
@@ -99,26 +104,53 @@ export class ParserService {
   }
 
   private async handleMessage(update: any): Promise<void> {
-    if (!update.message) return;
+    // --- RAW UPDATE DEBUG ---
+    const updateType = update?.className || update?.constructor?.name || typeof update;
+    const msgObj = update.message;
 
-    const msg = update.message;
+    if (!msgObj) {
+      console.log(`[Parser] ⚠️  update без .message — тип: ${updateType}`);
+      return;
+    }
+
+    const msg = msgObj;
     const peer = msg?.peerId;
-    if (!peer) return;
 
-    const channelId = Number(peer.channelId || peer.userId || peer.chatId || 0);
+    if (!peer) {
+      console.log(`[Parser] ⚠️  message без peerId — msgId=${msg.id}, тип: ${updateType}`);
+      return;
+    }
+
+    const rawChannelIdBig = peer.channelId ?? peer.userId ?? peer.chatId ?? 0;
+    const channelId = Number(rawChannelIdBig);
     const normalizedIncomingId = toRawId(channelId);
+
+    const peerType = peer.channelId ? 'channel' : peer.userId ? 'user' : peer.chatId ? 'chat' : 'unknown';
+
     const targetChannels = this.channelService.getTargetChannels();
+    const normalizedTargetIds = targetChannels.map(c => toRawId(c.id));
 
-    const isTargetChannel = targetChannels
-      .map(c => toRawId(c.id))
-      .includes(normalizedIncomingId);
+    console.log(
+      `[Parser] 📨 Сообщение msgId=${msg.id} | peer=${peerType} rawId=${rawChannelIdBig} → normalizedId=${normalizedIncomingId}` +
+      ` | targets=[${normalizedTargetIds.join(',')}]`,
+    );
 
-    if (!isTargetChannel) return;
+    const isTargetChannel = normalizedTargetIds.includes(normalizedIncomingId);
+
+    if (!isTargetChannel) {
+      console.log(
+        `[Parser] ⏭️  Не целевой канал: normalizedId=${normalizedIncomingId}` +
+        ` не найден среди [${normalizedTargetIds.join(',')}] (всего каналов в конфиге: ${targetChannels.length})`,
+      );
+      return;
+    }
 
     const channelConfig = targetChannels.find(c => toRawId(c.id) === normalizedIncomingId);
+    console.log(`[Parser] ✅ Целевой канал найден: id=${channelConfig?.id}, is_private=${channelConfig?.is_private}`);
 
     if (msg.groupedId) {
       const groupId = msg.groupedId.toString();
+      console.log(`[Parser] 🖼️  Альбом groupedId=${groupId}, буферизуем msgId=${msg.id}`);
       if (!this.albumBuffer[groupId]) this.albumBuffer[groupId] = [];
       if (!this.albumBuffer[groupId].some((m: any) => m.id === msg.id)) {
         this.albumBuffer[groupId].push(msg);
@@ -133,6 +165,7 @@ export class ParserService {
 
         if (!albumMsgs?.length) return;
 
+        console.log(`[Parser] 🖼️  Сохраняем альбом groupedId=${groupId} (${albumMsgs.length} шт.)`);
         try {
           const text = albumMsgs.find((m: any) => m.message)?.message || '';
           const mediaList = albumMsgs.map((m: any) => m.media).filter(Boolean);
@@ -148,10 +181,15 @@ export class ParserService {
       const sourceChannel = await this.channelService.getChannelIdentifier(peer, channelConfig);
       const postUrl = `https://t.me/${sourceChannel}/${msg.id}`;
 
-      if (await this.postRepository.checkPostExists(postUrl)) return;
+      const alreadyExists = await this.postRepository.checkPostExists(postUrl);
+      if (alreadyExists) {
+        console.log(`[Parser] ♻️  Дубликат, пропускаем: ${postUrl}`);
+        return;
+      }
 
-      console.log(`📝 Обрабатываем новый пост: ${postUrl}`);
+      console.log(`[Parser] 📝 Сохраняем новый пост: ${postUrl}`);
       await this.buildAndSavePost(peer, msg, msg, msg.message || '', channelConfig, normalizedIncomingId);
+      console.log(`[Parser] 💾 Пост сохранён: ${postUrl}`);
     } catch (error) {
       console.error('❌ Ошибка при обработке сообщения:', error);
     }

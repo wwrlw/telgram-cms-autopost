@@ -8,6 +8,4 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-RUN mkdir -p /app/media && chmod 755 /app/media
-
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]

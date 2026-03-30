@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-//
 import LoginPage from "@/views/LoginPage.vue";
 import Channels from "@/views/Channels.vue";
 import PublicationChannels from "@/views/PublicationChannels.vue";
@@ -140,14 +139,13 @@ router.beforeEach(async (to) => {
     }
 
     if (!token) {
-        // Пытаемся обновить access токен через refresh куку (HttpOnly)
         try {
             const res = await http.instance.post("/auth/refresh");
             const data = res?.data?.data || res?.data || {};
             const newAccess = data.accessToken;
             if (newAccess) {
                 setAccessToken(newAccess);
-                return; // продолжаем навигацию
+                return;
             }
             return "/login";
         } catch (e) {
@@ -195,9 +193,5 @@ router.beforeEach(async (to) => {
 
     return;
 });
-
-// router.afterEach(() => {
-//     window.scrollTo({ top: 0, behavior: "smooth" });
-// });
 
 export default router;

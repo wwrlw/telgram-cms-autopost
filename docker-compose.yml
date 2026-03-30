@@ -1,18 +1,12 @@
 services:
-  backend:
-    build:
-      context: ./http
-      dockerfile: dockerfile.dev
-    container_name: tg-parse-backend
+  api:
+    build: ./http
+    container_name: tg-api
     restart: unless-stopped
     ports:
       - "3001:3001"
-    volumes:
-      - ./parser/media:/app/media
-      - ./http:/app
-      - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017/?authSource=admin
       - MONGO_DB_NAME=${MONGO_DB_NAME}
       - JWT_SECRET=${JWT_SECRET}
@@ -20,11 +14,9 @@ services:
       - JWT_ACCESS_TTL=${JWT_ACCESS_TTL}
       - JWT_REFRESH_TTL=${JWT_REFRESH_TTL}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - VITE_API_URL=${VITE_API_URL}
       - PORT=${PORT}
       - NODE_OPTIONS=--max-old-space-size=1024
       - UV_THREADPOOL_SIZE=16
-      - DEBUG=fastify:*
       - MONGO_EXPLAIN=0
       - CACHE_ENABLED=true
       - PARSER_API_USERNAME=${API_USERNAME}
@@ -33,29 +25,30 @@ services:
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - PARSER_INTERNAL_URL=http://parser:3002
       - REDIS_URL=redis://redis:6379
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1.0'
-        reservations:
-          memory: 512M
-          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/', r => process.exit(r.statusCode >= 500 ? 1 : 0)).on('error', () => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - bots_bots
+
   parser:
     build: ./parser
-    container_name: tg-parse-parser
+    container_name: tg-parser
     restart: unless-stopped
     ports:
       - "127.0.0.1:3002:3002"
     volumes:
-      - ./parser:/app
-      - /app/node_modules
       - ./parser/media:/app/media
-    command: npm run watch
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - STRING_SESSION=${STRING_SESSION}
       - MONGO_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017
       - API_ID=${API_ID}
@@ -72,28 +65,30 @@ services:
       - MONGO_HOST=mongo
       - MONGO_PORT=27017
     depends_on:
-      - backend
+      api:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - bots_bots
-  frontend:
+
+  web:
     build:
       context: ./web
-      target: dev
       dockerfile: dockerfile
-    container_name: tg-parse-frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: tg-web
     restart: unless-stopped
-    volumes:
-      - ./web:/app/
-      - /app/node_modules
     ports:
-      - '127.0.0.1:5173:5173'
-    environment:
-      - NODE_ENV=development
-      - VITE_API_URL=${VITE_API_URL}
+      - '127.0.0.1:80:80'
     depends_on:
-      - backend
+      - api
     networks:
       - bots_bots
+
   mongo:
     image: mongo:7
     container_name: tg-parse-mongo
@@ -103,6 +98,12 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
     volumes:
       - ./data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks:
       - bots_bots
 
@@ -118,16 +119,22 @@ services:
       - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017/
       - ME_CONFIG_BASICAUTH=false
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     networks:
       - bots_bots
 
   redis:
     image: redis:7-alpine
-    ports:
-    - "6381:6379"
     container_name: tg-parse-redis
     restart: unless-stopped
+    ports:
+      - "6381:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     networks:
       - bots_bots
 

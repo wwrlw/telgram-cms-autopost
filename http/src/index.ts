@@ -58,6 +58,7 @@ async function start() {
         await fastify.register(logsRoutes, { prefix: '/logs' });
         await fastify.register(mediaRoutes);
         await fastify.register(telegramConfigRoutes, { prefix: '/telegram-config' });
+        fastify.get('/health', async () => ({ status: 'ok' }));
         fastify.setErrorHandler(errorHandler);
         await fastify.ready();
         await fastify.listen({ port: Number(process.env.PORT) || 4000, host: '0.0.0.0' });

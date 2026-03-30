@@ -34,10 +34,8 @@ import Sidebar from "@/components/Sidebar.vue";
 import Toast from "@/components/Shared/Toast.vue";
 import { ref, provide } from "vue";
 import { useRoute } from "vue-router";
-// import http from "@/js/http";
 
 const route = useRoute();
-// const router = useRouter();
 const loading = ref(false);
 const refreshTrigger = ref(0);
 
@@ -77,88 +75,5 @@ provide("setLoading", (value) => {
     loading.value = value;
 });
 
-// const checkBackendConnection = async () => {
-//     try {
-//         const response = await http.instance.get("/auth/check");
-//         if (response.data.success) {
-//             console.log("Backend connection restored");
-//             if (window.$toast) {
-//                 window.$toast.clearByType("error");
-//             }
-//         }
-//     } catch (error) {
-//         console.error("Backend connection check failed:", error);
-
-//         if (
-//             error.response?.status === 403 &&
-//             error.response?.data?.code === "USER_BANNED"
-//         ) {
-//             console.warn("User is banned, logging out...");
-
-//             localStorage.removeItem("token");
-//             localStorage.removeItem("role");
-//             sessionStorage.removeItem("token");
-//             sessionStorage.removeItem("role");
-
-//             if (window.$toast) {
-//                 window.$toast.error("Ваш аккаунт заблокирован", 10000);
-//             }
-
-//             router.push("/login");
-//             return;
-//         }
-
-//         if (
-//             error.response?.status === 404 &&
-//             error.response?.data?.code === "USER_NOT_FOUND"
-//         ) {
-//             console.warn("User not found in database, logging out...");
-
-//             localStorage.removeItem("token");
-//             localStorage.removeItem("role");
-//             sessionStorage.removeItem("token");
-//             sessionStorage.removeItem("role");
-
-//             // Показываем уведомление
-//             if (window.$toast) {
-//                 window.$toast.error(
-//                     "Пользователь не найден в базе данных",
-//                     10000
-//                 );
-//             }
-
-//             router.push("/login");
-//             return;
-//         }
-
-//         if (
-//             error.code === "ERR_NETWORK" ||
-//             error.message?.includes("Network Error") ||
-//             error.message?.includes("timeout") ||
-//             !error.response
-//         ) {
-//             if (window.$toast) {
-//                 window.$toast.error(
-//                     "Проблема с коннектом. Проверьте интернет-соединение",
-//                     15000
-//                 );
-//             }
-//         }
-//     }
-// };
-
-// let connectionCheckInterval;
-
-// onMounted(() => {
-//     connectionCheckInterval = setInterval(checkBackendConnection, 30000);
-
-//     setTimeout(checkBackendConnection, 30000);
-// });
-
-// onUnmounted(() => {
-//     if (connectionCheckInterval) {
-//         clearInterval(connectionCheckInterval);
-//     }
-// });
 </script>
 <style scoped></style>

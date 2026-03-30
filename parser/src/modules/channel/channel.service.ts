@@ -1,4 +1,5 @@
 import { TelegramClient } from 'telegram';
+import { Api } from 'telegram';
 import { ChannelConfig } from '../../types/index.js';
 import { configToEntityArg, toRawId, peerToStoredId } from './channel-id.utils.js';
 
@@ -35,7 +36,28 @@ export class ChannelService {
         const username = (entity as any).username || `channel_${Math.abs(channelConfig.id)}`;
         const title = (entity as any).title || 'Unknown';
         const privacyStatus = channelConfig.is_private ? '🔒 Private' : '🔓 Public';
-        console.log(`✅ Канал ${channelConfig.id}: ${title} (@${username}) [${privacyStatus}]`);
+        const isMember = !(entity as any).left;
+
+        if (isMember) {
+          console.log(`✅ Канал ${channelConfig.id}: ${title} (@${username}) [${privacyStatus}] — подписан`);
+          continue;
+        }
+
+        // Аккаунт не подписан — пробуем вступить
+        // JoinChannel работает и по entity напрямую (без username), если это публичный канал
+        if (!channelConfig.is_private) {
+          try {
+            await this.client.invoke(new Api.channels.JoinChannel({ channel: entity as any }));
+            console.log(`✅ Канал ${channelConfig.id}: ${title} (@${username}) [${privacyStatus}] — подписался автоматически`);
+          } catch (joinError: any) {
+            console.error(`❌ Канал ${channelConfig.id}: ${title} — не удалось подписаться: ${joinError?.message}`);
+          }
+        } else {
+          console.warn(
+            `⚠️  Канал ${channelConfig.id}: ${title} (@${username}) [${privacyStatus}] — НЕ подписан. ` +
+            `Приватный канал — вступите вручную под аккаунтом парсера, иначе новые сообщения не придут.`,
+          );
+        }
       } catch (error) {
         console.error(`❌ Не удалось получить доступ к каналу ${channelConfig.id}:`, error);
       }

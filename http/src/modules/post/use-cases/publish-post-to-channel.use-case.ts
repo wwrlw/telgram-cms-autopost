@@ -1,7 +1,7 @@
 import { IPostService } from '../post.service.interface';
 import { IPostedChannelService } from '../../publication-channel/posted-channel.service.interface';
 import { ITelegramPublishService } from '../../telegram/telegram-publish.service.interface';
-import { YandexGPTService } from '../../ai/yandex-gpt.service';
+// import { YandexGPTService } from '../../ai/yandex-gpt.service';
 
 export class PublishPostToChannelUseCase {
   constructor(
