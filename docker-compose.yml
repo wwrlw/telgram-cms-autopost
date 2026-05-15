@@ -4,7 +4,7 @@ services:
     container_name: tg-api
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017/?authSource=admin
@@ -129,7 +129,7 @@ services:
     container_name: tg-parse-redis
     restart: unless-stopped
     ports:
-      - "6381:6379"
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -140,4 +140,4 @@ services:
 
 networks:
   bots_bots:
-    external: true
+    driver: bridge
